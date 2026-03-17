@@ -137,11 +137,9 @@ GTEST_TEST(KotORCombat, negativeModifierCanTurnHitIntoMiss) {
 GTEST_TEST(KotORCombat, dexModifierFromCreatureInfo) {
 	CreatureInfo info;
 	info.setAbilityScore(kAbilityDexterity, 16); // modifier +3
-	int dexMod = info.getAbilityModifier(kAbilityDexterity);
-	EXPECT_EQ(dexMod, 3);
-	// AC for an unarmoured creature with this Dex
-	int ac = 10 + dexMod;
-	EXPECT_EQ(ac, 13);
+	EXPECT_EQ(info.getAbilityModifier(kAbilityDexterity), 3);
+	// AC for an unarmoured creature with this Dex via the shared helper
+	EXPECT_EQ(calcAC(16), 13);
 }
 
 GTEST_TEST(KotORCombat, strModifierFromCreatureInfo) {

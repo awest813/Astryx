@@ -75,11 +75,12 @@ GTEST_TEST(KotORBaseCreatureInfo, setAndGetAllAbilities) {
 	EXPECT_EQ(info.getAbilityScore(kAbilityCharisma),     18);
 }
 
-// Modifier formula: floor((score - 10) / 2)
-// C++ integer division truncates toward zero, so negative half-integers
-// round toward zero (e.g. (9-10)/2 = -1/2 = 0 in C++).
-// The KotOR rule uses the same truncating integer divide, which matches
-// the engine's implementation.
+// Modifier formula: (score - 10) / 2  using C++ truncating integer division.
+//
+// This differs from the d20 SRD's floor() for odd negative differences:
+//   score  9: (9-10)/2 = -1/2 =  0 in C++; SRD floor would give -1
+//   score  1: (1-10)/2 = -9/2 = -4 in C++; SRD floor would give -5
+// The engine uses the C++ truncating form, so we pin those values here.
 GTEST_TEST(KotORBaseCreatureInfo, abilityModifierFormula) {
 	CreatureInfo info;
 
@@ -99,17 +100,21 @@ GTEST_TEST(KotORBaseCreatureInfo, abilityModifierFormula) {
 	info.setAbilityScore(kAbilityStrength, 18);
 	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), 4);
 
-	// Score 8 → modifier -1  (8-10 = -2, -2/2 = -1)
+	// Score 8 → modifier -1  (8-10 = -2; -2/2 = -1, same as SRD)
 	info.setAbilityScore(kAbilityStrength, 8);
 	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), -1);
+
+	// Score 9 → modifier 0  ((9-10)/2 = -1/2 = 0 with C++ truncation)
+	// SRD floor would give -1; the engine gives 0.
+	info.setAbilityScore(kAbilityStrength, 9);
+	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), 0);
 
 	// Score 6 → modifier -2
 	info.setAbilityScore(kAbilityStrength, 6);
 	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), -2);
 
-	// Score 1 → modifier -5  ((1-10)/2 = -9/2 = -4 in C++ truncation)
-	// Note: the d20 SRD defines floor() here, but the engine uses C++ integer
-	// division which gives -4 for score 1. We test for -4 to match the code.
+	// Score 1 → modifier -4  ((1-10)/2 = -9/2 = -4 with C++ truncation)
+	// SRD floor would give -5; the engine gives -4.
 	info.setAbilityScore(kAbilityStrength, 1);
 	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), -4);
 
@@ -196,6 +201,10 @@ GTEST_TEST(KotORBaseCreatureInfo, copyConstruct) {
 	CreatureInfo dst(src);
 	EXPECT_EQ(dst.getAbilityScore(kAbilityStrength), 15);
 	EXPECT_EQ(dst.getSkillRank(kSkillPersuade),       6);
+
+	// Mutating dst must not affect src
+	dst.setAbilityScore(kAbilityStrength, 18);
+	EXPECT_EQ(src.getAbilityScore(kAbilityStrength), 15);
 }
 
 GTEST_TEST(KotORBaseCreatureInfo, assignmentOperator) {
