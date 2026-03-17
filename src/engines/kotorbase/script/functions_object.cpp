@@ -475,6 +475,146 @@ void Functions::getNextItemInInventory(Aurora::NWScript::FunctionContext &ctx) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Faction relationship helpers
+// ---------------------------------------------------------------------------
+
+/** Return true if a faction is considered hostile (attacks friendly factions). */
+static bool isFactionHostile(Engines::KotORBase::Faction f) {
+	return f == Engines::KotORBase::kFactionHostile1 ||
+	       f == Engines::KotORBase::kFactionHostile2 ||
+	       f == Engines::KotORBase::kFactionEndarSpire;
+}
+
+/** Return true if a faction is considered friendly (cooperative with other friendly factions). */
+static bool isFactionFriendly(Engines::KotORBase::Faction f) {
+	return f == Engines::KotORBase::kFactionFriendly1 ||
+	       f == Engines::KotORBase::kFactionFriendly2;
+}
+
+void Functions::getIsEnemy(Aurora::NWScript::FunctionContext &ctx) {
+	// GetIsEnemy(object oTarget, object oSource=OBJECT_SELF)
+	// Returns TRUE if oSource and oTarget are in mutually hostile factions.
+	ctx.getReturn() = 0;
+
+	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!target || !source)
+		return;
+
+	Faction tf = target->getFaction();
+	Faction sf = source->getFaction();
+
+	bool enemy = (isFactionHostile(tf) && isFactionFriendly(sf)) ||
+	             (isFactionHostile(sf) && isFactionFriendly(tf));
+	ctx.getReturn() = enemy ? 1 : 0;
+}
+
+void Functions::getIsFriend(Aurora::NWScript::FunctionContext &ctx) {
+	// GetIsFriend(object oTarget, object oSource=OBJECT_SELF)
+	// Returns TRUE if oSource and oTarget are in mutually friendly factions.
+	ctx.getReturn() = 0;
+
+	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!target || !source)
+		return;
+
+	Faction tf = target->getFaction();
+	Faction sf = source->getFaction();
+
+	// Same non-invalid faction, or both in a friendly faction family
+	bool friendly = (tf != kFactionInvalid && tf == sf) ||
+	                (isFactionFriendly(tf) && isFactionFriendly(sf));
+	ctx.getReturn() = friendly ? 1 : 0;
+}
+
+void Functions::getIsNeutral(Aurora::NWScript::FunctionContext &ctx) {
+	// GetIsNeutral(object oTarget, object oSource=OBJECT_SELF)
+	// Returns TRUE if oSource and oTarget are neither friends nor enemies.
+	ctx.getReturn() = 0;
+
+	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!target || !source)
+		return;
+
+	Faction tf = target->getFaction();
+	Faction sf = source->getFaction();
+
+	bool isEnemy  = (isFactionHostile(tf) && isFactionFriendly(sf)) ||
+	                (isFactionHostile(sf) && isFactionFriendly(tf));
+	bool isFriend = (tf != kFactionInvalid && tf == sf) ||
+	                (isFactionFriendly(tf) && isFactionFriendly(sf));
+
+	ctx.getReturn() = (!isEnemy && !isFriend) ? 1 : 0;
+}
+
+void Functions::getName(Aurora::NWScript::FunctionContext &ctx) {
+	// GetName(object oObject) -> string
+	const Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
+	ctx.getReturn() = object ? object->getName() : Common::UString();
+}
+
+void Functions::setIsDestroyable(Aurora::NWScript::FunctionContext &ctx) {
+	// SetIsDestroyable(int bDestroyable, int bRaiseDeadPossible=TRUE, int bSelectableWhenDead=FALSE)
+	// Full destroyable semantics require a persistence layer.  For the Endar
+	// Spire milestone this is a no-op that satisfies script execution without error.
+}
+
+void Functions::getIsInConversation(Aurora::NWScript::FunctionContext &ctx) {
+	// GetIsInConversation(object oObject) -> int
+	// Returns TRUE if the module's conversation GUI is currently active,
+	// regardless of which specific object is being addressed.
+	ctx.getReturn() = _game->getModule().isConversationActive() ? 1 : 0;
+}
+
+// ---------------------------------------------------------------------------
+// Area object iteration
+// ---------------------------------------------------------------------------
+
+void Functions::getFirstObjectInArea(Aurora::NWScript::FunctionContext &ctx) {
+	// GetFirstObjectInArea(object oArea=OBJECT_INVALID, int nObjectFilter=OBJECT_TYPE_CREATURE)
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	int filter = ctx.getParams()[1].getInt();
+
+	_areaIterObjects.clear();
+	_areaIterIndex = 0;
+
+	// Collect all matching objects from the module's object container.
+	// Each set bit in `filter` corresponds to a KotOR ObjectType value.
+	for (int bit = 1; bit < static_cast<int>(kObjectTypeMAX); bit <<= 1) {
+		if (!(filter & bit))
+			continue;
+
+		std::unique_ptr<Aurora::NWScript::ObjectSearch> search(
+			_game->getModule().findObjectsByType(static_cast<ObjectType>(bit)));
+
+		Aurora::NWScript::Object *raw = nullptr;
+		while ((raw = search->next())) {
+			Object *obj = ObjectContainer::toObject(raw);
+			if (obj)
+				_areaIterObjects.push_back(obj);
+		}
+	}
+
+	if (_areaIterObjects.empty())
+		return;
+
+	ctx.getReturn() = _areaIterObjects[_areaIterIndex++];
+}
+
+void Functions::getNextObjectInArea(Aurora::NWScript::FunctionContext &ctx) {
+	// GetNextObjectInArea(object oArea=OBJECT_INVALID, int nObjectFilter=OBJECT_TYPE_CREATURE)
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	if (_areaIterIndex >= _areaIterObjects.size())
+		return;
+
+	ctx.getReturn() = _areaIterObjects[_areaIterIndex++];
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

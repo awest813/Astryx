@@ -192,9 +192,6 @@ protected:
 	void getNearestCreature(Aurora::NWScript::FunctionContext &ctx);
 	void getTag(Aurora::NWScript::FunctionContext &ctx);
 
-	void getFirstItemInInventory(Aurora::NWScript::FunctionContext &ctx);
-	void getNextItemInInventory(Aurora::NWScript::FunctionContext &ctx);
-
 	void getArea    (Aurora::NWScript::FunctionContext &ctx);
 	void getLocation(Aurora::NWScript::FunctionContext &ctx);
 
@@ -222,6 +219,21 @@ protected:
 	void getDistanceToObject(Aurora::NWScript::FunctionContext &ctx);
 	void exploreAreaForPlayer(Aurora::NWScript::FunctionContext &ctx);
 
+	void getFirstItemInInventory(Aurora::NWScript::FunctionContext &ctx);
+	void getNextItemInInventory(Aurora::NWScript::FunctionContext &ctx);
+
+	void getFirstObjectInArea(Aurora::NWScript::FunctionContext &ctx);
+	void getNextObjectInArea(Aurora::NWScript::FunctionContext &ctx);
+
+	void getIsEnemy  (Aurora::NWScript::FunctionContext &ctx);
+	void getIsFriend (Aurora::NWScript::FunctionContext &ctx);
+	void getIsNeutral(Aurora::NWScript::FunctionContext &ctx);
+
+	void getName(Aurora::NWScript::FunctionContext &ctx);
+
+	void setIsDestroyable  (Aurora::NWScript::FunctionContext &ctx);
+	void getIsInConversation(Aurora::NWScript::FunctionContext &ctx);
+
 	// Situated objects, functions_situated.cpp
 
 	void getLocked(Aurora::NWScript::FunctionContext &ctx);
@@ -242,7 +254,8 @@ protected:
 	void actionStartConversation(Aurora::NWScript::FunctionContext &ctx);
 	void actionOpenDoor(Aurora::NWScript::FunctionContext &ctx);
 	void actionCloseDoor(Aurora::NWScript::FunctionContext &ctx);
-	void actionMoveToObject(Aurora::NWScript::FunctionContext &ctx);
+	void actionMoveToObject  (Aurora::NWScript::FunctionContext &ctx);
+	void actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx);
 	void actionFollowLeader(Aurora::NWScript::FunctionContext &ctx);
 	void clearAllActions(Aurora::NWScript::FunctionContext &ctx);
 
@@ -356,6 +369,10 @@ private:
 	Object *_inventoryIterObject { nullptr };
 	std::vector<Common::UString> _inventoryIterTags;
 	size_t _inventoryIterIndex { 0 };
+
+	// State for GetFirstObjectInArea / GetNextObjectInArea
+	std::vector<Object *> _areaIterObjects;
+	size_t _areaIterIndex { 0 };
 };
 
 } // End of namespace KotOR

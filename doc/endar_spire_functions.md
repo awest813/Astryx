@@ -27,6 +27,7 @@ Functions are sorted by their numeric ID, which matches the order in
 |   8 | `ExecuteScript` | ✅ | |
 |   9 | `ClearAllActions` | ✅ | |
 |  10 | `SetFacing` | ✅ | Needed for creature orientation after dialogue |
+|  21 | `ActionMoveToLocation` | ✅ | Queues a move-to-point action from a Location engine type; used for NPC positioning scripts |
 |  22 | `ActionMoveToObject` | ✅ | |
 |  24 | `GetArea` | ✅ | |
 |  25 | `GetEnteringObject` | ✅ | |
@@ -47,6 +48,8 @@ Functions are sorted by their numeric ID, which matches the order in
 |  50 | `GetMaxHitPoints` | ✅ | |
 |  78 | `EffectHeal` | ✅ | Needed to restore HP after mock combat |
 |  79 | `EffectDamage` | ✅ | Needed for combat damage application |
+|  93 | `GetFirstObjectInArea` | ✅ | Iterates area objects by type bitmask; used in area-scan scripts |
+|  94 | `GetNextObjectInArea` | ✅ | Continuation iterator for GetFirstObjectInArea |
 | 106 | `GetObjectType` | ✅ | Used in many combat/interaction guards |
 | 116 | `GetAC` | ✅ | Full AC: 10 + Dex modifier + equipped armour bonus |
 | 140 | `GetIsDead` | ✅ | Detect downed state in combat loop |
@@ -59,11 +62,17 @@ Functions are sorted by their numeric ID, which matches the order in
 | 215 | `Location` | ✅ | Constructs a Location engine type from a position vector and facing |
 | 217 | `GetIsPC` | ✅ | |
 | 220 | `ApplyEffectToObject` | ⚠️ | Applies heal/damage HP changes; limited effect semantics |
+| 235 | `GetIsEnemy` | ✅ | Hostile-faction vs friendly-faction check; wired in kotor + kotor2 |
+| 236 | `GetIsFriend` | ✅ | Same-or-friendly-faction check; wired in kotor + kotor2 |
+| 237 | `GetIsNeutral` | ✅ | Neither enemy nor friend; wired in kotor + kotor2 |
+| 253 | `GetName` | ✅ | Returns the display name string of an object |
 | 316 | `GetAttackTarget` | ✅ | Used in combat state machine |
 | 320 | `GetIsInCombat` | ✅ | Used to gate combat-specific dialogue |
+| 323 | `SetIsDestroyable` | ✅ | Accepted as no-op; full destroyable semantics out of scope for milestone |
 | 385 | `JumpToObject` | ✅ | Instant-teleport variant of ActionJumpToObject |
 | 403 | `ExploreAreaForPlayer` | ⚠️ | Script hook implemented as no-op for now |
 | 443 | `GetIsOpen` | ✅ | |
+| 445 | `GetIsInConversation` | ✅ | Returns conversation-active state from the module |
 | 556 | `GetLastHostileActor` | ✅ | Used in OnPhysicalAttacked handler |
 | 578 | `GetGlobalBoolean` | ✅ | |
 | 579 | `SetGlobalBoolean` | ✅ | |

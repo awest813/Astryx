@@ -32,6 +32,7 @@
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/item.h"
+#include "src/engines/kotorbase/location.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/game.h"
@@ -117,6 +118,27 @@ void Functions::actionMoveToObject(Aurora::NWScript::FunctionContext &ctx) {
 
 	Action action(kActionMoveToPoint);
 	action.range = range;
+	action.location = glm::vec3(x, y, z);
+
+	caller->addAction(action);
+}
+
+void Functions::actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionMoveToLocation(location lDestination, int bRun=FALSE)
+	// Queue a move-to-point action targeting the given Location engine type.
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller)
+		return;
+
+	Location *dest = ObjectContainer::toLocation(ctx.getParams()[0].getEngineType());
+	if (!dest)
+		return;
+
+	float x, y, z;
+	dest->getPosition(x, y, z);
+
+	Action action(kActionMoveToPoint);
+	action.range = 0.1f; // arrive within 0.1 units of the target location
 	action.location = glm::vec3(x, y, z);
 
 	caller->addAction(action);
