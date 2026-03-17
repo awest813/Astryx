@@ -321,6 +321,8 @@ protected:
 	void setGlobalBoolean(Aurora::NWScript::FunctionContext &ctx);
 	void getGlobalNumber(Aurora::NWScript::FunctionContext &ctx);
 	void setGlobalNumber(Aurora::NWScript::FunctionContext &ctx);
+	void getGlobalString(Aurora::NWScript::FunctionContext &ctx);
+	void setGlobalString(Aurora::NWScript::FunctionContext &ctx);
 
 	// Local variables, functions_local.cpp
 
@@ -332,10 +334,13 @@ protected:
 	// Party, functions_party.cpp
 
 	void getPartyMemberByIndex(Aurora::NWScript::FunctionContext &ctx);
+	void getPartyMemberCount(Aurora::NWScript::FunctionContext &ctx);
 	void getSoloMode(Aurora::NWScript::FunctionContext &ctx);
+	void setSoloMode(Aurora::NWScript::FunctionContext &ctx);
 	void getCommandable(Aurora::NWScript::FunctionContext &ctx);
 
 	void isObjectPartyMember(Aurora::NWScript::FunctionContext &ctx);
+	void isNPCPartyMember(Aurora::NWScript::FunctionContext &ctx);
 	void isAvailableCreature(Aurora::NWScript::FunctionContext &ctx);
 
 	void setPartyLeader(Aurora::NWScript::FunctionContext &ctx);
@@ -343,6 +348,47 @@ protected:
 
 	void showPartySelectionGUI(Aurora::NWScript::FunctionContext &ctx);
 	void addAvailableNPCByTemplate(Aurora::NWScript::FunctionContext &ctx);
+	void addAvailableNPCByObject(Aurora::NWScript::FunctionContext &ctx);
+	void removeAvailableNPC(Aurora::NWScript::FunctionContext &ctx);
+	void spawnAvailableNPC(Aurora::NWScript::FunctionContext &ctx);
+	void addPartyMember(Aurora::NWScript::FunctionContext &ctx);
+	void removePartyMember(Aurora::NWScript::FunctionContext &ctx);
+
+	// Alignment, functions_creatures.cpp
+
+	void getGoodEvilValue(Aurora::NWScript::FunctionContext &ctx);
+	void getAlignmentGoodEvil(Aurora::NWScript::FunctionContext &ctx);
+	void adjustAlignment(Aurora::NWScript::FunctionContext &ctx);
+	void setGoodEvilValue(Aurora::NWScript::FunctionContext &ctx);
+
+	// Saving throws, functions_creatures.cpp
+
+	void fortitudeSave(Aurora::NWScript::FunctionContext &ctx);
+	void reflexSave(Aurora::NWScript::FunctionContext &ctx);
+	void willSave(Aurora::NWScript::FunctionContext &ctx);
+
+	// Experience, functions_creatures.cpp
+
+	void givePlotXP(Aurora::NWScript::FunctionContext &ctx);
+
+	// Misc, functions_object.cpp / functions_module.cpp
+
+	void playSound(Aurora::NWScript::FunctionContext &ctx);
+	void barkString(Aurora::NWScript::FunctionContext &ctx);
+	void actionBarkString(Aurora::NWScript::FunctionContext &ctx);
+	void actionUnequipItem(Aurora::NWScript::FunctionContext &ctx);
+	void setAreaTransitionBMP(Aurora::NWScript::FunctionContext &ctx);
+	void getLoadFromSaveGame(Aurora::NWScript::FunctionContext &ctx);
+	void endGame(Aurora::NWScript::FunctionContext &ctx);
+
+	// Galaxy map, functions_module.cpp
+
+	void showGalaxyMap(Aurora::NWScript::FunctionContext &ctx);
+	void setPlanetSelectable(Aurora::NWScript::FunctionContext &ctx);
+	void getPlanetSelectable(Aurora::NWScript::FunctionContext &ctx);
+	void setPlanetAvailable(Aurora::NWScript::FunctionContext &ctx);
+	void getPlanetAvailable(Aurora::NWScript::FunctionContext &ctx);
+	void getSelectedPlanet(Aurora::NWScript::FunctionContext &ctx);
 
 	// Events, functions_events.cpp
 

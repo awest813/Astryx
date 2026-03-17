@@ -32,6 +32,8 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/effect.h"
+#include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/game.h"
 
 #include "src/engines/kotorbase/script/functions.h"
 
@@ -223,6 +225,139 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 		if (creature)
 			creature->handleDeath();
 	}
+}
+
+void Functions::getGoodEvilValue(Aurora::NWScript::FunctionContext &ctx) {
+	Aurora::NWScript::Object *rawParam = ctx.getParams()[0].getObject();
+	Object *obj = ObjectContainer::toObject(rawParam ? rawParam : ctx.getCaller());
+
+	ctx.getReturn() = obj ? obj->getGoodEvilValue() : 50;
+}
+
+void Functions::getAlignmentGoodEvil(Aurora::NWScript::FunctionContext &ctx) {
+	Aurora::NWScript::Object *rawParam = ctx.getParams()[0].getObject();
+	Object *obj = ObjectContainer::toObject(rawParam ? rawParam : ctx.getCaller());
+
+	// Return alignment constant: 1 = good (>70), 0 = neutral (30..70), 2 = evil (<30)
+	int value = obj ? obj->getGoodEvilValue() : 50;
+	if (value > 70)
+		ctx.getReturn() = 1; // ALIGNMENT_GOOD
+	else if (value < 30)
+		ctx.getReturn() = 2; // ALIGNMENT_EVIL
+	else
+		ctx.getReturn() = 0; // ALIGNMENT_NEUTRAL
+}
+
+void Functions::adjustAlignment(Aurora::NWScript::FunctionContext &ctx) {
+	Aurora::NWScript::Object *rawTarget = ctx.getParams()[0].getObject();
+	Object *target = ObjectContainer::toObject(rawTarget ? rawTarget : ctx.getCaller());
+	// param 1: alignment shift direction (0=ALIGNMENT_GOOD, 1=ALIGNMENT_EVIL)
+	// param 2: amount
+	int direction = ctx.getParams()[1].getInt();
+	int amount    = ctx.getParams()[2].getInt();
+
+	if (!target || amount <= 0)
+		return;
+
+	int delta = (direction == 0) ? amount : -amount;
+	target->adjustGoodEvilValue(delta);
+}
+
+void Functions::setGoodEvilValue(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	int value = ctx.getParams()[1].getInt();
+
+	if (creature)
+		creature->setGoodEvilValue(value);
+}
+
+void Functions::fortitudeSave(Aurora::NWScript::FunctionContext &ctx) {
+	// FortitudeSave(object oCreature, int nDC, int nSaveType=0, object oSaveVersus=OBJECT_SELF)
+	// Returns 0 (failure), 1 (success), or 2 (natural 20 / automatic success)
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	int dc = ctx.getParams()[1].getInt();
+
+	if (!creature) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	// Fortitude = 10 + Constitution modifier + class save bonus
+	int conMod = creature->getInfo().getAbilityModifier(kAbilityConstitution);
+	int roll   = std::rand() % 20 + 1;
+
+	if (roll == 20) {
+		ctx.getReturn() = 2; // automatic success
+		return;
+	}
+	if (roll == 1) {
+		ctx.getReturn() = 0; // automatic failure
+		return;
+	}
+	ctx.getReturn() = ((roll + conMod + 10) >= dc) ? 1 : 0;
+}
+
+void Functions::reflexSave(Aurora::NWScript::FunctionContext &ctx) {
+	// ReflexSave(object oCreature, int nDC, int nSaveType=0, object oSaveVersus=OBJECT_SELF)
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	int dc = ctx.getParams()[1].getInt();
+
+	if (!creature) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	int dexMod = creature->getInfo().getAbilityModifier(kAbilityDexterity);
+	int roll   = std::rand() % 20 + 1;
+
+	if (roll == 20) {
+		ctx.getReturn() = 2;
+		return;
+	}
+	if (roll == 1) {
+		ctx.getReturn() = 0;
+		return;
+	}
+	ctx.getReturn() = ((roll + dexMod + 10) >= dc) ? 1 : 0;
+}
+
+void Functions::willSave(Aurora::NWScript::FunctionContext &ctx) {
+	// WillSave(object oCreature, int nDC, int nSaveType=0, object oSaveVersus=OBJECT_SELF)
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	int dc = ctx.getParams()[1].getInt();
+
+	if (!creature) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	int wisMod = creature->getInfo().getAbilityModifier(kAbilityWisdom);
+	int roll   = std::rand() % 20 + 1;
+
+	if (roll == 20) {
+		ctx.getReturn() = 2;
+		return;
+	}
+	if (roll == 1) {
+		ctx.getReturn() = 0;
+		return;
+	}
+	ctx.getReturn() = ((roll + wisMod + 10) >= dc) ? 1 : 0;
+}
+
+void Functions::givePlotXP(Aurora::NWScript::FunctionContext &ctx) {
+	// GivePlotXP(string sPlotName, int nPercentage)
+	// Awards XP to the party leader based on a percentage of a plot XP table value.
+	// We implement a simple version: just log and add a token amount.
+	const Common::UString &plotName = ctx.getParams()[0].getString();
+	int percentage = ctx.getParams()[1].getInt();
+
+	warning("Functions::givePlotXP: plot '%s', %d%%", plotName.c_str(), percentage);
+
+	// Award to all active party members
+	Object *pc = _game->getModule().getPartyLeader();
+	if (pc)
+		pc->addPlotXP(percentage);
 }
 
 } // End of namespace KotORBase

@@ -100,7 +100,8 @@ Module::Module(::Engines::Console &console) :
 		_frameTime(0),
 		_inDialog(false),
 		_runScriptVar(-1),
-		_soloMode(false) {
+		_soloMode(false),
+		_selectedPlanet(-1) {
 
 	loadSurfaceTypes();
 }
@@ -359,6 +360,7 @@ void Module::unload(bool completeUnload) {
 
 		_globalNumbers.clear();
 		_globalBooleans.clear();
+		_globalStrings.clear();
 
 		_partyController.clearCurrentParty();
 		_partyController.clearAvailableParty();
@@ -912,6 +914,117 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 
 void Module::addAvailableNPCByTemplate(int npc, const Common::UString &templ) {
 	_partyController.addAvailableNPCByTemplate(npc, templ);
+}
+
+int Module::getPartyMemberCount() const {
+	return static_cast<int>(_partyController.getPartyMemberCount());
+}
+
+bool Module::isNPCPartyMember(int npc) const {
+	std::vector<int> members = _partyController.getPartyMembers();
+	for (int m : members)
+		if (m == npc)
+			return true;
+	return false;
+}
+
+void Module::setSoloMode(bool enabled) {
+	_soloMode = enabled;
+}
+
+void Module::addPartyMember(int npc, Creature *creature) {
+	_partyController.addPartyMember(npc, creature);
+	updateCurrentPartyGUI();
+}
+
+void Module::removePartyMember(int npc) {
+	size_t count = _partyController.getPartyMemberCount();
+
+	// Collect all members we want to keep
+	std::vector<std::pair<int, Creature *>> remaining;
+	remaining.reserve(count);
+	for (size_t i = 0; i < count; ++i) {
+		const auto &pair = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+		if (pair.first != npc) {
+			remaining.push_back(pair);
+		} else if (pair.second && _area) {
+			_area->removeObject(pair.second);
+		}
+	}
+
+	_partyController.clearCurrentParty();
+	for (auto &pair : remaining)
+		_partyController.addPartyMember(pair.first, pair.second);
+
+	updateCurrentPartyGUI();
+}
+
+void Module::addAvailableNPCByObject(int npc, Creature *creature) {
+	if (!creature)
+		return;
+	_partyController.addAvailableNPCByTemplate(npc, creature->getTemplateResRef());
+}
+
+void Module::removeAvailableNPC(int npc) {
+	_partyController.removeAvailableNPC(npc);
+}
+
+void Module::spawnAvailableNPC(int npc, const Common::UString &waypointTag) {
+	if (!_partyController.isAvailableCreature(npc))
+		return;
+
+	const Common::UString &templ = _partyController.getAvailableNPCTemplate(npc);
+	Creature *creature = createCreature(templ);
+	if (!creature)
+		return;
+
+	float x = 0.0f, y = 0.0f, z = 0.0f, angle = 0.0f;
+	if (!waypointTag.empty())
+		getObjectLocation(waypointTag, kObjectTypeWaypoint, x, y, z, angle);
+
+	creature->setPosition(x, y, z);
+	if (_area)
+		_area->addObject(*creature);
+
+	_partyController.addPartyMember(npc, creature);
+	updateCurrentPartyGUI();
+}
+
+void Module::showGalaxyMap() {
+	warning("Module::showGalaxyMap(): galaxy map GUI not yet implemented");
+}
+
+void Module::setPlanetSelectable(int planet, bool selectable) {
+	_planetSelectable[planet] = selectable;
+}
+
+bool Module::getPlanetSelectable(int planet) const {
+	auto it = _planetSelectable.find(planet);
+	return (it != _planetSelectable.end()) ? it->second : false;
+}
+
+void Module::setPlanetAvailable(int planet, bool available) {
+	_planetAvailable[planet] = available;
+}
+
+bool Module::getPlanetAvailable(int planet) const {
+	auto it = _planetAvailable.find(planet);
+	return (it != _planetAvailable.end()) ? it->second : false;
+}
+
+int Module::getSelectedPlanet() const {
+	return _selectedPlanet;
+}
+
+void Module::setGlobalString(const Common::UString &id, const Common::UString &value) {
+	_globalStrings[id] = value;
+}
+
+Common::UString Module::getGlobalString(const Common::UString &id) const {
+	auto iter = _globalStrings.find(id);
+	if (iter != _globalStrings.end())
+		return iter->second;
+	return Common::UString();
 }
 
 void Module::setReturnStrref(uint32_t id) {

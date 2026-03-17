@@ -148,6 +148,10 @@ void PartyController::addAvailableNPCByTemplate(int npc, const Common::UString &
 	_availableParty.insert(std::make_pair(npc, templ));
 }
 
+void PartyController::removeAvailableNPC(int npc) {
+	_availableParty.erase(npc);
+}
+
 bool PartyController::handleEvent(const Events::Event &e) {
 	switch (e.type) {
 		case Events::kEventKeyDown:
