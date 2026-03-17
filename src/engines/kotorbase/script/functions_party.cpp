@@ -106,6 +106,50 @@ void Functions::setCommandable(Aurora::NWScript::FunctionContext &ctx) {
 	target->setCommandable(commandable != 0);
 }
 
+void Functions::getPartyMemberCount(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getPartyMemberCount();
+}
+
+void Functions::setSoloMode(Aurora::NWScript::FunctionContext &ctx) {
+	bool enabled = ctx.getParams()[0].getInt() != 0;
+	_game->getModule().setSoloMode(enabled);
+}
+
+void Functions::isNPCPartyMember(Aurora::NWScript::FunctionContext &ctx) {
+	int npc = ctx.getParams()[0].getInt();
+	ctx.getReturn() = _game->getModule().isNPCPartyMember(npc);
+}
+
+void Functions::addPartyMember(Aurora::NWScript::FunctionContext &ctx) {
+	int npc = ctx.getParams()[0].getInt();
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
+	if (!creature)
+		return;
+	_game->getModule().addPartyMember(npc, creature);
+}
+
+void Functions::removePartyMember(Aurora::NWScript::FunctionContext &ctx) {
+	int npc = ctx.getParams()[0].getInt();
+	_game->getModule().removePartyMember(npc);
+}
+
+void Functions::addAvailableNPCByObject(Aurora::NWScript::FunctionContext &ctx) {
+	int npc = ctx.getParams()[0].getInt();
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
+	_game->getModule().addAvailableNPCByObject(npc, creature);
+}
+
+void Functions::removeAvailableNPC(Aurora::NWScript::FunctionContext &ctx) {
+	int npc = ctx.getParams()[0].getInt();
+	_game->getModule().removeAvailableNPC(npc);
+}
+
+void Functions::spawnAvailableNPC(Aurora::NWScript::FunctionContext &ctx) {
+	int npc = ctx.getParams()[0].getInt();
+	Common::UString waypointTag = ctx.getParams()[1].getString();
+	_game->getModule().spawnAvailableNPC(npc, waypointTag);
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

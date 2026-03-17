@@ -61,6 +61,19 @@ void Functions::setGlobalNumber(Aurora::NWScript::FunctionContext &ctx) {
 	_game->getModule().setGlobalNumber(id, value);
 }
 
+void Functions::getGlobalString(Aurora::NWScript::FunctionContext &ctx) {
+	Common::UString id = ctx.getParams()[0].getString();
+
+	ctx.getReturn() = _game->getModule().getGlobalString(id);
+}
+
+void Functions::setGlobalString(Aurora::NWScript::FunctionContext &ctx) {
+	Common::UString id = ctx.getParams()[0].getString();
+	Common::UString value = ctx.getParams()[1].getString();
+
+	_game->getModule().setGlobalString(id, value);
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

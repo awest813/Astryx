@@ -143,6 +143,22 @@ public:
 	/** Is this object considered to be an enemy? */
 	bool isEnemy() const;
 
+	// Alignment
+
+	/** Get the good/evil alignment value (0 = pure evil, 100 = pure good). */
+	int getGoodEvilValue() const;
+	/** Set the good/evil alignment value (clamped to [0, 100]). */
+	void setGoodEvilValue(int value);
+	/** Adjust the good/evil alignment by a delta (positive = toward good). */
+	void adjustGoodEvilValue(int delta);
+
+	// Experience
+
+	/** Get the current accumulated XP. */
+	int getCurrentXP() const;
+	/** Add plot (non-combat) experience points. */
+	void addPlotXP(int xp);
+
 	// Object/Cursor interactions
 
 	virtual const Common::UString &getCursor() const;
@@ -193,6 +209,9 @@ protected:
 	bool _usable; ///< Is the object usable?
 
 	Faction _faction; ///< To which faction does this object belong to.
+
+	int _goodEvilValue;  ///< Alignment value: 0 = pure evil, 100 = pure good.
+	int _currentXP;      ///< Accumulated experience points.
 
 	int _currentHitPoints; ///< The current hitpoints of the object.
 	int _maxHitPoints;     ///< The maximum hitpoints of the object.

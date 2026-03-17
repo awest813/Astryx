@@ -48,6 +48,8 @@ Object::Object(ObjectType type) :
 		_static(false),
 		_usable(true),
 		_faction(kFactionInvalid),
+		_goodEvilValue(50),
+		_currentXP(0),
 		_currentHitPoints(0),
 		_maxHitPoints(0),
 		_minOneHitPoint(false) {
@@ -230,6 +232,31 @@ bool Object::isEnemy() const {
 		_faction == kFactionHostile2
 		// TODO: Probably more factions can be considered an enemy.
 	;
+}
+
+int Object::getGoodEvilValue() const {
+	return _goodEvilValue;
+}
+
+void Object::setGoodEvilValue(int value) {
+	if (value < 0)
+		value = 0;
+	if (value > 100)
+		value = 100;
+	_goodEvilValue = value;
+}
+
+void Object::adjustGoodEvilValue(int delta) {
+	setGoodEvilValue(_goodEvilValue + delta);
+}
+
+int Object::getCurrentXP() const {
+	return _currentXP;
+}
+
+void Object::addPlotXP(int xp) {
+	if (xp > 0)
+		_currentXP += xp;
 }
 
 const Common::UString &Object::getCursor() const {

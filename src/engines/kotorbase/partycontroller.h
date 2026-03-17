@@ -78,6 +78,8 @@ public:
 	void clearAvailableParty();
 	/** Add a NPC to the list of available party members using a template. */
 	void addAvailableNPCByTemplate(int npc, const Common::UString &templ);
+	/** Remove a single NPC slot from the available party roster. */
+	void removeAvailableNPC(int npc);
 
 
 	bool handleEvent(const Events::Event &e);

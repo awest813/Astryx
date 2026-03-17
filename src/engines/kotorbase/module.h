@@ -145,9 +145,13 @@ public:
 	Creature *getPartyLeader() const;
 	/** Get the party member at a given index (0 is always the party leader). */
 	Creature *getPartyMemberByIndex(int index) const;
+	/** Get the count of party members including the leader. */
+	int getPartyMemberCount() const;
 
 	/** Is a specified creature a party member? */
 	bool isObjectPartyMember(Creature *creature) const;
+	/** Is a NPC slot in the active party? */
+	bool isNPCPartyMember(int npc) const;
 	/** Is a NPC in the list of available party members? */
 	bool isAvailableCreature(int npc) const;
 	/** Is the player in solo mode? */
@@ -157,11 +161,23 @@ public:
 	void setPartyLeader(int npc);
 	/** Set which party member should be the controlled character. */
 	void setPartyLeaderByIndex(int index);
+	/** Enable or disable solo mode. */
+	void setSoloMode(bool enabled);
 
 	/** Show the party selection GUI. */
 	void showPartySelectionGUI(int forceNPC1, int forceNPC2);
 	/** Add a NPC to the list of available party members using a template. */
 	void addAvailableNPCByTemplate(int npc, const Common::UString &templ);
+	/** Add an existing creature object to the available party roster. */
+	void addAvailableNPCByObject(int npc, Creature *creature);
+	/** Remove a NPC from the available party roster. */
+	void removeAvailableNPC(int npc);
+	/** Spawn an available NPC into the current area and add them to the active party. */
+	void spawnAvailableNPC(int npc, const Common::UString &waypointTag);
+	/** Add a creature directly to the active party. */
+	void addPartyMember(int npc, Creature *creature);
+	/** Remove a creature from the active party by NPC slot. */
+	void removePartyMember(int npc);
 	/** Notify the module that the party leader has changed. */
 	void notifyPartyLeaderChanged();
 
@@ -185,6 +201,26 @@ public:
 	void setGlobalBoolean(const Common::UString &id, bool value);
 	/** Get a global number. */
 	void setGlobalNumber(const Common::UString &id, int value);
+
+	/** Get a global string. */
+	Common::UString getGlobalString(const Common::UString &id) const;
+	/** Set a global string. */
+	void setGlobalString(const Common::UString &id, const Common::UString &value);
+
+	// Galaxy map
+
+	/** Show the galaxy map GUI. */
+	void showGalaxyMap();
+	/** Set whether a planet is selectable by the player. */
+	void setPlanetSelectable(int planet, bool selectable);
+	/** Is a planet selectable by the player? */
+	bool getPlanetSelectable(int planet) const;
+	/** Set whether a planet is available (travel target). */
+	void setPlanetAvailable(int planet, bool available);
+	/** Is a planet available as a travel target? */
+	bool getPlanetAvailable(int planet) const;
+	/** Get the currently selected planet. */
+	int getSelectedPlanet() const;
 
 	// Static utility methods
 
@@ -291,6 +327,13 @@ private:
 
 	std::map<Common::UString, bool> _globalBooleans;
 	std::map<Common::UString, int> _globalNumbers;
+	std::map<Common::UString, Common::UString> _globalStrings;
+
+	// Galaxy map planet state
+
+	std::map<int, bool> _planetSelectable; ///< Which planets are selectable on the galaxy map.
+	std::map<int, bool> _planetAvailable;  ///< Which planets are available (unlocked).
+	int _selectedPlanet;                   ///< The planet currently selected on the galaxy map.
 
 	// Delayed object interactions
 
