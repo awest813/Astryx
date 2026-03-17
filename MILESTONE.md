@@ -113,6 +113,13 @@ needed for the acceptance criteria above.
 - [x] Add unit tests for `CreatureInfo` ability-score storage, modifier
       calculation, and skill-rank round-trips.
       *(`tests/engines/kotorbase/creatureinfo.cpp` added.)*
+- [x] Add unit tests for `Inventory` item add/remove/query operations (stacking,
+      count tracking, empty-tag guards, assignment-operator independence).
+      *(`tests/engines/kotorbase/inventory.cpp` added; wired into `rules.mk`.)*
+- [x] Add unit tests for `Effect` (EffectHeal / EffectDamage type, amount, and
+      damageType accessors; clone independence; HP arithmetic mirrors used by
+      `applyEffectToObject`).
+      *(`tests/engines/kotorbase/effect.cpp` added; wired into `rules.mk`.)*
 
 ---
 
