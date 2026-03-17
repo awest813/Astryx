@@ -52,3 +52,8 @@ check_PROGRAMS                                       += tests/engines/kotorbase/
 tests_engines_kotorbase_test_effect_SOURCES           = tests/engines/kotorbase/effect.cpp
 tests_engines_kotorbase_test_effect_LDADD             = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_effect_CXXFLAGS          = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_nwscript_functions
+tests_engines_kotorbase_test_nwscript_functions_SOURCES   = tests/engines/kotorbase/nwscript_functions.cpp
+tests_engines_kotorbase_test_nwscript_functions_LDADD     = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_nwscript_functions_CXXFLAGS  = $(test_CXXFLAGS)

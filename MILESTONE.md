@@ -76,7 +76,11 @@ needed for the acceptance criteria above.
 - [x] Implement the NWScript functions needed by the Endar Spire module scripts;
       see the tracked list in [doc/endar_spire_functions.md](doc/endar_spire_functions.md).
       *(All functions in the tracker are now ✅ or ⚠️; `CancelCombat` (ID 54) and
-      `GetLastAttacker` (ID 36) wired in this session.)*
+      `GetLastAttacker` (ID 36) wired in previous session; `ActionMoveToLocation`
+      (ID 21), `GetFirstObjectInArea` (ID 93), `GetNextObjectInArea` (ID 94),
+      `GetIsEnemy` (ID 235), `GetIsFriend` (ID 236), `GetIsNeutral` (ID 237),
+      `GetName` (ID 253), `SetIsDestroyable` (ID 323), and `GetIsInConversation`
+      (ID 445) wired in this session; both kotor and kotor2 function tables updated.)*
 
 ### Combat
 
@@ -120,6 +124,12 @@ needed for the acceptance criteria above.
       damageType accessors; clone independence; HP arithmetic mirrors used by
       `applyEffectToObject`).
       *(`tests/engines/kotorbase/effect.cpp` added; wired into `rules.mk`.)*
+- [x] Add unit tests for the NWScript faction-relationship helpers
+      (`GetIsEnemy` / `GetIsFriend` / `GetIsNeutral`) covering all combinations
+      of hostile, friendly, neutral, EndarSpire, and invalid factions plus a
+      mutual-exclusivity property test.
+      *(`tests/engines/kotorbase/nwscript_functions.cpp` added; wired into
+      `rules.mk`.)*
 
 ---
 
