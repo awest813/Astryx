@@ -369,7 +369,15 @@ protected:
 
 	// Experience, functions_creatures.cpp
 
+	void giveXPToCreature(Aurora::NWScript::FunctionContext &ctx);
+	void setXP(Aurora::NWScript::FunctionContext &ctx);
+	void getXP(Aurora::NWScript::FunctionContext &ctx);
 	void givePlotXP(Aurora::NWScript::FunctionContext &ctx);
+
+	// Level-up / store GUI, functions_module.cpp
+
+	void showLevelUpGUI(Aurora::NWScript::FunctionContext &ctx);
+	void openStore(Aurora::NWScript::FunctionContext &ctx);
 
 	// Misc, functions_object.cpp / functions_module.cpp
 
