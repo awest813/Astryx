@@ -345,6 +345,39 @@ void Functions::willSave(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = ((roll + wisMod + 10) >= dc) ? 1 : 0;
 }
 
+void Functions::giveXPToCreature(Aurora::NWScript::FunctionContext &ctx) {
+	// GiveXPToCreature(object oCreature, int nXPAmount)
+	// Adds nXPAmount experience to the creature and fires ShowLevelUpGUI for the PC.
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	int amount = ctx.getParams()[1].getInt();
+
+	if (!creature || amount <= 0)
+		return;
+
+	creature->addPlotXP(amount);
+}
+
+void Functions::setXP(Aurora::NWScript::FunctionContext &ctx) {
+	// SetXP(object oCreature, int nXPAmount)
+	// Directly sets the total XP of a creature.
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	int amount = ctx.getParams()[1].getInt();
+
+	if (!creature)
+		return;
+
+	// Reset to zero then add the desired total (addPlotXP accumulates).
+	int current = creature->getCurrentXP();
+	creature->addPlotXP(amount - current);
+}
+
+void Functions::getXP(Aurora::NWScript::FunctionContext &ctx) {
+	// GetXP(object oCreature) → int
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+
+	ctx.getReturn() = creature ? creature->getCurrentXP() : 0;
+}
+
 void Functions::givePlotXP(Aurora::NWScript::FunctionContext &ctx) {
 	// GivePlotXP(string sPlotName, int nPercentage)
 	// Awards XP to the party leader based on a percentage of a plot XP table value.

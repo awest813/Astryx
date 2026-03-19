@@ -248,6 +248,8 @@ public:
 	// Saved games
 
 	void loadSavedGame(SavedGame *save);
+	/** Returns true if the current module was entered via a save-game load. */
+	bool isLoadedFromSaveGame() const;
 
 	// Conversation
 
@@ -369,7 +371,8 @@ private:
 	int _currentTexturePack; ///< The current texture pack.
 	Common::ChangeID _textures; ///< Resources added by the current texture pack.
 
-	bool _exit; ///< Should we exit the module?
+	bool _exit;              ///< Should we exit the module?
+	bool _loadedFromSaveGame { false }; ///< Was this module entered via a save-game load?
 
 	Common::UString _module;    ///< The current module's name.
 	Common::UString _newModule; ///< The module we should change to.

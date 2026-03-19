@@ -1166,10 +1166,15 @@ void Module::loadSavedGame(SavedGame *save) {
 	try {
 		std::unique_ptr<CharacterGenerationInfo> info(save->createCharGenInfo());
 		usePC(*info.get());
+		_loadedFromSaveGame = true;
 		load(save->getModuleName());
 	} catch (...) {
 		Common::exceptionDispatcherWarning();
 	}
+}
+
+bool Module::isLoadedFromSaveGame() const {
+	return _loadedFromSaveGame;
 }
 
 bool Module::isConversationActive() const {

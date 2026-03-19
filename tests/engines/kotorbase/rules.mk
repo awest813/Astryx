@@ -57,3 +57,8 @@ check_PROGRAMS                                           += tests/engines/kotorb
 tests_engines_kotorbase_test_nwscript_functions_SOURCES   = tests/engines/kotorbase/nwscript_functions.cpp
 tests_engines_kotorbase_test_nwscript_functions_LDADD     = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_nwscript_functions_CXXFLAGS  = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_alignment_xp
+tests_engines_kotorbase_test_alignment_xp_SOURCES         = tests/engines/kotorbase/alignment_xp.cpp
+tests_engines_kotorbase_test_alignment_xp_LDADD           = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_alignment_xp_CXXFLAGS        = $(test_CXXFLAGS)

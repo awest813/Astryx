@@ -97,6 +97,25 @@ void Functions::setGlobalFadeIn(Aurora::NWScript::FunctionContext &ctx) {
 	fadeQuad.fadeIn();
 }
 
+void Functions::getLoadFromSaveGame(Aurora::NWScript::FunctionContext &ctx) {
+	// Returns TRUE if the current module was entered by loading a saved game
+	// rather than by a normal module transition.
+	ctx.getReturn() = _game->getModule().isLoadedFromSaveGame() ? 1 : 0;
+}
+
+void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &ctx) {
+	// ShowLevelUpGUI() — presents the level-up screen for the PC.
+	// The full level-up GUI is out of scope for Milestone 2; log and return.
+	warning("Functions::showLevelUpGUI: level-up GUI not yet implemented");
+	ctx.getReturn() = 0;
+}
+
+void Functions::openStore(Aurora::NWScript::FunctionContext &ctx) {
+	// OpenStore(object oStore, object oPC, int nBonusMarkUp=0, int nBonusMarkDown=0)
+	// Merchant UI is out of scope for Milestone 2; log so scripts are not blocked.
+	warning("Functions::openStore: merchant GUI not yet implemented");
+}
+
 void Functions::setReturnStrref(Aurora::NWScript::FunctionContext &ctx) {
 	bool show = (ctx.getParams()[0].getInt() != 0);
 	int returnStrref = ctx.getParams()[1].getInt();

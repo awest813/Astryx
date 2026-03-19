@@ -153,3 +153,112 @@ milestone:
 Milestone 1 is **complete** when a CI-reproducible automated playthrough script
 (or a recorded manual walkthrough accepted by a maintainer) demonstrates all
 eight acceptance criteria above passing without crashes or script errors.
+
+---
+
+---
+
+# Milestone 2 — _Taris_ Beginnings: Alignment, XP & Party Joining
+
+This milestone extends xoreos beyond the Endar Spire tutorial.  After the PC
+escapes in the pod and crash-lands on **Taris**, Carth Onasi joins the party,
+XP is awarded for kills and plot events, and alignment shifts begin to matter.
+
+**Goal:** Wire and implement all NWScript engine functions needed for the first
+Taris module (`tar_m02aa`) to load, hand control to the PC, allow Carth to join
+the party, and start accumulating XP without crashing on script errors.
+
+---
+
+## Scope
+
+Only KotOR I's Upper-City Taris entry area (`tar_m02aa`) is in scope.
+KotOR II and other planets remain on the long-term roadmap.
+
+---
+
+## Acceptance Criteria
+
+1. **Module transition** — the `end_m01aa` exit script fires `StartNewModule`
+   and Taris loads without assertion failures or unhandled NWScript exceptions.
+2. **Party formation** — `AddPartyMember` / `RemovePartyMember` / `IsNPCPartyMember`
+   execute without crashing; Carth's `OnSpawn` script runs and he appears in
+   the active party list.
+3. **Alignment system** — `GetGoodEvilValue`, `SetGoodEvilValue`,
+   `AdjustAlignment`, and `GetAlignmentGoodEvil` return correct clamped and
+   bucketed values; the PC starts at 50 (neutral) and can be shifted.
+4. **XP accumulation** — `GiveXPToCreature`, `SetXP`, and `GetXP` correctly
+   track and expose the PC's accumulated XP; `GivePlotXP` awards plot XP to
+   the party leader.
+5. **Saving throws** — `FortitudeSave`, `ReflexSave`, and `WillSave` roll
+   d20 + ability modifier + 10 vs DC; natural-1 always fails, natural-20 always
+   succeeds, ties succeed.
+6. **Save-game flag** — `GetLoadFromSaveGame` returns TRUE only when the module
+   was entered via `loadSavedGame()`; returns FALSE after a normal transition.
+7. **Graceful stubs** — `ShowLevelUpGUI` logs a warning and returns 0;
+   `OpenStore` logs a warning; neither crashes the script system.
+8. **Global string variables** — `GetGlobalString` and `SetGlobalString` round-
+   trip correctly through the module's global-variable store.
+9. **Party count query** — `GetPartyMemberCount` and `GetPartyMemberByIndex`
+   reflect the live active-party size after `AddPartyMember` calls.
+10. **Solo mode toggle** — `SetSoloMode` and `GetSoloMode` flip the module's
+    solo-mode flag.
+
+---
+
+## Required Work
+
+### NWScript Functions — newly wired (all ✅ this session)
+
+- [x] `FortitudeSave` (ID 108), `ReflexSave` (ID 109), `WillSave` (ID 110) —
+      saving-throw rolls with natural-1/20 rules; wired in kotor + kotor2 tables.
+- [x] `GetGoodEvilValue` (ID 125), `GetAlignmentGoodEvil` (ID 127) — alignment
+      accessors; wired in kotor + kotor2 tables.
+- [x] `GetPartyMemberCount` (ID 126) — live party-size query; wired in both tables.
+- [x] `AdjustAlignment` (ID 201) — apply alignment delta with clamping; wired.
+- [x] `SetGlobalString` (ID 160), `GetGlobalString` (ID 194) — global string
+      variable round-trip; wired in both tables.
+- [x] `GetLoadFromSaveGame` (ID 251) — returns save-game entry flag; wired and
+      implemented; `_loadedFromSaveGame` field set in `Module::loadSavedGame()`.
+- [x] `ShowLevelUpGUI` (ID 265) — graceful stub; wired and implemented.
+- [x] `OpenStore` (ID 378) — graceful stub; wired and implemented.
+- [x] `GiveXPToCreature` (ID 393), `SetXP` (ID 394), `GetXP` (ID 395) — XP
+      accumulation; wired and implemented on `Object::addPlotXP` / `getCurrentXP`.
+- [x] `AddPartyMember` (ID 574), `RemovePartyMember` (ID 575) — active-party
+      management; wired in kotor + kotor2 tables.
+- [x] `IsNPCPartyMember` (ID 699) — NPC slot membership query; wired in both tables.
+- [x] `GivePlotXP` (ID 714) — plot-XP award to party leader; wired in both tables.
+- [x] `SetGoodEvilValue` (ID 750) — direct alignment setter; wired in both tables.
+- [x] `SetSoloMode` (ID 753) — solo-mode toggle; wired in both tables.
+
+### CI Test Coverage
+
+- [x] Add unit tests for the alignment clamping / bucket logic (`GetGoodEvilValue`,
+      `AdjustAlignment`, `GetAlignmentGoodEvil`) covering boundary values and
+      overflow/underflow.
+      *(`tests/engines/kotorbase/alignment_xp.cpp` added.)*
+- [x] Add unit tests for XP accumulation (`GiveXPToCreature`, `SetXP`, `GetXP`)
+      covering positive awards, zero/negative guards, and `SetXP` override.
+      *(same file.)*
+- [x] Add unit tests for the saving-throw d20 formula covering natural-1 auto-fail,
+      natural-20 auto-success, exact-DC success, and insufficient roll failure.
+      *(same file.)*
+
+---
+
+## Out of Scope for Milestone 2
+
+- Level-up GUI implementation (ShowLevelUpGUI returns 0).
+- Merchant/barter screen implementation (OpenStore is a stub).
+- Force powers and Force alignment (separate track).
+- Areas beyond Taris Upper-City entry.
+- Saving to disk.
+
+---
+
+## Success Metric
+
+Milestone 2 is **complete** when the Taris entry module loads and runs without
+unhandled NWScript exceptions, Carth joins the active party, and all ten
+acceptance criteria above are satisfied — verified by the unit tests and a
+manual smoke-run of the module transition from Endar Spire.
