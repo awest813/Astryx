@@ -64,6 +64,20 @@ public:
 
 	void setScale(Scale scale);
 
+	/**
+	 * Set the volume/gain of the audio tracks.
+	 *
+	 * @param gain The new gain
+	 */
+	void setVolume(float gain);
+
+	/**
+	 * Get the volume/gain of the audio tracks.
+	 *
+	 * @return The current gain
+	 */
+	float getVolume() const;
+
 	/** Is the video currently playing? */
 	bool isPlaying() const;
 
@@ -480,6 +494,8 @@ private:
 	float _textureHeight;
 
 	Scale _scale;
+
+	float _gain; ///< The volume/gain of the audio tracks.
 
 
 	/** The start time of the video, or -1 for not set */
