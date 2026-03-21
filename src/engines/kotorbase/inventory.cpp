@@ -46,6 +46,7 @@ Inventory::ItemGroup &Inventory::ItemGroup::operator=(const ItemGroup &other) {
 
 Inventory &Inventory::operator=(const Inventory &other) {
 	_items = other._items;
+	_gold = other._gold;
 	return *this;
 }
 
@@ -84,6 +85,22 @@ void Inventory::removeItem(const Common::UString &tag, int count) {
 
 void Inventory::removeAllItems() {
 	_items.clear();
+	_gold = 0;
+}
+
+uint32_t Inventory::getGold() const {
+	return _gold;
+}
+
+void Inventory::addGold(uint32_t amount) {
+	_gold += amount;
+}
+
+void Inventory::removeGold(uint32_t amount) {
+	if (_gold >= amount)
+		_gold -= amount;
+	else
+		_gold = 0;
 }
 
 const std::map<Common::UString, Inventory::ItemGroup> &Inventory::getItems() const {

@@ -280,6 +280,20 @@ void Functions::getNearestCreature(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = _game->getModule().getCurrentArea()->getNearestCreature(target, nth, criteria);
 }
 
+void Functions::getNearestObject(Aurora::NWScript::FunctionContext &ctx) {
+	// Nearest object ignoring criteria or finding just basic placeables.
+	// For Endar Spire, we can just return a null object for now since full 
+	// spatial searches for non-creatures aren't implemented in Area yet.
+	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+}
+
+void Functions::getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx) {
+	// Often equivalent to GetObjectByTag for a single module unless distance actually matters heavily.
+	// Simple stub for progression:
+	const Common::UString &tag = ctx.getParams()[0].getString();
+	ctx.getReturn() = _game->getModule().getCurrentArea()->getObject(tag);
+}
+
 void Functions::getTag(Aurora::NWScript::FunctionContext &ctx) {
 	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
 	if (!object)

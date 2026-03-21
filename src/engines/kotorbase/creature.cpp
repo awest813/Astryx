@@ -939,6 +939,22 @@ void Creature::cancelCombat() {
 }
 
 void Creature::executeAttack(Object *target) {
+	if (!target) {
+		cancelCombat();
+		return;
+	}
+
+	if (_dead) {
+		cancelCombat();
+		return;
+	}
+
+	Creature *targetCreature = ObjectContainer::toCreature(target);
+	if (targetCreature && targetCreature->isDead()) {
+		cancelCombat();
+		return;
+	}
+
 	const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
 	const Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
 
@@ -979,10 +995,18 @@ void Creature::executeAttack(Object *target) {
 
 	if (hp <= minHp) {
 		hp = minHp;
-		cancelCombat();
 	}
 
 	target->setCurrentHitPoints(hp);
+
+	if (hp <= minHp) {
+		cancelCombat();
+		
+		if (targetCreature) {
+			targetCreature->cancelCombat();
+			targetCreature->handleDeath();
+		}
+	}
 
 	debugC(Common::kDebugEngineLogic, 1,
 	       "Object \"%s\" was hit by \"%s\" (roll %d+%d=%d vs AC %d), %d damage, %d/%d HP remaining",

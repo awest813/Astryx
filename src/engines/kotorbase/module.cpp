@@ -155,9 +155,13 @@ void Module::loadModule(const Common::UString &module, const Common::UString &en
 
 	} catch (Common::Exception &e) {
 		_module.clear();
-
-		e.add("Failed loading module \"%s\"", module.c_str());
-		throw e;
+		warning("Failed loading module \"%s\": %s", module.c_str(), e.what());
+		
+		unload(true); // Ensure clean state
+		loadScreen->hide();
+		
+		// Leave the engine in a handled but unloaded state, allowing menu fallback
+		return;
 	}
 
 	initMinimap();
@@ -421,12 +425,25 @@ void Module::replaceModule() {
 	const Common::UString entryLocation     = _entryLocation;
 	const ObjectType      entryLocationType = _entryLocationType;
 
-	unload(false);
+	_newModule.clear();
 
-	_exit = true;
+	try {
+		unload(false);
+		_exit = true;
 
-	loadModule(newModule, entryLocation, entryLocationType);
-	enter();
+		loadModule(newModule, entryLocation, entryLocationType);
+		enter();
+	} catch (const std::exception &e) {
+		warning("Transition/Save loading failed (Missing Assets or Exception): %s", e.what());
+		unload(true);
+		_exit = true;
+		_hasModule = false;
+	} catch (...) {
+		warning("Transition/Save loading failed with an unknown error.");
+		unload(true);
+		_exit = true;
+		_hasModule = false;
+	}
 }
 
 void Module::enter() {

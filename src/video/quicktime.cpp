@@ -1033,8 +1033,10 @@ Common::SeekableReadStream *QuickTimeDecoder::VideoTrackHandler::getNextFramePac
 		}
 	}
 
-	if (actualChunk < 0)
-		error("Could not find data for frame %d", _curFrame);
+	if (actualChunk < 0) {
+		warning("Could not find data for frame %d", _curFrame);
+		return nullptr;
+	}
 
 	// Next seek to that frame
 	_decoder->_fd->seek(_parent->chunkOffsets[actualChunk]);
@@ -1066,8 +1068,8 @@ uint32_t QuickTimeDecoder::VideoTrackHandler::getFrameDuration() {
 		}
 	}
 
-	// This should never occur
-	throw Common::Exception("Cannot find duration for frame %d", _curFrame);
+	warning("Cannot find duration for frame %d", _curFrame);
+	return 0;
 }
 
 

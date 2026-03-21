@@ -92,7 +92,8 @@ void ScriptManager::executeFile(const Common::UString &path) {
 	std::unique_ptr<Common::SeekableReadStream> stream(ResMan.getResource(path, kFileTypeLUC));
 	if (!stream) {
 		const Common::UString fileName = TypeMan.setFileType(path, kFileTypeLUC);
-		throw Common::Exception("No such LUC \"%s\"", fileName.c_str());
+		warning("No such LUC \"%s\"", fileName.c_str());
+		return;
 	}
 
 	std::unique_ptr<Common::MemoryReadStream> memStream(stream->readStream(stream->size()));
@@ -102,7 +103,8 @@ void ScriptManager::executeFile(const Common::UString &path) {
 	const int execResult = lua_dobuffer(_luaState, data, dataSize, path.c_str());
 	if (execResult != 0) {
 		const Common::UString fileName = TypeMan.setFileType(path, kFileTypeLUC);
-		throw Common::Exception("Failed to execute Lua file: %s", fileName.c_str());
+		warning("Failed to execute Lua file: %s", fileName.c_str());
+		return;
 	}
 }
 
@@ -111,7 +113,8 @@ void ScriptManager::executeString(const Common::UString &code) {
 
 	const int execResult = lua_dostring(_luaState, code.c_str());
 	if (execResult != 0) {
-		throw Common::Exception("Failed to execute Lua code: %s", code.c_str());
+		warning("Failed to execute Lua code: %s", code.c_str());
+		return;
 	}
 }
 
@@ -122,7 +125,7 @@ Variables ScriptManager::callFunction(const Common::UString &name, const Variabl
 	std::vector<Common::UString> parts;
 	Common::UString::split(name, '.', parts);
 	if (parts.empty()) {
-		error("Lua call \"%s\" failed: bad name", name.c_str());
+		warning("Lua call \"%s\" failed: bad name", name.c_str());
 		return Variables();
 	}
 
@@ -375,7 +378,7 @@ void ScriptManager::executeDefaultCode() {
 
 int ScriptManager::atPanic(lua_State *state) {
 	const char *message = luaL_checkstring(state, -1);
-	error("Lua has panicked: %s", message);
+	warning("Lua has panicked: %s", message);
 	lua_pop(state, 1);
 	return 0;
 }

@@ -180,11 +180,16 @@ void ActionExecutor::executePickUpItem(const Action &action, const ExecutionCont
 	if (!moveTo(glm::vec2(x, y), action.range, ctx))
 		return;
 
-	Common::UString itemTag = action.object->getTag();
+	Common::UString itemResRef = action.object->getTemplateResRef();
+	if (itemResRef.empty())
+		itemResRef = action.object->getTag();
+	
 	Object *itemObject = action.object;
 
 	ctx.creature->popAction();
-	ctx.creature->getInventory().addItem(itemTag);
+	if (!itemResRef.empty()) {
+		ctx.creature->getInventory().addItem(itemResRef);
+	}
 	ctx.area->removeObject(itemObject);
 }
 

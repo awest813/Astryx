@@ -27,6 +27,8 @@
 
 #include "src/common/util.h"
 #include "src/common/random.h"
+#include "src/common/configman.h"
+#include <fstream>
 
 #include "src/aurora/nwscript/functionman.h"
 #include "src/aurora/nwscript/util.h"
@@ -56,20 +58,104 @@ void Functions::getRunScriptVar(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::unimplementedFunction(Aurora::NWScript::FunctionContext &ctx) {
-	warning("TODO: %s %s(%s)", Aurora::NWScript::formatType(ctx.getReturn().getType()).c_str(),
-	                           ctx.getName().c_str(), Aurora::NWScript::formatParams(ctx).c_str());
+	const Common::UString &name = ctx.getName();
+	
+	// Track script coverage
+	static std::ofstream coverageLog("docs/SCRIPT_COVERAGE.log", std::ios::app);
+	if (coverageLog.is_open()) {
+		coverageLog << name.c_str() << "\n";
+	}
+
+	int severity = 1; // 1 = Important (default)
+	if (name.beginsWith("Action") || name.beginsWith("Set"))
+		severity = 2; // Critical for progression
+	else if (name.beginsWith("Play") || name.beginsWith("EffectVisual") || name.beginsWith("SWMG_") || name.beginsWith("Sound") || name.beginsWith("Music"))
+		severity = 0; // Cosmetic/Non-blocking
+
+	bool strictMode = ConfigMan.getBool("strict_script_mode", false);
+
+	if (strictMode && severity == 2) {
+		error("STRICT MODE: Critical missing script %s called!", name.c_str());
+	} else {
+		warning("TODO [Sev %d]: %s %s(%s)", severity, Aurora::NWScript::formatType(ctx.getReturn().getType()).c_str(),
+		                           name.c_str(), Aurora::NWScript::formatParams(ctx).c_str());
+	}
+
+	// Safe stub fallback returns
+	switch (ctx.getReturn().getType()) {
+		case Aurora::NWScript::kTypeInt: ctx.getReturn().setType(Aurora::NWScript::kTypeInt); ctx.getReturn() = 0; break;
+		case Aurora::NWScript::kTypeFloat: ctx.getReturn().setType(Aurora::NWScript::kTypeFloat); ctx.getReturn() = 0.0f; break;
+		case Aurora::NWScript::kTypeString: ctx.getReturn().setType(Aurora::NWScript::kTypeString); ctx.getReturn() = Common::UString(""); break;
+		case Aurora::NWScript::kTypeObject: ctx.getReturn().setType(Aurora::NWScript::kTypeObject); break;
+		case Aurora::NWScript::kTypeVector: ctx.getReturn().setType(Aurora::NWScript::kTypeVector); break;
+		default: break;
+	}
 }
 
 void Functions::executeScript(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &script = ctx.getParams()[0].getString();
 
 	Object *target = ObjectContainer::toObject(ctx.getParams()[1].getObject());
-	if (!target)
-		throw Common::Exception("Functions::executeScript(): Invalid target");
+	if (!target) {
+		warning("Functions::executeScript(): Invalid target");
+		return;
+	}
 
 	_game->getModule().setRunScriptVar(ctx.getParams()[2].getInt());
 
 	target->runScript(script, target, ctx.getCaller());
+}
+
+void Functions::addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx) {
+	const Common::UString &plotId = ctx.getParams()[0].getString();
+	int32_t state = ctx.getParams()[1].getInt();
+	
+	int32_t current = _game->getModule().getGlobalNumber("JRNL_" + plotId);
+	if (state > current) {
+		_game->getModule().setGlobalNumber("JRNL_" + plotId, state);
+		info("QUEST UPDATED: %s [%d -> %d]", plotId.c_str(), current, state);
+	}
+}
+
+void Functions::removeJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx) {
+	const Common::UString &plotId = ctx.getParams()[0].getString();
+	_game->getModule().setGlobalNumber("JRNL_" + plotId, -1);
+	info("QUEST REMOVED: %s", plotId.c_str());
+}
+
+void Functions::getJournalEntry(Aurora::NWScript::FunctionContext &ctx) {
+	const Common::UString &plotId = ctx.getParams()[0].getString();
+	ctx.getReturn().setType(Aurora::NWScript::kTypeInt);
+	ctx.getReturn() = _game->getModule().getGlobalNumber("JRNL_" + plotId);
+}
+
+void Functions::giveGoldToCreature(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
+	int amount = ctx.getParams()[0].getInt();
+
+	if (creature && amount > 0) {
+		creature->getInventory().addGold(amount);
+		info("Gave %d gold to creature", amount);
+	}
+}
+
+void Functions::takeGoldFromCreature(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
+	int amount = ctx.getParams()[0].getInt();
+
+	if (creature && amount > 0) {
+		creature->getInventory().removeGold(amount);
+		info("Took %d gold from creature", amount);
+	}
+}
+
+void Functions::getGold(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	if (creature) {
+		ctx.getReturn() = static_cast<int32_t>(creature->getInventory().getGold());
+	} else {
+		ctx.getReturn() = 0;
+	}
 }
 
 int32_t Functions::getRandom(int min, int max, int32_t n) {

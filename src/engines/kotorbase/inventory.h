@@ -55,10 +55,15 @@ public:
 	void removeItem(const Common::UString &tag, int count = 1);
 	void removeAllItems();
 
+	uint32_t getGold() const;
+	void addGold(uint32_t amount);
+	void removeGold(uint32_t amount);
+
 private:
 	typedef std::map<Common::UString, ItemGroup> ItemMap;
 
 	ItemMap _items;
+	uint32_t _gold { 0 };
 };
 
 } // End of namespace KotORBase

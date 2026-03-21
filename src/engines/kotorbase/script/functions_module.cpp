@@ -131,6 +131,22 @@ void Functions::setReturnStrref(Aurora::NWScript::FunctionContext &ctx) {
 	_game->getModule().setReturnEnabled(show);
 }
 
+void Functions::getTransitionTarget(Aurora::NWScript::FunctionContext &ctx) {
+	// Simple stub that allows transition checks to fail cleanly rather than crash.
+	// We'd look up the transition destination tag here if implemented fully.
+	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+}
+
+void Functions::getModuleName(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getName();
+}
+
+void Functions::setAreaTransitionBMP(Aurora::NWScript::FunctionContext &ctx) {
+	int bmp = ctx.getParams()[0].getInt();
+	int strref = ctx.getParams()[1].getInt();
+	info("Transition BMP set: %d (strref %d)", bmp, strref);
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

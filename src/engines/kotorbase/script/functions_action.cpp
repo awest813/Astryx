@@ -142,6 +142,17 @@ void Functions::actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx) {
 	action.location = glm::vec3(x, y, z);
 
 	caller->addAction(action);
+	caller->addAction(action);
+}
+
+void Functions::actionForceMoveToObject(Aurora::NWScript::FunctionContext &ctx) {
+	// Alias of ActionMoveToObject for our simple pathfinding
+	actionMoveToObject(ctx);
+}
+
+void Functions::actionForceMoveToLocation(Aurora::NWScript::FunctionContext &ctx) {
+	// Alias of ActionMoveToLocation
+	actionMoveToLocation(ctx);
 }
 
 void Functions::actionFollowLeader(Aurora::NWScript::FunctionContext &ctx) {
@@ -154,6 +165,29 @@ void Functions::actionFollowLeader(Aurora::NWScript::FunctionContext &ctx) {
 
 	caller->addAction(action);
 }
+
+void Functions::cancelCombat(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (caller)
+		caller->cancelCombat();
+}
+
+void Functions::getAttackTarget(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	if (creature)
+		ctx.getReturn() = (Aurora::NWScript::Object *) creature->getAttackTarget();
+	else
+		ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+}
+
+void Functions::getAttemptedAttackTarget(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	if (creature)
+		ctx.getReturn() = (Aurora::NWScript::Object *) creature->getAttemptedAttackTarget();
+	else
+		ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+}
+
 
 void Functions::clearAllActions(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
@@ -179,7 +213,27 @@ void Functions::actionEquipItem(Aurora::NWScript::FunctionContext &ctx) {
 	if (!caller || !item)
 		return;
 
-	caller->equipItem(item->getTag(), static_cast<InventorySlot>(slot));
+	Common::UString resRef = item->getTemplateResRef();
+	if (resRef.empty())
+		resRef = item->getTag();
+
+	caller->equipItem(resRef, static_cast<InventorySlot>(slot));
+}
+
+void Functions::actionUnequipItem(Aurora::NWScript::FunctionContext &ctx) {
+	Item *item = dynamic_cast<Item *>(ObjectContainer::toObject(ctx.getParams()[0].getObject()));
+
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller || !item)
+		return;
+
+	// In the real engine this would be queued, but we can safely handle it directly for Endar Spire
+	for (int i = 0; i < kNumInventorySlots; ++i) {
+		if (caller->getEquippedItem(static_cast<InventorySlot>(i)) == item) {
+			caller->unequipItem(static_cast<InventorySlot>(i));
+			break;
+		}
+	}
 }
 
 void Functions::actionPickUpItem(Aurora::NWScript::FunctionContext &ctx) {
@@ -263,6 +317,12 @@ void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
 	float speed = ctx.getParams()[1].getFloat();
 	float length = ctx.getParams()[2].getFloat();
 	caller->playAnimation(animName, true, length, speed > 0.0f ? speed : 1.0f);
+}
+
+void Functions::playAnimation(Aurora::NWScript::FunctionContext &ctx) {
+	// PlayAnimation acts immediately instead of queueing.
+	// For Endar Spire we just re-use the mapping logic from actionPlayAnimation.
+	actionPlayAnimation(ctx);
 }
 
 void Functions::actionJumpToObject(Aurora::NWScript::FunctionContext &ctx) {
