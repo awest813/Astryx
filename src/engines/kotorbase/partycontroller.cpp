@@ -54,14 +54,18 @@ const std::pair<int, Creature *> &PartyController::getPartyMemberByIndex(int ind
 
 std::vector<int> PartyController::getPartyMembers() const {
 	std::vector<int> partyMembers;
-	for (auto partyMember : _party) {
+	// ⚡ Bolt: Pre-allocate memory to avoid vector reallocations during push_back
+	partyMembers.reserve(_party.size());
+	// ⚡ Bolt: Use const auto & to prevent unnecessary copies of std::pair<int, Creature *>
+	for (const auto &partyMember : _party) {
 		partyMembers.push_back(partyMember.first);
 	}
 	return partyMembers;
 }
 
 bool PartyController::isObjectPartyMember(Creature *object) const {
-	for (auto partyMember : _party) {
+	// ⚡ Bolt: Use const auto & to prevent unnecessary copies of std::pair<int, Creature *>
+	for (const auto &partyMember : _party) {
 		if (partyMember.second == object)
 			return true;
 	}
@@ -170,7 +174,8 @@ bool PartyController::handleEvent(const Events::Event &e) {
 }
 
 void PartyController::raiseHeartbeatEvent() {
-	for (auto partyMember : _party) {
+	// ⚡ Bolt: Use const auto & to prevent unnecessary copies of std::pair<int, Creature *>
+	for (const auto &partyMember : _party) {
 		partyMember.second->runScript("k_ai_master", partyMember.second, _module->getCurrentArea());
 	}
 }
