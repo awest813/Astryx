@@ -1,0 +1,3 @@
+## 2024-05-24 - Unnecessary pair copies in range-based loops
+**Learning:** Found C++11 auto usages creating deep copies of std::pair instead of references inside game state update loops like `raiseHeartbeatEvent`.
+**Action:** Always prefer `const auto &` over `auto` when iterating over collections holding non-primitive types like std::pair or complex objects to prevent expensive memory allocations and copies. Pre-allocate vector capacities before large insertion loops using `reserve()`.
