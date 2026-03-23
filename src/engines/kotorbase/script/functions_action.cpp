@@ -26,8 +26,10 @@
 
 #include "src/common/error.h"
 #include "src/common/util.h"
+#include "src/common/string.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/talkman.h"
 
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/door.h"
@@ -351,6 +353,17 @@ void Functions::actionWait(Aurora::NWScript::FunctionContext &ctx) {
 	Action action(kActionWait);
 	action.range = ctx.getParams()[0].getFloat();
 	caller->addAction(action);
+}
+
+void Functions::actionBarkString(Aurora::NWScript::FunctionContext &ctx) {
+	const uint32_t strRef = static_cast<uint32_t>(ctx.getParams()[0].getInt());
+	Common::UString text = TalkMan.getString(strRef);
+	if (text.empty())
+		text = Common::String::format("<strref:%u>", strRef);
+
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	const Common::UString who = caller ? caller->getTag() : Common::UString("(unknown)");
+	warning("ActionBarkString [%s]: %s", who.c_str(), text.c_str());
 }
 
 } // End of namespace KotORBase

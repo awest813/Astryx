@@ -147,6 +147,46 @@ void Functions::setAreaTransitionBMP(Aurora::NWScript::FunctionContext &ctx) {
 	info("Transition BMP set: %d (strref %d)", bmp, strref);
 }
 
+void Functions::endGame(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	// Graceful fallback: end the current module session and let the engine
+	// return to menu flow instead of halting on missing script support.
+	_game->getModule().exit();
+}
+
+void Functions::showGalaxyMap(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	_game->getModule().showGalaxyMap();
+}
+
+void Functions::setPlanetSelectable(Aurora::NWScript::FunctionContext &ctx) {
+	int planet = ctx.getParams()[0].getInt();
+	bool selectable = ctx.getParams()[1].getInt() != 0;
+
+	_game->getModule().setPlanetSelectable(planet, selectable);
+}
+
+void Functions::getPlanetSelectable(Aurora::NWScript::FunctionContext &ctx) {
+	int planet = ctx.getParams()[0].getInt();
+	ctx.getReturn() = _game->getModule().getPlanetSelectable(planet) ? 1 : 0;
+}
+
+void Functions::setPlanetAvailable(Aurora::NWScript::FunctionContext &ctx) {
+	int planet = ctx.getParams()[0].getInt();
+	bool available = ctx.getParams()[1].getInt() != 0;
+
+	_game->getModule().setPlanetAvailable(planet, available);
+}
+
+void Functions::getPlanetAvailable(Aurora::NWScript::FunctionContext &ctx) {
+	int planet = ctx.getParams()[0].getInt();
+	ctx.getReturn() = _game->getModule().getPlanetAvailable(planet) ? 1 : 0;
+}
+
+void Functions::getSelectedPlanet(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getSelectedPlanet();
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

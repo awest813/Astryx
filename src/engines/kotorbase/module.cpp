@@ -365,6 +365,7 @@ void Module::unload(bool completeUnload) {
 		_globalNumbers.clear();
 		_globalBooleans.clear();
 		_globalStrings.clear();
+		_loadedFromSaveGame = false;
 
 		_partyController.clearCurrentParty();
 		_partyController.clearAvailableParty();
@@ -430,6 +431,7 @@ void Module::replaceModule() {
 	try {
 		unload(false);
 		_exit = true;
+		_loadedFromSaveGame = false;
 
 		loadModule(newModule, entryLocation, entryLocationType);
 		enter();
@@ -1008,7 +1010,31 @@ void Module::spawnAvailableNPC(int npc, const Common::UString &waypointTag) {
 }
 
 void Module::showGalaxyMap() {
-	warning("Module::showGalaxyMap(): galaxy map GUI not yet implemented");
+	// Minimal fallback until the full galaxy-map GUI exists:
+	// choose a selectable/available planet so script progression can continue.
+	if ((_selectedPlanet != -1) && getPlanetAvailable(_selectedPlanet) && getPlanetSelectable(_selectedPlanet))
+		return;
+
+	for (const auto &entry : _planetAvailable) {
+		const int planet = entry.first;
+		if (!entry.second)
+			continue;
+		if (getPlanetSelectable(planet)) {
+			_selectedPlanet = planet;
+			info("Module::showGalaxyMap(): auto-selected planet %d", planet);
+			return;
+		}
+	}
+
+	for (const auto &entry : _planetAvailable) {
+		if (entry.second) {
+			_selectedPlanet = entry.first;
+			info("Module::showGalaxyMap(): auto-selected available planet %d", _selectedPlanet);
+			return;
+		}
+	}
+
+	warning("Module::showGalaxyMap(): no available planets to select");
 }
 
 void Module::setPlanetSelectable(int planet, bool selectable) {
