@@ -170,6 +170,11 @@ protected:
 	void getNextPC(Aurora::NWScript::FunctionContext &ctx);
 	void getPCSpeaker(Aurora::NWScript::FunctionContext &ctx);
 	void getIsConversationActive(Aurora::NWScript::FunctionContext &ctx);
+	void switchPlayerCharacter(Aurora::NWScript::FunctionContext &ctx);
+	void setTime(Aurora::NWScript::FunctionContext &ctx);
+	void setAreaUnescapable(Aurora::NWScript::FunctionContext &ctx);
+	void getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx);
+	void setCameraFacing(Aurora::NWScript::FunctionContext &ctx);
 
 	void startNewModule(Aurora::NWScript::FunctionContext &ctx);
 
@@ -192,6 +197,7 @@ protected:
 	void getNearestCreature(Aurora::NWScript::FunctionContext &ctx);
 	void getNearestObject(Aurora::NWScript::FunctionContext &ctx);
 	void getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx);
+	void getSpellTargetObject(Aurora::NWScript::FunctionContext &ctx);
 	void getTag(Aurora::NWScript::FunctionContext &ctx);
 
 	void getArea    (Aurora::NWScript::FunctionContext &ctx);
@@ -268,9 +274,13 @@ protected:
 	void actionCloseDoor(Aurora::NWScript::FunctionContext &ctx);
 	void actionMoveToObject  (Aurora::NWScript::FunctionContext &ctx);
 	void actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx);
+	void actionRandomWalk(Aurora::NWScript::FunctionContext &ctx);
+	void actionMoveAwayFromObject(Aurora::NWScript::FunctionContext &ctx);
 	void actionForceMoveToObject(Aurora::NWScript::FunctionContext &ctx);
 	void actionForceMoveToLocation(Aurora::NWScript::FunctionContext &ctx);
 	void actionFollowLeader(Aurora::NWScript::FunctionContext &ctx);
+	void actionPutDownItem(Aurora::NWScript::FunctionContext &ctx);
+	void actionCastSpellAtObject(Aurora::NWScript::FunctionContext &ctx);
 	void clearAllActions(Aurora::NWScript::FunctionContext &ctx);
 
 	void setFacing(Aurora::NWScript::FunctionContext &ctx);

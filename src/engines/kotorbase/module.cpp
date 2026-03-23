@@ -1003,7 +1003,7 @@ void Module::spawnAvailableNPC(int npc, const Common::UString &waypointTag) {
 
 	creature->setPosition(x, y, z);
 	if (_area)
-		_area->addObject(*creature);
+		_area->addCreature(creature);
 
 	_partyController.addPartyMember(npc, creature);
 	updateCurrentPartyGUI();

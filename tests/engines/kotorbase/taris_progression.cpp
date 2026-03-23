@@ -42,6 +42,7 @@ struct PartyStateModel {
 	std::map<int, bool> planetSelectable;
 	std::map<int, bool> planetAvailable;
 	int selectedPlanet { -1 };
+	bool areaUnescapable { false };
 
 	void addPartyMember(int npc, int objectId) {
 		members.push_back(std::make_pair(npc, objectId));
@@ -128,6 +129,14 @@ struct PartyStateModel {
 		return selectedPlanet;
 	}
 
+	void setAreaUnescapable(bool value) {
+		areaUnescapable = value;
+	}
+
+	bool getAreaUnescapable() const {
+		return areaUnescapable;
+	}
+
 	void showGalaxyMap() {
 		if (selectedPlanet != -1 && getPlanetAvailable(selectedPlanet) && getPlanetSelectable(selectedPlanet))
 			return;
@@ -181,6 +190,19 @@ GTEST_TEST(KotORBaseTarisParty, removePartyMemberUpdatesMembership) {
 	EXPECT_EQ(state.getPartyMemberByIndex(1), 102);
 }
 
+GTEST_TEST(KotORBaseTarisParty, removingUnknownPartyMemberDoesNotMutateRoster) {
+	PartyStateModel state;
+	state.addPartyMember(-1, 100);
+	state.addPartyMember(0, 101);
+
+	state.removePartyMember(9);
+
+	EXPECT_EQ(state.getPartyMemberCount(), 2);
+	EXPECT_TRUE(state.isNPCPartyMember(0));
+	EXPECT_EQ(state.getPartyMemberByIndex(0), 100);
+	EXPECT_EQ(state.getPartyMemberByIndex(1), 101);
+}
+
 GTEST_TEST(KotORBaseTarisParty, soloModeRoundTrips) {
 	PartyStateModel state;
 
@@ -226,4 +248,13 @@ GTEST_TEST(KotORBaseTarisParty, galaxyMapFlagsDefaultFalseAndRoundTrip) {
 	EXPECT_TRUE(state.getPlanetAvailable(3));
 	state.showGalaxyMap();
 	EXPECT_EQ(state.getSelectedPlanet(), 3);
+}
+
+GTEST_TEST(KotORBaseTarisParty, areaUnescapableFlagRoundTrips) {
+	PartyStateModel state;
+	EXPECT_FALSE(state.getAreaUnescapable());
+	state.setAreaUnescapable(true);
+	EXPECT_TRUE(state.getAreaUnescapable());
+	state.setAreaUnescapable(false);
+	EXPECT_FALSE(state.getAreaUnescapable());
 }

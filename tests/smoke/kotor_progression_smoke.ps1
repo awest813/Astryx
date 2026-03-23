@@ -7,22 +7,50 @@ $ErrorActionPreference = "Stop"
 
 $platformExt = if ($env:OS -eq "Windows_NT") { ".exe" } else { "" }
 
+function Resolve-TestBinary {
+	param(
+		[string]$BuildDir,
+		[string[]]$Candidates
+	)
+
+	foreach ($candidate in $Candidates) {
+		$fullPath = Join-Path $BuildDir $candidate
+		if (Test-Path $fullPath) {
+			return $fullPath
+		}
+	}
+
+	return $null
+}
+
 $tests = @(
 	@{
 		Name = "Endar Spire Golden Path"
-		Path = "tests/engines/kotorbase/test_endar_spire_golden$platformExt"
+		Paths = @(
+			"tests/engines/kotorbase/test_endar_spire_golden$platformExt",
+			"bin/Debug/tests_engines_kotorbase_test_endar_spire_golden$platformExt"
+		)
 	},
 	@{
 		Name = "Taris Progression State"
-		Path = "tests/engines/kotorbase/test_taris_progression$platformExt"
+		Paths = @(
+			"tests/engines/kotorbase/test_taris_progression$platformExt",
+			"bin/Debug/tests_engines_kotorbase_test_taris_progression$platformExt"
+		)
 	},
 	@{
 		Name = "Alignment/XP Baseline"
-		Path = "tests/engines/kotorbase/test_alignment_xp$platformExt"
+		Paths = @(
+			"tests/engines/kotorbase/test_alignment_xp$platformExt",
+			"bin/Debug/tests_engines_kotorbase_test_alignment_xp$platformExt"
+		)
 	},
 	@{
 		Name = "Crash Regression Guards"
-		Path = "tests/smoke/crash_regression$platformExt"
+		Paths = @(
+			"tests/smoke/crash_regression$platformExt",
+			"bin/Debug/tests_smoke_crash_regression$platformExt"
+		)
 	}
 )
 
@@ -32,10 +60,10 @@ Write-Host "KotOR progression smoke check"
 Write-Host "Build directory: $BuildDir"
 
 foreach ($test in $tests) {
-	$fullPath = Join-Path $BuildDir $test.Path
-	if (!(Test-Path $fullPath)) {
-		$failures += "missing binary: $($test.Path)"
-		Write-Warning "Missing $($test.Name) at $fullPath"
+	$fullPath = Resolve-TestBinary -BuildDir $BuildDir -Candidates $test.Paths
+	if (!$fullPath) {
+		$failures += "missing binary: $($test.Paths -join ', ')"
+		Write-Warning "Missing $($test.Name) under $BuildDir"
 		continue
 	}
 

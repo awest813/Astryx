@@ -46,8 +46,11 @@ void Functions::isObjectPartyMember(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 
-	if (!creature)
-		throw Common::Exception("Functions::isObjectPartyMember(): object is not a creature");
+	if (!creature) {
+		warning("Functions::isObjectPartyMember(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = _game->getModule().isObjectPartyMember(creature);
 }
@@ -64,8 +67,11 @@ void Functions::getSoloMode(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::getCommandable(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *target = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	if (!target)
-		throw Common::Exception("Functions::getCommandable(): Invalid target");
+	if (!target) {
+		warning("Functions::getCommandable(): invalid target");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = target->isCommandable();
 }
@@ -100,8 +106,10 @@ void Functions::setPartyLeader(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::setCommandable(Aurora::NWScript::FunctionContext &ctx) {
 	int commandable = ctx.getParams()[0].getInt();
 	Creature *target = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
-	if (!target)
-		throw Common::Exception("Functions::setCommandable(): Invalid target");
+	if (!target) {
+		warning("Functions::setCommandable(): invalid target");
+		return;
+	}
 
 	target->setCommandable(commandable != 0);
 }

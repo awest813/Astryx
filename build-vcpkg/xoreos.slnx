@@ -1,0 +1,2274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Solution>
+	<Configurations>
+		<BuildType Name="Debug"/>
+		<BuildType Name="Release"/>
+		<BuildType Name="MinSizeRel"/>
+		<BuildType Name="RelWithDebInfo"/>
+		<Platform Name="x64"/>
+	</Configurations>
+	<Project Path="ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="171067ce-279d-362a-b12b-5f0e0e3ba2af" DefaultStartup="true">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_dragonage.vcxproj"/>
+		<BuildDependency Project="engines_dragonage2.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_jade.vcxproj"/>
+		<BuildDependency Project="engines_kotor.vcxproj"/>
+		<BuildDependency Project="engines_kotor2.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_nwn.vcxproj"/>
+		<BuildDependency Project="engines_nwn2.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="engines_sonic.vcxproj"/>
+		<BuildDependency Project="engines_witcher.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<BuildDependency Project="xoreos.vcxproj"/>
+	</Project>
+	<Project Path="INSTALL.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="e985088c-805f-378a-bc58-bb3af0019e73">
+		<BuildDependency Project="ALL_BUILD.vcxproj"/>
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="RUN_TESTS.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8a04df25-11f2-3ba9-bbee-1e967bd74ca8">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="43beeb1f-dad9-3ed5-bea6-6a6216e0faad"/>
+	<Project Path="aurora.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="e2de55e0-d921-3dc5-992a-473d474da328">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+	</Project>
+	<Project Path="aurora_actionscript.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8432b1ac-8628-3c6b-94f3-9b750b3a6f0f">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="aurora_lua_libluascript.la.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ece22033-950a-36f3-b07c-e2591acfaea2">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="aurora_nwscript.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="6ed1ff85-fb97-39f3-b2f3-44cf8dabefcd">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="check.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="5b316ce0-2ba9-3f1b-8f8f-771d59a196d9">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_dragonage.vcxproj"/>
+		<BuildDependency Project="engines_dragonage2.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_jade.vcxproj"/>
+		<BuildDependency Project="engines_kotor.vcxproj"/>
+		<BuildDependency Project="engines_kotor2.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_nwn.vcxproj"/>
+		<BuildDependency Project="engines_nwn2.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="engines_sonic.vcxproj"/>
+		<BuildDependency Project="engines_witcher.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_2dafile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_actionscript.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_biffile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_bzffile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_dlgfile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_erffile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_erfwriter.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_gdafile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_gff3file.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_gff3writer.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_gff4file.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_herffile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_ifofile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_keyfile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_language.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_locstring.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_ltrfile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_lytfile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_ndsrom.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_nfofile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_rimfile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_smallfile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_ssffile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_talktable_gff.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_talktable_tlk.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_textureatlasfile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_thewitchersavefile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_thewitchersavewriter.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_util.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_visfile.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_xmlfixer.vcxproj"/>
+		<BuildDependency Project="tests_aurora_test_zipfile.vcxproj"/>
+		<BuildDependency Project="tests_common_test_aabbnode.vcxproj"/>
+		<BuildDependency Project="tests_common_test_binsearch.vcxproj"/>
+		<BuildDependency Project="tests_common_test_bitstream.vcxproj"/>
+		<BuildDependency Project="tests_common_test_bitstreamwriter.vcxproj"/>
+		<BuildDependency Project="tests_common_test_blowfish.vcxproj"/>
+		<BuildDependency Project="tests_common_test_boundingbox.vcxproj"/>
+		<BuildDependency Project="tests_common_test_configfile.vcxproj"/>
+		<BuildDependency Project="tests_common_test_configman.vcxproj"/>
+		<BuildDependency Project="tests_common_test_datetime.vcxproj"/>
+		<BuildDependency Project="tests_common_test_deflate.vcxproj"/>
+		<BuildDependency Project="tests_common_test_disposableptr.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_ascii.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_cp1250.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_cp1251.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_cp1252.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_cp932.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_cp936.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_cp949.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_cp950.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_latin9.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_utf16be.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_utf16le.vcxproj"/>
+		<BuildDependency Project="tests_common_test_encoding_utf8.vcxproj"/>
+		<BuildDependency Project="tests_common_test_filelist.vcxproj"/>
+		<BuildDependency Project="tests_common_test_filepath.vcxproj"/>
+		<BuildDependency Project="tests_common_test_geometry.vcxproj"/>
+		<BuildDependency Project="tests_common_test_hash.vcxproj"/>
+		<BuildDependency Project="tests_common_test_huffman.vcxproj"/>
+		<BuildDependency Project="tests_common_test_lzma.vcxproj"/>
+		<BuildDependency Project="tests_common_test_maths.vcxproj"/>
+		<BuildDependency Project="tests_common_test_md5.vcxproj"/>
+		<BuildDependency Project="tests_common_test_memreadstream.vcxproj"/>
+		<BuildDependency Project="tests_common_test_memwritestream.vcxproj"/>
+		<BuildDependency Project="tests_common_test_readfile.vcxproj"/>
+		<BuildDependency Project="tests_common_test_rect.vcxproj"/>
+		<BuildDependency Project="tests_common_test_serializationstream.vcxproj"/>
+		<BuildDependency Project="tests_common_test_streamtokenizer.vcxproj"/>
+		<BuildDependency Project="tests_common_test_string.vcxproj"/>
+		<BuildDependency Project="tests_common_test_strutil.vcxproj"/>
+		<BuildDependency Project="tests_common_test_ustring.vcxproj"/>
+		<BuildDependency Project="tests_common_test_util.vcxproj"/>
+		<BuildDependency Project="tests_common_test_writefile.vcxproj"/>
+		<BuildDependency Project="tests_common_test_xml.vcxproj"/>
+		<BuildDependency Project="tests_common_test_zipfile.vcxproj"/>
+		<BuildDependency Project="tests_engines_kotorbase_test_alignment_xp.vcxproj"/>
+		<BuildDependency Project="tests_engines_kotorbase_test_combat.vcxproj"/>
+		<BuildDependency Project="tests_engines_kotorbase_test_creatureinfo.vcxproj"/>
+		<BuildDependency Project="tests_engines_kotorbase_test_effect.vcxproj"/>
+		<BuildDependency Project="tests_engines_kotorbase_test_endar_spire_golden.vcxproj"/>
+		<BuildDependency Project="tests_engines_kotorbase_test_inventory.vcxproj"/>
+		<BuildDependency Project="tests_engines_kotorbase_test_nwscript_functions.vcxproj"/>
+		<BuildDependency Project="tests_engines_kotorbase_test_taris_progression.vcxproj"/>
+		<BuildDependency Project="tests_engines_nwn2_test_creature.vcxproj"/>
+		<BuildDependency Project="tests_engines_nwn2_test_door.vcxproj"/>
+		<BuildDependency Project="tests_engines_nwn2_test_roster.vcxproj"/>
+		<BuildDependency Project="tests_engines_nwn2_test_waypoint.vcxproj"/>
+		<BuildDependency Project="tests_engines_test_trigger.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_images_test_surface.vcxproj"/>
+		<BuildDependency Project="tests_images_test_util.vcxproj"/>
+		<BuildDependency Project="tests_images_test_xoreositex.vcxproj"/>
+		<BuildDependency Project="tests_smoke_crash_regression.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<BuildDependency Project="xoreos.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="common.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="86f68437-436d-381a-8cef-a90039ef088f">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+	</Project>
+	<Project Path="engines.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="33a2f64f-6759-3d73-8be6-52ac46de0c45">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+	</Project>
+	<Project Path="engines_aurora.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="c0eb7e71-9f49-3036-8d91-33158b01b767">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_dragonage.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="1165ff96-cbb0-361f-86fb-96e23cd76acb">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_dragonage2.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="70580079-1b7f-3a05-909b-b07015a37864">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_eclipse.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="9c1f5a2f-6212-35f9-a73a-f5fd509e7605">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_jade.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="bc2b886f-4f19-3c72-92a6-508e8da2bdc2">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_kotor.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8137c454-5252-3a55-a2e2-9baff48f58f9">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_kotor2.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="0ec93734-6e04-3337-adba-c4b1b201162d">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_kotorbase.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="50efc253-3277-353d-99ae-700acbb6fccb">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_nwn.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="448ba533-6fac-33c5-878e-c8cde426b83c">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_nwn2.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="710bf7d1-7747-3fb8-a3e9-a9727b9a0fa0">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_odyssey.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="e171e48e-dd9b-338d-a22e-1ab73977aeae">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_sonic.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="134455a8-e22b-38ee-9453-c8a717a13f26">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="engines_witcher.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ae836b92-b264-3838-9bd8-c37904d3ab4a">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="events.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="11adfbb9-6842-3d9e-893b-9ca8314da1f3">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+	</Project>
+	<Project Path="external_glew.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="3c7d02f4-90c4-32f8-a07c-ecec196312ad">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="external_imgui.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="9041d15f-bc35-3862-a8ff-a43e27f6091a">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="external_lua.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="f6e18200-49ad-335f-9a07-8604368e415e">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="external_mspack.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="6ae0c925-5e20-3e50-93ca-9c5a4899f7d4">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="external_toluapp.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="9bb7711d-cd43-3578-9aeb-cb176cbdcedb">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="graphics.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="3dd925bf-0a0f-344a-b52f-c98f9f4360c2">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+	</Project>
+	<Project Path="graphics_images.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8702b9c6-1186-3c60-9553-1b7c2beee8c4">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="graphics_mesh.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="631f05e2-920e-3ca9-aef5-b0e30b0f9321">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="graphics_render.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="b016a9a7-0521-3adc-b9b1-3aa50b641faa">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="graphics_shader.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="18139f70-8087-374f-8256-b3a93c8e13d6">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="sound.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="a944ea00-eced-3103-88ab-33dae400e03f">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+	</Project>
+	<Project Path="sound_decoders.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="6d3087f5-18d8-336a-8f4c-aa7e6e990504">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="tests_aurora_test_2dafile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="beddc49b-56d0-367b-80bf-12fcd8b4b087">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_actionscript.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="1a98d4a5-bea7-3aec-90a4-88dea0464908">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_biffile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ccb861e0-ef21-32d5-beb9-cb6c51ac167c">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_bzffile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="92d4d6eb-caca-3b48-bddf-6628234e3fdc">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_dlgfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="d452e012-bd6f-39f2-80d0-7af56452bab1">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_erffile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="4083ebae-8021-3103-aa74-1c85a9ff524a">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_erfwriter.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="f1eceab7-c985-3af1-bcd5-36eaf733bb97">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_gdafile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="f8986149-6c4b-3043-aba0-e1cfdf491395">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_gff3file.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="968669c4-0ccf-3059-8678-e9c35f060222">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_gff3writer.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="3ea0055d-0089-3656-88cc-4837629e045f">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_gff4file.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="b566430e-ef09-3ba4-b6c3-c9a9ee527a70">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_herffile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8eff4b72-f956-39c9-adc4-b6a0a2237ca0">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_ifofile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="abd98ed2-141c-3b28-bfe7-bdbe5418625e">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_keyfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="09daf8e7-14fc-390a-9b5d-6524c35631f5">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_language.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="77772588-1aa3-3f0e-992a-51254926aa18">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_locstring.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="4acad36a-8eb9-3d0a-a037-7dcb04156108">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_ltrfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="863aca84-932e-3303-bfef-56e709915fbc">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_lytfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8473fcf8-63ab-3708-ae70-f07b656f55d6">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_ndsrom.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="472c10d8-b434-330a-988e-2303f408b8d2">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_nfofile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="e18c2404-4bf8-332c-b2c6-1ff28fc3028c">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_rimfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ecab926d-7f23-34c8-b594-be2c044e4cfd">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_smallfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="e01bb538-4cfa-3c5c-abde-71a6f74bde48">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_ssffile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="fc0c6f75-d3c8-3917-a7d6-fd3553d0544a">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_talktable_gff.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="b006a15b-b3cd-3906-8897-5a5c21b8997d">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_talktable_tlk.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="5b8157b1-ce2d-3fb7-ab09-1c942fa273b9">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_textureatlasfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="6d0f766a-c216-36fd-8d1b-db1498d22790">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_thewitchersavefile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="6f79809f-97f7-3858-a260-64c6f02bc732">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_thewitchersavewriter.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="0ec8cbe1-6fa0-3878-80e6-addfba1aefd9">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_util.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="cd94919f-a474-3807-84ac-df4cdae63841">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_visfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="a1d7d9cb-dae7-36a6-aa5c-4773abd3a2ab">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_xmlfixer.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8b56dbf4-5466-315b-87c4-219bde984de5">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_aurora_test_zipfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="3df0e143-6e82-35d0-bbdf-07db688f3586">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_aabbnode.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="b3002c31-ef09-3b71-8ed8-7ceaca38ba41">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_binsearch.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="4786d74a-6295-323c-9db7-6353c8d5388b">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_bitstream.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="5fbeb52e-d7c6-3859-9830-8a32e1dae5b7">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_bitstreamwriter.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="0423e729-6786-3246-b988-2aa37d6b0738">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_blowfish.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="cebd98d0-f120-3b0f-b265-55981dd3aa13">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_boundingbox.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="4aeb8112-e4c9-3a3d-85a4-5fa9610d7061">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_configfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="4f287110-6cb0-31a2-b189-839c1203d8b0">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_configman.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="1594d477-c1c3-3817-9245-9910e5cd5eff">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_datetime.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="7ed52adb-0e74-3cf1-a30a-6aadf686487b">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_deflate.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="c6bf3005-fa66-3124-ab7c-f2fa9e37f451">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_disposableptr.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="57974de9-dbd7-3d5b-b944-a1a016721624">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_ascii.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="c3ab734b-f2ed-38dc-adb2-ea29494d7b18">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_cp1250.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="7a406a03-f45e-3458-b37f-7ccb08ad30bf">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_cp1251.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="c52fd7cf-465a-382c-b8d0-b08f130082b1">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_cp1252.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="442a406c-26fa-327c-b6a8-b4b3fc0e5175">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_cp932.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="0b89dd28-2901-3e24-a347-6b816af8fa6e">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_cp936.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="9f4f5f3d-2e73-3a09-8f1e-a1cc69927cc3">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_cp949.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="3d7c14d1-bedf-35f7-95b5-002e84153d66">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_cp950.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="84d0dc6c-27bf-3032-92cd-c99e62261d87">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_latin9.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8cf4724b-aeee-34be-87a2-051c5c5b14e3">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_utf16be.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="c163ba41-6437-37a1-bc42-2fd56fce76ee">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_utf16le.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ba3750a5-bdc6-3158-9236-7486eadcce06">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_encoding_utf8.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="27a493f2-fe03-3ad4-9462-1c5cf8f4c300">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_filelist.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="95bcd5a9-6d67-3d0c-b8a6-c65ad06eaf4b">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_filepath.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="1b5d1963-7884-32ef-afb7-a78cf7b36a79">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_geometry.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="4d396f7f-9e83-3ada-9c12-96990102280a">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_hash.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="1ceb17ae-b856-31d4-8ce7-c7fe45a0b7c5">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_huffman.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="d4ab9f12-a27d-3433-9ba8-8f3ab9713fa0">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_lzma.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="fd542a05-14dd-3a2a-81fd-9360de8099e0">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_maths.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="46640664-afeb-3ac3-b1ca-ddbfc4097d8f">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_md5.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="fc7c4253-cb9b-3b22-985d-bb5b7f2fbcfa">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_memreadstream.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="cd7472b4-f824-35b0-96b5-d2d23c028194">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_memwritestream.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="08f0cb5e-bbf7-3e26-8334-d7d33ed2cc8e">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_readfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="f9bb2b19-0ac5-3a20-8df9-eb563225309b">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_rect.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="cd07477c-81a0-3638-bc4c-ed3a15f1b3d1">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_serializationstream.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="cb1507b7-fd6e-30b9-be76-3fe84f4e628c">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_streamtokenizer.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="aaf48e7e-bb00-3e7b-900a-8a88bd4016d8">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_string.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="c95f4ec2-ffd9-3866-a2c1-e83a90b61811">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_strutil.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="47c999ed-386d-3795-a4f6-a163a8eb312e">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_ustring.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ab097a4c-2beb-3453-9021-c7f92d838681">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_util.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="18f71e95-6ba8-39de-9f78-547824d06753">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_writefile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="dcf64cc7-e305-32f5-a9b7-987bb37875c6">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_xml.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="6a33f799-9952-34f7-b3d2-1600bd9c7cfc">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_common_test_zipfile.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="2280f7b5-8df5-30e1-9b9e-7ee55822114d">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_kotorbase_test_alignment_xp.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="609ad838-eab5-387d-ba5d-1320d27eda72">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_kotorbase_test_combat.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ec76a337-3480-3edb-9a32-79e5827e63c6">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_kotorbase_test_creatureinfo.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="9c9ce3e8-3d06-3d3b-910d-793dccd2e4f2">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_kotorbase_test_effect.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="0ba941d3-2a32-3671-ab5f-bb6c9a2c5349">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_kotorbase_test_endar_spire_golden.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="62f6d269-702f-3f9d-8096-b537fdca8399">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_kotorbase_test_inventory.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="0b1b2501-2767-3651-a99a-bea07c869b5b">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_kotorbase_test_nwscript_functions.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="27b0321e-3589-3354-bb9b-0033bec4d1d7">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_kotorbase_test_taris_progression.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="6f81534e-5604-33dc-855f-916fd75dac4f">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_nwn2_test_creature.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="59616c71-df2c-3e24-972b-56f80fc405b1">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_nwn2.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_nwn2_test_door.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="b228fce5-9e93-3f52-bf8a-73cffd9173e2">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_nwn2.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_nwn2_test_roster.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="d52f26b4-7f0f-3eba-a856-e4cd069d4461">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_nwn2.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_nwn2_test_waypoint.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="0c43470f-f64e-33f0-84bb-126fe9e9f9f9">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_nwn2.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_engines_test_trigger.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="f5432fbc-8065-383e-b805-52c6f57eb5f3">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_googletest_libgtest.la.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="6536716c-9869-3891-8d50-1720eacc3849">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_googletest_libgtest_main.la.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="4dcd8057-7ee1-3625-8689-92e8d5bdebbc">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_images_test_surface.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="e854c29b-c0b7-3aec-815c-a9c6715ea9e6">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_images_test_util.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="bd3b4349-af4d-3f9a-a570-8b1c1f8468ce">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_images_test_xoreositex.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="be93f679-c221-3e59-9360-52caab83bed4">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<BuildDependency Project="tests_version.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_smoke_crash_regression.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="89e1a45a-a63f-3c5d-8069-bd51bb37d98a">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
+		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="tests_version.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="744d7aa5-6523-34f5-87ef-dfecb60e611d">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="uninstall.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="fabd712f-24b9-3819-82d3-65ebe43a844f">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="version.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="40fea062-7a5f-305d-a972-9aa37edb19e9">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="video.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="50799fcf-95d0-33dd-9d53-db56f8b4a6ac">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+	</Project>
+	<Project Path="video_codecs.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="996ca396-32fb-3d68-b88d-52cd52e9670c">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="xoreos.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="93738773-ecf4-3354-8b17-0bf530d723f2">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="aurora.vcxproj"/>
+		<BuildDependency Project="aurora_actionscript.vcxproj"/>
+		<BuildDependency Project="aurora_lua_libluascript.la.vcxproj"/>
+		<BuildDependency Project="aurora_nwscript.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
+		<BuildDependency Project="engines.vcxproj"/>
+		<BuildDependency Project="engines_aurora.vcxproj"/>
+		<BuildDependency Project="engines_dragonage.vcxproj"/>
+		<BuildDependency Project="engines_dragonage2.vcxproj"/>
+		<BuildDependency Project="engines_eclipse.vcxproj"/>
+		<BuildDependency Project="engines_jade.vcxproj"/>
+		<BuildDependency Project="engines_kotor.vcxproj"/>
+		<BuildDependency Project="engines_kotor2.vcxproj"/>
+		<BuildDependency Project="engines_kotorbase.vcxproj"/>
+		<BuildDependency Project="engines_nwn.vcxproj"/>
+		<BuildDependency Project="engines_nwn2.vcxproj"/>
+		<BuildDependency Project="engines_odyssey.vcxproj"/>
+		<BuildDependency Project="engines_sonic.vcxproj"/>
+		<BuildDependency Project="engines_witcher.vcxproj"/>
+		<BuildDependency Project="events.vcxproj"/>
+		<BuildDependency Project="external_glew.vcxproj"/>
+		<BuildDependency Project="external_imgui.vcxproj"/>
+		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
+		<BuildDependency Project="external_toluapp.vcxproj"/>
+		<BuildDependency Project="graphics.vcxproj"/>
+		<BuildDependency Project="graphics_images.vcxproj"/>
+		<BuildDependency Project="graphics_mesh.vcxproj"/>
+		<BuildDependency Project="graphics_render.vcxproj"/>
+		<BuildDependency Project="graphics_shader.vcxproj"/>
+		<BuildDependency Project="sound.vcxproj"/>
+		<BuildDependency Project="sound_decoders.vcxproj"/>
+		<BuildDependency Project="version.vcxproj"/>
+		<BuildDependency Project="video.vcxproj"/>
+		<BuildDependency Project="video_codecs.vcxproj"/>
+	</Project>
+</Solution>

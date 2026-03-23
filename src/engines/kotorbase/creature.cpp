@@ -968,7 +968,6 @@ void Creature::executeAttack(Object *target) {
 	int d20 = RNG.getNext(1, 21);
 	int attackRoll = d20 + attackMod;
 
-	Creature *targetCreature = ObjectContainer::toCreature(target);
 	int targetAC = targetCreature ? targetCreature->getAC() : 10;
 
 	// Natural 1 always misses; natural 20 always hits; otherwise compare totals

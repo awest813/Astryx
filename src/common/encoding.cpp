@@ -25,7 +25,11 @@
 #include <cstring>
 #include <cerrno>
 
+#ifdef XOREOS_INTERNAL_ICONV
+#include "src/common/iconvshim.h"
+#else
 #include <iconv.h>
+#endif
 
 #include <vector>
 #include <memory>

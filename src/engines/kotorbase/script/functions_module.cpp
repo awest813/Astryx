@@ -56,6 +56,31 @@ void Functions::getIsConversationActive(Aurora::NWScript::FunctionContext &ctx) 
 	ctx.getReturn() = _game->getModule().isConversationActive();
 }
 
+void Functions::switchPlayerCharacter(Aurora::NWScript::FunctionContext &ctx) {
+	const int npc = ctx.getParams()[0].getInt();
+	_game->getModule().setPartyLeader(npc);
+	ctx.getReturn() = 1;
+}
+
+void Functions::setTime(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	// Time-of-day simulation is not yet modeled; keep script flow alive.
+}
+
+void Functions::setAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
+	const bool unescapable = ctx.getParams()[0].getInt() != 0;
+	_game->getModule().setGlobalBoolean("__area_unescapable", unescapable);
+}
+
+void Functions::getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getGlobalBoolean("__area_unescapable") ? 1 : 0;
+}
+
+void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {
+	const float yaw = ctx.getParams()[0].getFloat();
+	_game->getModule().setCameraYaw(yaw);
+}
+
 void Functions::startNewModule(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString mod = ctx.getParams()[0].getString();
 

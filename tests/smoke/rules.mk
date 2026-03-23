@@ -8,6 +8,7 @@ tests_smoke_crash_regression_SOURCES = \
 
 tests_smoke_crash_regression_LDADD = \
     $(test_LIBS) \
+    src/common/libcommon.la \
     $(OPENAL_LIBS) \
     $(LUA_LIBS) \
     $(ICONV_LIBS) \

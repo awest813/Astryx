@@ -46,8 +46,11 @@ void Functions::getGender(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 
-	if (!creature)
-		throw Common::Exception("Functions::getGender(): Object is not a creature");
+	if (!creature) {
+		warning("Functions::getGender(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = creature->getGender();
 }
@@ -58,8 +61,11 @@ void Functions::getLevelByClass(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 
-	if (!creature)
-		throw Common::Exception("Functions::getLevelByClass(): Object is not a creature");
+	if (!creature) {
+		warning("Functions::getLevelByClass(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = creature->getLevel(creatureClass);
 }
@@ -70,8 +76,11 @@ void Functions::getLevelByPosition(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 
-	if (!creature)
-		throw Common::Exception("Functions::getLevelByPosition(): Object is not a creature");
+	if (!creature) {
+		warning("Functions::getLevelByPosition(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = creature->getLevelByPosition(position - 1);
 }
@@ -82,8 +91,11 @@ void Functions::getClassByPosition(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 
-	if (!creature)
-		throw Common::Exception("Functions::getClassByPosition(): Object is not a creature");
+	if (!creature) {
+		warning("Functions::getClassByPosition(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = creature->getClassByPosition(position - 1);
 }
@@ -107,8 +119,11 @@ void Functions::getSubRace(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 
-	if (!creature)
-		throw Common::Exception("Functions::getSubRace(): Object is not a creature");
+	if (!creature) {
+		warning("Functions::getSubRace(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = creature->getSubRace();
 }
@@ -119,8 +134,11 @@ void Functions::getHasSkill(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 
-	if (!creature)
-		throw Common::Exception("Functions::getHasSkill(): Object is not a creature");
+	if (!creature) {
+		warning("Functions::getHasSkill(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = creature->getSkillRank(KotORBase::Skill(nSkill)) > 0;
 }
@@ -131,8 +149,11 @@ void Functions::getSkillRank(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 
-	if (!creature)
-		throw Common::Exception("Functions::getHasSkill(): Object is not a creature");
+	if (!creature) {
+		warning("Functions::getSkillRank(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = creature->getSkillRank(KotORBase::Skill(nSkill));
 }
@@ -143,8 +164,11 @@ void Functions::getAbilityScore(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 
-	if (!creature)
-		throw Common::Exception("Functions::getHasSkill(): Object is not a creature");
+	if (!creature) {
+		warning("Functions::getAbilityScore(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = creature->getAbilityScore(KotORBase::Ability(nAbilityType));
 }
@@ -283,7 +307,7 @@ void Functions::fortitudeSave(Aurora::NWScript::FunctionContext &ctx) {
 	}
 
 	// Fortitude = 10 + Constitution modifier + class save bonus
-	int conMod = creature->getInfo().getAbilityModifier(kAbilityConstitution);
+	int conMod = creature->getCreatureInfo().getAbilityModifier(kAbilityConstitution);
 	int roll   = std::rand() % 20 + 1;
 
 	if (roll == 20) {
@@ -307,7 +331,7 @@ void Functions::reflexSave(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 	}
 
-	int dexMod = creature->getInfo().getAbilityModifier(kAbilityDexterity);
+	int dexMod = creature->getCreatureInfo().getAbilityModifier(kAbilityDexterity);
 	int roll   = std::rand() % 20 + 1;
 
 	if (roll == 20) {
@@ -331,7 +355,7 @@ void Functions::willSave(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 	}
 
-	int wisMod = creature->getInfo().getAbilityModifier(kAbilityWisdom);
+	int wisMod = creature->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 	int roll   = std::rand() % 20 + 1;
 
 	if (roll == 20) {

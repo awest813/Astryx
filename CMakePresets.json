@@ -1,0 +1,80 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "ninja-multi-vcpkg",
+      "displayName": "Ninja Multi-Config (vcpkg)",
+      "description": "Configure with vcpkg toolchain and generate Ninja project files for all configurations",
+      "binaryDir": "${sourceDir}/builds/${presetName}",
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "CMAKE_POLICY_VERSION_MINIMUM": {
+          "type": "STRING",
+          "value": "3.5"
+        },
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        }
+      }
+    },
+    {
+      "name": "ninja-multi-vcpkg-local",
+      "displayName": "Ninja Multi-Config (local vcpkg)",
+      "description": "Configure with local C:/vcpkg toolchain and generate Ninja project files for all configurations",
+      "binaryDir": "${sourceDir}/builds/${presetName}",
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "CMAKE_POLICY_VERSION_MINIMUM": {
+          "type": "STRING",
+          "value": "3.5"
+        },
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "ninja-multi-vcpkg-debug",
+      "configurePreset": "ninja-multi-vcpkg",
+      "displayName": "Build ninja-multi-vcpkg-debug",
+      "description": "Build ninja-multi-vcpkg Debug configuration",
+      "configuration": "Debug",
+      "targets": [
+        "all",
+        "check"
+      ]
+    },
+    {
+      "name": "ninja-multi-vcpkg-local-debug",
+      "configurePreset": "ninja-multi-vcpkg-local",
+      "displayName": "Build ninja-multi-vcpkg-local-debug",
+      "description": "Build ninja-multi-vcpkg-local Debug configuration",
+      "configuration": "Debug",
+      "targets": [
+        "all",
+        "check"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "ninja-multi-vcpkg-debug",
+      "configurePreset": "ninja-multi-vcpkg",
+      "configuration": "Debug"
+    },
+    {
+      "name": "ninja-multi-vcpkg-local-debug",
+      "configurePreset": "ninja-multi-vcpkg-local",
+      "configuration": "Debug"
+    }
+  ]
+}

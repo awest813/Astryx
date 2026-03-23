@@ -1,0 +1,9 @@
+Package: boost-scope
+Version: 1.90.0
+Port-Version: 1
+Depends: boost-assert, boost-cmake, boost-config, boost-core, boost-headers, boost-type-traits
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 301a52851917cd5b2c7b2c4ab4476d96e77ecaaf3a3438ca5af40954e5c0cd7f
+Description: Boost scope module
+Status: install ok half-installed

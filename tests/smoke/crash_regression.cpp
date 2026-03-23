@@ -1,9 +1,5 @@
 #include "gtest/gtest.h"
 
-// Includes to test crash regressions
-#include "src/engines/kotorbase/module.h"
-#include "src/engines/kotorbase/script/functions.h"
-
 TEST(CrashRegression, ModuleBadTransitionNoCrash) {
 	// Attempting a transition to a missing module should log a warning
 	// instead of throwing an unhandled exception that brings down the game.
