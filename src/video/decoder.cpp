@@ -46,7 +46,7 @@ namespace Video {
 VideoDecoder::VideoDecoder() : Renderable(Graphics::kRenderableTypeVideo),
 	_needCopy(false),
 	_texture(0),
-	_textureWidth(0.0f), _textureHeight(0.0f), _scale(kScaleNone),
+	_textureWidth(0.0f), _textureHeight(0.0f), _scale(kScaleNone), _gain(1.0f),
 	_startTime(0), _pauseLevel(0), _pauseStartTime(0) {
 
 }
@@ -158,8 +158,7 @@ void VideoDecoder::addTrack(Track *track, bool isExternal) {
 
 	if (track->getTrackType() == Track::kTrackTypeAudio) {
 		// Update volume settings if it's an audio track
-		// TODO: Make this setting available via an external interface
-		std::static_pointer_cast<AudioTrack>(owned)->setGain(1.0f);
+		std::static_pointer_cast<AudioTrack>(owned)->setGain(_gain);
 	} else if (track->getTrackType() == Track::kTrackTypeVideo) {
 		// If this track has a better time, update _nextVideoTrack
 		VideoTrackPtr videoTrack = std::static_pointer_cast<VideoTrack>(owned);
@@ -286,6 +285,18 @@ void VideoDecoder::copyData() {
 
 void VideoDecoder::setScale(Scale scale) {
 	_scale = scale;
+}
+
+void VideoDecoder::setVolume(float gain) {
+	_gain = gain;
+
+	for (TrackList::iterator it = _tracks.begin(); it != _tracks.end(); it++)
+		if ((*it)->getTrackType() == Track::kTrackTypeAudio)
+			std::static_pointer_cast<AudioTrack>(*it)->setGain(_gain);
+}
+
+float VideoDecoder::getVolume() const {
+	return _gain;
 }
 
 bool VideoDecoder::isPlaying() const {
