@@ -56,6 +56,31 @@ void Functions::getIsConversationActive(Aurora::NWScript::FunctionContext &ctx) 
 	ctx.getReturn() = _game->getModule().isConversationActive();
 }
 
+void Functions::switchPlayerCharacter(Aurora::NWScript::FunctionContext &ctx) {
+	const int npc = ctx.getParams()[0].getInt();
+	_game->getModule().setPartyLeader(npc);
+	ctx.getReturn() = 1;
+}
+
+void Functions::setTime(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	// Time-of-day simulation is not yet modeled; keep script flow alive.
+}
+
+void Functions::setAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
+	const bool unescapable = ctx.getParams()[0].getInt() != 0;
+	_game->getModule().setGlobalBoolean("__area_unescapable", unescapable);
+}
+
+void Functions::getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getGlobalBoolean("__area_unescapable") ? 1 : 0;
+}
+
+void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {
+	const float yaw = ctx.getParams()[0].getFloat();
+	_game->getModule().setCameraYaw(yaw);
+}
+
 void Functions::startNewModule(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString mod = ctx.getParams()[0].getString();
 
@@ -129,6 +154,62 @@ void Functions::setReturnStrref(Aurora::NWScript::FunctionContext &ctx) {
 		_game->getModule().setReturnStrref(38550);
 	}
 	_game->getModule().setReturnEnabled(show);
+}
+
+void Functions::getTransitionTarget(Aurora::NWScript::FunctionContext &ctx) {
+	// Simple stub that allows transition checks to fail cleanly rather than crash.
+	// We'd look up the transition destination tag here if implemented fully.
+	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+}
+
+void Functions::getModuleName(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getName();
+}
+
+void Functions::setAreaTransitionBMP(Aurora::NWScript::FunctionContext &ctx) {
+	int bmp = ctx.getParams()[0].getInt();
+	int strref = ctx.getParams()[1].getInt();
+	info("Transition BMP set: %d (strref %d)", bmp, strref);
+}
+
+void Functions::endGame(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	// Graceful fallback: end the current module session and let the engine
+	// return to menu flow instead of halting on missing script support.
+	_game->getModule().exit();
+}
+
+void Functions::showGalaxyMap(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	_game->getModule().showGalaxyMap();
+}
+
+void Functions::setPlanetSelectable(Aurora::NWScript::FunctionContext &ctx) {
+	int planet = ctx.getParams()[0].getInt();
+	bool selectable = ctx.getParams()[1].getInt() != 0;
+
+	_game->getModule().setPlanetSelectable(planet, selectable);
+}
+
+void Functions::getPlanetSelectable(Aurora::NWScript::FunctionContext &ctx) {
+	int planet = ctx.getParams()[0].getInt();
+	ctx.getReturn() = _game->getModule().getPlanetSelectable(planet) ? 1 : 0;
+}
+
+void Functions::setPlanetAvailable(Aurora::NWScript::FunctionContext &ctx) {
+	int planet = ctx.getParams()[0].getInt();
+	bool available = ctx.getParams()[1].getInt() != 0;
+
+	_game->getModule().setPlanetAvailable(planet, available);
+}
+
+void Functions::getPlanetAvailable(Aurora::NWScript::FunctionContext &ctx) {
+	int planet = ctx.getParams()[0].getInt();
+	ctx.getReturn() = _game->getModule().getPlanetAvailable(planet) ? 1 : 0;
+}
+
+void Functions::getSelectedPlanet(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getSelectedPlanet();
 }
 
 } // End of namespace KotORBase

@@ -170,6 +170,11 @@ protected:
 	void getNextPC(Aurora::NWScript::FunctionContext &ctx);
 	void getPCSpeaker(Aurora::NWScript::FunctionContext &ctx);
 	void getIsConversationActive(Aurora::NWScript::FunctionContext &ctx);
+	void switchPlayerCharacter(Aurora::NWScript::FunctionContext &ctx);
+	void setTime(Aurora::NWScript::FunctionContext &ctx);
+	void setAreaUnescapable(Aurora::NWScript::FunctionContext &ctx);
+	void getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx);
+	void setCameraFacing(Aurora::NWScript::FunctionContext &ctx);
 
 	void startNewModule(Aurora::NWScript::FunctionContext &ctx);
 
@@ -190,6 +195,9 @@ protected:
 	void getMaxHitPoints(Aurora::NWScript::FunctionContext &ctx);
 	void getItemInSlot(Aurora::NWScript::FunctionContext &ctx);
 	void getNearestCreature(Aurora::NWScript::FunctionContext &ctx);
+	void getNearestObject(Aurora::NWScript::FunctionContext &ctx);
+	void getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx);
+	void getSpellTargetObject(Aurora::NWScript::FunctionContext &ctx);
 	void getTag(Aurora::NWScript::FunctionContext &ctx);
 
 	void getArea    (Aurora::NWScript::FunctionContext &ctx);
@@ -234,6 +242,16 @@ protected:
 	void setIsDestroyable  (Aurora::NWScript::FunctionContext &ctx);
 	void getIsInConversation(Aurora::NWScript::FunctionContext &ctx);
 
+	// Quests / Journals
+	void addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
+	void removeJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
+	void getJournalEntry(Aurora::NWScript::FunctionContext &ctx);
+
+	// Economy
+	void giveGoldToCreature(Aurora::NWScript::FunctionContext &ctx);
+	void takeGoldFromCreature(Aurora::NWScript::FunctionContext &ctx);
+	void getGold(Aurora::NWScript::FunctionContext &ctx);
+
 	// Situated objects, functions_situated.cpp
 
 	void getLocked(Aurora::NWScript::FunctionContext &ctx);
@@ -256,7 +274,13 @@ protected:
 	void actionCloseDoor(Aurora::NWScript::FunctionContext &ctx);
 	void actionMoveToObject  (Aurora::NWScript::FunctionContext &ctx);
 	void actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx);
+	void actionRandomWalk(Aurora::NWScript::FunctionContext &ctx);
+	void actionMoveAwayFromObject(Aurora::NWScript::FunctionContext &ctx);
+	void actionForceMoveToObject(Aurora::NWScript::FunctionContext &ctx);
+	void actionForceMoveToLocation(Aurora::NWScript::FunctionContext &ctx);
 	void actionFollowLeader(Aurora::NWScript::FunctionContext &ctx);
+	void actionPutDownItem(Aurora::NWScript::FunctionContext &ctx);
+	void actionCastSpellAtObject(Aurora::NWScript::FunctionContext &ctx);
 	void clearAllActions(Aurora::NWScript::FunctionContext &ctx);
 
 	void setFacing(Aurora::NWScript::FunctionContext &ctx);
@@ -267,6 +291,7 @@ protected:
 	void getLastAttacker(Aurora::NWScript::FunctionContext &ctx);
 	void actionSpeakString(Aurora::NWScript::FunctionContext &ctx);
 	void actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx);
+	void playAnimation(Aurora::NWScript::FunctionContext &ctx);
 	void actionJumpToObject(Aurora::NWScript::FunctionContext &ctx);
 	void actionJumpToLocation(Aurora::NWScript::FunctionContext &ctx);
 	void actionWait(Aurora::NWScript::FunctionContext &ctx);
@@ -308,6 +333,7 @@ protected:
 	void getHitDice(Aurora::NWScript::FunctionContext &ctx);
 	void getAC(Aurora::NWScript::FunctionContext &ctx);
 	void getAttackTarget(Aurora::NWScript::FunctionContext &ctx);
+	void getAttemptedAttackTarget(Aurora::NWScript::FunctionContext &ctx);
 	void getIsInCombat(Aurora::NWScript::FunctionContext &ctx);
 	void getLastHostileActor(Aurora::NWScript::FunctionContext &ctx);
 
@@ -386,8 +412,10 @@ protected:
 	void actionBarkString(Aurora::NWScript::FunctionContext &ctx);
 	void actionUnequipItem(Aurora::NWScript::FunctionContext &ctx);
 	void setAreaTransitionBMP(Aurora::NWScript::FunctionContext &ctx);
+	void getModuleName(Aurora::NWScript::FunctionContext &ctx);
 	void getLoadFromSaveGame(Aurora::NWScript::FunctionContext &ctx);
 	void endGame(Aurora::NWScript::FunctionContext &ctx);
+	void getTransitionTarget(Aurora::NWScript::FunctionContext &ctx);
 
 	// Galaxy map, functions_module.cpp
 

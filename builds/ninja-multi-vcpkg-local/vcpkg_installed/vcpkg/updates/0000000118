@@ -1,0 +1,9 @@
+Package: boost-charconv
+Version: 1.90.0
+Port-Version: 1
+Depends: boost-assert, boost-cmake, boost-config, boost-core, boost-headers
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 24732b297f339406f6a1a8c5c531de80c76459a56bd14655238a79816e546e5e
+Description: Boost charconv module
+Status: install ok half-installed

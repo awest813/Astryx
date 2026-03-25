@@ -87,8 +87,11 @@ void Functions::getMinOneHP(Aurora::NWScript::FunctionContext &ctx) {
 
 	Object *kotorObject = ObjectContainer::toObject(object);
 
-	if (!kotorObject)
-		throw Common::Exception("Functions::getMinOneHP(): invalid object");
+	if (!kotorObject) {
+		warning("Functions::getMinOneHP(): invalid object");
+		ctx.getReturn() = 0;
+		return;
+	}
 
 	ctx.getReturn() = kotorObject->getMinOneHitPoints();
 }
@@ -99,8 +102,10 @@ void Functions::setMinOneHP(Aurora::NWScript::FunctionContext &ctx) {
 
 	Object *kotorObject = ObjectContainer::toObject(object);
 
-	if (!kotorObject)
-		throw Common::Exception("Functions::setMinOneHP(): invalid object");
+	if (!kotorObject) {
+		warning("Functions::setMinOneHP(): invalid object");
+		return;
+	}
 
 	kotorObject->setMinOneHitPoints(enabled);
 }
@@ -129,8 +134,10 @@ void Functions::setMaxHitPoints(Aurora::NWScript::FunctionContext &ctx) {
 		maxHitPoints = 1;
 
 	Object *kotorObject = ObjectContainer::toObject(object);
-	if (!kotorObject)
-		throw Common::Exception("Functions::setMaxHitPoints(): Invalid object");
+	if (!kotorObject) {
+		warning("Functions::setMaxHitPoints(): invalid object");
+		return;
+	}
 
 	kotorObject->setCurrentHitPoints(maxHitPoints);
 	kotorObject->setMaxHitPoints(maxHitPoints);
@@ -149,8 +156,10 @@ void Functions::changeToStandardFaction(Aurora::NWScript::FunctionContext &ctx) 
 	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
 	int faction = ctx.getParams()[1].getInt();
 
-	if (!object)
-		throw Common::Exception("Functions::changeToStandardFaction(): Invalid object");
+	if (!object) {
+		warning("Functions::changeToStandardFaction(): invalid object");
+		return;
+	}
 
 	object->setFaction(Faction(faction));
 }
@@ -175,7 +184,7 @@ void Functions::createItemOnObject(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 	}
 
-	throw Common::Exception("Functions::createItemOnObject(): Invalid object");
+	warning("Functions::createItemOnObject(): invalid object");
 }
 
 void Functions::getArea(Aurora::NWScript::FunctionContext &ctx) {
@@ -255,8 +264,11 @@ void Functions::getItemInSlot(Aurora::NWScript::FunctionContext &ctx) {
 	else
 		creature = _game->getModule().getPC();
 
-	if (!creature)
-		throw Common::Exception("Functions::getItemInSlot(): Invalid creature");
+	if (!creature) {
+		warning("Functions::getItemInSlot(): invalid creature");
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+		return;
+	}
 
 	int slot = ctx.getParams()[0].getInt();
 	Item *item = creature->getEquipedItem(static_cast<InventorySlot>(slot));
@@ -280,10 +292,32 @@ void Functions::getNearestCreature(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = _game->getModule().getCurrentArea()->getNearestCreature(target, nth, criteria);
 }
 
+void Functions::getNearestObject(Aurora::NWScript::FunctionContext &ctx) {
+	// Nearest object ignoring criteria or finding just basic placeables.
+	// For Endar Spire, we can just return a null object for now since full 
+	// spatial searches for non-creatures aren't implemented in Area yet.
+	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+}
+
+void Functions::getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx) {
+	// Often equivalent to GetObjectByTag for a single module unless distance actually matters heavily.
+	// Simple stub for progression:
+	const Common::UString &tag = ctx.getParams()[0].getString();
+	ctx.getReturn() = _game->getModule().getCurrentArea()->getObjectByTag(tag);
+}
+
+void Functions::getSpellTargetObject(Aurora::NWScript::FunctionContext &ctx) {
+	// Spell targeting context is not yet tracked globally.
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+}
+
 void Functions::getTag(Aurora::NWScript::FunctionContext &ctx) {
 	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
-	if (!object)
-		throw Common::Exception("Functions::getTag() parameter is not an object");
+	if (!object) {
+		warning("Functions::getTag(): invalid object");
+		ctx.getReturn() = Common::UString();
+		return;
+	}
 
 	ctx.getReturn() = object->getTag();
 }

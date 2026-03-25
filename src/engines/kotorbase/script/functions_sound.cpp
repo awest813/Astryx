@@ -22,6 +22,9 @@
  *  Star Wars: Knights of the Old Republic engine functions handling sound.
  */
 
+#include "src/common/debug.h"
+#include "src/common/ustring.h"
+
 #include "src/aurora/nwscript/functioncontext.h"
 
 #include "src/engines/kotorbase/object.h"
@@ -74,8 +77,10 @@ void Functions::musicBackgroundGetNightTrack(Aurora::NWScript::FunctionContext &
 void Functions::soundObjectPlay(Aurora::NWScript::FunctionContext &ctx) {
 	SoundObject *sound = ObjectContainer::toSoundObject(getParamObject(ctx, 0));
 
-	if (!sound)
-		throw Common::Exception("Function::soundObjectPlay(): object is not a sound");
+	if (!sound) {
+		warning("Functions::soundObjectPlay(): invalid sound object");
+		return;
+	}
 
 	sound->play();
 }
@@ -83,10 +88,19 @@ void Functions::soundObjectPlay(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::soundObjectStop(Aurora::NWScript::FunctionContext &ctx) {
 	SoundObject *sound = ObjectContainer::toSoundObject(getParamObject(ctx, 0));
 
-	if (!sound)
-		throw Common::Exception("Function::soundObjectStop(): object is not a sound");
+	if (!sound) {
+		warning("Functions::soundObjectStop(): invalid sound object");
+		return;
+	}
 
 	sound->stop();
+}
+
+void Functions::playSound(Aurora::NWScript::FunctionContext &ctx) {
+	const Common::UString &sound = ctx.getParams()[0].getString();
+	// Graceful stub: avoid script halts on PlaySound until full positional
+	// playback routing is implemented.
+	warning("Functions::playSound: \"%s\" not yet implemented", sound.c_str());
 }
 
 } // End of namespace KotORBase

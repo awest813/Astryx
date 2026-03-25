@@ -155,9 +155,13 @@ void Module::loadModule(const Common::UString &module, const Common::UString &en
 
 	} catch (Common::Exception &e) {
 		_module.clear();
-
-		e.add("Failed loading module \"%s\"", module.c_str());
-		throw e;
+		warning("Failed loading module \"%s\": %s", module.c_str(), e.what());
+		
+		unload(true); // Ensure clean state
+		loadScreen->hide();
+		
+		// Leave the engine in a handled but unloaded state, allowing menu fallback
+		return;
 	}
 
 	initMinimap();
@@ -361,6 +365,7 @@ void Module::unload(bool completeUnload) {
 		_globalNumbers.clear();
 		_globalBooleans.clear();
 		_globalStrings.clear();
+		_loadedFromSaveGame = false;
 
 		_partyController.clearCurrentParty();
 		_partyController.clearAvailableParty();
@@ -421,12 +426,26 @@ void Module::replaceModule() {
 	const Common::UString entryLocation     = _entryLocation;
 	const ObjectType      entryLocationType = _entryLocationType;
 
-	unload(false);
+	_newModule.clear();
 
-	_exit = true;
+	try {
+		unload(false);
+		_exit = true;
+		_loadedFromSaveGame = false;
 
-	loadModule(newModule, entryLocation, entryLocationType);
-	enter();
+		loadModule(newModule, entryLocation, entryLocationType);
+		enter();
+	} catch (const std::exception &e) {
+		warning("Transition/Save loading failed (Missing Assets or Exception): %s", e.what());
+		unload(true);
+		_exit = true;
+		_hasModule = false;
+	} catch (...) {
+		warning("Transition/Save loading failed with an unknown error.");
+		unload(true);
+		_exit = true;
+		_hasModule = false;
+	}
 }
 
 void Module::enter() {
@@ -984,14 +1003,38 @@ void Module::spawnAvailableNPC(int npc, const Common::UString &waypointTag) {
 
 	creature->setPosition(x, y, z);
 	if (_area)
-		_area->addObject(*creature);
+		_area->addCreature(creature);
 
 	_partyController.addPartyMember(npc, creature);
 	updateCurrentPartyGUI();
 }
 
 void Module::showGalaxyMap() {
-	warning("Module::showGalaxyMap(): galaxy map GUI not yet implemented");
+	// Minimal fallback until the full galaxy-map GUI exists:
+	// choose a selectable/available planet so script progression can continue.
+	if ((_selectedPlanet != -1) && getPlanetAvailable(_selectedPlanet) && getPlanetSelectable(_selectedPlanet))
+		return;
+
+	for (const auto &entry : _planetAvailable) {
+		const int planet = entry.first;
+		if (!entry.second)
+			continue;
+		if (getPlanetSelectable(planet)) {
+			_selectedPlanet = planet;
+			info("Module::showGalaxyMap(): auto-selected planet %d", planet);
+			return;
+		}
+	}
+
+	for (const auto &entry : _planetAvailable) {
+		if (entry.second) {
+			_selectedPlanet = entry.first;
+			info("Module::showGalaxyMap(): auto-selected available planet %d", _selectedPlanet);
+			return;
+		}
+	}
+
+	warning("Module::showGalaxyMap(): no available planets to select");
 }
 
 void Module::setPlanetSelectable(int planet, bool selectable) {

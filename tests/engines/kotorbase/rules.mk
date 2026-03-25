@@ -62,3 +62,13 @@ check_PROGRAMS                                           += tests/engines/kotorb
 tests_engines_kotorbase_test_alignment_xp_SOURCES         = tests/engines/kotorbase/alignment_xp.cpp
 tests_engines_kotorbase_test_alignment_xp_LDADD           = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_alignment_xp_CXXFLAGS        = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_endar_spire_golden
+tests_engines_kotorbase_test_endar_spire_golden_SOURCES   = tests/engines/kotorbase/endar_spire_golden.cpp
+tests_engines_kotorbase_test_endar_spire_golden_LDADD     = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_endar_spire_golden_CXXFLAGS  = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_taris_progression
+tests_engines_kotorbase_test_taris_progression_SOURCES    = tests/engines/kotorbase/taris_progression.cpp
+tests_engines_kotorbase_test_taris_progression_LDADD      = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_taris_progression_CXXFLAGS   = $(test_CXXFLAGS)

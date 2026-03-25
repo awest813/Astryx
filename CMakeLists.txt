@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with xoreos. If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.10)
 
 project(xoreos CXX)
 set(xoreos_VERSION 0.0.6)
@@ -294,9 +294,19 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # find the required libraries
 set(XOREOS_LIBRARIES "")
 
-find_package(Iconv REQUIRED)
-include_directories(${Iconv_INCLUDE_DIRS})
-list(APPEND XOREOS_LIBRARIES ${Iconv_LIBRARIES})
+option(XOREOS_USE_INTERNAL_ICONV_SHIM "Use an internal Windows iconv shim when external Iconv is unavailable" ON)
+
+find_package(Iconv)
+if(Iconv_FOUND)
+  include_directories(${Iconv_INCLUDE_DIRS})
+  list(APPEND XOREOS_LIBRARIES ${Iconv_LIBRARIES})
+elseif(WIN32 AND XOREOS_USE_INTERNAL_ICONV_SHIM)
+  message(WARNING "Iconv not found; using internal Windows iconv shim")
+  add_definitions(-DXOREOS_INTERNAL_ICONV)
+  set(ICONV_SECOND_ARGUMENT_IS_CONST FALSE)
+else()
+  message(FATAL_ERROR "Could NOT find Iconv and no internal shim is available for this platform")
+endif()
 
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})

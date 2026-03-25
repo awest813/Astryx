@@ -26,8 +26,10 @@
 
 #include "src/common/error.h"
 #include "src/common/util.h"
+#include "src/common/string.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/talkman.h"
 
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/door.h"
@@ -142,6 +144,45 @@ void Functions::actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx) {
 	action.location = glm::vec3(x, y, z);
 
 	caller->addAction(action);
+	caller->addAction(action);
+}
+
+void Functions::actionRandomWalk(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	// Graceful no-op for scripts that only request ambient movement.
+}
+
+void Functions::actionMoveAwayFromObject(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	if (!caller || !target)
+		return;
+
+	float callerX, callerY, callerZ;
+	float targetX, targetY, targetZ;
+	caller->getPosition(callerX, callerY, callerZ);
+	target->getPosition(targetX, targetY, targetZ);
+
+	const float distance = MAX<float>(1.0f, ctx.getParams()[2].getFloat());
+	glm::vec3 away(callerX - targetX, callerY - targetY, callerZ - targetZ);
+	if (glm::length(away) < 0.001f)
+		away = glm::vec3(1.0f, 0.0f, 0.0f);
+	away = glm::normalize(away) * distance;
+
+	Action action(kActionMoveToPoint);
+	action.range = 0.1f;
+	action.location = glm::vec3(callerX, callerY, callerZ) + away;
+	caller->addAction(action);
+}
+
+void Functions::actionForceMoveToObject(Aurora::NWScript::FunctionContext &ctx) {
+	// Alias of ActionMoveToObject for our simple pathfinding
+	actionMoveToObject(ctx);
+}
+
+void Functions::actionForceMoveToLocation(Aurora::NWScript::FunctionContext &ctx) {
+	// Alias of ActionMoveToLocation
+	actionMoveToLocation(ctx);
 }
 
 void Functions::actionFollowLeader(Aurora::NWScript::FunctionContext &ctx) {
@@ -154,6 +195,21 @@ void Functions::actionFollowLeader(Aurora::NWScript::FunctionContext &ctx) {
 
 	caller->addAction(action);
 }
+
+void Functions::cancelCombat(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (caller)
+		caller->cancelCombat();
+}
+
+void Functions::getAttemptedAttackTarget(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	if (creature)
+		ctx.getReturn() = (Aurora::NWScript::Object *) creature->getAttemptedAttackTarget();
+	else
+		ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+}
+
 
 void Functions::clearAllActions(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
@@ -179,7 +235,28 @@ void Functions::actionEquipItem(Aurora::NWScript::FunctionContext &ctx) {
 	if (!caller || !item)
 		return;
 
-	caller->equipItem(item->getTag(), static_cast<InventorySlot>(slot));
+	Common::UString resRef = item->getTemplateResRef();
+	if (resRef.empty())
+		resRef = item->getTag();
+
+	caller->equipItem(resRef, static_cast<InventorySlot>(slot));
+}
+
+void Functions::actionUnequipItem(Aurora::NWScript::FunctionContext &ctx) {
+	Item *item = dynamic_cast<Item *>(ObjectContainer::toObject(ctx.getParams()[0].getObject()));
+
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller || !item)
+		return;
+
+	// In the real engine this would be queued, but we can safely handle it directly.
+	for (int i = static_cast<int>(kInventorySlotHead); i < static_cast<int>(kInventorySlotMAX); ++i) {
+		InventorySlot slot = static_cast<InventorySlot>(i);
+		if (caller->getEquipedItem(slot) == item) {
+			caller->equipItem("", slot);
+			break;
+		}
+	}
 }
 
 void Functions::actionPickUpItem(Aurora::NWScript::FunctionContext &ctx) {
@@ -205,12 +282,6 @@ void Functions::actionAttack(Aurora::NWScript::FunctionContext &ctx) {
 	Action action(kActionAttackObject);
 	action.object = target;
 	caller->addAction(action);
-}
-
-void Functions::cancelCombat(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	if (creature)
-		creature->cancelCombat();
 }
 
 void Functions::getLastAttacker(Aurora::NWScript::FunctionContext &ctx) {
@@ -265,6 +336,12 @@ void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
 	caller->playAnimation(animName, true, length, speed > 0.0f ? speed : 1.0f);
 }
 
+void Functions::playAnimation(Aurora::NWScript::FunctionContext &ctx) {
+	// PlayAnimation acts immediately instead of queueing.
+	// For Endar Spire we just re-use the mapping logic from actionPlayAnimation.
+	actionPlayAnimation(ctx);
+}
+
 void Functions::actionJumpToObject(Aurora::NWScript::FunctionContext &ctx) {
 	// Immediately teleport the caller to the position of the target object.
 	// This is the action-queued variant of JumpToObject; for the Endar Spire
@@ -291,6 +368,27 @@ void Functions::actionWait(Aurora::NWScript::FunctionContext &ctx) {
 	Action action(kActionWait);
 	action.range = ctx.getParams()[0].getFloat();
 	caller->addAction(action);
+}
+
+void Functions::actionPutDownItem(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	// Inventory dropping is not yet modeled; keep script flow alive.
+}
+
+void Functions::actionCastSpellAtObject(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	// Spell casting is currently out of scope for this progression slice.
+}
+
+void Functions::actionBarkString(Aurora::NWScript::FunctionContext &ctx) {
+	const uint32_t strRef = static_cast<uint32_t>(ctx.getParams()[0].getInt());
+	Common::UString text = TalkMan.getString(strRef);
+	if (text.empty())
+		text = Common::String::format("<strref:%u>", strRef);
+
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	const Common::UString who = caller ? caller->getTag() : Common::UString("(unknown)");
+	warning("ActionBarkString [%s]: %s", who.c_str(), text.c_str());
 }
 
 } // End of namespace KotORBase

@@ -244,6 +244,18 @@ void Functions::getStringByStrRef(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = TalkMan.getString(strRef);
 }
 
+void Functions::barkString(Aurora::NWScript::FunctionContext &ctx) {
+	Object *speaker = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	const uint32_t strRef = static_cast<uint32_t>(ctx.getParams()[1].getInt());
+
+	Common::UString text = TalkMan.getString(strRef);
+	if (text.empty())
+		text = Common::String::format("<strref:%u>", strRef);
+
+	const Common::UString who = speaker ? speaker->getTag() : Common::UString("(unknown)");
+	warning("BarkString [%s]: %s", who.c_str(), text.c_str());
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines
