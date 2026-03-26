@@ -75,12 +75,12 @@ GTEST_TEST(KotORBaseCreatureInfo, setAndGetAllAbilities) {
 	EXPECT_EQ(info.getAbilityScore(kAbilityCharisma),     18);
 }
 
-// Modifier formula: floor((score - 10) / 2), per d20 rules.
+// Modifier formula: floor((score - 10) / 2), per d20/SRD rules.
 //
-// This differs from the d20 SRD's floor() for odd negative differences:
-//   score  9: (9-10)/2 = -1/2 =  0 in C++; SRD floor would give -1
-//   score  1: (1-10)/2 = -9/2 = -4 in C++; SRD floor would give -5
-// The engine uses the floor form, including odd negative scores.
+// The engine explicitly implements the mathematical floor for odd negative
+// differences, so odd scores below 10 round away from zero:
+//   score  9: floor(-0.5) = -1
+//   score  1: floor(-4.5) = -5
 GTEST_TEST(KotORBaseCreatureInfo, abilityModifierFormula) {
 	CreatureInfo info;
 
@@ -100,12 +100,11 @@ GTEST_TEST(KotORBaseCreatureInfo, abilityModifierFormula) {
 	info.setAbilityScore(kAbilityStrength, 18);
 	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), 4);
 
-	// Score 8 → modifier -1  (8-10 = -2; -2/2 = -1, same as SRD)
+	// Score 8 → modifier -1  (even delta: same as C++ truncation)
 	info.setAbilityScore(kAbilityStrength, 8);
 	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), -1);
 
-	// Score 9 → modifier 0  ((9-10)/2 = -1/2 = 0 with C++ truncation)
-	// SRD floor would give -1; the engine gives 0.
+	// Score 9 → modifier -1  (odd delta: floor(-0.5) = -1)
 	info.setAbilityScore(kAbilityStrength, 9);
 	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), -1);
 
@@ -113,8 +112,7 @@ GTEST_TEST(KotORBaseCreatureInfo, abilityModifierFormula) {
 	info.setAbilityScore(kAbilityStrength, 6);
 	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), -2);
 
-	// Score 1 → modifier -4  ((1-10)/2 = -9/2 = -4 with C++ truncation)
-	// SRD floor would give -5; the engine gives -4.
+	// Score 1 → modifier -5  (odd delta: floor(-4.5) = -5)
 	info.setAbilityScore(kAbilityStrength, 1);
 	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), -5);
 

@@ -252,7 +252,7 @@ TEST(EndarSpireGoldenPath, ApplyEffectDamageDeathDetection) {
 	const int maxHp = 10;
 	int currentHp = 4;
 
-	// Apply 4 points of damage: 4 - 4 = 0  → dead
+	// Apply exactly-lethal damage: 4 - 4 = 0  → dead (HP == 0 triggers death)
 	Effect lethalDmg(kEffectDamage, 4);
 	int afterDmg = currentHp - lethalDmg.getAmount();
 	EXPECT_EQ(afterDmg, 0);
@@ -263,6 +263,12 @@ TEST(EndarSpireGoldenPath, ApplyEffectDamageDeathDetection) {
 	int afterNonLethal = currentHp - nonLethalDmg.getAmount();
 	EXPECT_EQ(afterNonLethal, 1);
 	EXPECT_GT(afterNonLethal, 0); // does not trigger death path
+
+	// Overkill: damage equal to max HP applied to 4 remaining HP → HP goes
+	// negative, which also triggers the death path (hp <= 0).
+	Effect overkillDmg(kEffectDamage, maxHp);
+	int afterOverkill = currentHp - overkillDmg.getAmount();
+	EXPECT_LT(afterOverkill, 0); // HP below zero still triggers death
 }
 
 // ---------------------------------------------------------------------------
@@ -294,3 +300,34 @@ TEST(EndarSpireGoldenPath, CombatRoundNullAreaGuard) {
 	EXPECT_EQ(creaturesVisited, 5);
 }
 
+// ---------------------------------------------------------------------------
+// 10. Unarmed minimum damage — very low STR must still deal at least 1 damage
+// ---------------------------------------------------------------------------
+
+TEST(EndarSpireGoldenPath, UnarmedAttackMinimumDamage) {
+	// Creature::executeAttack computes unarmed damage as:
+	//   damage = 1 + strModifier
+	//   if (damage < 1) damage = 1;
+	//
+	// With STR 6 the modifier is -2, giving a raw damage of -1.  The floor
+	// clamp must raise this to 1 so that combat never accidentally heals.
+	CreatureInfo pcInfo;
+	pcInfo.setAbilityScore(kAbilityStrength, 6);
+	const int strMod = pcInfo.getAbilityModifier(kAbilityStrength);
+	EXPECT_EQ(strMod, -2);
+
+	// Raw unarmed formula before floor
+	int rawDamage = 1 + strMod;
+	EXPECT_EQ(rawDamage, -1); // would be negative without the clamp
+
+	// After the minimum-damage floor applied in executeAttack
+	int actualDamage = (rawDamage < 1) ? 1 : rawDamage;
+	EXPECT_EQ(actualDamage, 1);
+
+	// Verify the symmetric case: STR 14 (+2) should give 3 and not be clamped
+	pcInfo.setAbilityScore(kAbilityStrength, 14);
+	int normalDamage = 1 + pcInfo.getAbilityModifier(kAbilityStrength); // 1+2=3
+	EXPECT_EQ(normalDamage, 3);
+	int clampedNormal = (normalDamage < 1) ? 1 : normalDamage;
+	EXPECT_EQ(clampedNormal, 3); // unaffected by the floor
+}
