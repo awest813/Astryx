@@ -262,3 +262,126 @@ Milestone 2 is **complete** when the Taris entry module loads and runs without
 unhandled NWScript exceptions, Carth joins the active party, and all ten
 acceptance criteria above are satisfied — verified by the unit tests and a
 manual smoke-run of the module transition from Endar Spire.
+
+---
+
+---
+
+# Milestone 3 — Geometry, Item Stacks, Faction Transfers & Module Queries
+
+This milestone adds a new batch of NWScript utility functions that are called
+by common KotOR I and KotOR II scripts across many modules and quest areas.
+
+**Goal:** Implement and wire the next set of frequently-used NWScript functions
+so that scripts relying on object-to-object distance queries, faction changes,
+item stack sizes, and module filename detection run without falling through to
+the `unimplementedFunction` warning path.
+
+---
+
+## Scope
+
+KotOR I and KotOR II kotorbase layer.  Functions wired in both
+`kotor/script/function_tables.h` and `kotor2/script/function_tables.h`.
+
+---
+
+## Acceptance Criteria
+
+1. **`GetDistanceBetween` (ID 151)** — returns 3D Euclidean distance between two
+   objects; negative on invalid input; wired in both tables.
+2. **`SetFacingPoint` (ID 143)** — rotates OBJECT_SELF to face a world-space
+   vector point; uses atan2 of (target − caller) in the XY plane.
+3. **`AngleToVector` (ID 144)** — converts an angle in degrees to a 2D unit
+   vector (x = cos(angle), y = sin(angle), z = 0).
+4. **`VectorToAngle` (ID 145)** — converts a vector to an angle in degrees via
+   atan2(y, x); round-trips with AngleToVector.
+5. **`ActionGiveItem` (ID 135)** — transfers one item from the caller's inventory
+   to the target creature's inventory.
+6. **`ActionTakeItem` (ID 136)** — transfers one item from a source creature's
+   inventory into the caller's inventory.
+7. **`GetItemStackSize` (ID 138)** — returns the `_stackSize` of an Item object
+   (1 for non-stackable, ≥ 1 for stacked consumables).
+8. **`SetItemStackSize` (ID 150)** — sets the `_stackSize`; clamps values < 1 to 1.
+9. **`GetFactionEqual` (ID 172)** — returns TRUE if both objects share the same
+   non-invalid standard faction.
+10. **`ChangeFaction` (ID 173)** — sets the first object's faction to match the
+    second object's faction.
+11. **`GetModuleFileName` (ID 210)** — returns the resource-ref name of the
+    currently loaded module (e.g. `"end_m01aa"`).
+12. **`GetGoingToBeAttackedBy` (ID 211)** — returns the first creature in the
+    current area whose `getAttackTarget()` matches the given object.
+
+---
+
+## Required Work
+
+### NWScript Functions — newly implemented and wired (all ✅ this session)
+
+- [x] `GetDistanceBetween` (ID 151) — implementation already existed in
+      `functions_object.cpp`; wired in kotor + kotor2 tables.
+- [x] `SetFacingPoint` (ID 143) — implemented in `functions_action.cpp`; computes
+      atan2 of (target − caller) in 2D and calls `setOrientation`; wired.
+- [x] `AngleToVector` (ID 144) — implemented in `functions_math.cpp`; uses
+      `cos`/`sin` with `Common::deg2rad`; wired in both tables.
+- [x] `VectorToAngle` (ID 145) — implemented in `functions_math.cpp`; uses
+      `atan2` with `Common::rad2deg`; wired in both tables.
+- [x] `ActionGiveItem` (ID 135) — implemented in `functions_action.cpp`; removes
+      item from caller inventory and adds to target inventory; wired.
+- [x] `ActionTakeItem` (ID 136) — implemented in `functions_action.cpp`; removes
+      item from source inventory and adds to caller inventory; wired.
+- [x] `GetItemStackSize` (ID 138) / `SetItemStackSize` (ID 150) — `Item` class
+      extended with `_stackSize` field and `getStackSize()` / `setStackSize()`;
+      `CreateItemOnObject` now propagates `count` as the initial stack size; both
+      NWScript functions wired in kotor + kotor2 tables.
+- [x] `GetFactionEqual` (ID 172) — implemented in `functions_object.cpp`; checks
+      non-invalid faction equality; wired in both tables.
+- [x] `ChangeFaction` (ID 173) — implemented in `functions_object.cpp`; calls
+      `setFaction(factionSrc->getFaction())`; wired in both tables.
+- [x] `GetModuleFileName` (ID 210) — implemented in `functions_module.cpp`;
+      returns `Module::getResRef()` (new getter for `_module` field); wired.
+- [x] `GetGoingToBeAttackedBy` (ID 211) — implemented in `functions_object.cpp`;
+      iterates area creatures and returns the first whose attack target is the
+      given object; wired in both tables.
+
+### Supporting changes
+
+- [x] `Module::getResRef()` added (module.h / module.cpp) — returns `_module`.
+- [x] `Item::getStackSize()` / `Item::setStackSize()` added (item.h / item.cpp).
+- [x] `createItemOnObject` updated to propagate `count` to `item->setStackSize()`.
+- [x] Pre-existing tests fixed: `TEST()` macro replaced with `GTEST_TEST()` in
+      `tests/engines/kotorbase/endar_spire_golden.cpp` and
+      `tests/smoke/crash_regression.cpp` (project uses `-DGTEST_DONT_DEFINE_TEST=1`).
+- [x] `SUCCEED()` replaced with `GTEST_SUCCEED()` in `crash_regression.cpp`.
+
+### CI Test Coverage
+
+- [x] Add unit tests for 3D/2D distance arithmetic
+      (`distanceBetweenOriginIs0`, `distanceBetweenAlongXAxis`,
+      `distanceBetween3DPythagorean`, `distanceBetween2DIgnoresZ`).
+- [x] Add unit tests for `AngleToVector` / `VectorToAngle` covering 0°, 90°,
+      180°, unit-length invariant, and round-trip property.
+- [x] Add unit tests for item stack-size clamp logic (default = 1, positive
+      values pass through, values < 1 clamp to 1).
+- [x] Add unit tests for `GetFactionEqual` covering same-faction, different-
+      faction, and invalid-faction cases.
+      *(`tests/engines/kotorbase/milestone3_functions.cpp` added; wired into
+      `tests/engines/kotorbase/rules.mk`.)*
+
+---
+
+## Out of Scope for Milestone 3
+
+- Full effect inspection (`GetFirstEffect`, `GetNextEffect`, `GetIsEffectValid`).
+- Spell system functions (`GetSpellId`, `GetCasterLevel`, etc.).
+- Advanced faction queries (`GetFactionWeakestMember`, `AdjustReputation`, etc.).
+- Listen/pattern matching functions.
+- Areas beyond Taris.
+
+---
+
+## Success Metric
+
+Milestone 3 is **complete** when all 92 unit tests pass (verified by `make check`)
+and the 12 newly implemented NWScript functions no longer appear in the
+`unimplementedFunction` warning path during typical Taris script execution.

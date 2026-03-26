@@ -48,6 +48,11 @@ public:
 
 	int getACBonus() const;
 
+	// Stack size (for stackable items like medpacs)
+
+	int getStackSize() const;
+	void setStackSize(int size);
+
 	// Visual properties
 
 	int getBodyVariation() const;
@@ -69,6 +74,7 @@ private:
 	int _bodyVariation;
 	int _textureVariation;
 	int _acBonus;
+	int _stackSize { 1 };
 
 	void load(const Aurora::GFF3Struct &gff);
 };

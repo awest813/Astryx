@@ -22,6 +22,8 @@
  *  Star Wars: Knights of the Old Republic engine functions assigning actions to objects.
  */
 
+#include <cmath>
+
 #include "external/glm/geometric.hpp"
 
 #include "src/common/error.h"
@@ -531,6 +533,61 @@ void Functions::actionBarkString(Aurora::NWScript::FunctionContext &ctx) {
 	Object *caller = ObjectContainer::toObject(ctx.getCaller());
 	const Common::UString who = caller ? caller->getTag() : Common::UString("(unknown)");
 	status("ActionBarkString [%s]: %s", who.c_str(), text.c_str());
+}
+
+void Functions::setFacingPoint(Aurora::NWScript::FunctionContext &ctx) {
+	// SetFacingPoint(vector vTarget)
+	// Rotates the caller to face the point vTarget in 2D space.
+	float tx, ty, tz;
+	ctx.getParams()[0].getVector(tx, ty, tz);
+
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	if (!caller)
+		return;
+
+	float cx, cy, cz;
+	caller->getPosition(cx, cy, cz);
+
+	const float angle = std::atan2(ty - cy, tx - cx) * (180.0f / M_PI);
+	caller->setOrientation(0.0f, 0.0f, 1.0f, angle);
+}
+
+void Functions::actionGiveItem(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionGiveItem(object oItem, object oGiveTo)
+	// Transfers oItem from the caller's inventory to oGiveTo's inventory.
+	Item *item = dynamic_cast<Item *>(ObjectContainer::toObject(ctx.getParams()[0].getObject()));
+	Creature *target = ObjectContainer::toCreature(getParamObject(ctx, 1));
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+
+	if (!item || !target || !caller)
+		return;
+
+	const Common::UString tag = item->getTag();
+	if (tag.empty())
+		return;
+
+	caller->getInventory().removeItem(tag, 1);
+	target->getInventory().addItem(tag, 1);
+	target->addScriptItem(tag);
+}
+
+void Functions::actionTakeItem(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionTakeItem(object oItem, object oTakeFrom)
+	// Transfers oItem from oTakeFrom's inventory into the caller's inventory.
+	Item *item = dynamic_cast<Item *>(ObjectContainer::toObject(ctx.getParams()[0].getObject()));
+	Creature *source = ObjectContainer::toCreature(getParamObject(ctx, 1));
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+
+	if (!item || !source || !caller)
+		return;
+
+	const Common::UString tag = item->getTag();
+	if (tag.empty())
+		return;
+
+	source->getInventory().removeItem(tag, 1);
+	caller->getInventory().addItem(tag, 1);
+	caller->addScriptItem(tag);
 }
 
 } // End of namespace KotORBase

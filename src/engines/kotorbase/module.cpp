@@ -1142,6 +1142,10 @@ const Common::UString &Module::getName() const {
 	return Object::getName();
 }
 
+const Common::UString &Module::getResRef() const {
+	return _module;
+}
+
 Area *Module::getCurrentArea() {
 	return _area.get();
 }

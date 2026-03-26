@@ -33,6 +33,7 @@
 
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/situated.h"
 #include "src/engines/kotorbase/module.h"
@@ -169,13 +170,17 @@ void Functions::createItemOnObject(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &itemTag = ctx.getParams()[0].getString();
 	Aurora::NWScript::Object *object = ctx.getParams()[1].getObject();
 	int32_t count = ctx.getParams()[2].getInt();
+	if (count < 1)
+		count = 1;
 
 	Creature *creature = ObjectContainer::toCreature(object);
 	if (creature) {
 		creature->getInventory().addItem(itemTag, count);
 		Item *item = creature->addScriptItem(itemTag);
-		if (item)
+		if (item) {
+			item->setStackSize(count);
 			ctx.getReturn() = item;
+		}
 		return;
 	}
 
@@ -774,6 +779,68 @@ void Functions::getLockUnlockDC(Aurora::NWScript::FunctionContext &ctx) {
 	}
 
 	ctx.getReturn() = situated->isKeyRequired() ? 100 : 10;
+}
+
+void Functions::getItemStackSize(Aurora::NWScript::FunctionContext &ctx) {
+	// GetItemStackSize(object oItem) -> int
+	// Returns the stack size (quantity) of a stackable item; 1 for non-stacked items.
+	Item *item = dynamic_cast<Item *>(ObjectContainer::toObject(getParamObject(ctx, 0)));
+	ctx.getReturn() = item ? item->getStackSize() : 0;
+}
+
+void Functions::setItemStackSize(Aurora::NWScript::FunctionContext &ctx) {
+	// SetItemStackSize(object oItem, int nSize)
+	// Sets the stack size of a stackable item.  Values below 1 are clamped to 1.
+	Item *item = dynamic_cast<Item *>(ObjectContainer::toObject(getParamObject(ctx, 0)));
+	int size = ctx.getParams()[1].getInt();
+	if (item)
+		item->setStackSize(size);
+}
+
+void Functions::getFactionEqual(Aurora::NWScript::FunctionContext &ctx) {
+	// GetFactionEqual(object oTarget, object oSource=OBJECT_SELF) -> int
+	// Returns TRUE if oTarget and oSource are members of the same standard faction.
+	ctx.getReturn() = 0;
+
+	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!target || !source)
+		return;
+
+	Faction tf = target->getFaction();
+	Faction sf = source->getFaction();
+	ctx.getReturn() = (tf != kFactionInvalid && tf == sf) ? 1 : 0;
+}
+
+void Functions::changeFaction(Aurora::NWScript::FunctionContext &ctx) {
+	// ChangeFaction(object oObjectToChange, object oMemberOfFactionToJoin)
+	// Changes oObjectToChange's faction to match oMemberOfFactionToJoin's faction.
+	Object *toChange = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const Object *factionSrc = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!toChange || !factionSrc) {
+		warning("Functions::changeFaction(): invalid object");
+		return;
+	}
+
+	toChange->setFaction(factionSrc->getFaction());
+}
+
+void Functions::getGoingToBeAttackedBy(Aurora::NWScript::FunctionContext &ctx) {
+	// GetGoingToBeAttackedBy(object oTarget) -> object
+	// Returns the first creature in the current area that has oTarget as its attack target.
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	if (!target)
+		return;
+
+	const std::vector<Creature *> &creatures = _game->getModule().getCurrentArea()->getCreatures();
+	for (Creature *creature : creatures) {
+		if (creature && creature->getAttackTarget() == target) {
+			ctx.getReturn() = creature;
+			return;
+		}
+	}
 }
 
 } // End of namespace KotORBase

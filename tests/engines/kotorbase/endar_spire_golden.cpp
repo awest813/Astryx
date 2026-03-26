@@ -69,7 +69,7 @@ static bool rollHits(int d20, int attackMod, int targetAC) {
 // 1. Character creation — class selection, ability allocation, starting HP
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, CharacterCreation) {
+GTEST_TEST(EndarSpireGoldenPath, CharacterCreation) {
 	// Scoundrel: 6-sided hit die.  CON 12 gives +1 modifier → starting HP = 7.
 	CreatureInfo info;
 	info.setAbilityScore(kAbilityStrength,    14);
@@ -90,7 +90,7 @@ TEST(EndarSpireGoldenPath, CharacterCreation) {
 // 2. Inventory & equip — footlocker loot, AC calculation with combat suit
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, InventoryEquip) {
+GTEST_TEST(EndarSpireGoldenPath, InventoryEquip) {
 	// PC picks up items from the footlocker at the start of the Endar Spire.
 	Inventory inv;
 	inv.addItem("g_i_crhide001"); // Combat Suit (+2 AC)
@@ -111,7 +111,7 @@ TEST(EndarSpireGoldenPath, InventoryEquip) {
 // 3. Dialogue progression — Trask Ulgo, skill-gated lines
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, DialogProgression) {
+GTEST_TEST(EndarSpireGoldenPath, DialogProgression) {
 	// Trask's dialogue has lines gated by awareness (perception) skill checks.
 	// Verify that the ability-modifier logic used by dialogue conditionals is
 	// correct for a Scoundrel with Wisdom 12.
@@ -135,7 +135,7 @@ TEST(EndarSpireGoldenPath, DialogProgression) {
 // 4. Door triggers — security skill check to open the sealed door
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, DoorTriggers) {
+GTEST_TEST(EndarSpireGoldenPath, DoorTriggers) {
 	// Trask uses Security skill (rank 4) against the first locked door (DC 10).
 	CreatureInfo info;
 	info.setSkillRank(kSkillSecurity, 4);
@@ -157,7 +157,7 @@ TEST(EndarSpireGoldenPath, DoorTriggers) {
 // 5. Combat resolution — Sith trooper encounter on the Endar Spire
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, CombatResolution) {
+GTEST_TEST(EndarSpireGoldenPath, CombatResolution) {
 	// PC (Scoundrel, STR 14) attacks a Sith trooper (HP 10, AC 12).
 	CreatureInfo pcInfo;
 	pcInfo.setAbilityScore(kAbilityStrength, 14);
@@ -194,7 +194,7 @@ TEST(EndarSpireGoldenPath, CombatResolution) {
 // 6. Module exit script — trigger fires and transitions to Taris
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, ModuleExitScript) {
+GTEST_TEST(EndarSpireGoldenPath, ModuleExitScript) {
 	// The escape-pod trigger fires a script that calls StartNewModule.
 	// Verify that the heal-to-full logic applied before transition is correct:
 	// a creature at low HP receives an EffectHeal that restores them.
@@ -222,7 +222,7 @@ TEST(EndarSpireGoldenPath, ModuleExitScript) {
 // 7. Item pickup range — creature must be within 1.5 units to pick up an item
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, PickUpItemRange) {
+GTEST_TEST(EndarSpireGoldenPath, PickUpItemRange) {
 	// The ActionPickUpItem action must use a non-zero range so the creature
 	// can approach and pick up an item that is not at its exact position.
 	// Functions::actionPickUpItem sets action.range = 1.5f; verify that the
@@ -246,7 +246,7 @@ TEST(EndarSpireGoldenPath, PickUpItemRange) {
 // 8. ApplyEffectToObject death path — HP clamping and death detection
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, ApplyEffectDamageDeathDetection) {
+GTEST_TEST(EndarSpireGoldenPath, ApplyEffectDamageDeathDetection) {
 	// Mirrors the applyEffectToObject logic: damage is subtracted, then
 	// death is detected only when HP drops to ≤ 0.
 	const int maxHp = 10;
@@ -275,7 +275,7 @@ TEST(EndarSpireGoldenPath, ApplyEffectDamageDeathDetection) {
 // 9. Combat round null-area guard — ensure null-area won't dereference
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, CombatRoundNullAreaGuard) {
+GTEST_TEST(EndarSpireGoldenPath, CombatRoundNullAreaGuard) {
 	// Module::notifyCombatRoundBegan and notifyCombatRoundEnded now guard
 	// against a null _area before iterating creatures.  The guard pattern is:
 	//   if (!_area) return;
@@ -304,7 +304,7 @@ TEST(EndarSpireGoldenPath, CombatRoundNullAreaGuard) {
 // 10. Unarmed minimum damage — very low STR must still deal at least 1 damage
 // ---------------------------------------------------------------------------
 
-TEST(EndarSpireGoldenPath, UnarmedAttackMinimumDamage) {
+GTEST_TEST(EndarSpireGoldenPath, UnarmedAttackMinimumDamage) {
 	// Creature::executeAttack computes unarmed damage as:
 	//   damage = 1 + strModifier
 	//   if (damage < 1) damage = 1;

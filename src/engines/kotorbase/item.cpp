@@ -118,6 +118,14 @@ const Common::UString Item::getModelName() const {
 	return Common::String::format("%s_%03d", _itemClass.c_str(), _modelVariation);
 }
 
+int Item::getStackSize() const {
+	return _stackSize;
+}
+
+void Item::setStackSize(int size) {
+	_stackSize = (size < 1) ? 1 : size;
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

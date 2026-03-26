@@ -72,3 +72,8 @@ check_PROGRAMS                                           += tests/engines/kotorb
 tests_engines_kotorbase_test_taris_progression_SOURCES    = tests/engines/kotorbase/taris_progression.cpp
 tests_engines_kotorbase_test_taris_progression_LDADD      = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_taris_progression_CXXFLAGS   = $(test_CXXFLAGS)
+
+check_PROGRAMS                                            += tests/engines/kotorbase/test_milestone3_functions
+tests_engines_kotorbase_test_milestone3_functions_SOURCES  = tests/engines/kotorbase/milestone3_functions.cpp
+tests_engines_kotorbase_test_milestone3_functions_LDADD    = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_milestone3_functions_CXXFLAGS = $(test_CXXFLAGS)

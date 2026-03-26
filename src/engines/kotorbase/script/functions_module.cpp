@@ -221,6 +221,13 @@ void Functions::getModuleName(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = _game->getModule().getName();
 }
 
+void Functions::getModuleFileName(Aurora::NWScript::FunctionContext &ctx) {
+	// GetModuleFileName() -> string
+	// Returns the resource reference (filename without extension) of the
+	// currently loaded module, e.g. "end_m01aa".
+	ctx.getReturn() = _game->getModule().getResRef();
+}
+
 void Functions::setAreaTransitionBMP(Aurora::NWScript::FunctionContext &ctx) {
 	int bmp = ctx.getParams()[0].getInt();
 	int strref = ctx.getParams()[1].getInt();

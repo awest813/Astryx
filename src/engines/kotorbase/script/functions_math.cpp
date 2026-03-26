@@ -22,6 +22,8 @@
  *  Star Wars: Knights of the Old Republic engine functions doing mathematical operations.
  */
 
+#include <cmath>
+
 #include "src/common/util.h"
 #include "src/common/maths.h"
 
@@ -165,6 +167,21 @@ void Functions::feetToMeters(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::yardsToMeters(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = ctx.getParams()[0].getFloat() * 0.9144f;
+}
+
+void Functions::angleToVector(Aurora::NWScript::FunctionContext &ctx) {
+	// AngleToVector(float fAngle) -> vector
+	// Converts an angle in degrees to a 2D unit vector (x=cos, y=sin, z=0).
+	const float rad = Common::deg2rad(ctx.getParams()[0].getFloat());
+	ctx.getReturn().setVector(std::cos(rad), std::sin(rad), 0.0f);
+}
+
+void Functions::vectorToAngle(Aurora::NWScript::FunctionContext &ctx) {
+	// VectorToAngle(vector vVector) -> float
+	// Converts a 2D vector to an angle in degrees (atan2 of y and x).
+	float x, y, z;
+	ctx.getParams()[0].getVector(x, y, z);
+	ctx.getReturn() = Common::rad2deg(std::atan2(y, x));
 }
 
 } // End of namespace KotORBase

@@ -133,6 +133,9 @@ protected:
 	void feetToMeters(Aurora::NWScript::FunctionContext &ctx);
 	void yardsToMeters(Aurora::NWScript::FunctionContext &ctx);
 
+	void angleToVector(Aurora::NWScript::FunctionContext &ctx);
+	void vectorToAngle(Aurora::NWScript::FunctionContext &ctx);
+
 	// Strings, functions_string.cpp
 
 	void writeTimestampedLogEntry(Aurora::NWScript::FunctionContext &ctx);
@@ -264,6 +267,14 @@ protected:
 	void setIsDestroyable  (Aurora::NWScript::FunctionContext &ctx);
 	void getIsInConversation(Aurora::NWScript::FunctionContext &ctx);
 
+	void getItemStackSize(Aurora::NWScript::FunctionContext &ctx);
+	void setItemStackSize(Aurora::NWScript::FunctionContext &ctx);
+
+	void getFactionEqual(Aurora::NWScript::FunctionContext &ctx);
+	void changeFaction  (Aurora::NWScript::FunctionContext &ctx);
+
+	void getGoingToBeAttackedBy(Aurora::NWScript::FunctionContext &ctx);
+
 	// Quests / Journals
 	void addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
 	void removeJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
@@ -306,8 +317,11 @@ protected:
 	void clearAllActions(Aurora::NWScript::FunctionContext &ctx);
 
 	void setFacing(Aurora::NWScript::FunctionContext &ctx);
+	void setFacingPoint(Aurora::NWScript::FunctionContext &ctx);
 	void actionEquipItem(Aurora::NWScript::FunctionContext &ctx);
 	void actionPickUpItem(Aurora::NWScript::FunctionContext &ctx);
+	void actionGiveItem(Aurora::NWScript::FunctionContext &ctx);
+	void actionTakeItem(Aurora::NWScript::FunctionContext &ctx);
 	void actionAttack(Aurora::NWScript::FunctionContext &ctx);
 	void actionUseFeat(Aurora::NWScript::FunctionContext &ctx);
 	void actionUseTalentOnObject(Aurora::NWScript::FunctionContext &ctx);
@@ -464,6 +478,7 @@ protected:
 	void actionUnequipItem(Aurora::NWScript::FunctionContext &ctx);
 	void setAreaTransitionBMP(Aurora::NWScript::FunctionContext &ctx);
 	void getModuleName(Aurora::NWScript::FunctionContext &ctx);
+	void getModuleFileName(Aurora::NWScript::FunctionContext &ctx);
 	void getLoadFromSaveGame(Aurora::NWScript::FunctionContext &ctx);
 	void endGame(Aurora::NWScript::FunctionContext &ctx);
 	void getTransitionTarget(Aurora::NWScript::FunctionContext &ctx);

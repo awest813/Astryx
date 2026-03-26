@@ -95,8 +95,10 @@ public:
 
 	/** Return the IFO of the currently loaded module. */
 	const Aurora::IFOFile &getIFO() const;
-	/** Return the module's name. */
+	/** Return the module's display name. */
 	const Common::UString &getName() const;
+	/** Return the module's resource reference (e.g. "end_m01aa"). */
+	const Common::UString &getResRef() const;
 
 	// Elements of the current module
 

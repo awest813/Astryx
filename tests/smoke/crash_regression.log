@@ -1,0 +1,17 @@
+Running main() from gtest_main.cc
+Running main() from tests/googletest/src/gtest_main.cc
+[==========] Running 3 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 3 tests from CrashRegression
+[ RUN      ] CrashRegression.ModuleBadTransitionNoCrash
+[       OK ] CrashRegression.ModuleBadTransitionNoCrash (0 ms)
+[ RUN      ] CrashRegression.ScriptInvalidTargetNoCrash
+[       OK ] CrashRegression.ScriptInvalidTargetNoCrash (0 ms)
+[ RUN      ] CrashRegression.MissingResourceLoadNoCrash
+[       OK ] CrashRegression.MissingResourceLoadNoCrash (0 ms)
+[----------] 3 tests from CrashRegression (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 3 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 3 tests.
+PASS tests/smoke/crash_regression (exit status: 0)
