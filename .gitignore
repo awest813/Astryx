@@ -97,6 +97,9 @@ Makefile.in
 /tests/engines/test_*
 /tests/engines/nwn2/test_*
 /tests/engines/kotorbase/test_*
+/tests/smoke/crash_regression
+/tests/smoke/*.log
+/tests/smoke/*.trs
 
 # Unix binary
 /src/xoreos
