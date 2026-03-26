@@ -301,6 +301,7 @@ void Functions::actionPickUpItem(Aurora::NWScript::FunctionContext &ctx) {
 
 	Action action(kActionPickUpItem);
 	action.object = itemObj;
+	action.range  = 1.5f;   // Must be within 1.5 units to pick up
 	caller->addAction(action);
 }
 
