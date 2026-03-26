@@ -41,6 +41,7 @@
 #include "src/engines/kotorbase/action.h"
 #include "src/engines/kotorbase/creature.h"
 
+#include "src/engines/kotorbase/script/endar_spire_support.h"
 #include "src/engines/kotorbase/script/functions.h"
 
 namespace Engines {
@@ -136,15 +137,7 @@ void Functions::actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx) {
 	if (!dest)
 		return;
 
-	float x, y, z;
-	dest->getPosition(x, y, z);
-
-	Action action(kActionMoveToPoint);
-	action.range = 0.1f; // arrive within 0.1 units of the target location
-	action.location = glm::vec3(x, y, z);
-
-	caller->addAction(action);
-	caller->addAction(action);
+	caller->addAction(EndarSpireSupport::makeMoveToLocationAction(*dest));
 }
 
 void Functions::actionForceMoveToObject(Aurora::NWScript::FunctionContext &ctx) {
@@ -166,12 +159,6 @@ void Functions::actionFollowLeader(Aurora::NWScript::FunctionContext &ctx) {
 	action.range = 1.0f;
 
 	caller->addAction(action);
-}
-
-void Functions::cancelCombat(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
-	if (caller)
-		caller->cancelCombat();
 }
 
 void Functions::getAttackTarget(Aurora::NWScript::FunctionContext &ctx) {
@@ -293,28 +280,9 @@ void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
 	if (!caller)
 		return;
 
-	// Map the numeric animation ID to a named animation string.
-	// KOTOR animation IDs are documented in animconst.nss; common ones used in
-	// combat and dialogue are handled here; unknown IDs fall back to a no-op.
-	Common::UString animName;
-	switch (animID) {
-		case  0: animName = "pause1";     break; // ANIMATION_LOOPING_PAUSE
-		case  1: animName = "pause2";     break; // ANIMATION_LOOPING_PAUSE2
-		case  2: animName = "listen";     break; // ANIMATION_LOOPING_LISTEN
-		case  3: animName = "meditate";   break; // ANIMATION_LOOPING_MEDITATE
-		case  4: animName = "worship";    break; // ANIMATION_LOOPING_WORSHIP
-		case 10: animName = "talk";       break; // ANIMATION_LOOPING_TALK_NORMAL
-		case 11: animName = "talklooking"; break; // ANIMATION_LOOPING_TALK_PLEADING
-		case 16: animName = "victory1";   break; // ANIMATION_LOOPING_DEAD_FRONT
-		case 17: animName = "victory2";   break; // ANIMATION_LOOPING_DEAD_BACK
-		case 38: animName = "attack1";    break; // ANIMATION_FIREFORGET_HEAD_TURN_LEFT
-		case 39: animName = "attack2";    break; // ANIMATION_FIREFORGET_HEAD_TURN_RIGHT
-		case 40: animName = "dodge";      break; // ANIMATION_FIREFORGET_PAUSE_SCRATCH_HEAD
-		case 44: animName = "die";        break; // ANIMATION_FIREFORGET_SPASM
-		case 48: animName = "g8a1";       break; // ANIMATION_FIREFORGET_DODGE_DUCK
-		case 49: animName = "g8a2";       break; // ANIMATION_FIREFORGET_DODGE_SIDE
-		default: return; // Unknown animation ID; ignore
-	}
+	const char *animName = EndarSpireSupport::getActionAnimationName(animID);
+	if (!animName)
+		return;
 
 	float speed = ctx.getParams()[1].getFloat();
 	float length = ctx.getParams()[2].getFloat();

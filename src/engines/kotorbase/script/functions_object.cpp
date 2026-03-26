@@ -42,6 +42,7 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creaturesearch.h"
 
+#include "src/engines/kotorbase/script/endar_spire_support.h"
 #include "src/engines/kotorbase/script/functions.h"
 
 namespace Engines {
@@ -198,9 +199,7 @@ void Functions::jumpToLocation(Aurora::NWScript::FunctionContext &ctx) {
 	if (!object || !moveTo)
 		return;
 
-	float x, y, z;
-	moveTo->getPosition(x, y, z);
-	object->setPosition(x, y, z);
+	EndarSpireSupport::applyLocationToObject(*object, *moveTo);
 }
 
 void Functions::jumpToObject(Aurora::NWScript::FunctionContext &ctx) {
@@ -489,23 +488,6 @@ void Functions::getNextItemInInventory(Aurora::NWScript::FunctionContext &ctx) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Faction relationship helpers
-// ---------------------------------------------------------------------------
-
-/** Return true if a faction is considered hostile (attacks friendly factions). */
-static bool isFactionHostile(Engines::KotORBase::Faction f) {
-	return f == Engines::KotORBase::kFactionHostile1 ||
-	       f == Engines::KotORBase::kFactionHostile2 ||
-	       f == Engines::KotORBase::kFactionEndarSpire;
-}
-
-/** Return true if a faction is considered friendly (cooperative with other friendly factions). */
-static bool isFactionFriendly(Engines::KotORBase::Faction f) {
-	return f == Engines::KotORBase::kFactionFriendly1 ||
-	       f == Engines::KotORBase::kFactionFriendly2;
-}
-
 void Functions::getIsEnemy(Aurora::NWScript::FunctionContext &ctx) {
 	// GetIsEnemy(object oTarget, object oSource=OBJECT_SELF)
 	// Returns TRUE if oSource and oTarget are in mutually hostile factions.
@@ -519,8 +501,7 @@ void Functions::getIsEnemy(Aurora::NWScript::FunctionContext &ctx) {
 	Faction tf = target->getFaction();
 	Faction sf = source->getFaction();
 
-	bool enemy = (isFactionHostile(tf) && isFactionFriendly(sf)) ||
-	             (isFactionHostile(sf) && isFactionFriendly(tf));
+	bool enemy = EndarSpireSupport::areFactionsEnemy(tf, sf);
 	ctx.getReturn() = enemy ? 1 : 0;
 }
 
@@ -537,9 +518,7 @@ void Functions::getIsFriend(Aurora::NWScript::FunctionContext &ctx) {
 	Faction tf = target->getFaction();
 	Faction sf = source->getFaction();
 
-	// Same non-invalid faction, or both in a friendly faction family
-	bool friendly = (tf != kFactionInvalid && tf == sf) ||
-	                (isFactionFriendly(tf) && isFactionFriendly(sf));
+	bool friendly = EndarSpireSupport::areFactionsFriendly(tf, sf);
 	ctx.getReturn() = friendly ? 1 : 0;
 }
 
@@ -556,12 +535,7 @@ void Functions::getIsNeutral(Aurora::NWScript::FunctionContext &ctx) {
 	Faction tf = target->getFaction();
 	Faction sf = source->getFaction();
 
-	bool isEnemy  = (isFactionHostile(tf) && isFactionFriendly(sf)) ||
-	                (isFactionHostile(sf) && isFactionFriendly(tf));
-	bool isFriend = (tf != kFactionInvalid && tf == sf) ||
-	                (isFactionFriendly(tf) && isFactionFriendly(sf));
-
-	ctx.getReturn() = (!isEnemy && !isFriend) ? 1 : 0;
+	ctx.getReturn() = EndarSpireSupport::areFactionsNeutral(tf, sf) ? 1 : 0;
 }
 
 void Functions::getName(Aurora::NWScript::FunctionContext &ctx) {
