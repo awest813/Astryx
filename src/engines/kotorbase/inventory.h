@@ -39,7 +39,7 @@ public:
 
 	struct ItemGroup {
 		Common::UString tag;
-		int count;
+		int count { 0 };
 
 		ItemGroup();
 		ItemGroup(const ItemGroup &other);
