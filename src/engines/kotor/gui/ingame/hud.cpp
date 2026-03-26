@@ -338,8 +338,10 @@ void HUD::update(int width, int height) {
 				break;
 			}
 		}
-		if (!foundRes)
-			throw Common::Exception("No gui with 800x600 resolution found.");
+		if (!foundRes) {
+			warning("HUD::update(): no matching HUD GUI for %dx%d and no 800x600 fallback; keeping current HUD", wWidth, wHeight);
+			return;
+		}
 		scale = true;
 	}
 

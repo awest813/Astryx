@@ -42,8 +42,10 @@ void Functions::signalEvent(Aurora::NWScript::FunctionContext &ctx) {
 		object = _game->getModule().getPC();
 
 	Event *e = static_cast<Event *>(ctx.getParams()[1].getEngineType());
-	if (!e)
-		throw Common::Exception("Functions::signalEvent(): Invalid event");
+	if (!e) {
+		warning("Functions::signalEvent(): invalid event");
+		return;
+	}
 
 	switch (e->getType()) {
 		case kEventUserDefined:

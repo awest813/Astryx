@@ -22,6 +22,7 @@
  *  Star Wars: Knights of the Old Republic engine functions operating on the current module.
  */
 
+#include "src/common/maths.h"
 #include "src/common/util.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
@@ -76,9 +77,63 @@ void Functions::getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = _game->getModule().getGlobalBoolean("__area_unescapable") ? 1 : 0;
 }
 
+void Functions::getCurrentForcePoints(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+
+void Functions::getMaxForcePoints(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+
+void Functions::pauseGame(Aurora::NWScript::FunctionContext &ctx) {
+	const bool paused = ctx.getParams()[0].getInt() != 0;
+	_game->getModule().setGlobalBoolean("__game_paused", paused);
+}
+
+void Functions::setPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx) {
+	_game->getModule().setGlobalNumber("__player_restrict_mode", ctx.getParams()[0].getInt());
+}
+
+void Functions::getPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = _game->getModule().getGlobalNumber("__player_restrict_mode");
+}
+
 void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {
-	const float yaw = ctx.getParams()[0].getFloat();
+	float yaw = ctx.getParams()[0].getFloat();
+	if ((yaw < -6.5f) || (yaw > 6.5f))
+		yaw = Common::deg2rad(yaw);
 	_game->getModule().setCameraYaw(yaw);
+}
+
+void Functions::getListenPatternNumber(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+
+void Functions::getLastSpeaker(Aurora::NWScript::FunctionContext &ctx) {
+	Aurora::NWScript::Object *speaker = ctx.getCaller();
+	if (!speaker)
+		speaker = (Aurora::NWScript::Object *) _game->getModule().getPC();
+
+	ctx.getReturn() = speaker;
+}
+
+void Functions::getPartyAIStyle(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+
+void Functions::getNPCAIStyle(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+
+void Functions::shipBuild(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
 }
 
 void Functions::startNewModule(Aurora::NWScript::FunctionContext &ctx) {

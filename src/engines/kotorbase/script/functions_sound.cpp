@@ -96,6 +96,16 @@ void Functions::soundObjectStop(Aurora::NWScript::FunctionContext &ctx) {
 	sound->stop();
 }
 
+void Functions::playRumblePattern(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+
+void Functions::stopRumblePattern(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+
 void Functions::playSound(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &sound = ctx.getParams()[0].getString();
 	// Graceful stub: avoid script halts on PlaySound until full positional

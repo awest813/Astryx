@@ -33,7 +33,8 @@ namespace KotORBase {
 
 enum EffectType {
 	kEffectHeal   = 0,
-	kEffectDamage = 1
+	kEffectDamage = 1,
+	kEffectVisual = 2
 };
 
 class Effect : public Aurora::NWScript::EngineType {

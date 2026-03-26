@@ -183,7 +183,12 @@ int CreatureInfo::getAbilityModifier(Ability ability) const {
 			return -1;
 	}
 
-	return (score - 10) / 2;
+	const int delta = score - 10;
+	if (delta >= 0)
+		return delta / 2;
+
+	// D20/SRD uses floor((score - 10) / 2), not truncation toward zero.
+	return -(((-delta) + 1) / 2);
 }
 
 void CreatureInfo::setAbilityScore(Ability ability, uint32_t score) {

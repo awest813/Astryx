@@ -1,0 +1,217 @@
+Start testing: Mar 25 20:49 Eastern Daylight Time
+----------------------------------------------------------
+86/93 Testing: tests_engines_kotorbase_test_combat
+86/93 Test: tests_engines_kotorbase_test_combat
+Command: "C:/Projects/Astryx/build-vcpkg/bin/Release/tests_engines_kotorbase_test_combat.exe"
+Directory: C:/Projects/Astryx/build-vcpkg
+"tests_engines_kotorbase_test_combat" start time: Mar 25 20:49 Eastern Daylight Time
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+Running main() from C:\Projects\Astryx\tests\googletest\src\gtest_main.cc
+[==========] Running 13 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 13 tests from KotORCombat
+[ RUN      ] KotORCombat.baseAcIsTen
+[       OK ] KotORCombat.baseAcIsTen (0 ms)
+[ RUN      ] KotORCombat.positiveDexBonusRaisesAC
+[       OK ] KotORCombat.positiveDexBonusRaisesAC (0 ms)
+[ RUN      ] KotORCombat.negativeDexPenaltyLowersAC
+[       OK ] KotORCombat.negativeDexPenaltyLowersAC (0 ms)
+[ RUN      ] KotORCombat.armourBonusStacksWithDex
+[       OK ] KotORCombat.armourBonusStacksWithDex (0 ms)
+[ RUN      ] KotORCombat.naturalTwentyAlwaysHits
+[       OK ] KotORCombat.naturalTwentyAlwaysHits (0 ms)
+[ RUN      ] KotORCombat.naturalOneAlwaysMisses
+[       OK ] KotORCombat.naturalOneAlwaysMisses (0 ms)
+[ RUN      ] KotORCombat.exactRollHits
+[       OK ] KotORCombat.exactRollHits (0 ms)
+[ RUN      ] KotORCombat.oneShortMisses
+[       OK ] KotORCombat.oneShortMisses (0 ms)
+[ RUN      ] KotORCombat.positiveModifierCanTurnMissIntoHit
+[       OK ] KotORCombat.positiveModifierCanTurnMissIntoHit (0 ms)
+[ RUN      ] KotORCombat.negativeModifierCanTurnHitIntoMiss
+[       OK ] KotORCombat.negativeModifierCanTurnHitIntoMiss (0 ms)
+[ RUN      ] KotORCombat.dexModifierFromCreatureInfo
+[       OK ] KotORCombat.dexModifierFromCreatureInfo (0 ms)
+[ RUN      ] KotORCombat.strModifierFromCreatureInfo
+[       OK ] KotORCombat.strModifierFromCreatureInfo (0 ms)
+[ RUN      ] KotORCombat.weakAttackerVsHighAC
+[       OK ] KotORCombat.weakAttackerVsHighAC (0 ms)
+[----------] 13 tests from KotORCombat (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 13 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 13 tests.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"tests_engines_kotorbase_test_combat" end time: Mar 25 20:49 Eastern Daylight Time
+"tests_engines_kotorbase_test_combat" time elapsed: 00:00:00
+----------------------------------------------------------
+
+88/93 Testing: tests_engines_kotorbase_test_effect
+88/93 Test: tests_engines_kotorbase_test_effect
+Command: "C:/Projects/Astryx/build-vcpkg/bin/Release/tests_engines_kotorbase_test_effect.exe"
+Directory: C:/Projects/Astryx/build-vcpkg
+"tests_engines_kotorbase_test_effect" start time: Mar 25 20:49 Eastern Daylight Time
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+Running main() from C:\Projects\Astryx\tests\googletest\src\gtest_main.cc
+[==========] Running 19 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 19 tests from KotOREffect
+[ RUN      ] KotOREffect.healTypeIsHeal
+[       OK ] KotOREffect.healTypeIsHeal (0 ms)
+[ RUN      ] KotOREffect.healAmountRoundTrips
+[       OK ] KotOREffect.healAmountRoundTrips (0 ms)
+[ RUN      ] KotOREffect.healZeroAmount
+[       OK ] KotOREffect.healZeroAmount (0 ms)
+[ RUN      ] KotOREffect.healDamageTypeDefaultsToZero
+[       OK ] KotOREffect.healDamageTypeDefaultsToZero (0 ms)
+[ RUN      ] KotOREffect.damageTypeIsDamage
+[       OK ] KotOREffect.damageTypeIsDamage (0 ms)
+[ RUN      ] KotOREffect.damageAmountRoundTrips
+[       OK ] KotOREffect.damageAmountRoundTrips (0 ms)
+[ RUN      ] KotOREffect.damageTypeFieldRoundTrips
+[       OK ] KotOREffect.damageTypeFieldRoundTrips (0 ms)
+[ RUN      ] KotOREffect.damageZeroAmount
+[       OK ] KotOREffect.damageZeroAmount (0 ms)
+[ RUN      ] KotOREffect.visualEffectTypeRoundTrips
+[       OK ] KotOREffect.visualEffectTypeRoundTrips (0 ms)
+[ RUN      ] KotOREffect.cloneProducesEquivalentHeal
+[       OK ] KotOREffect.cloneProducesEquivalentHeal (0 ms)
+[ RUN      ] KotOREffect.cloneProducesEquivalentDamage
+[       OK ] KotOREffect.cloneProducesEquivalentDamage (0 ms)
+[ RUN      ] KotOREffect.cloneProducesEquivalentVisualEffect
+[       OK ] KotOREffect.cloneProducesEquivalentVisualEffect (0 ms)
+[ RUN      ] KotOREffect.cloneIsIndependent
+[       OK ] KotOREffect.cloneIsIndependent (0 ms)
+[ RUN      ] KotOREffect.healRestoresHP
+[       OK ] KotOREffect.healRestoresHP (0 ms)
+[ RUN      ] KotOREffect.healCanOvercap
+[       OK ] KotOREffect.healCanOvercap (0 ms)
+[ RUN      ] KotOREffect.damageReducesHP
+[       OK ] KotOREffect.damageReducesHP (0 ms)
+[ RUN      ] KotOREffect.damageCanGoNegative
+[       OK ] KotOREffect.damageCanGoNegative (0 ms)
+[ RUN      ] KotOREffect.zeroHealIsNoop
+[       OK ] KotOREffect.zeroHealIsNoop (0 ms)
+[ RUN      ] KotOREffect.zeroDamageIsNoop
+[       OK ] KotOREffect.zeroDamageIsNoop (0 ms)
+[----------] 19 tests from KotOREffect (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 19 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 19 tests.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"tests_engines_kotorbase_test_effect" end time: Mar 25 20:49 Eastern Daylight Time
+"tests_engines_kotorbase_test_effect" time elapsed: 00:00:00
+----------------------------------------------------------
+
+89/93 Testing: tests_engines_kotorbase_test_nwscript_functions
+89/93 Test: tests_engines_kotorbase_test_nwscript_functions
+Command: "C:/Projects/Astryx/build-vcpkg/bin/Release/tests_engines_kotorbase_test_nwscript_functions.exe"
+Directory: C:/Projects/Astryx/build-vcpkg
+"tests_engines_kotorbase_test_nwscript_functions" start time: Mar 25 20:49 Eastern Daylight Time
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+Running main() from C:\Projects\Astryx\tests\googletest\src\gtest_main.cc
+[==========] Running 19 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 19 tests from KotORNWScriptFuncs
+[ RUN      ] KotORNWScriptFuncs.hostileVsFriendly1IsEnemy
+[       OK ] KotORNWScriptFuncs.hostileVsFriendly1IsEnemy (0 ms)
+[ RUN      ] KotORNWScriptFuncs.hostileVsFriendly2IsEnemy
+[       OK ] KotORNWScriptFuncs.hostileVsFriendly2IsEnemy (0 ms)
+[ RUN      ] KotORNWScriptFuncs.endarSpireVsFriendlyIsEnemy
+[       OK ] KotORNWScriptFuncs.endarSpireVsFriendlyIsEnemy (0 ms)
+[ RUN      ] KotORNWScriptFuncs.sameFactionIsNotEnemy
+[       OK ] KotORNWScriptFuncs.sameFactionIsNotEnemy (0 ms)
+[ RUN      ] KotORNWScriptFuncs.hostileVsHostileIsNotEnemy
+[       OK ] KotORNWScriptFuncs.hostileVsHostileIsNotEnemy (0 ms)
+[ RUN      ] KotORNWScriptFuncs.invalidFactionIsNotEnemy
+[       OK ] KotORNWScriptFuncs.invalidFactionIsNotEnemy (0 ms)
+[ RUN      ] KotORNWScriptFuncs.sameFriendly1IsFriend
+[       OK ] KotORNWScriptFuncs.sameFriendly1IsFriend (0 ms)
+[ RUN      ] KotORNWScriptFuncs.friendly1AndFriendly2AreFriends
+[       OK ] KotORNWScriptFuncs.friendly1AndFriendly2AreFriends (0 ms)
+[ RUN      ] KotORNWScriptFuncs.sameHostileIsFriend
+[       OK ] KotORNWScriptFuncs.sameHostileIsFriend (0 ms)
+[ RUN      ] KotORNWScriptFuncs.hostileAndFriendlyIsNotFriend
+[       OK ] KotORNWScriptFuncs.hostileAndFriendlyIsNotFriend (0 ms)
+[ RUN      ] KotORNWScriptFuncs.invalidFactionIsNotFriend
+[       OK ] KotORNWScriptFuncs.invalidFactionIsNotFriend (0 ms)
+[ RUN      ] KotORNWScriptFuncs.neutralVsFriendlyIsNeutral
+[       OK ] KotORNWScriptFuncs.neutralVsFriendlyIsNeutral (0 ms)
+[ RUN      ] KotORNWScriptFuncs.neutralVsHostileIsNeutral
+[       OK ] KotORNWScriptFuncs.neutralVsHostileIsNeutral (0 ms)
+[ RUN      ] KotORNWScriptFuncs.enemyFactionIsNotNeutral
+[       OK ] KotORNWScriptFuncs.enemyFactionIsNotNeutral (0 ms)
+[ RUN      ] KotORNWScriptFuncs.friendlyFactionIsNotNeutral
+[       OK ] KotORNWScriptFuncs.friendlyFactionIsNotNeutral (0 ms)
+[ RUN      ] KotORNWScriptFuncs.exactlyOneRelationship
+[       OK ] KotORNWScriptFuncs.exactlyOneRelationship (0 ms)
+[ RUN      ] KotORNWScriptFuncs.abilityModifierUsesD20Rule
+[       OK ] KotORNWScriptFuncs.abilityModifierUsesD20Rule (0 ms)
+[ RUN      ] KotORNWScriptFuncs.locationStoresPositionAndFacing
+[       OK ] KotORNWScriptFuncs.locationStoresPositionAndFacing (0 ms)
+[ RUN      ] KotORNWScriptFuncs.distanceAndUnitConversionsMatchExpectedValues
+[       OK ] KotORNWScriptFuncs.distanceAndUnitConversionsMatchExpectedValues (0 ms)
+[----------] 19 tests from KotORNWScriptFuncs (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 19 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 19 tests.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"tests_engines_kotorbase_test_nwscript_functions" end time: Mar 25 20:49 Eastern Daylight Time
+"tests_engines_kotorbase_test_nwscript_functions" time elapsed: 00:00:00
+----------------------------------------------------------
+
+91/93 Testing: tests_engines_kotorbase_test_endar_spire_golden
+91/93 Test: tests_engines_kotorbase_test_endar_spire_golden
+Command: "C:/Projects/Astryx/build-vcpkg/bin/Release/tests_engines_kotorbase_test_endar_spire_golden.exe"
+Directory: C:/Projects/Astryx/build-vcpkg
+"tests_engines_kotorbase_test_endar_spire_golden" start time: Mar 25 20:49 Eastern Daylight Time
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+Running main() from C:\Projects\Astryx\tests\googletest\src\gtest_main.cc
+[==========] Running 6 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 6 tests from EndarSpireGoldenPath
+[ RUN      ] EndarSpireGoldenPath.CharacterCreation
+[       OK ] EndarSpireGoldenPath.CharacterCreation (0 ms)
+[ RUN      ] EndarSpireGoldenPath.InventoryEquip
+[       OK ] EndarSpireGoldenPath.InventoryEquip (0 ms)
+[ RUN      ] EndarSpireGoldenPath.DialogProgression
+[       OK ] EndarSpireGoldenPath.DialogProgression (0 ms)
+[ RUN      ] EndarSpireGoldenPath.DoorTriggers
+[       OK ] EndarSpireGoldenPath.DoorTriggers (0 ms)
+[ RUN      ] EndarSpireGoldenPath.CombatResolution
+[       OK ] EndarSpireGoldenPath.CombatResolution (0 ms)
+[ RUN      ] EndarSpireGoldenPath.ModuleExitScript
+[       OK ] EndarSpireGoldenPath.ModuleExitScript (0 ms)
+[----------] 6 tests from EndarSpireGoldenPath (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 6 tests from 1 test suite ran. (0 ms total)
+[  PASSED  ] 6 tests.
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"tests_engines_kotorbase_test_endar_spire_golden" end time: Mar 25 20:49 Eastern Daylight Time
+"tests_engines_kotorbase_test_endar_spire_golden" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Mar 25 20:49 Eastern Daylight Time

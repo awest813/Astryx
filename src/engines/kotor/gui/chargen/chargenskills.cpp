@@ -24,6 +24,7 @@
 
 #include "src/common/strutil.h"
 
+#include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
 
 #include "src/engines/kotorbase/gui/chargeninfo.h"
@@ -40,16 +41,27 @@ static const int kSkillPointsBySoldier   = 4;
 static const int kSkillPointsByScout     = 6;
 static const int kSkillPointsByScoundrel = 8;
 
-// Widget tag suffixes for each skill (appended to "BTN_" / "LBL_").
-static const char * const kSkillTags[] = {
-	"COMP_USE",   // kSkillComputerUse
-	"DEMOLITIONS",// kSkillDemolitions
-	"STEALTH",    // kSkillStealth
-	"AWARENESS",  // kSkillAwareness
-	"PERSUADE",   // kSkillPersuade
-	"REPAIR",     // kSkillRepair
-	"SECURITY",   // kSkillSecurity
-	"TREAT_INJ",  // kSkillTreatInjury
+// Widget tag mappings for skill points and +/- controls.
+struct SkillWidgetTags {
+	const char *pointTag;
+	const char *plusTag;
+	const char *minusTag;
+
+	// Legacy fallback names used by earlier milestone patches.
+	const char *legacyPointTag;
+	const char *legacyPlusTag;
+	const char *legacyMinusTag;
+};
+
+static const SkillWidgetTags kSkillTags[] = {
+	{ "COMPUTER_USE_POINTS_BTN", "COM_PLUS_BTN", "COM_MINUS_BTN", "LBL_COMP_USE",    "BTN_COMP_USE_PLUS",    "BTN_COMP_USE_MINUS"    }, // kSkillComputerUse
+	{ "DEMOLITIONS_POINTS_BTN",  "DEM_PLUS_BTN", "DEM_MINUS_BTN", "LBL_DEMOLITIONS", "BTN_DEMOLITIONS_PLUS", "BTN_DEMOLITIONS_MINUS" }, // kSkillDemolitions
+	{ "STEALTH_POINTS_BTN",      "STE_PLUS_BTN", "STE_MINUS_BTN", "LBL_STEALTH",     "BTN_STEALTH_PLUS",     "BTN_STEALTH_MINUS"     }, // kSkillStealth
+	{ "AWARENESS_POINTS_BTN",    "AWA_PLUS_BTN", "AWA_MINUS_BTN", "LBL_AWARENESS",   "BTN_AWARENESS_PLUS",   "BTN_AWARENESS_MINUS"   }, // kSkillAwareness
+	{ "PERSUADE_POINTS_BTN",     "PER_PLUS_BTN", "PER_MINUS_BTN", "LBL_PERSUADE",    "BTN_PERSUADE_PLUS",    "BTN_PERSUADE_MINUS"    }, // kSkillPersuade
+	{ "REPAIR_POINTS_BTN",       "REP_PLUS_BTN", "REP_MINUS_BTN", "LBL_REPAIR",      "BTN_REPAIR_PLUS",      "BTN_REPAIR_MINUS"      }, // kSkillRepair
+	{ "SECURITY_POINTS_BTN",     "SEC_PLUS_BTN", "SEC_MINUS_BTN", "LBL_SECURITY",    "BTN_SECURITY_PLUS",    "BTN_SECURITY_MINUS"    }, // kSkillSecurity
+	{ "TREAT_INJURY_POINTS_BTN", "TRE_PLUS_BTN", "TRE_MINUS_BTN", "LBL_TREAT_INJ",   "BTN_TREAT_INJ_PLUS",   "BTN_TREAT_INJ_MINUS"   }, // kSkillTreatInjury
 };
 
 CharacterGenerationSkillsMenu::CharacterGenerationSkillsMenu(
@@ -57,7 +69,12 @@ CharacterGenerationSkillsMenu::CharacterGenerationSkillsMenu(
 		Console *console) :
 		CharacterGenerationBaseMenu(info, console) {
 
-	load("skilitems");
+	// KotOR 1 uses "skchrgen". Keep a fallback for alternate data layouts.
+	try {
+		load("skchrgen");
+	} catch (...) {
+		load("skilitems");
+	}
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
@@ -101,28 +118,30 @@ int CharacterGenerationSkillsMenu::computeSkillPoints() const {
 }
 
 void CharacterGenerationSkillsMenu::updateLabels() {
-	auto setLbl = [this](const char *tag, const Common::UString &text) {
+	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
 		Odyssey::WidgetLabel *lbl = getLabel(tag);
 		if (lbl)
 			lbl->setText(text);
+
+		Odyssey::WidgetButton *btn = getButton(tag);
+		if (btn)
+			btn->setText(text);
 	};
 
 	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
-		Common::UString lblTag = Common::UString("LBL_") + kSkillTags[i];
-		setLbl(lblTag.c_str(), Common::composeString(_ranks[i]));
+		setWidgetText(kSkillTags[i].pointTag, Common::composeString(_ranks[i]));
+		setWidgetText(kSkillTags[i].legacyPointTag, Common::composeString(_ranks[i]));
 	}
 
-	setLbl("REMAINING_SELECTIONS_LBL", Common::composeString(_remainingPoints));
+	setWidgetText("REMAINING_SELECTIONS_LBL", Common::composeString(_remainingPoints));
+	setWidgetText("SELECTIONS_REMAINING_LBL", Common::composeString(_remainingPoints));
 }
 
 void CharacterGenerationSkillsMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
 	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
-		Common::UString plusTag  = Common::UString("BTN_") + kSkillTags[i] + "_PLUS";
-		Common::UString minusTag = Common::UString("BTN_") + kSkillTags[i] + "_MINUS";
-
-		if (tag == plusTag) {
+		if ((tag == kSkillTags[i].plusTag) || (tag == kSkillTags[i].legacyPlusTag)) {
 			if (_remainingPoints > 0) {
 				++_ranks[i];
 				--_remainingPoints;
@@ -130,7 +149,7 @@ void CharacterGenerationSkillsMenu::callbackActive(Widget &widget) {
 			}
 			return;
 		}
-		if (tag == minusTag) {
+		if ((tag == kSkillTags[i].minusTag) || (tag == kSkillTags[i].legacyMinusTag)) {
 			if (_ranks[i] > 0) {
 				--_ranks[i];
 				++_remainingPoints;
@@ -138,6 +157,29 @@ void CharacterGenerationSkillsMenu::callbackActive(Widget &widget) {
 			}
 			return;
 		}
+	}
+
+	if (tag == "BTN_RECOMMENDED") {
+		const KotORBase::CreatureInfo::Skills &s = _info.getSkills();
+		_ranks[KotORBase::kSkillComputerUse] = s.computerUse;
+		_ranks[KotORBase::kSkillDemolitions] = s.demolitions;
+		_ranks[KotORBase::kSkillStealth]     = s.stealth;
+		_ranks[KotORBase::kSkillAwareness]   = s.awareness;
+		_ranks[KotORBase::kSkillPersuade]    = s.persuade;
+		_ranks[KotORBase::kSkillRepair]      = s.repair;
+		_ranks[KotORBase::kSkillSecurity]    = s.security;
+		_ranks[KotORBase::kSkillTreatInjury] = s.treatInjury;
+
+		int total = computeSkillPoints();
+		int spent = 0;
+		for (int i = 0; i < KotORBase::kSkillMAX; ++i)
+			spent += static_cast<int>(_ranks[i]);
+		_remainingPoints = total - spent;
+		if (_remainingPoints < 0)
+			_remainingPoints = 0;
+
+		updateLabels();
+		return;
 	}
 
 	if (tag == "BTN_BACK") {

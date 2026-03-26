@@ -258,3 +258,30 @@ GTEST_TEST(KotORBaseTarisParty, areaUnescapableFlagRoundTrips) {
 	state.setAreaUnescapable(false);
 	EXPECT_FALSE(state.getAreaUnescapable());
 }
+
+GTEST_TEST(KotORBaseTarisParty, galaxyMapKeepsValidSelectedPlanet) {
+	PartyStateModel state;
+	state.setPlanetAvailable(4, true);
+	state.setPlanetSelectable(4, true);
+	state.selectedPlanet = 4;
+
+	state.showGalaxyMap();
+	EXPECT_EQ(state.getSelectedPlanet(), 4);
+}
+
+GTEST_TEST(KotORBaseTarisParty, galaxyMapFallsBackToFirstAvailableWhenNoneSelectable) {
+	PartyStateModel state;
+	state.setPlanetAvailable(6, true);
+	state.setPlanetAvailable(2, true);
+	state.setPlanetSelectable(6, false);
+	state.setPlanetSelectable(2, false);
+
+	state.showGalaxyMap();
+	EXPECT_EQ(state.getSelectedPlanet(), 2);
+}
+
+GTEST_TEST(KotORBaseTarisParty, galaxyMapLeavesSelectionWhenNothingAvailable) {
+	PartyStateModel state;
+	state.showGalaxyMap();
+	EXPECT_EQ(state.getSelectedPlanet(), -1);
+}

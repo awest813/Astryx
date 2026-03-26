@@ -29,6 +29,10 @@
 
 #include "gtest/gtest.h"
 
+#include <cmath>
+
+#include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/location.h"
 #include "src/engines/kotorbase/types.h"
 
 // ---------------------------------------------------------------------------
@@ -174,4 +178,45 @@ GTEST_TEST(KotORNWScriptFuncs, exactlyOneRelationship) {
 				<< " → e=" << e << " f=" << f << " n=" << n;
 		}
 	}
+}
+
+GTEST_TEST(KotORNWScriptFuncs, abilityModifierUsesD20Rule) {
+	CreatureInfo info;
+	info.setAbilityScore(kAbilityStrength, 8);
+	info.setAbilityScore(kAbilityWisdom, 9);
+	info.setAbilityScore(kAbilityDexterity, 10);
+	info.setAbilityScore(kAbilityConstitution, 18);
+
+	EXPECT_EQ(info.getAbilityModifier(kAbilityStrength), -1);
+	EXPECT_EQ(info.getAbilityModifier(kAbilityWisdom), -1);
+	EXPECT_EQ(info.getAbilityModifier(kAbilityDexterity), 0);
+	EXPECT_EQ(info.getAbilityModifier(kAbilityConstitution), 4);
+}
+
+GTEST_TEST(KotORNWScriptFuncs, locationStoresPositionAndFacing) {
+	Location location;
+	location.setPosition(1.5f, -2.0f, 3.25f);
+	location.setFacing(1.75f);
+
+	float x, y, z;
+	location.getPosition(x, y, z);
+
+	EXPECT_FLOAT_EQ(x, 1.5f);
+	EXPECT_FLOAT_EQ(y, -2.0f);
+	EXPECT_FLOAT_EQ(z, 3.25f);
+	EXPECT_FLOAT_EQ(location.getFacing(), 1.75f);
+}
+
+GTEST_TEST(KotORNWScriptFuncs, distanceAndUnitConversionsMatchExpectedValues) {
+	const float dx = 6.0f;
+	const float dy = 8.0f;
+	const float dz = 12.0f;
+
+	EXPECT_FLOAT_EQ(std::sqrt(dx * dx + dy * dy), 10.0f);
+	EXPECT_FLOAT_EQ(std::sqrt(dx * dx + dy * dy + dz * dz), std::sqrt(244.0f));
+	EXPECT_FLOAT_EQ(3.0f * 0.3048f, 0.9144f);
+	EXPECT_FLOAT_EQ(2.0f * 0.9144f, 1.8288f);
+	EXPECT_EQ(2 * 6, 12);
+	EXPECT_EQ(3 * 60, 180);
+	EXPECT_EQ(1 * 3600, 3600);
 }

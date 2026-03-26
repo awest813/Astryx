@@ -1,11 +1,19 @@
 param(
-	[string]$BuildDir = "build"
+	[string]$BuildDir = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $platformExt = if ($env:OS -eq "Windows_NT") { ".exe" } else { "" }
+
+if ([string]::IsNullOrWhiteSpace($BuildDir)) {
+	if (Test-Path "build-vcpkg") {
+		$BuildDir = "build-vcpkg"
+	} else {
+		$BuildDir = "build"
+	}
+}
 
 function Resolve-TestBinary {
 	param(
@@ -28,6 +36,7 @@ $tests = @(
 		Name = "Endar Spire Golden Path"
 		Paths = @(
 			"tests/engines/kotorbase/test_endar_spire_golden$platformExt",
+			"bin/Release/tests_engines_kotorbase_test_endar_spire_golden$platformExt",
 			"bin/Debug/tests_engines_kotorbase_test_endar_spire_golden$platformExt"
 		)
 	},
@@ -35,6 +44,7 @@ $tests = @(
 		Name = "Taris Progression State"
 		Paths = @(
 			"tests/engines/kotorbase/test_taris_progression$platformExt",
+			"bin/Release/tests_engines_kotorbase_test_taris_progression$platformExt",
 			"bin/Debug/tests_engines_kotorbase_test_taris_progression$platformExt"
 		)
 	},
@@ -42,13 +52,31 @@ $tests = @(
 		Name = "Alignment/XP Baseline"
 		Paths = @(
 			"tests/engines/kotorbase/test_alignment_xp$platformExt",
+			"bin/Release/tests_engines_kotorbase_test_alignment_xp$platformExt",
 			"bin/Debug/tests_engines_kotorbase_test_alignment_xp$platformExt"
+		)
+	},
+	@{
+		Name = "Combat Baseline"
+		Paths = @(
+			"tests/engines/kotorbase/test_combat$platformExt",
+			"bin/Release/tests_engines_kotorbase_test_combat$platformExt",
+			"bin/Debug/tests_engines_kotorbase_test_combat$platformExt"
+		)
+	},
+	@{
+		Name = "NWScript Function Stability"
+		Paths = @(
+			"tests/engines/kotorbase/test_nwscript_functions$platformExt",
+			"bin/Release/tests_engines_kotorbase_test_nwscript_functions$platformExt",
+			"bin/Debug/tests_engines_kotorbase_test_nwscript_functions$platformExt"
 		)
 	},
 	@{
 		Name = "Crash Regression Guards"
 		Paths = @(
 			"tests/smoke/crash_regression$platformExt",
+			"bin/Release/tests_smoke_crash_regression$platformExt",
 			"bin/Debug/tests_smoke_crash_regression$platformExt"
 		)
 	}
@@ -56,7 +84,7 @@ $tests = @(
 
 $failures = @()
 
-Write-Host "KotOR progression smoke check"
+Write-Host "KotOR load-to-Taris progression smoke check"
 Write-Host "Build directory: $BuildDir"
 
 foreach ($test in $tests) {
@@ -75,8 +103,8 @@ foreach ($test in $tests) {
 }
 
 if ($failures.Count -gt 0) {
-	Write-Error ("KotOR progression smoke failed: " + ($failures -join "; "))
+	Write-Error ("KotOR load-to-Taris smoke failed: " + ($failures -join "; "))
 }
 
-Write-Host "KotOR progression smoke passed."
+Write-Host "KotOR load-to-Taris progression smoke passed."
 Write-Host "For manual progression checks, see docs/KOTOR_PROGRESS_TO_DANTOOINE_SMOKE.md."

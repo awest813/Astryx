@@ -35,9 +35,10 @@ namespace KotOR {
 
 /** Menu that lets the player distribute ability points during custom character creation.
  *
- *  Loads the "abitems" GUI resource.  The player starts with 30 points to spend;
- *  each ability begins at 8 and costs one point per rank up to 13, then two points
- *  for 14–15, three for 16, four for 17, and five for 18.
+ *  Loads the "abchrgen" GUI resource (with a legacy fallback for "abitems").
+ *  The player starts with 30 points to spend.
+ *  Each ability begins at 8 and costs one point per rank up to 13, two points
+ *  for 14-15, three points for 16-17, and four points for 18.
  */
 class CharacterGenerationAbilitiesMenu : public CharacterGenerationBaseMenu {
 public:

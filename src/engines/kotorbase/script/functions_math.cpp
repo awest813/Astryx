@@ -147,6 +147,26 @@ void Functions::vectorNormalize(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn().setVector(x / length, y / length, z / length);
 }
 
+void Functions::roundsToSeconds(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = ctx.getParams()[0].getInt() * 6;
+}
+
+void Functions::hoursToSeconds(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = ctx.getParams()[0].getInt() * 3600;
+}
+
+void Functions::turnsToSeconds(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = ctx.getParams()[0].getInt() * 60;
+}
+
+void Functions::feetToMeters(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = ctx.getParams()[0].getFloat() * 0.3048f;
+}
+
+void Functions::yardsToMeters(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = ctx.getParams()[0].getFloat() * 0.9144f;
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

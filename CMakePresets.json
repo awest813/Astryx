@@ -7,6 +7,41 @@
   },
   "configurePresets": [
     {
+      "name": "portable-vcpkg-ninja",
+      "displayName": "Portable vcpkg (Ninja)",
+      "description": "Configure with a repo-local vcpkg checkout for Linux/macOS or Windows Ninja builds",
+      "binaryDir": "${sourceDir}/build-vcpkg-linux",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_POLICY_VERSION_MINIMUM": {
+          "type": "STRING",
+          "value": "3.5"
+        },
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "${sourceDir}/.deps/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        }
+      }
+    },
+    {
+      "name": "portable-vcpkg-ninja-multi",
+      "displayName": "Portable vcpkg (Ninja Multi-Config)",
+      "description": "Configure with a repo-local vcpkg checkout for Windows multi-config builds",
+      "binaryDir": "${sourceDir}/build-vcpkg-portable",
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "CMAKE_POLICY_VERSION_MINIMUM": {
+          "type": "STRING",
+          "value": "3.5"
+        },
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "${sourceDir}/.deps/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        }
+      }
+    },
+    {
       "name": "ninja-multi-vcpkg",
       "displayName": "Ninja Multi-Config (vcpkg)",
       "description": "Configure with vcpkg toolchain and generate Ninja project files for all configurations",
@@ -43,6 +78,25 @@
   ],
   "buildPresets": [
     {
+      "name": "portable-vcpkg-ninja-debug",
+      "configurePreset": "portable-vcpkg-ninja",
+      "displayName": "Build portable-vcpkg-ninja-debug",
+      "description": "Build portable-vcpkg-ninja Debug configuration",
+      "targets": [
+        "xoreos"
+      ]
+    },
+    {
+      "name": "portable-vcpkg-ninja-multi-debug",
+      "configurePreset": "portable-vcpkg-ninja-multi",
+      "displayName": "Build portable-vcpkg-ninja-multi-debug",
+      "description": "Build portable-vcpkg-ninja-multi Debug configuration",
+      "configuration": "Debug",
+      "targets": [
+        "xoreos"
+      ]
+    },
+    {
       "name": "ninja-multi-vcpkg-debug",
       "configurePreset": "ninja-multi-vcpkg",
       "displayName": "Build ninja-multi-vcpkg-debug",
@@ -66,6 +120,16 @@
     }
   ],
   "testPresets": [
+    {
+      "name": "portable-vcpkg-ninja-debug",
+      "configurePreset": "portable-vcpkg-ninja",
+      "configuration": "Debug"
+    },
+    {
+      "name": "portable-vcpkg-ninja-multi-debug",
+      "configurePreset": "portable-vcpkg-ninja-multi",
+      "configuration": "Debug"
+    },
     {
       "name": "ninja-multi-vcpkg-debug",
       "configurePreset": "ninja-multi-vcpkg",

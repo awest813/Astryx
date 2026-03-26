@@ -734,9 +734,7 @@ int Creature::getHitDice() const {
 }
 
 int Creature::getAC() const {
-	int dex = _info.getAbilityScore(kAbilityDexterity);
-	int dexMod = (dex - 10) / 2;
-	int ac = 10 + dexMod;
+	int ac = 10 + _info.getAbilityModifier(kAbilityDexterity);
 
 	const Item *armor = getEquipedItem(kInventorySlotBody);
 	if (armor)
@@ -929,13 +927,22 @@ void Creature::setAttemptedAttackTarget(Object *target) {
 }
 
 void Creature::startCombat(Object *target, int round) {
+	if (!target) {
+		cancelCombat();
+		return;
+	}
+
 	_inCombat = true;
 	_attackTarget = target;
 	_attackRound = round;
+	_attemptedAttackTarget = nullptr;
 }
 
 void Creature::cancelCombat() {
 	_inCombat = false;
+	_attackTarget = nullptr;
+	_attemptedAttackTarget = nullptr;
+	_attackRound = 0;
 }
 
 void Creature::executeAttack(Object *target) {
@@ -954,6 +961,10 @@ void Creature::executeAttack(Object *target) {
 		cancelCombat();
 		return;
 	}
+
+	// Track hostility for NWScript callers (GetLastHostileActor/GetLastAttacker).
+	if (targetCreature)
+		targetCreature->_lastHostileActor = this;
 
 	const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
 	const Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
@@ -989,6 +1000,10 @@ void Creature::executeAttack(Object *target) {
 	else
 		damage = 1 + _info.getAbilityModifier(kAbilityStrength);
 
+	// Combat should never heal via negative/zero damage rolls.
+	if (damage < 1)
+		damage = 1;
+
 	int hp = target->getCurrentHitPoints() - damage;
 	int minHp = target->getMinOneHitPoints() ? 1 : 0;
 
@@ -1021,9 +1036,13 @@ bool Creature::isDead() const {
 bool Creature::handleDeath() {
 	if (!_dead && _currentHitPoints <= 0) {
 		_dead = true;
-		_model->clearDefaultAnimations();
-		_model->addDefaultAnimation("dead", 100);
-		_model->playAnimation("die", false);
+		if (_model) {
+			_model->clearDefaultAnimations();
+			_model->addDefaultAnimation("dead", 100);
+			_model->playAnimation("die", false);
+		} else {
+			warning("Creature::handleDeath(): \"%s\" has no model; applying logical death only", _tag.c_str());
+		}
 		return true;
 	}
 	return false;
@@ -1160,7 +1179,8 @@ int Creature::computeWeaponDamage(const Item *weapon) const {
 		result += RNG.getNext(1, weapon->getDieToRoll() + 1);
 	}
 
-	return result + mod;
+	result += mod;
+	return (result < 1) ? 1 : result;
 }
 
 } // End of namespace KotORBase
