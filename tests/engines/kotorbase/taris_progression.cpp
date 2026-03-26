@@ -48,6 +48,9 @@ struct PartyStateModel {
 	}
 
 	void removePartyMember(int npc) {
+		if (npc == -1)
+			return;
+
 		std::vector<std::pair<int, int> > kept;
 		kept.reserve(members.size());
 		for (const auto &entry : members) {
@@ -179,6 +182,32 @@ GTEST_TEST(KotORBaseTarisParty, removePartyMemberUpdatesMembership) {
 	EXPECT_TRUE(state.isNPCPartyMember(1));
 	EXPECT_EQ(state.getPartyMemberByIndex(0), 100);
 	EXPECT_EQ(state.getPartyMemberByIndex(1), 102);
+}
+
+GTEST_TEST(KotORBaseTarisParty, removingUnknownPartyMemberDoesNotMutateRoster) {
+	PartyStateModel state;
+	state.addPartyMember(-1, 100);
+	state.addPartyMember(0, 101);
+
+	state.removePartyMember(9);
+
+	EXPECT_EQ(state.getPartyMemberCount(), 2);
+	EXPECT_TRUE(state.isNPCPartyMember(0));
+	EXPECT_EQ(state.getPartyMemberByIndex(0), 100);
+	EXPECT_EQ(state.getPartyMemberByIndex(1), 101);
+}
+
+GTEST_TEST(KotORBaseTarisParty, removingPlayerCharacterIsIgnored) {
+	PartyStateModel state;
+	state.addPartyMember(-1, 100);
+	state.addPartyMember(0, 101);
+
+	state.removePartyMember(-1);
+
+	EXPECT_EQ(state.getPartyMemberCount(), 2);
+	EXPECT_TRUE(state.isNPCPartyMember(0));
+	EXPECT_EQ(state.getPartyMemberByIndex(0), 100);
+	EXPECT_EQ(state.getPartyMemberByIndex(1), 101);
 }
 
 GTEST_TEST(KotORBaseTarisParty, soloModeRoundTrips) {

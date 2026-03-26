@@ -288,10 +288,12 @@ void Module::loadParty() {
 		_partyController.addPartyMember(-1, _pc);
 	} else {
 		_partyController.clearCurrentParty();
+		bool hasPC = false;
 
 		for (auto npc : partyMembers) {
 			if (npc == -1) {
 				_partyController.addPartyMember(-1, _pc);
+				hasPC = true;
 				continue;
 			}
 
@@ -303,6 +305,11 @@ void Module::loadParty() {
 
 			Creature *creature = createCreature(templ);
 			_partyController.addPartyMember(npc, creature);
+		}
+
+		if (!hasPC) {
+			warning("Module::loadParty(): saved party missing PC; injecting fallback");
+			_partyController.addPartyMember(-1, _pc);
 		}
 	}
 
@@ -957,23 +964,16 @@ void Module::addPartyMember(int npc, Creature *creature) {
 }
 
 void Module::removePartyMember(int npc) {
-	size_t count = _partyController.getPartyMemberCount();
-
-	// Collect all members we want to keep
-	std::vector<std::pair<int, Creature *>> remaining;
-	remaining.reserve(count);
-	for (size_t i = 0; i < count; ++i) {
-		const auto &pair = _partyController.getPartyMemberByIndex(static_cast<int>(i));
-		if (pair.first != npc) {
-			remaining.push_back(pair);
-		} else if (pair.second && _area) {
-			_area->removeObject(pair.second);
-		}
+	if (npc == -1) {
+		warning("Module::removePartyMember(): refusing to remove player character");
+		return;
 	}
 
-	_partyController.clearCurrentParty();
-	for (auto &pair : remaining)
-		_partyController.addPartyMember(pair.first, pair.second);
+	std::vector<Creature *> removedMembers = _partyController.removePartyMember(npc);
+	for (Creature *member : removedMembers) {
+		if (member && _area)
+			_area->removeObject(member);
+	}
 
 	updateCurrentPartyGUI();
 }

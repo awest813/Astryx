@@ -23,6 +23,7 @@
  */
 
 #include "src/common/error.h"
+#include "src/common/debug.h"
 
 #include "src/engines/kotorbase/partycontroller.h"
 #include "src/engines/kotorbase/creature.h"
@@ -42,6 +43,9 @@ size_t PartyController::getPartyMemberCount() const {
 }
 
 Creature *PartyController::getPartyLeader() const {
+	if (_party.empty())
+		return nullptr;
+
 	return _party[0].second;
 }
 
@@ -73,6 +77,11 @@ void PartyController::clearCurrentParty() {
 }
 
 void PartyController::addPartyMember(int npc, Creature *creature) {
+	if (!creature) {
+		warning("PartyController::addPartyMember(): invalid creature");
+		return;
+	}
+
 	if (!_party.empty()) {
 		Creature *partyLeader = getPartyLeader();
 		float x, y, z;
@@ -83,9 +92,42 @@ void PartyController::addPartyMember(int npc, Creature *creature) {
 	_party.push_back(std::make_pair(npc, creature));
 
 	if (npc != -1) {
-		_module->getCurrentArea()->addCreature(creature);
-		creature->show();
+		Area *area = _module->getCurrentArea();
+		if (area) {
+			area->addCreature(creature);
+			creature->show();
+		}
 	}
+}
+
+std::vector<Creature *> PartyController::removePartyMember(int npc) {
+	std::vector<Creature *> removed;
+	if (_party.empty())
+		return removed;
+
+	Creature *previousLeader = getPartyLeader();
+	bool leaderRemoved = false;
+
+	for (auto it = _party.begin(); it != _party.end();) {
+		if (it->first != npc) {
+			++it;
+			continue;
+		}
+
+		if (it->second == previousLeader)
+			leaderRemoved = true;
+
+		removed.push_back(it->second);
+		it = _party.erase(it);
+	}
+
+	if (leaderRemoved && !_party.empty()) {
+		_party[0].second->setUsable(false);
+		_party[0].second->clearActions();
+		_module->notifyPartyLeaderChanged();
+	}
+
+	return removed;
 }
 
 void PartyController::setPartyLeader(int npc) {
@@ -106,7 +148,8 @@ void PartyController::setPartyLeader(int npc) {
 }
 
 void PartyController::setPartyLeaderByIndex(int index) {
-	if (index == 0)
+	const int partySize = static_cast<int>(_party.size());
+	if (partySize < 2 || index <= 0 || index >= partySize)
 		return;
 
 	std::pair<int, Creature *> prevLeader = _party[0];
@@ -157,7 +200,7 @@ bool PartyController::handleEvent(const Events::Event &e) {
 		case Events::kEventKeyDown:
 		case Events::kEventKeyUp:
 			if (e.key.keysym.sym == Events::kKeyTab) {
-				if (!_party.empty() && (e.type == Events::kEventKeyUp))
+				if ((_party.size() > 1) && (e.type == Events::kEventKeyUp))
 					setPartyLeaderByIndex(1);
 
 				return true;
@@ -176,6 +219,9 @@ void PartyController::raiseHeartbeatEvent() {
 }
 
 void PartyController::leftShiftPartyMembers() {
+	if (_party.size() < 2)
+		return;
+
 	std::pair<int, Creature *> prevLeader = _party[0];
 	size_t partySize = _party.size();
 	for (int i = 0; i < static_cast<int>(partySize - 1); ++i) {

@@ -46,7 +46,11 @@ void PartyLeaderController::clearUserInput() {
 }
 
 void PartyLeaderController::stopMovement() {
-	_module->getPartyLeader()->playDefaultAnimation();
+	Creature *partyLeader = _module->getPartyLeader();
+	if (!partyLeader)
+		return;
+
+	partyLeader->playDefaultAnimation();
 	_moving = false;
 }
 
@@ -61,8 +65,11 @@ bool PartyLeaderController::handleEvent(const Events::Event &e) {
 				_backwardMovementWanted = (e.type == Events::kEventKeyDown);
 				return true;
 			} else if ((e.key.keysym.scancode == SDL_SCANCODE_X) && (e.type == Events::kEventKeyUp)) {
-				if (!_moving)
-					_module->getPartyLeader()->playDrawWeaponAnimation();
+				if (!_moving) {
+					Creature *partyLeader = _module->getPartyLeader();
+					if (partyLeader)
+						partyLeader->playDrawWeaponAnimation();
+				}
 
 				return true;
 			}
@@ -83,6 +90,8 @@ bool PartyLeaderController::handleEvent(const Events::Event &e) {
 
 bool PartyLeaderController::processMovement(float frameTime) {
 	Creature *partyLeader = _module->getPartyLeader();
+	if (!partyLeader)
+		return false;
 
 	bool moveForwards = _forwardMovementWanted && !_backwardMovementWanted;
 	bool moveBackwards = !_forwardMovementWanted && _backwardMovementWanted;
