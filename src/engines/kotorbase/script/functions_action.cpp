@@ -329,7 +329,7 @@ void Functions::actionSpeakString(Aurora::NWScript::FunctionContext &ctx) {
 	Object *caller = ObjectContainer::toObject(ctx.getCaller());
 	const Common::UString tag = caller ? caller->getTag() : Common::UString("(unknown)");
 
-	warning("ActionSpeakString [%s]: %s", tag.c_str(), str.c_str());
+	status("ActionSpeakString [%s]: %s", tag.c_str(), str.c_str());
 }
 
 void Functions::speakString(Aurora::NWScript::FunctionContext &ctx) {
@@ -344,7 +344,7 @@ void Functions::actionSpeakStringByStrRef(Aurora::NWScript::FunctionContext &ctx
 
 	Object *caller = ObjectContainer::toObject(ctx.getCaller());
 	const Common::UString who = caller ? caller->getTag() : Common::UString("(unknown)");
-	warning("ActionSpeakStringByStrRef [%s]: %s", who.c_str(), text.c_str());
+	status("ActionSpeakStringByStrRef [%s]: %s", who.c_str(), text.c_str());
 }
 
 void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
@@ -366,11 +366,13 @@ void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
 		case  4: animName = "worship";    break; // ANIMATION_LOOPING_WORSHIP
 		case 10: animName = "talk";       break; // ANIMATION_LOOPING_TALK_NORMAL
 		case 11: animName = "talklooking"; break; // ANIMATION_LOOPING_TALK_PLEADING
-		case 16: animName = "victory1";   break; // ANIMATION_LOOPING_DEAD_FRONT
-		case 17: animName = "victory2";   break; // ANIMATION_LOOPING_DEAD_BACK
-		case 38: animName = "attack1";    break; // ANIMATION_FIREFORGET_HEAD_TURN_LEFT
-		case 39: animName = "attack2";    break; // ANIMATION_FIREFORGET_HEAD_TURN_RIGHT
-		case 40: animName = "dodge";      break; // ANIMATION_FIREFORGET_PAUSE_SCRATCH_HEAD
+		case 12: animName = "deadf";      break; // ANIMATION_LOOPING_DEAD_FRONT
+		case 13: animName = "deadb";      break; // ANIMATION_LOOPING_DEAD_BACK
+		case 16: animName = "victory1";   break; // ANIMATION_LOOPING_VICTORY1
+		case 17: animName = "victory2";   break; // ANIMATION_LOOPING_VICTORY2
+		case 38: animName = "attack1";    break; // ANIMATION_FIREFORGET_ATTACK1
+		case 39: animName = "attack2";    break; // ANIMATION_FIREFORGET_ATTACK2
+		case 40: animName = "dodge";      break; // ANIMATION_FIREFORGET_DODGE
 		case 44: animName = "die";        break; // ANIMATION_FIREFORGET_SPASM
 		case 48: animName = "g8a1";       break; // ANIMATION_FIREFORGET_DODGE_DUCK
 		case 49: animName = "g8a2";       break; // ANIMATION_FIREFORGET_DODGE_SIDE
@@ -527,7 +529,7 @@ void Functions::actionBarkString(Aurora::NWScript::FunctionContext &ctx) {
 
 	Object *caller = ObjectContainer::toObject(ctx.getCaller());
 	const Common::UString who = caller ? caller->getTag() : Common::UString("(unknown)");
-	warning("ActionBarkString [%s]: %s", who.c_str(), text.c_str());
+	status("ActionBarkString [%s]: %s", who.c_str(), text.c_str());
 }
 
 } // End of namespace KotORBase
