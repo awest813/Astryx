@@ -630,6 +630,14 @@ CreatureInfo &Creature::getCreatureInfo() {
 	return _info;
 }
 
+const CreatureInfo &Creature::getCreatureInfo() const {
+	return _info;
+}
+
+bool Creature::hasFeat(uint32_t feat) const {
+	return _info.hasFeat(feat);
+}
+
 float Creature::getCameraHeight() const {
 	float height = 1.8f;
 	if (_model) {
@@ -922,8 +930,16 @@ Object *Creature::getLastHostileActor() const {
 	return _lastHostileActor;
 }
 
+int Creature::getLastCombatFeatUsed() const {
+	return _lastCombatFeatUsed;
+}
+
 void Creature::setAttemptedAttackTarget(Object *target) {
 	_attemptedAttackTarget = target;
+}
+
+void Creature::setLastCombatFeatUsed(int featID) {
+	_lastCombatFeatUsed = featID;
 }
 
 void Creature::startCombat(Object *target, int round) {

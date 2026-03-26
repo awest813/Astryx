@@ -99,6 +99,8 @@ public:
 	const Common::UString &getConversation() const;
 	/** Get abstract information of this creature. */
 	CreatureInfo &getCreatureInfo();
+	const CreatureInfo &getCreatureInfo() const;
+	bool hasFeat(uint32_t feat) const;
 
 	/** Is the creature a player character? */
 	bool isPC() const;
@@ -208,8 +210,10 @@ public:
 	int getAttackRound() const;
 	Object *getAttemptedAttackTarget() const;
 	Object *getLastHostileActor() const;
+	int getLastCombatFeatUsed() const;
 
 	void setAttemptedAttackTarget(Object *target);
+	void setLastCombatFeatUsed(int featID);
 
 	void startCombat(Object *target, int round);
 	void cancelCombat();
@@ -254,6 +258,7 @@ private:
 	int _attackRound { 0 };
 	Object *_attemptedAttackTarget { nullptr };
 	Object *_lastHostileActor { nullptr };
+	int _lastCombatFeatUsed { -1 };
 
 
 	bool _isPC; ///< Is the creature a PC?

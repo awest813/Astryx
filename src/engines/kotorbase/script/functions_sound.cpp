@@ -77,10 +77,8 @@ void Functions::musicBackgroundGetNightTrack(Aurora::NWScript::FunctionContext &
 void Functions::soundObjectPlay(Aurora::NWScript::FunctionContext &ctx) {
 	SoundObject *sound = ObjectContainer::toSoundObject(getParamObject(ctx, 0));
 
-	if (!sound) {
-		warning("Functions::soundObjectPlay(): invalid sound object");
+	if (!sound)
 		return;
-	}
 
 	sound->play();
 }
@@ -88,10 +86,8 @@ void Functions::soundObjectPlay(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::soundObjectStop(Aurora::NWScript::FunctionContext &ctx) {
 	SoundObject *sound = ObjectContainer::toSoundObject(getParamObject(ctx, 0));
 
-	if (!sound) {
-		warning("Functions::soundObjectStop(): invalid sound object");
+	if (!sound)
 		return;
-	}
 
 	sound->stop();
 }

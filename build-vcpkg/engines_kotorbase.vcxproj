@@ -348,6 +348,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\actionqueue.h" />
     <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\round.h" />
     <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\effect.h" />
+    <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\talent.h" />
     <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\room.cpp" />
     <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\object.cpp" />
     <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\action.cpp" />
@@ -377,6 +378,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\actionqueue.cpp" />
     <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\round.cpp" />
     <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\effect.cpp" />
+    <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\talent.cpp" />
     <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\script\container.h" />
     <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\script\event.h" />
     <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\script\functions.h" />

@@ -309,6 +309,9 @@ protected:
 	void actionEquipItem(Aurora::NWScript::FunctionContext &ctx);
 	void actionPickUpItem(Aurora::NWScript::FunctionContext &ctx);
 	void actionAttack(Aurora::NWScript::FunctionContext &ctx);
+	void actionUseFeat(Aurora::NWScript::FunctionContext &ctx);
+	void actionUseTalentOnObject(Aurora::NWScript::FunctionContext &ctx);
+	void actionUseTalentAtLocation(Aurora::NWScript::FunctionContext &ctx);
 	void cancelCombat(Aurora::NWScript::FunctionContext &ctx);
 	void getLastAttacker(Aurora::NWScript::FunctionContext &ctx);
 	void actionSpeakString(Aurora::NWScript::FunctionContext &ctx);
@@ -355,8 +358,22 @@ protected:
 	void getRacialType(Aurora::NWScript::FunctionContext &ctx);
 	void getSubRace(Aurora::NWScript::FunctionContext &ctx);
 
+	void getHasFeat(Aurora::NWScript::FunctionContext &ctx);
 	void getHasSkill(Aurora::NWScript::FunctionContext &ctx);
 	void getSkillRank(Aurora::NWScript::FunctionContext &ctx);
+	void getHasFeatEffect(Aurora::NWScript::FunctionContext &ctx);
+
+	void talentSpell(Aurora::NWScript::FunctionContext &ctx);
+	void talentFeat(Aurora::NWScript::FunctionContext &ctx);
+	void talentSkill(Aurora::NWScript::FunctionContext &ctx);
+	void getCreatureHasTalent(Aurora::NWScript::FunctionContext &ctx);
+	void getCreatureTalentRandom(Aurora::NWScript::FunctionContext &ctx);
+	void getCreatureTalentBest(Aurora::NWScript::FunctionContext &ctx);
+	void getIsTalentValid(Aurora::NWScript::FunctionContext &ctx);
+	void getTypeFromTalent(Aurora::NWScript::FunctionContext &ctx);
+	void getIdFromTalent(Aurora::NWScript::FunctionContext &ctx);
+	void getCategoryFromTalent(Aurora::NWScript::FunctionContext &ctx);
+	void getLastCombatFeatUsed(Aurora::NWScript::FunctionContext &ctx);
 
 	void getAbilityScore(Aurora::NWScript::FunctionContext &ctx);
 	void getAbilityModifier(Aurora::NWScript::FunctionContext &ctx);

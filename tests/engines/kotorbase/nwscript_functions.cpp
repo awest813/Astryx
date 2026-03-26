@@ -33,6 +33,7 @@
 
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/location.h"
+#include "src/engines/kotorbase/talent.h"
 #include "src/engines/kotorbase/types.h"
 
 // ---------------------------------------------------------------------------
@@ -219,4 +220,17 @@ GTEST_TEST(KotORNWScriptFuncs, distanceAndUnitConversionsMatchExpectedValues) {
 	EXPECT_EQ(2 * 6, 12);
 	EXPECT_EQ(3 * 60, 180);
 	EXPECT_EQ(1 * 3600, 3600);
+}
+
+GTEST_TEST(KotORNWScriptFuncs, talentTracksTypeAndID) {
+	Talent featTalent(kTalentTypeFeat, 15);
+	EXPECT_TRUE(featTalent.isValid());
+	EXPECT_EQ(featTalent.getType(), kTalentTypeFeat);
+	EXPECT_EQ(featTalent.getCategory(), kTalentTypeFeat);
+	EXPECT_EQ(featTalent.getID(), 15);
+
+	Talent invalid;
+	EXPECT_FALSE(invalid.isValid());
+	EXPECT_EQ(invalid.getType(), kTalentTypeInvalid);
+	EXPECT_EQ(invalid.getID(), -1);
 }

@@ -40,6 +40,7 @@
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/action.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/talent.h"
 
 #include "src/engines/kotorbase/script/functions.h"
 
@@ -417,6 +418,70 @@ void Functions::actionInteractObject(Aurora::NWScript::FunctionContext &ctx) {
 	Action action(kActionUseObject);
 	action.object = target;
 	action.range = 1.5f;
+	caller->addAction(action);
+}
+
+void Functions::actionUseFeat(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Object *target = ObjectContainer::toObject(ctx.getParams()[1].getObject());
+	if (!caller)
+		return;
+
+	const int featID = ctx.getParams()[0].getInt();
+	caller->setLastCombatFeatUsed(featID);
+
+	if (target) {
+		caller->setAttemptedAttackTarget(target);
+
+		Action action(kActionAttackObject);
+		action.object = target;
+		caller->addAction(action);
+	}
+}
+
+void Functions::actionUseTalentOnObject(Aurora::NWScript::FunctionContext &ctx) {
+	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
+	Object *target = ObjectContainer::toObject(ctx.getParams()[1].getObject());
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller || !talent || !talent->isValid())
+		return;
+
+	if (talent->getType() == kTalentTypeFeat) {
+		caller->setLastCombatFeatUsed(talent->getID());
+		if (target) {
+			caller->setAttemptedAttackTarget(target);
+
+			Action action(kActionAttackObject);
+			action.object = target;
+			caller->addAction(action);
+		}
+		return;
+	}
+
+	if (talent->getType() == kTalentTypeSkill && target) {
+		Action action(kActionUseObject);
+		action.object = target;
+		action.range = 1.5f;
+		caller->addAction(action);
+	}
+}
+
+void Functions::actionUseTalentAtLocation(Aurora::NWScript::FunctionContext &ctx) {
+	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
+	Location *target = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller || !talent || !talent->isValid() || !target)
+		return;
+
+	if (talent->getType() == kTalentTypeFeat)
+		caller->setLastCombatFeatUsed(talent->getID());
+
+	float x, y, z;
+	target->getPosition(x, y, z);
+
+	Action action(kActionMoveToPoint);
+	action.range = 0.1f;
+	action.location = glm::vec3(x, y, z);
 	caller->addAction(action);
 }
 
