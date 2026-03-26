@@ -127,6 +127,11 @@ protected:
 	void vector         (Aurora::NWScript::FunctionContext &ctx);
 	void vectorMagnitude(Aurora::NWScript::FunctionContext &ctx);
 	void vectorNormalize(Aurora::NWScript::FunctionContext &ctx);
+	void roundsToSeconds(Aurora::NWScript::FunctionContext &ctx);
+	void hoursToSeconds(Aurora::NWScript::FunctionContext &ctx);
+	void turnsToSeconds(Aurora::NWScript::FunctionContext &ctx);
+	void feetToMeters(Aurora::NWScript::FunctionContext &ctx);
+	void yardsToMeters(Aurora::NWScript::FunctionContext &ctx);
 
 	// Strings, functions_string.cpp
 
@@ -174,7 +179,17 @@ protected:
 	void setTime(Aurora::NWScript::FunctionContext &ctx);
 	void setAreaUnescapable(Aurora::NWScript::FunctionContext &ctx);
 	void getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx);
+	void getCurrentForcePoints(Aurora::NWScript::FunctionContext &ctx);
+	void getMaxForcePoints(Aurora::NWScript::FunctionContext &ctx);
+	void pauseGame(Aurora::NWScript::FunctionContext &ctx);
+	void setPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx);
+	void getPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx);
 	void setCameraFacing(Aurora::NWScript::FunctionContext &ctx);
+	void getListenPatternNumber(Aurora::NWScript::FunctionContext &ctx);
+	void getLastSpeaker(Aurora::NWScript::FunctionContext &ctx);
+	void getPartyAIStyle(Aurora::NWScript::FunctionContext &ctx);
+	void getNPCAIStyle(Aurora::NWScript::FunctionContext &ctx);
+	void shipBuild(Aurora::NWScript::FunctionContext &ctx);
 
 	void startNewModule(Aurora::NWScript::FunctionContext &ctx);
 
@@ -202,6 +217,8 @@ protected:
 
 	void getArea    (Aurora::NWScript::FunctionContext &ctx);
 	void getLocation(Aurora::NWScript::FunctionContext &ctx);
+	void getPositionFromLocation(Aurora::NWScript::FunctionContext &ctx);
+	void getFacingFromLocation(Aurora::NWScript::FunctionContext &ctx);
 
 	void jumpToLocation(Aurora::NWScript::FunctionContext &ctx);
 	void jumpToObject  (Aurora::NWScript::FunctionContext &ctx);
@@ -225,6 +242,11 @@ protected:
 	void getItemPossessedBy(Aurora::NWScript::FunctionContext &ctx);
 	void getObjectType(Aurora::NWScript::FunctionContext &ctx);
 	void getDistanceToObject(Aurora::NWScript::FunctionContext &ctx);
+	void getDistanceToObject2D(Aurora::NWScript::FunctionContext &ctx);
+	void getDistanceBetween(Aurora::NWScript::FunctionContext &ctx);
+	void getDistanceBetween2D(Aurora::NWScript::FunctionContext &ctx);
+	void getDistanceBetweenLocations(Aurora::NWScript::FunctionContext &ctx);
+	void getDistanceBetweenLocations2D(Aurora::NWScript::FunctionContext &ctx);
 	void exploreAreaForPlayer(Aurora::NWScript::FunctionContext &ctx);
 
 	void getFirstItemInInventory(Aurora::NWScript::FunctionContext &ctx);
@@ -290,11 +312,18 @@ protected:
 	void cancelCombat(Aurora::NWScript::FunctionContext &ctx);
 	void getLastAttacker(Aurora::NWScript::FunctionContext &ctx);
 	void actionSpeakString(Aurora::NWScript::FunctionContext &ctx);
+	void speakString(Aurora::NWScript::FunctionContext &ctx);
+	void actionSpeakStringByStrRef(Aurora::NWScript::FunctionContext &ctx);
 	void actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx);
 	void playAnimation(Aurora::NWScript::FunctionContext &ctx);
 	void actionJumpToObject(Aurora::NWScript::FunctionContext &ctx);
 	void actionJumpToLocation(Aurora::NWScript::FunctionContext &ctx);
+	void actionInteractObject(Aurora::NWScript::FunctionContext &ctx);
+	void actionPauseConversation(Aurora::NWScript::FunctionContext &ctx);
+	void actionResumeConversation(Aurora::NWScript::FunctionContext &ctx);
 	void actionWait(Aurora::NWScript::FunctionContext &ctx);
+	void getUserActionsPending(Aurora::NWScript::FunctionContext &ctx);
+	void noClicksFor(Aurora::NWScript::FunctionContext &ctx);
 
 	// Sound, functions_sound.cpp
 
@@ -308,6 +337,8 @@ protected:
 
 	void soundObjectPlay(Aurora::NWScript::FunctionContext &ctx);
 	void soundObjectStop(Aurora::NWScript::FunctionContext &ctx);
+	void playRumblePattern(Aurora::NWScript::FunctionContext &ctx);
+	void stopRumblePattern(Aurora::NWScript::FunctionContext &ctx);
 
 	// Movies, functions_movie.cpp
 
@@ -328,17 +359,20 @@ protected:
 	void getSkillRank(Aurora::NWScript::FunctionContext &ctx);
 
 	void getAbilityScore(Aurora::NWScript::FunctionContext &ctx);
+	void getAbilityModifier(Aurora::NWScript::FunctionContext &ctx);
 
 	void getIsDead(Aurora::NWScript::FunctionContext &ctx);
 	void getHitDice(Aurora::NWScript::FunctionContext &ctx);
 	void getAC(Aurora::NWScript::FunctionContext &ctx);
 	void getAttackTarget(Aurora::NWScript::FunctionContext &ctx);
 	void getAttemptedAttackTarget(Aurora::NWScript::FunctionContext &ctx);
+	void getAttemptedSpellTarget(Aurora::NWScript::FunctionContext &ctx);
 	void getIsInCombat(Aurora::NWScript::FunctionContext &ctx);
 	void getLastHostileActor(Aurora::NWScript::FunctionContext &ctx);
 
 	void effectHeal(Aurora::NWScript::FunctionContext &ctx);
 	void effectDamage(Aurora::NWScript::FunctionContext &ctx);
+	void effectVisualEffect(Aurora::NWScript::FunctionContext &ctx);
 	void applyEffectToObject(Aurora::NWScript::FunctionContext &ctx);
 
 	// Global values, functions_global.cpp
@@ -416,6 +450,7 @@ protected:
 	void getLoadFromSaveGame(Aurora::NWScript::FunctionContext &ctx);
 	void endGame(Aurora::NWScript::FunctionContext &ctx);
 	void getTransitionTarget(Aurora::NWScript::FunctionContext &ctx);
+	void getLockUnlockDC(Aurora::NWScript::FunctionContext &ctx);
 
 	// Galaxy map, functions_module.cpp
 

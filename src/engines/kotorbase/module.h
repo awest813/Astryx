@@ -134,6 +134,8 @@ public:
 
 	/** Move the current party to a specified location within the current area. */
 	void moveParty(float x, float y, float z);
+	/** Move the current party to a specified location and facing within the current area. */
+	void moveParty(float x, float y, float z, float angle);
 	/** Move the current party to a specified object within a specified module. */
 	void moveParty(const Common::UString &module, const Common::UString &object, ObjectType type = kObjectTypeAll);
 	/** Notify the module that the party leader was moved. */

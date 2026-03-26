@@ -527,6 +527,48 @@ foreach(AM_PROGRAM ${AM_PROGRAMS})
   target_link_libraries(${AM_PROGRAM} ${XOREOS_LIBRARIES})
 endforeach()
 
+if(WIN32)
+  function(xoreos_collect_runtime_dlls out_var library_path)
+    set(_dlls "")
+    if(library_path AND EXISTS "${library_path}")
+      get_filename_component(_lib_dir "${library_path}" DIRECTORY)
+      set(_candidate_dirs "${_lib_dir}")
+
+      if(_lib_dir MATCHES "([/\\\\])lib$")
+        string(REGEX REPLACE "([/\\\\])lib$" "\\1bin" _bin_dir "${_lib_dir}")
+        list(APPEND _candidate_dirs "${_bin_dir}")
+      endif()
+
+      foreach(_dir IN LISTS _candidate_dirs)
+        if(EXISTS "${_dir}")
+          file(GLOB _dir_dlls "${_dir}/SDL2*.dll")
+          list(APPEND _dlls ${_dir_dlls})
+        endif()
+      endforeach()
+
+      list(REMOVE_DUPLICATES _dlls)
+    endif()
+
+    set(${out_var} "${_dlls}" PARENT_SCOPE)
+  endfunction()
+
+  xoreos_collect_runtime_dlls(XOREOS_SDL2_RUNTIME_DLLS "${SDL2_LIBRARY}")
+  if(XOREOS_SDL2_RUNTIME_DLLS)
+    foreach(AM_PROGRAM ${AM_PROGRAMS})
+      foreach(_runtime_dll ${XOREOS_SDL2_RUNTIME_DLLS})
+        add_custom_command(
+          TARGET ${AM_PROGRAM}
+          POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_runtime_dll}" $<TARGET_FILE_DIR:${AM_PROGRAM}>
+          COMMENT "Copying SDL2 runtime dependency: ${_runtime_dll}"
+        )
+      endforeach()
+    endforeach()
+  else()
+    message(WARNING "SDL2 runtime DLLs were not found near SDL2_LIBRARY; direct executable launch may still require PATH setup")
+  endif()
+endif()
+
 # install programs to bin dir
 install(
  TARGETS ${AM_PROGRAMS}

@@ -106,3 +106,6 @@ Makefile.in
 
 # CMake build directory
 /build/
+/build-vcpkg-linux/
+/build-vcpkg-portable/
+/build-vcpkg-release/

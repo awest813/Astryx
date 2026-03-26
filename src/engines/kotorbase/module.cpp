@@ -326,7 +326,12 @@ static const char * const texturePacks[3] = {
 };
 
 void Module::loadTexturePack() {
-	const int level = ConfigMan.getInt("texturepack");
+	int level = ConfigMan.getInt("texturepack");
+	if (level < 0 || level >= static_cast<int>(ARRAYSIZE(texturePacks))) {
+		warning("Invalid texture pack level %d; falling back to highest quality pack", level);
+		level = static_cast<int>(ARRAYSIZE(texturePacks)) - 1;
+		ConfigMan.setInt("texturepack", level);
+	}
 	if (_currentTexturePack == level)
 		// Nothing to do
 		return;
@@ -462,7 +467,7 @@ void Module::enter() {
 	if (!getEntryObjectLocation(entryX, entryY, entryZ, _))
 		getEntryIFOLocation(entryX, entryY, entryZ, _);
 
-	moveParty(entryX, entryY, entryZ);
+	moveParty(entryX, entryY, entryZ, _);
 	enterArea();
 
 	GfxMan.resumeAnimations();
@@ -492,10 +497,9 @@ bool Module::getObjectLocation(const Common::UString &object, ObjectType locatio
 	if (!kotorObject)
 		return false;
 
-	// TODO: Entry orientation
-
+	float orientationX, orientationY, orientationZ;
 	kotorObject->getPosition(entryX, entryY, entryZ);
-	entryAngle = 0.0f;
+	kotorObject->getOrientation(orientationX, orientationY, orientationZ, entryAngle);
 
 	return true;
 }
@@ -560,6 +564,10 @@ void Module::clickObject(Object *object) {
 	action.range = 1.0f;
 
 	Creature *partyLeader = getPartyLeader();
+	if (!partyLeader) {
+		warning("Module::clickObject(): missing party leader");
+		return;
+	}
 	partyLeader->clearActions();
 	partyLeader->addAction(action);
 }
@@ -744,7 +752,7 @@ void Module::openContainer(Placeable *placeable) {
 
 void Module::notifyCombatRoundBegan(int round) {
 	for (auto &c : _area->getCreatures()) {
-		if (c->isDead() || !c->isInCombat() || c->getAttackRound() != round)
+		if (c->isDead() || !c->isInCombat())
 			continue;
 
 		Object *target = c->getAttackTarget();
@@ -795,23 +803,36 @@ void Module::handleActions() {
 }
 
 void Module::moveParty(float x, float y, float z) {
+	Creature *partyLeader = getPartyLeader();
+	float angle = 0.0f;
+	float orientationX, orientationY, orientationZ;
+	if (partyLeader)
+		partyLeader->getOrientation(orientationX, orientationY, orientationZ, angle);
+
+	moveParty(x, y, z, angle);
+}
+
+void Module::moveParty(float x, float y, float z, float angle) {
 	int partySize = static_cast<int>(_partyController.getPartyMemberCount());
 	for (int i = 0; i < partySize; ++i) {
 		Creature *creature = _partyController.getPartyMemberByIndex(i).second;
 		creature->setPosition(x, y, z);
+		creature->setOrientation(0.0f, 0.0f, 1.0f, angle);
 
 		if (i == 0)
 			movedPartyLeader();
 		else
 			_area->notifyObjectMoved(*creature);
 	}
+
+	setCameraYaw(Common::deg2rad(angle));
 }
 
 void Module::moveParty(const Common::UString &module, const Common::UString &object, ObjectType type) {
 	if (module.empty() || (module == _module)) {
 		float x, y, z, angle;
 		if (getObjectLocation(object, type, x, y, z, angle))
-			moveParty(x, y, z);
+			moveParty(x, y, z, angle);
 
 		return;
 	}
@@ -1002,6 +1023,7 @@ void Module::spawnAvailableNPC(int npc, const Common::UString &waypointTag) {
 		getObjectLocation(waypointTag, kObjectTypeWaypoint, x, y, z, angle);
 
 	creature->setPosition(x, y, z);
+	creature->setOrientation(0.0f, 0.0f, 1.0f, angle);
 	if (_area)
 		_area->addCreature(creature);
 

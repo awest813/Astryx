@@ -49,8 +49,11 @@ namespace KotORBase {
 
 void Functions::getCurrentAction(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *object = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	if (!object)
-		throw Common::Exception("Functions::getCurrentAction(): Invalid object");
+	if (!object) {
+		warning("Functions::getCurrentAction(): invalid object");
+		ctx.getReturn() = kActionQueueEmpty;
+		return;
+	}
 
 	const Action *action = object->getCurrentAction();
 	if (!action)
@@ -61,8 +64,10 @@ void Functions::getCurrentAction(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::assignCommand(Aurora::NWScript::FunctionContext &ctx) {
 	Common::UString script = ctx.getScriptName();
-	if (script.empty())
-		throw Common::Exception("Functions::assignCommand(): Script needed");
+	if (script.empty()) {
+		warning("Functions::assignCommand(): missing script name");
+		return;
+	}
 
 	const Aurora::NWScript::ScriptState &state = ctx.getParams()[1].getScriptState();
 
@@ -71,8 +76,10 @@ void Functions::assignCommand(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::delayCommand(Aurora::NWScript::FunctionContext &ctx) {
 	Common::UString script = ctx.getScriptName();
-	if (script.empty())
-		throw Common::Exception("Functions::assignCommand(): Script needed");
+	if (script.empty()) {
+		warning("Functions::delayCommand(): missing script name");
+		return;
+	}
 
 	uint32_t delay = ctx.getParams()[0].getFloat() * 1000;
 
@@ -89,8 +96,10 @@ void Functions::actionStartConversation(Aurora::NWScript::FunctionContext &ctx) 
 void Functions::actionOpenDoor(Aurora::NWScript::FunctionContext &ctx) {
 	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();
 	Door *door = ObjectContainer::toDoor(object);
-	if (!door)
-		throw Common::Exception("Functions::actionOpenDoor(): Object is not a door");
+	if (!door) {
+		warning("Functions::actionOpenDoor(): object is not a door");
+		return;
+	}
 
 	door->open(0);
 }
@@ -98,20 +107,28 @@ void Functions::actionOpenDoor(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::actionCloseDoor(Aurora::NWScript::FunctionContext &ctx) {
 	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();
 	Door *door = ObjectContainer::toDoor(object);
-	if (!door)
-		throw Common::Exception("Functions::actionCloseDoor(): Object is not a door");
+	if (!door) {
+		warning("Functions::actionCloseDoor(): object is not a door");
+		return;
+	}
 
 	door->close(0);
 }
 
 void Functions::actionMoveToObject(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
-	if (!caller)
-		throw Common::Exception("Functions::actionMoveToObject(): Invalid caller");
+	if (!caller) {
+		warning("Functions::actionMoveToObject(): invalid caller");
+		return;
+	}
 
 	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
 	if (!object)
 		object = _game->getModule().getPartyLeader();
+	if (!object) {
+		warning("Functions::actionMoveToObject(): no target object or party leader");
+		return;
+	}
 
 	float range = ctx.getParams()[2].getFloat();
 
@@ -143,7 +160,6 @@ void Functions::actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx) {
 	action.range = 0.1f; // arrive within 0.1 units of the target location
 	action.location = glm::vec3(x, y, z);
 
-	caller->addAction(action);
 	caller->addAction(action);
 }
 
@@ -187,8 +203,10 @@ void Functions::actionForceMoveToLocation(Aurora::NWScript::FunctionContext &ctx
 
 void Functions::actionFollowLeader(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
-	if (!caller)
-		throw Common::Exception("Functions::actionFollowLeader(): Invalid caller");
+	if (!caller) {
+		warning("Functions::actionFollowLeader(): invalid caller");
+		return;
+	}
 
 	Action action(kActionFollowLeader);
 	action.range = 1.0f;
@@ -210,11 +228,23 @@ void Functions::getAttemptedAttackTarget(Aurora::NWScript::FunctionContext &ctx)
 		ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
 }
 
+void Functions::getAttemptedSpellTarget(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (creature)
+		ctx.getReturn() = (Aurora::NWScript::Object *) creature->getAttemptedAttackTarget();
+	else
+		ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+}
+
 
 void Functions::clearAllActions(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
 	if (!caller)
 		caller = _game->getModule().getPartyLeader();
+	if (!caller) {
+		warning("Functions::clearAllActions(): no caller or party leader");
+		return;
+	}
 
 	caller->clearActions();
 }
@@ -301,6 +331,21 @@ void Functions::actionSpeakString(Aurora::NWScript::FunctionContext &ctx) {
 	warning("ActionSpeakString [%s]: %s", tag.c_str(), str.c_str());
 }
 
+void Functions::speakString(Aurora::NWScript::FunctionContext &ctx) {
+	actionSpeakString(ctx);
+}
+
+void Functions::actionSpeakStringByStrRef(Aurora::NWScript::FunctionContext &ctx) {
+	const uint32_t strRef = static_cast<uint32_t>(ctx.getParams()[0].getInt());
+	Common::UString text = TalkMan.getString(strRef);
+	if (text.empty())
+		text = Common::String::format("<strref:%u>", strRef);
+
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	const Common::UString who = caller ? caller->getTag() : Common::UString("(unknown)");
+	warning("ActionSpeakStringByStrRef [%s]: %s", who.c_str(), text.c_str());
+}
+
 void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
 	int animID = ctx.getParams()[0].getInt();
 
@@ -355,6 +400,26 @@ void Functions::actionJumpToLocation(Aurora::NWScript::FunctionContext &ctx) {
 	jumpToLocation(ctx);
 }
 
+void Functions::actionPauseConversation(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+}
+
+void Functions::actionResumeConversation(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+}
+
+void Functions::actionInteractObject(Aurora::NWScript::FunctionContext &ctx) {
+	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller || !target)
+		return;
+
+	Action action(kActionUseObject);
+	action.object = target;
+	action.range = 1.5f;
+	caller->addAction(action);
+}
+
 void Functions::actionWait(Aurora::NWScript::FunctionContext &ctx) {
 	// Queue a wait action with the specified duration (seconds).
 	// The action executor pops it immediately after the first tick; this is
@@ -368,6 +433,15 @@ void Functions::actionWait(Aurora::NWScript::FunctionContext &ctx) {
 	Action action(kActionWait);
 	action.range = ctx.getParams()[0].getFloat();
 	caller->addAction(action);
+}
+
+void Functions::getUserActionsPending(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+
+void Functions::noClicksFor(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
 }
 
 void Functions::actionPutDownItem(Aurora::NWScript::FunctionContext &ctx) {

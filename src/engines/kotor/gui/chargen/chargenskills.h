@@ -37,7 +37,8 @@ namespace KotOR {
 
 /** Menu that lets the player distribute skill points during custom character creation.
  *
- *  Loads the "skilitems" GUI resource.  The number of skill points available is
+ *  Loads the "skchrgen" GUI resource (with a legacy fallback for "skilitems").
+ *  The number of skill points available is
  *  (4 + Intelligence modifier) for Soldiers, (6 + Int mod) for Scouts, and
  *  (8 + Int mod) for Scoundrels.
  */

@@ -1,0 +1,90 @@
+[2026-03-26T00:15:26] xoreos 0.0.6+.dirty [.dirty] (2026-03-26T00:05:41Z)
+[2026-03-26T00:15:26] Full command line: C:\Projects\Astryx\build-vcpkg\bin\Release\xoreos.exe -pD:\SteamLibrary\steamapps\common\swkotor --skipvideos=true --saveconf=false --logfile=C:\Projects\Astryx\build-vcpkg\xoreos-runtime-live-pass.log --consolelog=C:\Projects\Astryx\build-vcpkg\xoreos-console-live-pass.log
+[2026-03-26T00:15:26] Target "swkotor"
+[2026-03-26T00:15:26] Found Max FSAA: 0x
+[2026-03-26T00:15:26] OpenGL context successfully created:
+[2026-03-26T00:15:26] OpenGL version: 2.1
+[2026-03-26T00:15:26] FSAA level    : 0x
+[2026-03-26T00:15:26] Initialising shaders...
+[2026-03-26T00:15:26] shader default/text.vert loaded
+[2026-03-26T00:15:26] shader default/text.frag loaded
+[2026-03-26T00:15:26] shader default/texture.vert loaded
+[2026-03-26T00:15:26] shader default/texture.frag loaded
+[2026-03-26T00:15:26] shader default/textureMatrix.vert loaded
+[2026-03-26T00:15:26] shader default/default.vert loaded
+[2026-03-26T00:15:26] shader default/colour.frag loaded
+[2026-03-26T00:15:26] Initialising default surfaces...
+[2026-03-26T00:15:26] Initialising default materials...
+[2026-03-26T00:15:26] Initialising default mesh containers...
+[2026-03-26T00:15:26] Graphics subsystem initialized
+[2026-03-26T00:15:26] Sound subsystem initialized
+[2026-03-26T00:15:26] Event subsystem initialized
+[2026-03-26T00:15:26] Detected game "Star Wars: Knights of the Old Republic"
+[2026-03-26T00:15:26] [  0%] Declare languages (0.00s)
+[2026-03-26T00:15:26] [  5%] Detecting game version (0.00s)
+[2026-03-26T00:15:26] This is Star Wars: Knights of the Old Republic Windows v1.03.514077
+[2026-03-26T00:15:26] Available languages:
+[2026-03-26T00:15:26] - English
+[2026-03-26T00:15:26] Using the first available language (English)
+[2026-03-26T00:15:26] Setting the language to English
+[2026-03-26T00:15:26] [ 11%] Loading user game config (0.02s)
+[2026-03-26T00:15:26] [ 16%] Setting base directory (0.02s)
+[2026-03-26T00:15:26] [ 22%] Adding extra archive directories (0.02s)
+[2026-03-26T00:15:26] [ 27%] Loading main KEY (0.04s)
+[2026-03-26T00:15:26] [ 33%] Loading global auxiliary resources (0.10s)
+[2026-03-26T00:15:26] [ 38%] Loading GUI textures (0.11s)
+[2026-03-26T00:15:26] [ 44%] Indexing extra sound resources (0.12s)
+[2026-03-26T00:15:27] [ 50%] Indexing extra voice resources (0.17s)
+[2026-03-26T00:15:27] [ 55%] Indexing extra music resources (0.78s)
+[2026-03-26T00:15:27] [ 61%] Indexing extra movie resources (0.79s)
+[2026-03-26T00:15:27] [ 66%] Indexing Windows-specific resources (0.79s)
+[2026-03-26T00:15:27] [ 72%] Indexing override files (0.80s)
+[2026-03-26T00:15:27] [ 77%] Loading main talk table (0.80s)
+[2026-03-26T00:15:27] [ 83%] Registering file formats (0.81s)
+[2026-03-26T00:15:27] [ 88%] Loading game cursors (0.81s)
+[2026-03-26T00:15:27] [ 94%] Initializing internal game config (0.81s)
+[2026-03-26T00:15:27] [100%] Successfully initialized the engine (0.81s)
+[2026-03-26T00:15:27] Loading texture pack 2
+[2026-03-26T00:15:27] WARNING: Failed to create texture "mainmenu_a00005" (-1)
+[2026-03-26T00:15:27]     Because: No such image resource "mainmenu_a00005"
+[2026-03-26T00:15:51] WARNING: Failed to create texture "M01aa_04a_a0002t" (-1)
+[2026-03-26T00:15:51]     Because: No such image resource "M01aa_04a_a0002t"
+[2026-03-26T00:15:51] WARNING: Failed to create texture "DOR_LHR02_a00004" (-1)
+[2026-03-26T00:15:51]     Because: No such image resource "DOR_LHR02_a00004"
+[2026-03-26T00:15:51] WARNING: Failed to create texture "DOR_LHR02_a00004" (-1)
+[2026-03-26T00:15:51]     Because: No such image resource "DOR_LHR02_a00004"
+[2026-03-26T00:15:51] WARNING: Failed to create texture "DOR_LHR02_a00004" (-1)
+[2026-03-26T00:15:51]     Because: No such image resource "DOR_LHR02_a00004"
+[2026-03-26T00:15:51] WARNING: Failed to create texture "DOR_LHR02_a00004" (-1)
+[2026-03-26T00:15:51]     Because: No such image resource "DOR_LHR02_a00004"
+[2026-03-26T00:15:51] WARNING: Creature::attachWeaponModel(): Model "C_DrdAstro" does not have node "lhand"!
+[2026-03-26T00:15:51] WARNING: Creature::attachWeaponModel(): Model "C_DrdAstro" does not have node "rhand"!
+[2026-03-26T00:15:51] WARNING: Creature::attachWeaponModel(): Model "C_DrdAstro" does not have node "lhand"!
+[2026-03-26T00:15:51] WARNING: Creature::attachWeaponModel(): Model "C_DrdAstro" does not have node "rhand"!
+[2026-03-26T00:15:51] WARNING: Creature::attachWeaponModel(): Model "C_DrdAstro" does not have node "lhand"!
+[2026-03-26T00:15:51] WARNING: Creature::attachWeaponModel(): Model "C_DrdAstro" does not have node "rhand"!
+[2026-03-26T00:15:51] WARNING: TODO [Sev 0]: int PlayRumblePattern(15)!
+[2026-03-26T00:15:54] WARNING: Functions::soundObjectPlay(): invalid sound object!
+[2026-03-26T00:15:58] WARNING: Functions::soundObjectPlay(): invalid sound object!
+[2026-03-26T00:16:02] WARNING: TODO [Sev 2]: void ActionPauseConversation()!
+[2026-03-26T00:16:02] WARNING: TODO [Sev 2]: void ActionResumeConversation()!
+[2026-03-26T00:16:02] WARNING: Functions::soundObjectPlay(): invalid sound object!
+[2026-03-26T00:16:22] WARNING: TODO [Sev 0]: engine EffectVisualEffect(6002, 0)!
+[2026-03-26T00:16:22] WARNING: TODO [Sev 0]: int PlayRumblePattern(16)!
+[2026-03-26T00:16:22] WARNING: Functions::soundObjectPlay(): invalid sound object!
+[2026-03-26T00:16:23] WARNING: Functions::givePlotXP: plot 'end_tutorial', 5%!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: int GetListenPatternNumber()!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: object GetLastSpeaker()!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: int ShipBuild()!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: int ShipBuild()!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: int ShipBuild()!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: int GetPartyAIStyle()!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: int GetNPCAIStyle(<object>("end_trask"))!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: int GetUserActionsPending()!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: int ShipBuild()!
+[2026-03-26T00:16:32] WARNING: TODO [Sev 1]: int ShipBuild()!
+[2026-03-26T00:16:37] WARNING: TODO [Sev 1]: void NoClicksFor(0.500000)!
+[2026-03-26T00:17:03] WARNING: TODO [Sev 0]: engine EffectVisualEffect(6002, 0)!
+[2026-03-26T00:17:03] WARNING: TODO [Sev 0]: int PlayRumblePattern(16)!
+[2026-03-26T00:17:03] WARNING: Functions::soundObjectPlay(): invalid sound object!
+[2026-03-26T00:17:03] WARNING: TODO [Sev 1]: void NoClicksFor(0.500000)!

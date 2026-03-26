@@ -35,6 +35,7 @@
 using Engines::KotORBase::Effect;
 using Engines::KotORBase::kEffectHeal;
 using Engines::KotORBase::kEffectDamage;
+using Engines::KotORBase::kEffectVisual;
 
 // ---------------------------------------------------------------------------
 // EffectHeal construction and accessors
@@ -85,6 +86,13 @@ GTEST_TEST(KotOREffect, damageZeroAmount) {
 	EXPECT_EQ(e.getAmount(), 0);
 }
 
+GTEST_TEST(KotOREffect, visualEffectTypeRoundTrips) {
+	Effect e(kEffectVisual, 6002, 1);
+	EXPECT_EQ(e.getType(), kEffectVisual);
+	EXPECT_EQ(e.getAmount(), 6002);
+	EXPECT_EQ(e.getDamageType(), 1);
+}
+
 // ---------------------------------------------------------------------------
 // clone()
 // ---------------------------------------------------------------------------
@@ -109,6 +117,18 @@ GTEST_TEST(KotOREffect, cloneProducesEquivalentDamage) {
 	EXPECT_EQ(cloned->getType(),       kEffectDamage);
 	EXPECT_EQ(cloned->getAmount(),     7);
 	EXPECT_EQ(cloned->getDamageType(), 1);
+	delete rawClone;
+}
+
+GTEST_TEST(KotOREffect, cloneProducesEquivalentVisualEffect) {
+	Effect orig(kEffectVisual, 6002, 0);
+	Aurora::NWScript::EngineType *rawClone = orig.clone();
+	Effect *cloned = dynamic_cast<Effect *>(rawClone);
+
+	ASSERT_NE(cloned, nullptr);
+	EXPECT_EQ(cloned->getType(),       kEffectVisual);
+	EXPECT_EQ(cloned->getAmount(),     6002);
+	EXPECT_EQ(cloned->getDamageType(), 0);
 	delete rawClone;
 }
 

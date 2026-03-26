@@ -25,6 +25,7 @@
 #include <algorithm>
 
 #include "src/common/util.h"
+#include "src/common/error.h"
 #include "src/common/strutil.h"
 #include "src/common/ustring.h"
 #include "src/common/configman.h"
@@ -56,6 +57,10 @@ OptionsResolutionMenu::OptionsResolutionMenu(Console *console) : KotORBase::GUI(
 
 	int currentIndex = -1;
 	std::vector<Graphics::DisplayMode> modes = WindowMan.getDisplayModes();
+	if (modes.empty()) {
+		warning("OptionsResolutionMenu: SDL returned no display modes; keeping current resolution");
+		return;
+	}
 
 	// sort and then get the highest resolution.
 	std::sort(modes.begin(), modes.end());
@@ -109,9 +114,14 @@ void OptionsResolutionMenu::callbackActive(Widget &widget) {
 		const int index = getListBox("LB_RESOLUTIONS")->getSelectedIndex();
 
 		if (index >= 0 && static_cast<size_t>(index) < _modes.size()) {
-			WindowMan.setWindowSize(_modes[index].w, _modes[index].h);
-			ConfigMan.setInt("width", _modes[index].w);
-			ConfigMan.setInt("height", _modes[index].h);
+			try {
+				WindowMan.setWindowSize(_modes[index].w, _modes[index].h);
+				ConfigMan.setInt("width", _modes[index].w);
+				ConfigMan.setInt("height", _modes[index].h);
+			} catch (const Common::Exception &e) {
+				warning("OptionsResolutionMenu: failed to change resolution to %dx%d: %s",
+				        _modes[index].w, _modes[index].h, e.what());
+			}
 		}
 
 		_returnCode = kReturnCodeAbort;

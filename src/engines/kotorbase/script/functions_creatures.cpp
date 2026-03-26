@@ -173,6 +173,21 @@ void Functions::getAbilityScore(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = creature->getAbilityScore(KotORBase::Ability(nAbilityType));
 }
 
+void Functions::getAbilityModifier(Aurora::NWScript::FunctionContext &ctx) {
+	int nAbilityType = ctx.getParams()[0].getInt();
+	Aurora::NWScript::Object *object = ctx.getParams()[1].getObject();
+
+	Creature *creature = ObjectContainer::toCreature(object);
+
+	if (!creature) {
+		warning("Functions::getAbilityModifier(): invalid creature");
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	ctx.getReturn() = creature->getCreatureInfo().getAbilityModifier(KotORBase::Ability(nAbilityType));
+}
+
 void Functions::getIsDead(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
 	ctx.getReturn() = creature ? (int32_t)creature->isDead() : 0;
@@ -225,6 +240,12 @@ void Functions::effectDamage(Aurora::NWScript::FunctionContext &ctx) {
 	int damageType = ctx.getParams()[1].getInt();
 	// param 2 (damage power) is not used in the basic implementation
 	ctx.getReturn() = new Effect(kEffectDamage, amount, damageType);
+}
+
+void Functions::effectVisualEffect(Aurora::NWScript::FunctionContext &ctx) {
+	const int visualEffect = ctx.getParams()[0].getInt();
+	const int exposeToNetwork = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kEffectVisual, visualEffect, exposeToNetwork);
 }
 
 void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {

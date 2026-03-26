@@ -34,6 +34,7 @@
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/placeable.h"
+#include "src/engines/kotorbase/situated.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/location.h"
@@ -198,6 +199,25 @@ void Functions::getLocation(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 
 	ctx.getReturn() = object->getLocation();
+}
+
+void Functions::getPositionFromLocation(Aurora::NWScript::FunctionContext &ctx) {
+	Location *location = ObjectContainer::toLocation(ctx.getParams()[0].getEngineType());
+	ctx.getReturn().setType(Aurora::NWScript::kTypeVector);
+
+	if (!location) {
+		ctx.getReturn().setVector(0.0f, 0.0f, 0.0f);
+		return;
+	}
+
+	float x, y, z;
+	location->getPosition(x, y, z);
+	ctx.getReturn().setVector(x, y, z);
+}
+
+void Functions::getFacingFromLocation(Aurora::NWScript::FunctionContext &ctx) {
+	Location *location = ObjectContainer::toLocation(ctx.getParams()[0].getEngineType());
+	ctx.getReturn() = location ? location->getFacing() : 0.0f;
 }
 
 void Functions::jumpToLocation(Aurora::NWScript::FunctionContext &ctx) {
@@ -436,6 +456,98 @@ void Functions::getDistanceToObject(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
+void Functions::getDistanceToObject2D(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = -1.0f;
+
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	if (!target || !caller)
+		return;
+
+	float x1, y1, z1;
+	float x2, y2, z2;
+	target->getPosition(x1, y1, z1);
+	caller->getPosition(x2, y2, z2);
+
+	const float dx = x1 - x2;
+	const float dy = y1 - y2;
+	ctx.getReturn() = std::sqrt(dx * dx + dy * dy);
+}
+
+void Functions::getDistanceBetween(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = -1.0f;
+
+	Object *first = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Object *second = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!first || !second)
+		return;
+
+	float x1, y1, z1;
+	float x2, y2, z2;
+	first->getPosition(x1, y1, z1);
+	second->getPosition(x2, y2, z2);
+
+	const float dx = x1 - x2;
+	const float dy = y1 - y2;
+	const float dz = z1 - z2;
+	ctx.getReturn() = std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+void Functions::getDistanceBetween2D(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = -1.0f;
+
+	Object *first = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Object *second = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!first || !second)
+		return;
+
+	float x1, y1, z1;
+	float x2, y2, z2;
+	first->getPosition(x1, y1, z1);
+	second->getPosition(x2, y2, z2);
+
+	const float dx = x1 - x2;
+	const float dy = y1 - y2;
+	ctx.getReturn() = std::sqrt(dx * dx + dy * dy);
+}
+
+void Functions::getDistanceBetweenLocations(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = -1.0f;
+
+	Location *first = ObjectContainer::toLocation(ctx.getParams()[0].getEngineType());
+	Location *second = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
+	if (!first || !second)
+		return;
+
+	float x1, y1, z1;
+	float x2, y2, z2;
+	first->getPosition(x1, y1, z1);
+	second->getPosition(x2, y2, z2);
+
+	const float dx = x1 - x2;
+	const float dy = y1 - y2;
+	const float dz = z1 - z2;
+	ctx.getReturn() = std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+void Functions::getDistanceBetweenLocations2D(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = -1.0f;
+
+	Location *first = ObjectContainer::toLocation(ctx.getParams()[0].getEngineType());
+	Location *second = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
+	if (!first || !second)
+		return;
+
+	float x1, y1, z1;
+	float x2, y2, z2;
+	first->getPosition(x1, y1, z1);
+	second->getPosition(x2, y2, z2);
+
+	const float dx = x1 - x2;
+	const float dy = y1 - y2;
+	ctx.getReturn() = std::sqrt(dx * dx + dy * dy);
+}
+
 void Functions::exploreAreaForPlayer(Aurora::NWScript::FunctionContext &ctx) {
 	// Marks the entire area as explored on the minimap for the given player.
 	// Full minimap revelation requires a rendering-layer hook; this stub
@@ -647,6 +759,21 @@ void Functions::getNextObjectInArea(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 
 	ctx.getReturn() = _areaIterObjects[_areaIterIndex++];
+}
+
+void Functions::getLockUnlockDC(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	if (!situated) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	if (!situated->isLocked()) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	ctx.getReturn() = situated->isKeyRequired() ? 100 : 10;
 }
 
 } // End of namespace KotORBase

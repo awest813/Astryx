@@ -14,6 +14,8 @@ Current scripted slice:
 - `test_endar_spire_golden`
 - `test_taris_progression`
 - `test_alignment_xp`
+- `test_combat`
+- `test_nwscript_functions`
 - `crash_regression`
 
 ## Manual Progression Path (Main Menu to Dantooine)
@@ -25,6 +27,7 @@ Use this walkthrough when validating with live game content:
 - [ ] `tar_m02aa` loads without script halts and Carth party-join path executes.
 - [ ] Party operations (add/remove/count/index/solo mode) remain stable after transitions.
 - [ ] Global string and boolean/number script gates survive module changes.
+- [ ] Taris loading interactions (click/move/action scripts) avoid null-target hard crashes.
 - [ ] Taris progression path reaches departure sequence without crash/progression blocker.
 - [ ] Galaxy map flow allows travel selection toward Dantooine path (GUI or scripted fallback selection).
 - [ ] Dantooine arrival transition completes without crash or hard script stop.

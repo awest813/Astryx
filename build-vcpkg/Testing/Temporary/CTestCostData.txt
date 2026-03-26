@@ -1,0 +1,6 @@
+tests_engines_kotorbase_test_nwscript_functions 2 0.0146724
+tests_engines_kotorbase_test_endar_spire_golden 2 0.0178303
+tests_engines_kotorbase_test_taris_progression 1 0.045837
+tests_engines_kotorbase_test_combat 1 0.0324947
+tests_engines_kotorbase_test_effect 1 0.0297062
+---

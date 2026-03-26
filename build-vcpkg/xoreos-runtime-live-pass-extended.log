@@ -1,0 +1,49 @@
+[2026-03-26T00:18:06] xoreos 0.0.6+.dirty [.dirty] (2026-03-26T00:05:41Z)
+[2026-03-26T00:18:06] Full command line: C:\Projects\Astryx\build-vcpkg\bin\Release\xoreos.exe -pD:\SteamLibrary\steamapps\common\swkotor --skipvideos=true --saveconf=false --logfile=C:\Projects\Astryx\build-vcpkg\xoreos-runtime-live-pass-extended.log --consolelog=C:\Projects\Astryx\build-vcpkg\xoreos-console-live-pass-extended.log
+[2026-03-26T00:18:06] Target "swkotor"
+[2026-03-26T00:18:07] Found Max FSAA: 0x
+[2026-03-26T00:18:07] OpenGL context successfully created:
+[2026-03-26T00:18:07] OpenGL version: 2.1
+[2026-03-26T00:18:07] FSAA level    : 0x
+[2026-03-26T00:18:07] Initialising shaders...
+[2026-03-26T00:18:07] shader default/text.vert loaded
+[2026-03-26T00:18:07] shader default/text.frag loaded
+[2026-03-26T00:18:07] shader default/texture.vert loaded
+[2026-03-26T00:18:07] shader default/texture.frag loaded
+[2026-03-26T00:18:07] shader default/textureMatrix.vert loaded
+[2026-03-26T00:18:07] shader default/default.vert loaded
+[2026-03-26T00:18:07] shader default/colour.frag loaded
+[2026-03-26T00:18:07] Initialising default surfaces...
+[2026-03-26T00:18:07] Initialising default materials...
+[2026-03-26T00:18:07] Initialising default mesh containers...
+[2026-03-26T00:18:07] Graphics subsystem initialized
+[2026-03-26T00:18:07] Sound subsystem initialized
+[2026-03-26T00:18:07] Event subsystem initialized
+[2026-03-26T00:18:07] Detected game "Star Wars: Knights of the Old Republic"
+[2026-03-26T00:18:07] [  0%] Declare languages (0.00s)
+[2026-03-26T00:18:07] [  5%] Detecting game version (0.00s)
+[2026-03-26T00:18:07] This is Star Wars: Knights of the Old Republic Windows v1.03.514077
+[2026-03-26T00:18:07] Available languages:
+[2026-03-26T00:18:07] - English
+[2026-03-26T00:18:07] Using the first available language (English)
+[2026-03-26T00:18:07] Setting the language to English
+[2026-03-26T00:18:07] [ 11%] Loading user game config (0.01s)
+[2026-03-26T00:18:07] [ 16%] Setting base directory (0.03s)
+[2026-03-26T00:18:07] [ 22%] Adding extra archive directories (0.03s)
+[2026-03-26T00:18:07] [ 27%] Loading main KEY (0.05s)
+[2026-03-26T00:18:07] [ 33%] Loading global auxiliary resources (0.14s)
+[2026-03-26T00:18:07] [ 38%] Loading GUI textures (0.15s)
+[2026-03-26T00:18:07] [ 44%] Indexing extra sound resources (0.16s)
+[2026-03-26T00:18:07] [ 50%] Indexing extra voice resources (0.22s)
+[2026-03-26T00:18:08] [ 55%] Indexing extra music resources (0.95s)
+[2026-03-26T00:18:08] [ 61%] Indexing extra movie resources (0.96s)
+[2026-03-26T00:18:08] [ 66%] Indexing Windows-specific resources (0.97s)
+[2026-03-26T00:18:08] [ 72%] Indexing override files (0.97s)
+[2026-03-26T00:18:08] [ 77%] Loading main talk table (0.97s)
+[2026-03-26T00:18:08] [ 83%] Registering file formats (1.00s)
+[2026-03-26T00:18:08] [ 88%] Loading game cursors (1.00s)
+[2026-03-26T00:18:08] [ 94%] Initializing internal game config (1.00s)
+[2026-03-26T00:18:08] [100%] Successfully initialized the engine (1.00s)
+[2026-03-26T00:18:08] Loading texture pack 2
+[2026-03-26T00:18:08] WARNING: Failed to create texture "mainmenu_a00005" (-1)
+[2026-03-26T00:18:08]     Because: No such image resource "mainmenu_a00005"

@@ -48,7 +48,12 @@ CharacterGenerationAbilitiesMenu::CharacterGenerationAbilitiesMenu(
 		Console *console) :
 		CharacterGenerationBaseMenu(info, console) {
 
-	load("abitems");
+	// KotOR 1 uses "abchrgen". Keep a fallback for alternate data layouts.
+	try {
+		load("abchrgen");
+	} catch (...) {
+		load("abitems");
+	}
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
@@ -79,9 +84,8 @@ CharacterGenerationAbilitiesMenu::CharacterGenerationAbilitiesMenu(
 int CharacterGenerationAbilitiesMenu::raiseCost(uint32_t current) {
 	if (current <= 13) return 1;
 	if (current <= 15) return 2;
-	if (current == 16) return 3;
-	if (current == 17) return 4;
-	return 5; // 18
+	if (current <= 17) return 3;
+	return 4;
 }
 
 int CharacterGenerationAbilitiesMenu::lowerCost(uint32_t current) {
@@ -119,20 +123,22 @@ void CharacterGenerationAbilitiesMenu::callbackActive(Widget &widget) {
 	struct AbilityRef {
 		const char *plusTag;
 		const char *minusTag;
+		const char *legacyPlusTag;
+		const char *legacyMinusTag;
 		uint32_t   *value;
 	};
 
 	static const AbilityRef kAbilityRefs[] = {
-		{ "BTN_STR_PLUS", "BTN_STR_MINUS", &_str  },
-		{ "BTN_DEX_PLUS", "BTN_DEX_MINUS", &_dex  },
-		{ "BTN_CON_PLUS", "BTN_CON_MINUS", &_con  },
-		{ "BTN_INT_PLUS", "BTN_INT_MINUS", &_intl },
-		{ "BTN_WIS_PLUS", "BTN_WIS_MINUS", &_wis  },
-		{ "BTN_CHA_PLUS", "BTN_CHA_MINUS", &_cha  },
+		{ "STR_PLUS_BTN", "STR_MINUS_BTN", "BTN_STR_PLUS", "BTN_STR_MINUS", &_str  },
+		{ "DEX_PLUS_BTN", "DEX_MINUS_BTN", "BTN_DEX_PLUS", "BTN_DEX_MINUS", &_dex  },
+		{ "CON_PLUS_BTN", "CON_MINUS_BTN", "BTN_CON_PLUS", "BTN_CON_MINUS", &_con  },
+		{ "INT_PLUS_BTN", "INT_MINUS_BTN", "BTN_INT_PLUS", "BTN_INT_MINUS", &_intl },
+		{ "WIS_PLUS_BTN", "WIS_MINUS_BTN", "BTN_WIS_PLUS", "BTN_WIS_MINUS", &_wis  },
+		{ "CHA_PLUS_BTN", "CHA_MINUS_BTN", "BTN_CHA_PLUS", "BTN_CHA_MINUS", &_cha  },
 	};
 
 	for (size_t i = 0; i < ARRAYSIZE(kAbilityRefs); ++i) {
-		if (tag == kAbilityRefs[i].plusTag) {
+		if ((tag == kAbilityRefs[i].plusTag) || (tag == kAbilityRefs[i].legacyPlusTag)) {
 			uint32_t &v = *kAbilityRefs[i].value;
 			if (v < kAbilityMax) {
 				int cost = raiseCost(v);
@@ -144,7 +150,7 @@ void CharacterGenerationAbilitiesMenu::callbackActive(Widget &widget) {
 			}
 			return;
 		}
-		if (tag == kAbilityRefs[i].minusTag) {
+		if ((tag == kAbilityRefs[i].minusTag) || (tag == kAbilityRefs[i].legacyMinusTag)) {
 			uint32_t &v = *kAbilityRefs[i].value;
 			if (v > kAbilityMin) {
 				_remainingPoints += lowerCost(v);

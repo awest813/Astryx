@@ -2198,9 +2198,11 @@
 	</Project>
 	<Project Path="tests_smoke_crash_regression.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="89e1a45a-a63f-3c5d-8069-bd51bb37d98a">
 		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="common.vcxproj"/>
 		<BuildDependency Project="external_glew.vcxproj"/>
 		<BuildDependency Project="external_imgui.vcxproj"/>
 		<BuildDependency Project="external_lua.vcxproj"/>
+		<BuildDependency Project="external_mspack.vcxproj"/>
 		<BuildDependency Project="external_toluapp.vcxproj"/>
 		<BuildDependency Project="tests_googletest_libgtest.la.vcxproj"/>
 		<BuildDependency Project="tests_googletest_libgtest_main.la.vcxproj"/>
