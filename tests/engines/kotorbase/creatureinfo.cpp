@@ -190,6 +190,23 @@ GTEST_TEST(KotORBaseCreatureInfo, skillsAreIndependent) {
 }
 
 // ---------------------------------------------------------------------------
+// Feats
+// ---------------------------------------------------------------------------
+
+GTEST_TEST(KotORBaseCreatureInfo, addAndHasFeat) {
+	CreatureInfo info;
+
+	info.addFeat(42);
+	info.addFeat(7);
+	info.addFeat(42); // duplicate should be ignored
+
+	EXPECT_TRUE(info.hasFeat(42));
+	EXPECT_TRUE(info.hasFeat(7));
+	EXPECT_FALSE(info.hasFeat(99));
+	EXPECT_EQ(info.getFeats().size(), 2u);
+}
+
+// ---------------------------------------------------------------------------
 // Copy / assignment
 // ---------------------------------------------------------------------------
 

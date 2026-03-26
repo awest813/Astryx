@@ -265,4 +265,4 @@ sdl2 provides CMake targets:
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     )
 
-All requested installations completed successfully in: 2.61 ms
+All requested installations completed successfully in: 1.24 ms

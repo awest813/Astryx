@@ -104,6 +104,12 @@ public:
 
 	void setSkillRank(Skill skill, uint32_t rank);
 
+	// Feats
+
+	void addFeat(uint32_t feat);
+	bool hasFeat(uint32_t feat) const;
+	const std::vector<uint32_t> &getFeats() const;
+
 	// Inventory
 
 	Inventory &getInventory();
@@ -126,10 +132,12 @@ private:
 	Skills _skills;
 	Inventory _inventory;
 	std::map<InventorySlot, Common::UString> _equipment;
+	std::vector<uint32_t> _feats;
 
 	void loadClassLevels(const Aurora::GFF3Struct &gff);
 	void loadSkills(const Aurora::GFF3Struct &gff);
 	void loadAbilities(const Aurora::GFF3Struct &gff);
+	void loadFeats(const Aurora::GFF3Struct &gff);
 };
 
 } // End of namespace KotORBase

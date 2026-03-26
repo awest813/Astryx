@@ -88,6 +88,9 @@
     <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\effect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\talent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Projects\Astryx\src\engines\kotorbase\script\container.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -280,6 +283,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\effect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\talent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Projects\Astryx\src\engines\kotorbase\script\container.h">

@@ -32,6 +32,7 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/effect.h"
+#include "src/engines/kotorbase/talent.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
 
@@ -40,6 +41,41 @@
 namespace Engines {
 
 namespace KotORBase {
+
+namespace {
+
+Talent *createInvalidTalent() {
+	return new Talent();
+}
+
+bool hasAnySkillTalent(const Creature *creature) {
+	for (int skill = kSkillComputerUse; skill < kSkillMAX; ++skill) {
+		if (creature->getCreatureInfo().getSkillRank(static_cast<Skill>(skill)) > 0)
+			return true;
+	}
+
+	return false;
+}
+
+int getBestSkillTalentID(const Creature *creature) {
+	int bestSkill = -1;
+	int bestRank = -1;
+
+	for (int skill = kSkillComputerUse; skill < kSkillMAX; ++skill) {
+		const int rank = creature->getCreatureInfo().getSkillRank(static_cast<Skill>(skill));
+		if (rank > bestRank) {
+			bestRank = rank;
+			bestSkill = skill;
+		}
+	}
+
+	if (bestRank <= 0)
+		return -1;
+
+	return bestSkill;
+}
+
+} // End of anonymous namespace
 
 void Functions::getGender(Aurora::NWScript::FunctionContext &ctx) {
 	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
@@ -128,6 +164,12 @@ void Functions::getSubRace(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = creature->getSubRace();
 }
 
+void Functions::getHasFeat(Aurora::NWScript::FunctionContext &ctx) {
+	const uint32_t feat = static_cast<uint32_t>(ctx.getParams()[0].getInt());
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
+	ctx.getReturn() = creature ? static_cast<int32_t>(creature->hasFeat(feat)) : 0;
+}
+
 void Functions::getHasSkill(Aurora::NWScript::FunctionContext &ctx) {
 	int nSkill = ctx.getParams()[0].getInt();
 	Aurora::NWScript::Object *object = ctx.getParams()[1].getObject();
@@ -156,6 +198,143 @@ void Functions::getSkillRank(Aurora::NWScript::FunctionContext &ctx) {
 	}
 
 	ctx.getReturn() = creature->getSkillRank(KotORBase::Skill(nSkill));
+}
+
+void Functions::getHasFeatEffect(Aurora::NWScript::FunctionContext &ctx) {
+	getHasFeat(ctx);
+}
+
+void Functions::talentSpell(Aurora::NWScript::FunctionContext &ctx) {
+	const int spellID = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Talent(kTalentTypeSpell, spellID);
+}
+
+void Functions::talentFeat(Aurora::NWScript::FunctionContext &ctx) {
+	const int featID = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Talent(kTalentTypeFeat, featID);
+}
+
+void Functions::talentSkill(Aurora::NWScript::FunctionContext &ctx) {
+	const int skillID = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Talent(kTalentTypeSkill, skillID);
+}
+
+void Functions::getCreatureHasTalent(Aurora::NWScript::FunctionContext &ctx) {
+	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
+	const Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
+	if (!talent || !talent->isValid() || !creature) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	switch (talent->getType()) {
+		case kTalentTypeFeat:
+			ctx.getReturn() = static_cast<int32_t>(creature->hasFeat(static_cast<uint32_t>(talent->getID())));
+			return;
+
+		case kTalentTypeSkill: {
+			const int skillID = talent->getID();
+			if (skillID < kSkillComputerUse || skillID >= kSkillMAX) {
+				ctx.getReturn() = 0;
+				return;
+			}
+
+			ctx.getReturn() = static_cast<int32_t>(
+				creature->getCreatureInfo().getSkillRank(static_cast<Skill>(skillID)) > 0);
+			return;
+		}
+
+		case kTalentTypeSpell:
+		case kTalentTypeInvalid:
+		default:
+			ctx.getReturn() = 0;
+			return;
+	}
+}
+
+void Functions::getCreatureTalentRandom(Aurora::NWScript::FunctionContext &ctx) {
+	const int category = ctx.getParams()[0].getInt();
+	const Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
+	if (!creature) {
+		ctx.getReturn() = createInvalidTalent();
+		return;
+	}
+
+	// Ignore visibility gating until combat perception masks are implemented.
+	const std::vector<uint32_t> &feats = creature->getCreatureInfo().getFeats();
+	if ((category == kTalentTypeFeat || category == kTalentTypeInvalid) && !feats.empty()) {
+		const int index = getRandom(0, static_cast<int>(feats.size()) - 1);
+		ctx.getReturn() = new Talent(kTalentTypeFeat, static_cast<int>(feats[index]));
+		return;
+	}
+
+	if ((category == kTalentTypeSkill || category == kTalentTypeInvalid) && hasAnySkillTalent(creature)) {
+		std::vector<int> skills;
+		for (int skill = kSkillComputerUse; skill < kSkillMAX; ++skill) {
+			if (creature->getCreatureInfo().getSkillRank(static_cast<Skill>(skill)) > 0)
+				skills.push_back(skill);
+		}
+
+		if (!skills.empty()) {
+			const int index = getRandom(0, static_cast<int>(skills.size()) - 1);
+			ctx.getReturn() = new Talent(kTalentTypeSkill, skills[index]);
+			return;
+		}
+	}
+
+	ctx.getReturn() = createInvalidTalent();
+}
+
+void Functions::getCreatureTalentBest(Aurora::NWScript::FunctionContext &ctx) {
+	const int category = ctx.getParams()[0].getInt();
+	const Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 2));
+	if (!creature) {
+		ctx.getReturn() = createInvalidTalent();
+		return;
+	}
+
+	// nCRMax/nClass/bOffensive filters are ignored until full feat/spell
+	// metadata and combat scoring are implemented.
+	const std::vector<uint32_t> &feats = creature->getCreatureInfo().getFeats();
+	if ((category == kTalentTypeFeat || category == kTalentTypeInvalid) && !feats.empty()) {
+		ctx.getReturn() = new Talent(kTalentTypeFeat, static_cast<int>(feats.front()));
+		return;
+	}
+
+	if (category == kTalentTypeSkill || category == kTalentTypeInvalid) {
+		const int bestSkill = getBestSkillTalentID(creature);
+		if (bestSkill >= 0) {
+			ctx.getReturn() = new Talent(kTalentTypeSkill, bestSkill);
+			return;
+		}
+	}
+
+	ctx.getReturn() = createInvalidTalent();
+}
+
+void Functions::getIsTalentValid(Aurora::NWScript::FunctionContext &ctx) {
+	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
+	ctx.getReturn() = talent ? static_cast<int32_t>(talent->isValid()) : 0;
+}
+
+void Functions::getTypeFromTalent(Aurora::NWScript::FunctionContext &ctx) {
+	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
+	ctx.getReturn() = talent ? static_cast<int32_t>(talent->getType()) : 0;
+}
+
+void Functions::getIdFromTalent(Aurora::NWScript::FunctionContext &ctx) {
+	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
+	ctx.getReturn() = talent ? static_cast<int32_t>(talent->getID()) : -1;
+}
+
+void Functions::getCategoryFromTalent(Aurora::NWScript::FunctionContext &ctx) {
+	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
+	ctx.getReturn() = talent ? static_cast<int32_t>(talent->getCategory()) : 0;
+}
+
+void Functions::getLastCombatFeatUsed(Aurora::NWScript::FunctionContext &ctx) {
+	const Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = creature ? creature->getLastCombatFeatUsed() : -1;
 }
 
 void Functions::getAbilityScore(Aurora::NWScript::FunctionContext &ctx) {

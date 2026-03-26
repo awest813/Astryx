@@ -82,6 +82,7 @@ CreatureInfo::CreatureInfo(const Aurora::GFF3Struct &gff) {
 	loadClassLevels(gff);
 	loadSkills(gff);
 	loadAbilities(gff);
+	loadFeats(gff);
 }
 
 CreatureInfo::CreatureInfo(const CharacterGenerationInfo &info) {
@@ -98,6 +99,7 @@ CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
 	_abilities = other._abilities;
 	_inventory = other._inventory;
 	_equipment = other._equipment;
+	_feats = other._feats;
 
 	return *this;
 }
@@ -273,6 +275,26 @@ void CreatureInfo::setSkillRank(Skill skill, uint32_t rank) {
 	}
 }
 
+void CreatureInfo::addFeat(uint32_t feat) {
+	if (hasFeat(feat))
+		return;
+
+	_feats.push_back(feat);
+}
+
+bool CreatureInfo::hasFeat(uint32_t feat) const {
+	for (std::vector<uint32_t>::const_iterator f = _feats.begin(); f != _feats.end(); ++f) {
+		if (*f == feat)
+			return true;
+	}
+
+	return false;
+}
+
+const std::vector<uint32_t> &CreatureInfo::getFeats() const {
+	return _feats;
+}
+
 void CreatureInfo::loadClassLevels(const Aurora::GFF3Struct &gff) {
 	_levels.clear();
 
@@ -304,6 +326,19 @@ void CreatureInfo::loadAbilities(const Aurora::GFF3Struct &gff) {
 	_abilities.intelligence = gff.getUint("Int");
 	_abilities.wisdom       = gff.getUint("Wis");
 	_abilities.charisma     = gff.getUint("Cha");
+}
+
+void CreatureInfo::loadFeats(const Aurora::GFF3Struct &gff) {
+	_feats.clear();
+
+	if (!gff.hasField("FeatList"))
+		return;
+
+	const Aurora::GFF3List &feats = gff.getList("FeatList");
+	for (Aurora::GFF3List::const_iterator f = feats.begin(); f != feats.end(); ++f) {
+		const Aurora::GFF3Struct &feat = **f;
+		addFeat(feat.getUint("Feat"));
+	}
 }
 
 Inventory &CreatureInfo::getInventory() {

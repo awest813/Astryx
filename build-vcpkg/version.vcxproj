@@ -319,10 +319,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClInclude Include="C:\Projects\Astryx\src\version\version.h" />
     <ClCompile Include="C:\Projects\Astryx\src\version\version.cpp">
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions);XOREOS_BUILDDATE="2026-03-26T00:05:41Z";XOREOS_REVDESC=".dirty";XOREOS_REV=".dirty"</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions);XOREOS_BUILDDATE="2026-03-26T00:05:41Z";XOREOS_REVDESC=".dirty";XOREOS_REV=".dirty"</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">%(PreprocessorDefinitions);XOREOS_BUILDDATE="2026-03-26T00:05:41Z";XOREOS_REVDESC=".dirty";XOREOS_REV=".dirty"</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">%(PreprocessorDefinitions);XOREOS_BUILDDATE="2026-03-26T00:05:41Z";XOREOS_REVDESC=".dirty";XOREOS_REV=".dirty"</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions);XOREOS_BUILDDATE="2026-03-26T01:03:55Z";XOREOS_REVDESC=".dirty";XOREOS_REV=".dirty"</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions);XOREOS_BUILDDATE="2026-03-26T01:03:55Z";XOREOS_REVDESC=".dirty";XOREOS_REV=".dirty"</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">%(PreprocessorDefinitions);XOREOS_BUILDDATE="2026-03-26T01:03:55Z";XOREOS_REVDESC=".dirty";XOREOS_REV=".dirty"</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">%(PreprocessorDefinitions);XOREOS_BUILDDATE="2026-03-26T01:03:55Z";XOREOS_REVDESC=".dirty";XOREOS_REV=".dirty"</PreprocessorDefinitions>
     </ClCompile>
   </ItemGroup>
   <ItemGroup />
