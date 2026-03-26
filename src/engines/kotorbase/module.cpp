@@ -751,6 +751,9 @@ void Module::openContainer(Placeable *placeable) {
 }
 
 void Module::notifyCombatRoundBegan(int round) {
+	if (!_area)
+		return;
+
 	for (auto &c : _area->getCreatures()) {
 		if (c->isDead() || !c->isInCombat())
 			continue;
@@ -772,6 +775,9 @@ void Module::notifyCombatRoundBegan(int round) {
 }
 
 void Module::notifyCombatRoundEnded(int UNUSED(round)) {
+	if (!_area)
+		return;
+
 	for (auto &c : _area->getCreatures()) {
 		if (c->isDead() || !c->isInCombat())
 			continue;

@@ -444,10 +444,13 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 		int damaged = current - effect->getAmount();
 		target->setCurrentHitPoints(damaged);
 
-		// Check for death on creatures
+		// Check for death on creatures; cancel combat first to keep state consistent
+		// with the executeAttack path, which always calls cancelCombat before handleDeath.
 		Creature *creature = ObjectContainer::toCreature(target);
-		if (creature)
+		if (creature && creature->getCurrentHitPoints() <= 0) {
+			creature->cancelCombat();
 			creature->handleDeath();
+		}
 	}
 }
 
