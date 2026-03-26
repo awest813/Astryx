@@ -284,7 +284,7 @@ void Functions::fortitudeSave(Aurora::NWScript::FunctionContext &ctx) {
 
 	// Fortitude = 10 + Constitution modifier + class save bonus
 	int conMod = creature->getInfo().getAbilityModifier(kAbilityConstitution);
-	int roll   = std::rand() % 20 + 1;
+	int roll   = getRandom(1, 20);
 
 	if (roll == 20) {
 		ctx.getReturn() = 2; // automatic success
@@ -308,7 +308,7 @@ void Functions::reflexSave(Aurora::NWScript::FunctionContext &ctx) {
 	}
 
 	int dexMod = creature->getInfo().getAbilityModifier(kAbilityDexterity);
-	int roll   = std::rand() % 20 + 1;
+	int roll   = getRandom(1, 20);
 
 	if (roll == 20) {
 		ctx.getReturn() = 2;
@@ -332,7 +332,7 @@ void Functions::willSave(Aurora::NWScript::FunctionContext &ctx) {
 	}
 
 	int wisMod = creature->getInfo().getAbilityModifier(kAbilityWisdom);
-	int roll   = std::rand() % 20 + 1;
+	int roll   = getRandom(1, 20);
 
 	if (roll == 20) {
 		ctx.getReturn() = 2;
