@@ -27,6 +27,7 @@
 #include "external/glm/geometric.hpp"
 
 #include "src/common/error.h"
+#include "src/common/maths.h"
 #include "src/common/util.h"
 #include "src/common/string.h"
 
@@ -548,7 +549,7 @@ void Functions::setFacingPoint(Aurora::NWScript::FunctionContext &ctx) {
 	float cx, cy, cz;
 	caller->getPosition(cx, cy, cz);
 
-	const float angle = std::atan2(ty - cy, tx - cx) * (180.0f / M_PI);
+	const float angle = Common::rad2deg(std::atan2(ty - cy, tx - cx));
 	caller->setOrientation(0.0f, 0.0f, 1.0f, angle);
 }
 

@@ -87,7 +87,7 @@ static float vectorToAngle(float x, float y) {
 	return std::atan2(y, x) * (180.0f / M_PI);
 }
 
-GTEST_TEST(KotORMilestone3, angleZeroPoinetsAlongXAxis) {
+GTEST_TEST(KotORMilestone3, angleZeroPointsAlongXAxis) {
 	float x, y;
 	angleToVector(0.0f, x, y);
 	EXPECT_NEAR(x, 1.0f, 1e-6f);

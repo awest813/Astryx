@@ -834,7 +834,11 @@ void Functions::getGoingToBeAttackedBy(Aurora::NWScript::FunctionContext &ctx) {
 	if (!target)
 		return;
 
-	const std::vector<Creature *> &creatures = _game->getModule().getCurrentArea()->getCreatures();
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area)
+		return;
+
+	const std::vector<Creature *> &creatures = area->getCreatures();
 	for (Creature *creature : creatures) {
 		if (creature && creature->getAttackTarget() == target) {
 			ctx.getReturn() = creature;
