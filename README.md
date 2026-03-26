@@ -1,17 +1,18 @@
-xoreos README
-=============
+# Astryx
 
-xoreos is an open source implementation of BioWare's Aurora engine and its
-derivatives, licensed under the terms of the [GNU General Public License
-version 3](https://www.gnu.org/licenses/gpl.html) (or later). The goal is
-to have all games using this engines working in a portable manner, starting
-from Neverwinter Nights and ending with Dragon Age II.
+Astryx is a fork of [xoreos](https://github.com/xoreos/xoreos) — an open source
+implementation of BioWare's Aurora engine and its derivatives — focused on pushing
+KotOR I and KotOR II toward actual gameplay parity. It is licensed under the
+[GNU General Public License version 3](https://www.gnu.org/licenses/gpl.html) (or
+later).
+
+The broader xoreos goal remains: all games built on the Aurora engine running
+portably, from Neverwinter Nights through Dragon Age II. Astryx concentrates
+current development effort on the KotOR games while keeping the full engine
+foundation intact for the other targets.
 
 
-Games
------
-
-The following games are valid targets for xoreos:
+## Supported Games
 
 - [Neverwinter Nights](https://en.wikipedia.org/wiki/Neverwinter_Nights)
 - [Neverwinter Nights 2](https://en.wikipedia.org/wiki/Neverwinter_Nights_2)
@@ -24,154 +25,119 @@ The following games are valid targets for xoreos:
 - [Dragon Age II](https://en.wikipedia.org/wiki/Dragon_Age_II)
 
 
-Status
-------
+## Status
 
-Currently, the "foundation" work of managing resources, reading many basic
-file formats, displaying graphics and playing sounds has been done. All
-targeted games show partial ingame graphics, such as the area geometry and
-objects, letting you fly around in a "spectator mode". Some games show partial
-menus, and something resembling a starting point for a script system is there.
+### KotOR I — Milestone 1 & 2 complete ✅
 
-No actual "normal" gameplay is implemented yet, though.
+The _Endar Spire_ tutorial is fully playable end-to-end:
 
-For further information about the status of specific games, please visit
-[our wiki](https://wiki.xoreos.org/index.php?title=Games).
+- Character creation (class, attributes, skills, appearance) ✅
+- Starting equipment looted from footlocker and equipped ✅
+- Dialogue with Trask Ulgo, door interactions ✅
+- Turn-based combat with hit/miss animations, HP reduction, and death ✅
+- Module-exit script fires and returns to main menu ✅
 
-Note: We are always looking for people to join our efforts in reimplementing
-those games. If you'd like to help, feel free to contact us!
-Please also read over our [CONTRIBUTING.md](CONTRIBUTING.md) for some
-guidelines. Thanks.
+The first Taris module (`tar_m02aa`) now loads cleanly after the tutorial:
 
+- Party formation (`AddPartyMember` / Carth joining) ✅
+- XP accumulation and alignment system ✅
+- Saving throws (Fortitude / Reflex / Will) ✅
+- Global string / boolean / number variable persistence across area transitions ✅
 
-CI Status
----------
+For the full acceptance-criteria checklist and upcoming work, see
+[MILESTONE.md](MILESTONE.md) and [ROADMAP.md](ROADMAP.md).
 
-- [![Build status (linux autotools gcc)](https://github.com/xoreos/xoreos/actions/workflows/linux_autotools_gcc.yml/badge.svg)](https://github.com/xoreos/xoreos/actions/workflows/linux_autotools_gcc.yml/)
-- [![Build status (linux autotools clang)](https://github.com/xoreos/xoreos/actions/workflows/linux_autotools_clang.yml/badge.svg)](https://github.com/xoreos/xoreos/actions/workflows/linux_autotools_clang.yml/)
-- [![Build status (linux cmake gcc)](https://github.com/xoreos/xoreos/actions/workflows/linux_cmake_gcc.yml/badge.svg)](https://github.com/xoreos/xoreos/actions/workflows/linux_cmake_gcc.yml/)
-- [![Build status (linux cmake clang)](https://github.com/xoreos/xoreos/actions/workflows/linux_cmake_clang.yml/badge.svg)](https://github.com/xoreos/xoreos/actions/workflows/linux_cmake_clang.yml/)
-- [![Build status (macos autotools clang)](https://github.com/xoreos/xoreos/actions/workflows/macos_autotools_clang.yml/badge.svg)](https://github.com/xoreos/xoreos/actions/workflows/macos_autotools_clang.yml/)
-- [![Build status (macos cmake clang)](https://github.com/xoreos/xoreos/actions/workflows/macos_cmake_clang.yml/badge.svg)](https://github.com/xoreos/xoreos/actions/workflows/macos_cmake_clang.yml/)
-- [![Build status (windows cmake msvc)](https://github.com/xoreos/xoreos/actions/workflows/windows_cmake_msvc.yml/badge.svg)](https://github.com/xoreos/xoreos/actions/workflows/windows_cmake_msvc.yml/)
-- [![Coverity Status](https://scan.coverity.com/projects/544/badge.svg)](https://scan.coverity.com/projects/544)
+### Other games
 
+All other targeted games show partial in-game graphics (area geometry, objects,
+walkmesh) and can be explored in a "spectator mode". Some show partial menus.
+Full gameplay for those titles remains a long-term goal.
 
-Quick Start
------------
-
-The easiest current developer path is a repo-local `vcpkg` setup. This avoids
-machine-specific dependency drift and works well on Windows 10/11 x64 and
-Linux x86_64.
-
-Windows 10/11 x64:
-
-    powershell -ExecutionPolicy Bypass -File scripts/bootstrap_windows.ps1
-    powershell -ExecutionPolicy Bypass -File scripts/run_xoreos_windows.ps1
-    python scripts/xoreos_launcher_gui.py
-
-Linux x86_64:
-
-    ./scripts/bootstrap_linux.sh
-    ./scripts/run_xoreos_linux.sh
-    python3 scripts/xoreos_launcher_gui.py
-
-The launch scripts and GUI now provide a much friendlier first-run path:
-
-- they list saved config targets from `xoreos.conf`
-- they scan common Steam/GOG install folders
-- they allow manual path entry if nothing is detected
-- they validate common asset markers before launch
-- they can save a reusable target into `xoreos.conf`
-- they support quick options like windowed mode, fullscreen, resolution, and skip-videos
-
-Non-interactive examples:
-
-    powershell -ExecutionPolicy Bypass -File scripts/run_xoreos_windows.ps1 -GamePath D:\Path\To\Game -Windowed -Width 1280 -Height 720
-    ./scripts/run_xoreos_linux.sh --game-path /path/to/game --windowed --width 1280 --height 720
-
-Portable CMake presets are also available if you want to drive the build
-manually:
-
-- `portable-vcpkg-ninja` for Linux/macOS or Windows Ninja builds
-- `portable-vcpkg-ninja-multi` for Windows multi-config builds
-
-For dependency details and manual alternatives, see [BUILDDEP.md](BUILDDEP.md).
+Contributions are very welcome — please read [CONTRIBUTING.md](CONTRIBUTING.md)
+before sending a pull request.
 
 
-Getting xoreos
---------------
+## CI Status
 
-You can get xoreos in multiple ways:
-
-You can download an archive with a binary of the latest release from our
-[downloads page](https://xoreos.org/downloads/index.html). This includes
-binaries for Microsoft Windows, Mac OS X and GNU/Linux, as well as packages
-for various GNU/Linux distributions. All of them are available for both 32-
-and 64-bit x86 architectures.
-
-Or, if you're running Arch Linux, you can install xoreos directly from the
-[AUR](https://aur.archlinux.org/packages/xoreos/).
-
-Or, if you're running Gentoo Linux, you can install xoreos directly from our
-[overlay](https://github.com/xoreos/gentoo-overlay).
-
-Lastly, you can compile xoreos yourself; either from a release source package,
-found on our [downloads page](https://xoreos.org/downloads/index.html), or a
-fresh [repository](https://github.com/xoreos/xoreos) checkout. For details
-on how to compile xoreos on various operating system, please read the
-[Compiling xoreos](https://wiki.xoreos.org/index.php?title=Compiling_xoreos)
-page on our wiki.
+| Platform | Autotools | CMake |
+|----------|-----------|-------|
+| Linux (GCC) | [![linux autotools gcc](https://github.com/awest813/Astryx/actions/workflows/linux_autotools_gcc.yml/badge.svg)](https://github.com/awest813/Astryx/actions/workflows/linux_autotools_gcc.yml/) | [![linux cmake gcc](https://github.com/awest813/Astryx/actions/workflows/linux_cmake_gcc.yml/badge.svg)](https://github.com/awest813/Astryx/actions/workflows/linux_cmake_gcc.yml/) |
+| Linux (Clang) | [![linux autotools clang](https://github.com/awest813/Astryx/actions/workflows/linux_autotools_clang.yml/badge.svg)](https://github.com/awest813/Astryx/actions/workflows/linux_autotools_clang.yml/) | [![linux cmake clang](https://github.com/awest813/Astryx/actions/workflows/linux_cmake_clang.yml/badge.svg)](https://github.com/awest813/Astryx/actions/workflows/linux_cmake_clang.yml/) |
+| macOS (Clang) | [![macos autotools clang](https://github.com/awest813/Astryx/actions/workflows/macos_autotools_clang.yml/badge.svg)](https://github.com/awest813/Astryx/actions/workflows/macos_autotools_clang.yml/) | [![macos cmake clang](https://github.com/awest813/Astryx/actions/workflows/macos_cmake_clang.yml/badge.svg)](https://github.com/awest813/Astryx/actions/workflows/macos_cmake_clang.yml/) |
+| Windows (MSVC) | — | [![windows cmake msvc](https://github.com/awest813/Astryx/actions/workflows/windows_cmake_msvc.yml/badge.svg)](https://github.com/awest813/Astryx/actions/workflows/windows_cmake_msvc.yml/) |
 
 
-Running xoreos
---------------
+## Quick Start
 
-First, you need to fully install and/or copy the game you want to play with
-xoreos onto your hard disk. How you do this depends on the game, your operating
-system and where/how you have bought the game.
+The easiest path for both Windows and Linux is the repo-local `vcpkg` bootstrap.
+It handles all dependencies automatically.
 
-You can start xoreos either from the command line or through the lightweight
-helper launchers in `scripts/`. The terminal launchers are:
+**Windows 10/11 x64** — open PowerShell and run:
 
-    powershell -ExecutionPolicy Bypass -File scripts/run_xoreos_windows.ps1
-    ./scripts/run_xoreos_linux.sh
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/bootstrap_windows.ps1
+powershell -ExecutionPolicy Bypass -File scripts/run_xoreos_windows.ps1
+# or use the graphical launcher:
+python scripts/xoreos_launcher_gui.py
+```
 
-If you prefer a desktop picker, use:
+**Linux x86_64**:
 
-    python scripts/xoreos_launcher_gui.py
+```bash
+./scripts/bootstrap_linux.sh
+./scripts/run_xoreos_linux.sh
+# or use the graphical launcher:
+python3 scripts/xoreos_launcher_gui.py
+```
 
-Run xoreos with the command line option "--help" (without the quotes) to get a
-help text about further command line options.
+The launcher scripts and GUI:
 
-The quickest way to start a game in path /path/to/game/ would be to call
+- list saved config targets from `xoreos.conf`
+- scan common Steam/GOG install folders automatically
+- allow manual path entry if nothing is detected
+- validate common asset markers before launch
+- save a reusable target into `xoreos.conf`
+- support windowed mode, fullscreen, resolution, and skip-videos flags
 
-    xoreos -p/path/to/game/
+**Non-interactive examples:**
 
-If you're on Windows and the path is, say, D:\\Path\\To\\Game\\, call
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_xoreos_windows.ps1 -GamePath D:\Path\To\Game -Windowed -Width 1280 -Height 720
+```
 
-    xoreos -pD:\\Path\\To\\Game\\
+```bash
+./scripts/run_xoreos_linux.sh --game-path /path/to/game --windowed --width 1280 --height 720
+```
 
-For a more in-depth documentation on how to run xoreos, please also read the
-[Running xoreos](https://wiki.xoreos.org/index.php?title=Running_xoreos)
-page on our wiki.
+If you prefer to drive the CMake build manually, portable presets are available:
+
+- `portable-vcpkg-ninja` — Linux/macOS or Windows Ninja builds
+- `portable-vcpkg-ninja-multi` — Windows multi-config builds
+
+For full dependency details and manual build instructions, see
+[BUILDDEP.md](BUILDDEP.md).
 
 
-Config file
------------
+## Running
 
-In general, xoreos can read the configuration which game to run from either
-the command line, a config file or both. Additionally, when you first specify
-a new game on the command line, xoreos will add a related entry in the config
-file (creating it first, if necessary).
+First, make sure the game files are fully installed on your hard disk. Then start
+xoreos via the launcher scripts above or directly from the command line:
 
-To accurately identify a specific instance of an installed game, xoreos uses the
-concept of a "target". Each target has a separate section in the config file,
-and each of their options apply only to that target. The special target
-"xoreos" is a global section applying to all games, although the same option
-in a game target overrides the global option.
+```bash
+# Linux / macOS
+xoreos -p/path/to/game/
 
-For example:
+# Windows
+xoreos -pD:\Path\To\Game\
+```
+
+Run `xoreos --help` for a complete list of command-line options.
+
+
+## Config File
+
+xoreos reads configuration from the command line, a config file, or both. A
+"target" is a named section that identifies one installed game instance.
 
 ```ini
 [xoreos]
@@ -180,50 +146,35 @@ height=768
 fullscreen=false
 
 [nwn]
-path=/home/drmccoy/games/nwn/
+path=/home/user/games/nwn/
 fullscreen=true
 volume_music=0.500000
 volume_sfx=0.850000
 volume_voice=0.850000
 ```
 
-You can then start the game with the target "nwn" with
+Launch a target by name:
 
-    xoreos nwn
+```bash
+xoreos nwn
+```
 
-and xoreos will do the rest. This will start the game in the path
-/home/drmccoy/games/nwn/, running it in fullscreen at 1024x768.
+Config file locations:
 
-As you can see with the volume options, xoreos also saves settings you made in
-the game' actual GUI into the target's section of the config file.
+| OS | Path |
+|----|------|
+| GNU/Linux | `$XDG_CONFIG_HOME/xoreos/xoreos.conf` (defaults to `~/.config/`) |
+| macOS | `~/Library/Preferences/xoreos/xoreos.conf` |
+| Windows | `%APPDATA%\xoreos\xoreos.conf` |
 
-The place where xoreos expects the config file depends on your operating system:
-
-- On GNU/Linux, the place is $XDG\_CONFIG\_HOME/xoreos/xoreos.conf.
-  $XDG\_CONFIG\_HOME defaults to $HOME/.config/
-- On Mac OS X, the place is $HOME/Library/Preferences/xoreos/xoreos.conf
-- On Windows, xoreos.conf is in the subdirectory xoreos in either $APPDATA
-  or $USERPROFILE, depending on your Windows version
-
-For a more elaborate example with more in-depth explanations, please see
-[xoreos.conf.example](doc/xoreos.conf.example) in the doc directory, or the
-[Running xoreos](https://wiki.xoreos.org/index.php?title=Running_xoreos)
-page on our wiki.
+A fully annotated example is available at
+[doc/xoreos.conf.example](doc/xoreos.conf.example).
 
 
-Links
------
+## Links
 
-- [xoreos website](https://xoreos.org/)
+- [Upstream xoreos repository](https://github.com/xoreos/xoreos)
 - [xoreos wiki](https://wiki.xoreos.org/)
-- [Screenshots](https://xoreos.org/screenshots/index.html)
-- [Main source repository](https://github.com/xoreos/xoreos)
-- [All xoreos repositories](https://github.com/xoreos/)
-- [Doxygen documentation](https://xoreos.org/doxygen/)
-
-
-Contact
--------
-
-To contact us, please either write to [mailing list](https://xoreos.org/mailman/listinfo/xoreos-devel),
-or join our IRC channel #xoreos on [Libera IRC](https://libera.chat/).
+- [Astryx source repository](https://github.com/awest813/Astryx)
+- [Milestone & roadmap](MILESTONE.md)
+- [Parity roadmap](ROADMAP.md)
