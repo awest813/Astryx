@@ -776,6 +776,35 @@ void Functions::getLockUnlockDC(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = situated->isKeyRequired() ? 100 : 10;
 }
 
+void Functions::getReputation(Aurora::NWScript::FunctionContext &ctx) {
+	// GetReputation(object oSource, object oTarget) → int [0–100]
+	Object *source = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 1));
+
+	if (!source || !target) {
+		ctx.getReturn() = 50;
+		return;
+	}
+
+	int srcFaction = static_cast<int>(source->getFaction());
+	int tgtFaction = static_cast<int>(target->getFaction());
+	ctx.getReturn() = _game->getModule().getReputation(srcFaction, tgtFaction);
+}
+
+void Functions::adjustReputation(Aurora::NWScript::FunctionContext &ctx) {
+	// AdjustReputation(object oTarget, object oSourceFactionMember, int nAdjustment)
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	int delta = ctx.getParams()[2].getInt();
+
+	if (!target || !source)
+		return;
+
+	int srcFaction = static_cast<int>(source->getFaction());
+	int tgtFaction = static_cast<int>(target->getFaction());
+	_game->getModule().adjustReputation(tgtFaction, srcFaction, delta);
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

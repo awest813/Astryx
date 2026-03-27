@@ -99,6 +99,10 @@ int Item::getACBonus() const {
 	return _acBonus;
 }
 
+int Item::getBaseItem() const {
+	return _baseItem;
+}
+
 int Item::getBodyVariation() const {
 	return _bodyVariation;
 }

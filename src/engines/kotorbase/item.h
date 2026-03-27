@@ -47,6 +47,7 @@ public:
 	bool isRangedWeapon() const;
 
 	int getACBonus() const;
+	int getBaseItem() const;
 
 	// Visual properties
 

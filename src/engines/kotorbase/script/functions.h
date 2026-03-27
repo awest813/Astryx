@@ -232,6 +232,8 @@ protected:
 
 	void getStandardFaction(Aurora::NWScript::FunctionContext &ctx);
 	void changeToStandardFaction(Aurora::NWScript::FunctionContext &ctx);
+	void getReputation(Aurora::NWScript::FunctionContext &ctx);
+	void adjustReputation(Aurora::NWScript::FunctionContext &ctx);
 
 	void createItemOnObject(Aurora::NWScript::FunctionContext &ctx);
 	void destroyObject(Aurora::NWScript::FunctionContext &ctx);
@@ -268,6 +270,7 @@ protected:
 	void addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
 	void removeJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
 	void getJournalEntry(Aurora::NWScript::FunctionContext &ctx);
+	void getJournalQuestExperience(Aurora::NWScript::FunctionContext &ctx);
 
 	// Economy
 	void giveGoldToCreature(Aurora::NWScript::FunctionContext &ctx);
@@ -390,7 +393,14 @@ protected:
 	void effectHeal(Aurora::NWScript::FunctionContext &ctx);
 	void effectDamage(Aurora::NWScript::FunctionContext &ctx);
 	void effectVisualEffect(Aurora::NWScript::FunctionContext &ctx);
+	void effectACIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectAttackIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectSkillIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectTemporaryHitpoints(Aurora::NWScript::FunctionContext &ctx);
 	void applyEffectToObject(Aurora::NWScript::FunctionContext &ctx);
+
+	// Items
+	void getBaseItemType(Aurora::NWScript::FunctionContext &ctx);
 
 	// Global values, functions_global.cpp
 
