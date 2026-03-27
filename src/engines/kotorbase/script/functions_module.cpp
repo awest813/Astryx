@@ -105,9 +105,8 @@ void Functions::getPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {
-	float yaw = ctx.getParams()[0].getFloat();
-	if ((yaw < -6.5f) || (yaw > 6.5f))
-		yaw = Common::deg2rad(yaw);
+	// NWScript SetCameraFacing always passes degrees; convert unconditionally.
+	float yaw = Common::deg2rad(ctx.getParams()[0].getFloat());
 	_game->getModule().setCameraYaw(yaw);
 }
 

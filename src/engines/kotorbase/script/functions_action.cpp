@@ -239,13 +239,12 @@ void Functions::getAttemptedSpellTarget(Aurora::NWScript::FunctionContext &ctx) 
 
 
 void Functions::clearAllActions(Aurora::NWScript::FunctionContext &ctx) {
+	// ClearAllActions operates on the calling object only.  Falling back to the
+	// party leader when the caller is null would clear the wrong creature's queue
+	// during cinematic sequences where NPCs (not the PC) are the callers.
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
 	if (!caller)
-		caller = _game->getModule().getPartyLeader();
-	if (!caller) {
-		warning("Functions::clearAllActions(): no caller or party leader");
 		return;
-	}
 
 	caller->clearActions();
 }
@@ -348,47 +347,75 @@ void Functions::actionSpeakStringByStrRef(Aurora::NWScript::FunctionContext &ctx
 	status("ActionSpeakStringByStrRef [%s]: %s", who.c_str(), text.c_str());
 }
 
-void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
-	int animID = ctx.getParams()[0].getInt();
+static Common::UString animIDToName(int animID) {
+	switch (animID) {
+		case  0: return "pause1";      // ANIMATION_LOOPING_PAUSE
+		case  1: return "pause2";      // ANIMATION_LOOPING_PAUSE2
+		case  2: return "listen";      // ANIMATION_LOOPING_LISTEN
+		case  3: return "meditate";    // ANIMATION_LOOPING_MEDITATE
+		case  4: return "worship";     // ANIMATION_LOOPING_WORSHIP
+		case  5: return "drunk";       // ANIMATION_LOOPING_DRUNK
+		case  6: return "talk_injured"; // ANIMATION_LOOPING_TALK_INJURED
+		case  7: return "listen_injured"; // ANIMATION_LOOPING_LISTEN_INJURED
+		case  8: return "treatinjury"; // ANIMATION_LOOPING_TREAT_INJURY
+		case  9: return "getlow";      // ANIMATION_LOOPING_GET_LOW
+		case 10: return "talk";        // ANIMATION_LOOPING_TALK_NORMAL
+		case 11: return "talklooking"; // ANIMATION_LOOPING_TALK_PLEADING
+		case 12: return "deadf";       // ANIMATION_LOOPING_DEAD_FRONT
+		case 13: return "deadb";       // ANIMATION_LOOPING_DEAD_BACK
+		case 14: return "conjure1";    // ANIMATION_LOOPING_CONJURE1
+		case 15: return "conjure2";    // ANIMATION_LOOPING_CONJURE2
+		case 16: return "victory1";    // ANIMATION_LOOPING_VICTORY1
+		case 17: return "victory2";    // ANIMATION_LOOPING_VICTORY2
+		case 18: return "victory3";    // ANIMATION_LOOPING_VICTORY3
+		case 19: return "getmid";      // ANIMATION_LOOPING_GET_MID
+		case 38: return "attack1";     // ANIMATION_FIREFORGET_ATTACK1
+		case 39: return "attack2";     // ANIMATION_FIREFORGET_ATTACK2
+		case 40: return "dodge";       // ANIMATION_FIREFORGET_DODGE
+		case 41: return "attack3";     // ANIMATION_FIREFORGET_ATTACK3
+		case 44: return "die";         // ANIMATION_FIREFORGET_SPASM
+		case 45: return "dead";        // ANIMATION_FIREFORGET_DEAD (fall)
+		case 48: return "g8a1";        // ANIMATION_FIREFORGET_DODGE_DUCK
+		case 49: return "g8a2";        // ANIMATION_FIREFORGET_DODGE_SIDE
+		case 56: return "castout";     // ANIMATION_FIREFORGET_CAST_OUT_HAND
+		case 57: return "castin";      // ANIMATION_FIREFORGET_CAST_IN_HAND
+		case 58: return "castarea";    // ANIMATION_FIREFORGET_CAST_AREA
+		default: return "";            // Unknown; caller ignores empty string
+	}
+}
 
+void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionPlayAnimation queues after pending actions (action form).
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
 	if (!caller)
 		return;
 
-	// Map the numeric animation ID to a named animation string.
-	// KOTOR animation IDs are documented in animconst.nss; common ones used in
-	// combat and dialogue are handled here; unknown IDs fall back to a no-op.
-	Common::UString animName;
-	switch (animID) {
-		case  0: animName = "pause1";     break; // ANIMATION_LOOPING_PAUSE
-		case  1: animName = "pause2";     break; // ANIMATION_LOOPING_PAUSE2
-		case  2: animName = "listen";     break; // ANIMATION_LOOPING_LISTEN
-		case  3: animName = "meditate";   break; // ANIMATION_LOOPING_MEDITATE
-		case  4: animName = "worship";    break; // ANIMATION_LOOPING_WORSHIP
-		case 10: animName = "talk";       break; // ANIMATION_LOOPING_TALK_NORMAL
-		case 11: animName = "talklooking"; break; // ANIMATION_LOOPING_TALK_PLEADING
-		case 12: animName = "deadf";      break; // ANIMATION_LOOPING_DEAD_FRONT
-		case 13: animName = "deadb";      break; // ANIMATION_LOOPING_DEAD_BACK
-		case 16: animName = "victory1";   break; // ANIMATION_LOOPING_VICTORY1
-		case 17: animName = "victory2";   break; // ANIMATION_LOOPING_VICTORY2
-		case 38: animName = "attack1";    break; // ANIMATION_FIREFORGET_ATTACK1
-		case 39: animName = "attack2";    break; // ANIMATION_FIREFORGET_ATTACK2
-		case 40: animName = "dodge";      break; // ANIMATION_FIREFORGET_DODGE
-		case 44: animName = "die";        break; // ANIMATION_FIREFORGET_SPASM
-		case 48: animName = "g8a1";       break; // ANIMATION_FIREFORGET_DODGE_DUCK
-		case 49: animName = "g8a2";       break; // ANIMATION_FIREFORGET_DODGE_SIDE
-		default: return; // Unknown animation ID; ignore
-	}
+	const int animID = ctx.getParams()[0].getInt();
+	const Common::UString animName = animIDToName(animID);
+	if (animName.empty())
+		return;
 
-	float speed = ctx.getParams()[1].getFloat();
+	float speed  = ctx.getParams()[1].getFloat();
 	float length = ctx.getParams()[2].getFloat();
 	caller->playAnimation(animName, true, length, speed > 0.0f ? speed : 1.0f);
 }
 
 void Functions::playAnimation(Aurora::NWScript::FunctionContext &ctx) {
-	// PlayAnimation acts immediately instead of queueing.
-	// For Endar Spire we just re-use the mapping logic from actionPlayAnimation.
-	actionPlayAnimation(ctx);
+	// PlayAnimation is the immediate form: it fires now regardless of the action
+	// queue.  Uses the same ID→name table but bypasses any pending action state.
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller)
+		return;
+
+	const int animID = ctx.getParams()[0].getInt();
+	const Common::UString animName = animIDToName(animID);
+	if (animName.empty())
+		return;
+
+	float speed  = ctx.getParams()[1].getFloat();
+	float length = ctx.getParams()[2].getFloat();
+	// restart=false: immediate play does not loop-restart a running animation.
+	caller->playAnimation(animName, false, length, speed > 0.0f ? speed : 1.0f);
 }
 
 void Functions::actionJumpToObject(Aurora::NWScript::FunctionContext &ctx) {
@@ -504,8 +531,12 @@ void Functions::actionWait(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getUserActionsPending(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	// Returns TRUE if the calling creature has any actions in its queue.
+	// Cinematic scripts use this in wait loops:
+	//   while (GetUserActionsPending()) { ActionWait(0.1); }
+	// Returning a hardcoded 0 caused those loops to never execute.
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = (caller && caller->getCurrentAction()) ? 1 : 0;
 }
 
 void Functions::noClicksFor(Aurora::NWScript::FunctionContext &ctx) {
