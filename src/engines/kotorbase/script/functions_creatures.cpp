@@ -32,6 +32,7 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/effect.h"
+#include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/talent.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
@@ -451,7 +452,17 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 			creature->cancelCombat();
 			creature->handleDeath();
 		}
+	} else if (effect->getType() == kEffectTemporaryHitpoints) {
+		// Temporary HP: add to current HP, capped at max HP.
+		int maxHP = target->getMaxHitPoints();
+		int boosted = current + effect->getAmount();
+		if (boosted > maxHP)
+			boosted = maxHP;
+		target->setCurrentHitPoints(boosted);
 	}
+	// ACIncrease / AttackIncrease / SkillIncrease are passive bonuses stored on the
+	// creature's stat block; applying them via ApplyEffectToObject is a no-op here
+	// until the full buff/debuff system is implemented.
 }
 
 void Functions::getGoodEvilValue(Aurora::NWScript::FunctionContext &ctx) {
@@ -618,6 +629,49 @@ void Functions::givePlotXP(Aurora::NWScript::FunctionContext &ctx) {
 	Object *pc = _game->getModule().getPartyLeader();
 	if (pc)
 		pc->addPlotXP(percentage);
+}
+
+// ---------------------------------------------------------------------------
+// New Effect constructors — Milestone 3
+// ---------------------------------------------------------------------------
+
+void Functions::effectACIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectACIncrease(int nValue, int nModifyType=0, int nDamageType=8199)
+	int bonus = ctx.getParams()[0].getInt();
+	ctx.getReturn().setEngineType(new Effect(kEffectACIncrease, bonus));
+}
+
+void Functions::effectAttackIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectAttackIncrease(int nBonus, int nModifierType=0)
+	int bonus = ctx.getParams()[0].getInt();
+	ctx.getReturn().setEngineType(new Effect(kEffectAttackIncrease, bonus));
+}
+
+void Functions::effectSkillIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectSkillIncrease(int nSkill, int nValue)
+	int skill  = ctx.getParams()[0].getInt();
+	int amount = ctx.getParams()[1].getInt();
+	ctx.getReturn().setEngineType(new Effect(kEffectSkillIncrease, amount, skill));
+}
+
+void Functions::effectTemporaryHitpoints(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectTemporaryHitpoints(int nHitPoints)
+	int amount = ctx.getParams()[0].getInt();
+	ctx.getReturn().setEngineType(new Effect(kEffectTemporaryHitpoints, amount));
+}
+
+// ---------------------------------------------------------------------------
+// Item queries — Milestone 3
+// ---------------------------------------------------------------------------
+
+void Functions::getBaseItemType(Aurora::NWScript::FunctionContext &ctx) {
+	// GetBaseItemType(object oItem) → int
+	Item *item = ObjectContainer::toItem(getParamObject(ctx, 0));
+	if (!item) {
+		ctx.getReturn() = -1;
+		return;
+	}
+	ctx.getReturn() = item->getBaseItem();
 }
 
 } // End of namespace KotORBase

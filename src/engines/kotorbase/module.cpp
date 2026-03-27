@@ -22,6 +22,9 @@
  *  The context needed to run a module in KotOR games.
  */
 
+#include <map>
+#include <utility>
+
 #include "src/common/util.h"
 #include "src/common/maths.h"
 #include "src/common/error.h"
@@ -1096,6 +1099,45 @@ Common::UString Module::getGlobalString(const Common::UString &id) const {
 	if (iter != _globalStrings.end())
 		return iter->second;
 	return Common::UString();
+}
+
+// ---------------------------------------------------------------------------
+// Reputation helpers
+// ---------------------------------------------------------------------------
+
+static int defaultReputationBetweenFactions(int sourceFaction, int targetFaction) {
+	// Hostile factions: 1 (Hostile1), 3 (Hostile2)
+	// Friendly factions: 2 (Friendly1), 4 (Friendly2)
+	// All others treated as neutral.
+	const bool sourceHostile  = (sourceFaction == 1 || sourceFaction == 3);
+	const bool sourceFriendly = (sourceFaction == 2 || sourceFaction == 4);
+	const bool targetHostile  = (targetFaction == 1 || targetFaction == 3);
+	const bool targetFriendly = (targetFaction == 2 || targetFaction == 4);
+
+	if (sourceFaction == targetFaction)
+		return 100; // same faction — fully allied
+
+	if ((sourceHostile && targetFriendly) || (sourceFriendly && targetHostile))
+		return 0; // opposing sides — fully hostile
+
+	return 50; // neutral default
+}
+
+int Module::getReputation(int sourceFaction, int targetFaction) const {
+	auto key = std::make_pair(sourceFaction, targetFaction);
+	auto it = _reputations.find(key);
+	if (it != _reputations.end())
+		return it->second;
+	return defaultReputationBetweenFactions(sourceFaction, targetFaction);
+}
+
+void Module::adjustReputation(int targetFaction, int sourceFaction, int delta) {
+	auto key = std::make_pair(sourceFaction, targetFaction);
+	int current = getReputation(sourceFaction, targetFaction);
+	int updated = current + delta;
+	if (updated < 0)   updated = 0;
+	if (updated > 100) updated = 100;
+	_reputations[key] = updated;
 }
 
 void Module::setReturnStrref(uint32_t id) {

@@ -139,6 +139,21 @@ int CreatureInfo::getNumClasses() const {
 	return static_cast<int>(_levels.size());
 }
 
+void CreatureInfo::incrementClassLevel(Class charClass) {
+	auto it = std::find_if(_levels.begin(), _levels.end(), [&](const ClassLevel &cl) {
+		return cl.characterClass == charClass;
+	});
+
+	if (it != _levels.end()) {
+		it->level += 1;
+	} else {
+		ClassLevel newLevel;
+		newLevel.characterClass = charClass;
+		newLevel.level = 1;
+		_levels.push_back(newLevel);
+	}
+}
+
 int CreatureInfo::getAbilityScore(Ability ability) const {
 	switch (ability) {
 		case kAbilityStrength:

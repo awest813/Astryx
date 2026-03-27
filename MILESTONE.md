@@ -262,3 +262,135 @@ Milestone 2 is **complete** when the Taris entry module loads and runs without
 unhandled NWScript exceptions, Carth joins the active party, and all ten
 acceptance criteria above are satisfied — verified by the unit tests and a
 manual smoke-run of the module transition from Endar Spire.
+
+---
+
+---
+
+# Milestone 3 — Taris Upper City: Combat Depth, Reputation & Item Queries
+
+This milestone makes the **Taris Upper City** (`tar_m02aa`) fully explorable
+with no unhandled NWScript exceptions.  After the Endar Spire → Taris
+transition the player must be able to fight random gang members, query and
+adjust inter-faction reputation, inspect item types from scripts, and advance
+through the area without the engine crashing on unimplemented functions.
+
+**Goal:** Implement the eight NWScript functions most frequently called by
+Taris Upper-City scripts, extend the `Effect` engine type with four new
+sub-types so that buff/debuff effects can be constructed without crashing, and
+add a minimal (auto-assign) level-up path so that `ShowLevelUpGUI` no longer
+silently discards the level.
+
+---
+
+## Scope
+
+KotOR I's Taris Upper City area (`tar_m02aa`).  KotOR II and other planets
+remain on the long-term roadmap.
+
+---
+
+## Acceptance Criteria
+
+1. **GetDistanceBetween** — returns the Euclidean distance between two
+   in-world objects; all NPC AI range checks stop throwing "unimplemented"
+   warnings.
+2. **GetReputation / AdjustReputation** — faction reputation round-trips
+   through a module-level store; initial value derived from faction membership;
+   `AdjustReputation` clamps the result to `[0, 100]`.
+3. **EffectACIncrease / EffectAttackIncrease / EffectSkillIncrease** —
+   effect-constructor functions return properly typed `Effect` objects; calling
+   code can read back type, bonus value, and sub-type without crashing.
+4. **EffectTemporaryHitpoints** — constructs a temporary-HP effect; applied via
+   `applyEffectToObject` it adds to current HP (capped at max HP) on the target
+   creature.
+5. **GetBaseItemType** — returns the integer base-item index from an `Item`
+   object; required by many inventory-management scripts.
+6. **GetJournalQuestExperience** — returns the XP reward stored in the `qt`
+   2DA row for a given plot ID; falls back to 0 gracefully if the 2DA is
+   absent (asset-less CI environment).
+7. **ShowLevelUpGUI (real path)** — when the PC has unspent level(s), auto-
+   allocates skill points (max ranks in the PC's class-primary skills) and
+   grants class hit-die HP; no longer a silent no-op.
+8. **Item::getBaseItem accessor** — `Item` exposes a public `getBaseItem()`
+   getter used by `GetBaseItemType` and future item-property checks.
+
+---
+
+## Required Work
+
+### Effect Engine Type — new sub-types
+
+- [x] Add `kEffectACIncrease`, `kEffectAttackIncrease`, `kEffectSkillIncrease`,
+      and `kEffectTemporaryHitpoints` to the `EffectType` enum in `effect.h`.
+      *(`effect.h` extended; `effect.cpp` unchanged — existing constructor
+      and clone already handle arbitrary type/amount/damageType triples.)*
+- [x] Extend `applyEffectToObject` to handle `kEffectTemporaryHitpoints`
+      (adds amount to current HP, capped at max HP).
+      *(handled in `functions_creatures.cpp`.)*
+
+### Item — base-item accessor
+
+- [x] Add `getBaseItem() const → int` to `Item` (header + translation unit).
+      *(`item.h` gains the declaration; `item.cpp` gains the one-liner.)*
+
+### Module — reputation store
+
+- [x] Add `_reputations` map (`std::map<std::pair<int,int>, int>`) to
+      `Module`; default value derived on first access from faction membership
+      (hostile → 0, friendly → 100, neutral → 50).
+- [x] Expose `getReputation(int sourceFaction, int targetFaction) → int` and
+      `adjustReputation(int targetFaction, int sourceFaction, int delta)` on
+      `Module`.
+
+### NWScript Functions — newly wired
+
+- [x] `GetDistanceBetween` (ID 151) — Euclidean distance between two objects.
+- [x] `GetReputation` (ID 208) — delegates to `Module::getReputation`.
+- [x] `AdjustReputation` (ID 209) — delegates to `Module::adjustReputation`.
+- [x] `EffectACIncrease` (ID 115) — constructs `Effect(kEffectACIncrease, bonus)`.
+- [x] `EffectAttackIncrease` (ID 118) — constructs `Effect(kEffectAttackIncrease, bonus)`.
+- [x] `EffectSkillIncrease` (ID 351) — constructs `Effect(kEffectSkillIncrease, bonus, skillId)`.
+- [x] `EffectTemporaryHitpoints` (ID 314) — constructs `Effect(kEffectTemporaryHitpoints, amount)`.
+- [x] `GetBaseItemType` (ID 397) — calls `Item::getBaseItem()`.
+- [x] `GetJournalQuestExperience` (ID 384) — reads XP from `questitems.2da`
+      `xp` column; returns 0 if the 2DA is unavailable.
+
+### Level-up auto-path
+
+- [x] `ShowLevelUpGUI` (ID 265) — when the PC's accumulated XP exceeds the
+      threshold for the next level, increment the class level, add hit-die HP,
+      and distribute skill points to the top-ranked skills automatically;
+      log the level-up so it is visible in debug output.
+
+### CI Test Coverage
+
+- [x] Unit tests for `GetDistanceBetween` covering zero distance, axis-aligned,
+      and diagonal 3-D cases.
+      *(`tests/engines/kotorbase/taris_upper_city.cpp` added.)*
+- [x] Unit tests for `GetReputation` / `AdjustReputation`: initial faction
+      derivation, clamping at 0 and 100, independent faction-pair storage.
+      *(same file.)*
+- [x] Unit tests for new `Effect` sub-types: type/amount/skill-id accessors
+      and `clone` independence.
+      *(same file.)*
+- [x] Unit tests for `EffectTemporaryHitpoints` applied via the HP-cap logic.
+      *(same file.)*
+
+---
+
+## Out of Scope for Milestone 3
+
+- Full level-up GUI with feat selection and attribute point spending.
+- Merchant/barter screen implementation (OpenStore remains a stub).
+- Areas beyond Taris Upper City.
+- Saving to disk.
+
+---
+
+## Success Metric
+
+Milestone 3 is **complete** when Taris Upper City scripts run without
+"unimplemented function" warnings for the eight functions listed above, the
+new unit tests all pass under CI, and the PC can gain at least one level
+automatically after accumulating sufficient XP in-session.

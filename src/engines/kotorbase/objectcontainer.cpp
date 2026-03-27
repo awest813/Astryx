@@ -27,6 +27,7 @@
 
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/situated.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/door.h"
@@ -154,6 +155,10 @@ Door *ObjectContainer::toDoor(Aurora::NWScript::Object *object) {
 
 Creature *ObjectContainer::toCreature(Aurora::NWScript::Object *object) {
 	return dynamic_cast<Creature *>(object);
+}
+
+Item *ObjectContainer::toItem(Aurora::NWScript::Object *object) {
+	return dynamic_cast<Item *>(object);
 }
 
 SoundObject *ObjectContainer::toSoundObject(Aurora::NWScript::Object *object) {

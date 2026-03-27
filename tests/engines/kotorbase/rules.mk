@@ -72,3 +72,8 @@ check_PROGRAMS                                           += tests/engines/kotorb
 tests_engines_kotorbase_test_taris_progression_SOURCES    = tests/engines/kotorbase/taris_progression.cpp
 tests_engines_kotorbase_test_taris_progression_LDADD      = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_taris_progression_CXXFLAGS   = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_taris_upper_city
+tests_engines_kotorbase_test_taris_upper_city_SOURCES     = tests/engines/kotorbase/taris_upper_city.cpp
+tests_engines_kotorbase_test_taris_upper_city_LDADD       = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_taris_upper_city_CXXFLAGS    = $(test_CXXFLAGS)

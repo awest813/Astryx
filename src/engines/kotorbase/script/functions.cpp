@@ -41,6 +41,9 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/game.h"
 
+#include "src/aurora/2dafile.h"
+#include "src/aurora/2dareg.h"
+
 #include "src/engines/kotorbase/script/functions.h"
 
 namespace Engines {
@@ -128,6 +131,29 @@ void Functions::getJournalEntry(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &plotId = ctx.getParams()[0].getString();
 	ctx.getReturn().setType(Aurora::NWScript::kTypeInt);
 	ctx.getReturn() = _game->getModule().getGlobalNumber("JRNL_" + plotId);
+}
+
+void Functions::getJournalQuestExperience(Aurora::NWScript::FunctionContext &ctx) {
+	// GetJournalQuestExperience(string sPlotID) → int
+	// Returns the XP reward for the given quest plot ID from the questitems 2DA.
+	// Gracefully returns 0 if the 2DA is unavailable (e.g. in CI environments
+	// without game assets).
+	const Common::UString &plotId = ctx.getParams()[0].getString();
+	ctx.getReturn() = 0;
+
+	try {
+		const Aurora::TwoDAFile &qiFile = TwoDAReg.get2DA("questitems");
+		size_t rows = qiFile.getRowCount();
+		for (size_t i = 0; i < rows; ++i) {
+			const Aurora::TwoDARow &row = qiFile.getRow(i);
+			if (row.getString("label") == plotId) {
+				ctx.getReturn() = row.getInt("xp");
+				return;
+			}
+		}
+	} catch (...) {
+		// 2DA unavailable — return 0 silently.
+	}
 }
 
 void Functions::giveGoldToCreature(Aurora::NWScript::FunctionContext &ctx) {

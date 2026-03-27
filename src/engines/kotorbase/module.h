@@ -26,7 +26,9 @@
 #define ENGINES_KOTORBASE_MODULE_H
 
 #include <list>
+#include <map>
 #include <set>
+#include <utility>
 
 #include <memory>
 #include "src/common/ustring.h"
@@ -224,6 +226,13 @@ public:
 	/** Get the currently selected planet. */
 	int getSelectedPlanet() const;
 
+	// Reputation
+
+	/** Get the reputation of oTarget's faction towards oSource's faction (0–100). */
+	int getReputation(int sourceFaction, int targetFaction) const;
+	/** Adjust the reputation of targetFaction towards sourceFaction by delta, clamped to [0, 100]. */
+	void adjustReputation(int targetFaction, int sourceFaction, int delta);
+
 	// Static utility methods
 
 	static Common::UString getName(const Common::UString &module, const Common::UString &moduleDirOptionName);
@@ -332,6 +341,9 @@ private:
 	std::map<Common::UString, bool> _globalBooleans;
 	std::map<Common::UString, int> _globalNumbers;
 	std::map<Common::UString, Common::UString> _globalStrings;
+
+	// Inter-faction reputation store: key = (sourceFaction, targetFaction), value in [0, 100]
+	std::map<std::pair<int,int>, int> _reputations;
 
 	// Galaxy map planet state
 

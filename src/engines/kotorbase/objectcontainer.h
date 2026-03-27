@@ -46,6 +46,7 @@ class Situated;
 class Placeable;
 class Door;
 class Creature;
+class Item;
 class SoundObject;
 class Location;
 class Talent;
@@ -90,6 +91,7 @@ public:
 	static Placeable   *toPlaceable  (Aurora::NWScript::Object *object);
 	static Door        *toDoor       (Aurora::NWScript::Object *object);
 	static Creature    *toCreature   (Aurora::NWScript::Object *object);
+	static Item        *toItem       (Aurora::NWScript::Object *object);
 	static Creature    *toPC         (Aurora::NWScript::Object *object);
 	static SoundObject *toSoundObject(Aurora::NWScript::Object *object);
 	static Creature    *toPartyMember(Aurora::NWScript::Object *object);

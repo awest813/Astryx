@@ -66,6 +66,8 @@ public:
 	Class getClassByPosition(int position) const;
 	int getLevelByPosition(int position) const;
 	int getNumClasses() const;
+	/** Increment the level of the given class by 1 (adds a new ClassLevel entry if needed). */
+	void incrementClassLevel(Class charClass);
 
 	// Abilities
 
