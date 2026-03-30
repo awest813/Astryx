@@ -180,6 +180,16 @@ void CameraController::stopMovement() {
 	_counterClockwiseMovementWanted = false;
 }
 
+void CameraController::syncOrbitingCamera() {
+	if (_flycam)
+		return;
+	if (!_module->getCurrentArea())
+		return;
+
+	processRotation(0.0f);
+	processMovement(0.0f);
+}
+
 glm::vec3 CameraController::getCameraPosition(float distance) const {
 	glm::vec3 position;
 	position.x = _target.x + distance * sin(_yaw);

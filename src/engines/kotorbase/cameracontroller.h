@@ -57,6 +57,10 @@ public:
 	void processMovement(float frameTime);
 	void stopMovement();
 
+	/** Apply current yaw/distance to CameraMan immediately (frameTime 0). Used when
+	 *  scripts or dialogue set facing so the view matches KotOR without waiting a frame. */
+	void syncOrbitingCamera();
+
 private:
 	Module *_module;
 	bool _flycam { false };

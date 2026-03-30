@@ -1352,6 +1352,7 @@ float Module::getCameraYaw() const {
 
 void Module::setCameraYaw(float yaw) {
 	_cameraController.setYaw(yaw);
+	_cameraController.syncOrbitingCamera();
 }
 
 void Module::delayConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
