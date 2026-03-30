@@ -27,7 +27,9 @@
  *
  *   1. SetCameraFacing – NWScript always supplies degrees; must convert
  *      unconditionally, including small values (0–6°) that the old guard
- *      incorrectly left in degrees.
+ *      incorrectly left in degrees. Module::setCameraFacing also pushes the
+ *      orbiting camera to CameraMan immediately (via Module::setCameraYaw) so
+ *      scripted cuts match retail.
  *
  *   2. GetUserActionsPending – must reflect the actual action-queue state so
  *      that cinematic wait loops ("while (GetUserActionsPending())") terminate
