@@ -412,6 +412,7 @@ private:
 	int _runScriptVar;
 	bool _soloMode;
 	int _userDefinedEventNumber { 0 };
+	bool _inBattleMusic { false };  ///< Is the battle music track currently playing?
 
 	// Unloading
 
@@ -481,6 +482,18 @@ private:
 	void notifyCombatRoundBegan(int round);
 	void notifyCombatRoundEnded(int round);
 
+	/**
+	 * Tick NPC combat AI: hostile NPCs within perception range will auto-queue
+	 * an attack action against the nearest party member.  Party members that are
+	 * not the current leader will auto-attack any NPC that is attacking the party.
+	 */
+	void updateCombatAI();
+
+	/** Switch ambient/battle music depending on whether any creature is in combat. */
+	void updateBattleMusic();
+
+	/** Award XP to the party for creatures that died this frame. */
+	void updateXPOnKill();
 
 	friend class RoundController;
 };

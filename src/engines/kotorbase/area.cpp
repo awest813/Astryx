@@ -200,6 +200,14 @@ void Area::playAmbientMusic(Common::UString music) {
 	_ambientMusic = ::Engines::playSound(music, Sound::kSoundTypeMusic, true);
 }
 
+void Area::playBattleMusic() {
+	if (_musicBattle.empty())
+		return;
+
+	stopAmbientMusic();
+	_ambientMusic = ::Engines::playSound(_musicBattle, Sound::kSoundTypeMusic, true);
+}
+
 void Area::playAmbientSound(Common::UString sound) {
 	stopAmbientSound();
 

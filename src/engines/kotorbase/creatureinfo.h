@@ -69,6 +69,9 @@ public:
 	/** Increment the level of the given class by 1 (adds a new ClassLevel entry if needed). */
 	void incrementClassLevel(Class charClass);
 
+	/** Compute the total Base Attack Bonus from all class levels (KOTOR d20 rules). */
+	int getBAB() const;
+
 	// Abilities
 
 	struct Abilities {
