@@ -458,6 +458,7 @@ void Functions::actionUseFeat(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 
 	const int featID = ctx.getParams()[0].getInt();
+	caller->setLastCombatFeatUsed(featID);
 	caller->queueCombatFeat(featID);
 
 	if (target) {
@@ -477,6 +478,7 @@ void Functions::actionUseTalentOnObject(Aurora::NWScript::FunctionContext &ctx) 
 		return;
 
 	if (talent->getType() == kTalentTypeFeat) {
+		caller->setLastCombatFeatUsed(talent->getID());
 		caller->queueCombatFeat(talent->getID());
 		if (target) {
 			caller->setAttemptedAttackTarget(target);
@@ -503,6 +505,8 @@ void Functions::actionUseTalentAtLocation(Aurora::NWScript::FunctionContext &ctx
 	if (!caller || !talent || !talent->isValid() || !target)
 		return;
 
+	if (talent->getType() == kTalentTypeFeat)
+		caller->setLastCombatFeatUsed(talent->getID());
 	if (talent->getType() == kTalentTypeFeat)
 		caller->queueCombatFeat(talent->getID());
 
