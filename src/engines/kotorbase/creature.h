@@ -162,6 +162,9 @@ public:
 	/** Return the total character level (sum of all class levels). */
 	int getHitDice() const;
 
+	/** Compute the Base Attack Bonus from class/level. */
+	int getBAB() const;
+
 	/** Compute the full armor class (10 + Dex modifier + equipped armour bonus). */
 	int getAC() const;
 
@@ -217,7 +220,15 @@ public:
 
 	void startCombat(Object *target, int round);
 	void cancelCombat();
-	void executeAttack(Object *target);
+	/**
+	 * Execute one attack iteration against target.
+	 *
+	 * @param target     The object being attacked.
+	 * @param babPenalty Iterative-attack penalty applied to this swing (0 for the
+	 *                   primary attack, -5 for the second, -10 for the third…).
+	 * @param damageMod  Additional flat damage modifier (e.g. from caller-selected feats).
+	 */
+	void executeAttack(Object *target, int babPenalty = 0, int damageMod = 0);
 
 	// Death
 
@@ -225,6 +236,11 @@ public:
 
 	/** Handle creature's death. Return true if changed from alive to dead. */
 	bool handleDeath();
+
+	/** Has kill XP for this creature already been awarded? */
+	bool isXPAwarded() const;
+	/** Mark kill XP as awarded. */
+	void markXPAwarded();
 
 protected:
 	// Parts of a creature's body.
@@ -289,6 +305,7 @@ private:
 	float _runRate;
 
 	bool _dead { false };
+	bool _xpAwarded { false }; ///< Has kill XP for this creature already been awarded?
 
 
 	// Perception

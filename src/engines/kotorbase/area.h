@@ -111,6 +111,8 @@ public:
 
 	/** Play the specified music (or the area's default) as ambient music. */
 	void playAmbientMusic(Common::UString music = "");
+	/** Play the area's battle music track (used during combat). */
+	void playBattleMusic();
 	/** Play the specified sound (or the area's default) as ambient sound. */
 	void playAmbientSound(Common::UString sound = "");
 

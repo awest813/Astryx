@@ -24,6 +24,7 @@
 
 #include <map>
 #include <utility>
+#include <vector>
 
 #include "src/common/util.h"
 #include "src/common/maths.h"
@@ -57,6 +58,7 @@
 #include "src/engines/aurora/flycamera.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/area.h"
@@ -606,6 +608,9 @@ void Module::processEventQueue() {
 	_roundController.update();
 	_area->handleCreaturesDeath();
 
+	// Run NPC and party combat AI before executing movement/actions.
+	updateCombatAI();
+
 	GfxMan.lockFrame();
 
 	_area->processCreaturesActions(_frameTime);
@@ -786,11 +791,280 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 			continue;
 
 		Object *target = c->getAttemptedAttackTarget();
-		if (!target)
+		if (!target) {
+			c->setAttemptedAttackTarget(nullptr);
+			continue;
+		}
+
+		// -----------------------------------------------------------------
+		// Determine feat-driven attack sequence for this round.
+		// KOTOR uses the same d20/STAR WARS RPG rules:
+		//   Primary attack at full BAB.
+		//   BAB ≥  6 → second iterative attack at BAB-5
+		//   BAB ≥ 11 → third  iterative attack at BAB-10
+		//   BAB ≥ 16 → fourth iterative attack at BAB-15
+		//   Flurry        → +1 attack (off-hand), all attacks at -4 penalty
+		//   Improved Flurry → -2 penalty instead of -4
+		//   Rapid Shot    → +1 ranged attack, all attacks at -2 penalty
+		//   Improved Rapid Shot → no penalty
+		//   Two-Weapon Fighting → off-hand at -2; without feat: -4
+		// -----------------------------------------------------------------
+
+		const CreatureInfo &info = c->getCreatureInfo();
+		const Item *rightWeapon  = c->getEquipedItem(kInventorySlotRightWeapon);
+		const Item *leftWeapon   = c->getEquipedItem(kInventorySlotLeftWeapon);
+
+		bool ranged = (rightWeapon && rightWeapon->isRangedWeapon()) ||
+		              (leftWeapon  && leftWeapon->isRangedWeapon());
+
+		int bab = c->getBAB();
+
+		// Build the list of (babPenalty, damageMod) pairs for each swing this round.
+		struct Swing { int babPenalty; int damageMod; };
+		std::vector<Swing> swings;
+
+		// Base iterative attacks from BAB.
+		for (int penalty = 0; bab + penalty > 0; penalty -= 5) {
+			swings.push_back({penalty, 0});
+			if (bab + penalty < 6)
+				break; // no more iterations below BAB 1
+		}
+
+		// Feat: Flurry / Improved Flurry (melee only).
+		// All attacks (including the bonus one) take a -4 penalty (-2 for Improved).
+		// The extra attack is at the highest BAB (same as the primary swing).
+		if (!ranged && (info.hasFeat(kFeatFlurry) || info.hasFeat(kFeatImprovedFlurry))) {
+			int penalty = info.hasFeat(kFeatImprovedFlurry) ? -2 : -4;
+			// First apply the penalty to all existing swings, then add the bonus one
+			// (it is also at full BAB, i.e. penalty=0 relative to base, then shifted).
+			for (auto &s : swings)
+				s.babPenalty += penalty;
+			// Extra attack is at the same "post-penalty" BAB as the primary swing.
+			swings.push_back({penalty, 0});
+		}
+
+		// Feat: Rapid Shot (ranged only).
+		// All attacks (including the bonus one) take a -2 penalty (Improved: none).
+		if (ranged && (info.hasFeat(kFeatRapidShot) || info.hasFeat(kFeatImprovedRapidShot))) {
+			int penalty = info.hasFeat(kFeatImprovedRapidShot) ? 0 : -2;
+			if (penalty != 0) {
+				for (auto &s : swings)
+					s.babPenalty += penalty;
+			}
+			// Extra ranged attack at the highest BAB (post-penalty).
+			swings.push_back({penalty, 0});
+		}
+
+		// Feat: Two-Weapon Fighting (off-hand attack when wielding two weapons, melee)
+		if (!ranged && rightWeapon && leftWeapon) {
+			int offHandPenalty = info.hasFeat(kFeatMasterTwoWeapon) ? 0
+			                  : (info.hasFeat(kFeatImprovedTwoWeapon) ? -2
+			                  : (info.hasFeat(kFeatTwoWeaponFighting)  ? -2 : -4));
+			swings.push_back({offHandPenalty, 0});
+		}
+
+		// Execute all swings.
+		for (const auto &s : swings) {
+			if (target->isDead())
+				break;
+			c->executeAttack(target, s.babPenalty, s.damageMod);
+		}
+
+		c->setAttemptedAttackTarget(nullptr);
+	}
+
+	// Award XP for any kills that occurred this round.
+	updateXPOnKill();
+
+	// Update battle music state.
+	updateBattleMusic();
+}
+
+// ---------------------------------------------------------------------------
+// NPC / Party AI
+// ---------------------------------------------------------------------------
+
+static const float kNPCNoticeRange    = 12.0f; // metres — generic perception radius
+static const float kNPCEngageRange    = 20.0f; // metres — once aggro'd, keep attacking
+
+void Module::updateCombatAI() {
+	if (!_area || !_pc)
+		return;
+
+	const std::vector<Creature *> &creatures = _area->getCreatures();
+
+	// Build a list of active party members for fast lookup.
+	std::vector<Creature *> partyMembers;
+	int partySize = static_cast<int>(_partyController.getPartyMemberCount());
+	for (int i = 0; i < partySize; ++i)
+		partyMembers.push_back(_partyController.getPartyMemberByIndex(i).second);
+
+	for (auto &c : creatures) {
+		if (c->isDead() || !c->isCommandable())
 			continue;
 
-		c->executeAttack(target);
-		c->setAttemptedAttackTarget(nullptr);
+		bool isPartyMember = false;
+		for (auto pm : partyMembers)
+			if (pm == c) { isPartyMember = true; break; }
+
+		// ---------------------------------------------------------------
+		// NPC enemy AI: hostile, non-party creatures auto-attack the
+		// nearest party member they can perceive.
+		// ---------------------------------------------------------------
+		if (!isPartyMember) {
+			const Action *currentAction = c->getCurrentAction();
+
+			// If in combat, ensure we're either attacking or chasing the target.
+			if (c->isInCombat()) {
+				Object *t = c->getAttackTarget();
+				if (t && !t->isDead()) {
+					// Target is alive — chase if out of range and idle.
+					bool outOfRange = c->getDistanceTo(t) > c->getMaxAttackRange();
+					bool idle = (!currentAction || currentAction->type == kActionFollowLeader);
+					if (outOfRange && idle) {
+						c->clearActions();
+						Action attack(kActionAttackObject);
+						attack.object = t;
+						attack.range  = c->getMaxAttackRange();
+						c->addAction(attack);
+					}
+					continue;
+				}
+				// Target is dead or null — cancel combat and find a new one.
+				c->cancelCombat();
+			}
+
+			// If already queued to attack, leave it alone.
+			if (currentAction && currentAction->type == kActionAttackObject)
+				continue;
+
+			// Find nearest live party member within notice range.
+			Creature *bestTarget = nullptr;
+			float bestDist = kNPCNoticeRange;
+
+			for (auto pm : partyMembers) {
+				if (pm->isDead())
+					continue;
+				float dist = c->getDistanceTo(pm);
+				if (dist > kNPCNoticeRange)
+					continue;
+				// Check faction hostility: reputation < 50 means hostile.
+				int rep = getReputation(static_cast<int>(c->getFaction()),
+				                        static_cast<int>(pm->getFaction()));
+				if (rep >= 50)
+					continue;
+				if (dist < bestDist) {
+					bestDist   = dist;
+					bestTarget = pm;
+				}
+			}
+
+			if (bestTarget) {
+				c->clearActions();
+				Action attack(kActionAttackObject);
+				attack.object = bestTarget;
+				attack.range  = c->getMaxAttackRange();
+				c->addAction(attack);
+			}
+			continue;
+		}
+
+		// ---------------------------------------------------------------
+		// Party member auto-combat: non-leader party members auto-attack
+		// whichever hostile NPC is currently attacking the party leader
+		// (or any hostile within engage range if the leader is idle).
+		// ---------------------------------------------------------------
+		Creature *leader = getPartyLeader();
+		if (!leader || c == leader)
+			continue;
+
+		// Non-leader: if idle, mirror the leader's attack target.
+		const Action *ca = c->getCurrentAction();
+		bool idle = (!ca || ca->type == kActionFollowLeader);
+		if (!idle)
+			continue;
+
+		// Prefer the leader's current attack target.
+		Object *leaderTarget = leader->isInCombat() ? leader->getAttackTarget() : nullptr;
+
+		// Otherwise find a hostile creature that is attacking any party member.
+		if (!leaderTarget || leaderTarget->isDead()) {
+			leaderTarget = nullptr;
+			float bestDist = kNPCEngageRange;
+			for (auto *nc : creatures) {
+				if (nc->isDead())
+					continue;
+				bool ncIsParty = false;
+				for (auto pm : partyMembers)
+					if (pm == nc) { ncIsParty = true; break; }
+				if (ncIsParty)
+					continue;
+				int rep = getReputation(static_cast<int>(c->getFaction()),
+				                        static_cast<int>(nc->getFaction()));
+				if (rep >= 50)
+					continue;
+				float dist = c->getDistanceTo(nc);
+				if (dist < bestDist) {
+					bestDist    = dist;
+					leaderTarget = nc;
+				}
+			}
+		}
+
+		if (leaderTarget && !leaderTarget->isDead()) {
+			c->clearActions();
+			Action attack(kActionAttackObject);
+			attack.object = leaderTarget;
+			attack.range  = c->getMaxAttackRange();
+			c->addAction(attack);
+		}
+	}
+}
+
+void Module::updateBattleMusic() {
+	if (!_area)
+		return;
+
+	bool anyInCombat = false;
+	for (auto &c : _area->getCreatures()) {
+		if (!c->isDead() && c->isInCombat()) {
+			anyInCombat = true;
+			break;
+		}
+	}
+
+	if (anyInCombat && !_inBattleMusic) {
+		_inBattleMusic = true;
+		_area->playBattleMusic();
+	} else if (!anyInCombat && _inBattleMusic) {
+		_inBattleMusic = false;
+		_area->playAmbientMusic();
+	}
+}
+
+void Module::updateXPOnKill() {
+	if (!_area || !_pc)
+		return;
+
+	for (auto &c : _area->getCreatures()) {
+		if (!c->isDead() || c->isXPAwarded())
+			continue;
+		if (c->isPC() || c->isPartyMember())
+			continue;
+
+		int hitDice = c->getHitDice();
+		if (hitDice <= 0)
+			continue;
+
+		c->markXPAwarded();
+
+		// XP = 25 × creature hit dice — consistent with KOTOR's own scaling.
+		int xp = 25 * hitDice;
+		_pc->addPlotXP(xp);
+
+		debugC(Common::kDebugEngineLogic, 1,
+		       "Module::updateXPOnKill(): awarded %d XP for killing \"%s\" (HD %d)",
+		       xp, c->getTag().c_str(), hitDice);
 	}
 }
 

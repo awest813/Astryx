@@ -304,6 +304,37 @@ enum WeaponWield {
 	kWeaponWieldHeavy  = 6
 };
 
+/** KOTOR feat IDs (feats.2da row indices). */
+enum FeatID {
+	kFeatAmbidexterity         =  0,
+	kFeatTwoWeaponFighting     =  1,
+	kFeatImprovedTwoWeapon     =  2,
+	kFeatMasterTwoWeapon       =  3,
+	kFeatFlurry                =  4,
+	kFeatImprovedFlurry        =  5,
+	kFeatPowerAttack           =  6,
+	kFeatImprovedPowerAttack   =  7,
+	kFeatCriticalStrike        =  8,
+	kFeatImprovedCriticalStrike =  9,
+	kFeatRapidShot             = 10,
+	kFeatImprovedRapidShot     = 11,
+	kFeatSneakAttack1          = 14,
+	kFeatSneakAttack2          = 15,
+	kFeatSneakAttack3          = 16,
+	kFeatSneakAttack4          = 17,
+	kFeatSneakAttack5          = 18,
+	kFeatSneakAttack6          = 19,
+	kFeatSneakAttack7          = 20,
+	kFeatSneakAttack8          = 21,
+	kFeatSneakAttack9          = 22,
+	kFeatWeaponFocusMelee      = 25,
+	kFeatWeaponFocusBlaster    = 26,
+	kFeatWeaponFocusBlasterRifle = 27,
+	kFeatWeaponSpecializationMelee    = 28,
+	kFeatWeaponSpecializationBlaster  = 29,
+	kFeatWeaponSpecializationBlasterRifle = 30
+};
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

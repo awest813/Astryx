@@ -139,6 +139,47 @@ int CreatureInfo::getNumClasses() const {
 	return static_cast<int>(_levels.size());
 }
 
+int CreatureInfo::getBAB() const {
+	// KOTOR d20 BAB progressions (per class level):
+	//   Full (1:1)  — Soldier, CombatDroid
+	//   3/4         — Scout, all Jedi classes, ExpertDroid, TechSpecialist, BountyHunter,
+	//                  JediWeaponMaster, JediMaster, JediWatchMan, SithMarauder, SithLord,
+	//                  SithAssassin
+	//   1/2         — Scoundrel, Minion
+
+	int bab = 0;
+	for (const auto &cl : _levels) {
+		const int lv = cl.level;
+		switch (cl.characterClass) {
+			case kClassSoldier:
+			case kClassCombatDroid:
+				bab += lv;
+				break;
+			case kClassScout:
+			case kClassJediGuardian:
+			case kClassJediConsular:
+			case kClassJediSentinel:
+			case kClassExpertDroid:
+			case kClassTechSpecialist:
+			case kClassBountyHunter:
+			case kClassJediWeaponMaster:
+			case kClassJediMaster:
+			case kClassJediWatchMan:
+			case kClassSithMarauder:
+			case kClassSithLord:
+			case kClassSithAssassin:
+				bab += (lv * 3) / 4;
+				break;
+			case kClassScoundrel:
+			case kClassMinion:
+			default:
+				bab += lv / 2;
+				break;
+		}
+	}
+	return bab;
+}
+
 void CreatureInfo::incrementClassLevel(Class charClass) {
 	auto it = std::find_if(_levels.begin(), _levels.end(), [&](const ClassLevel &cl) {
 		return cl.characterClass == charClass;

@@ -741,6 +741,10 @@ int Creature::getHitDice() const {
 	return total;
 }
 
+int Creature::getBAB() const {
+	return _info.getBAB();
+}
+
 int Creature::getAC() const {
 	int ac = 10 + _info.getAbilityModifier(kAbilityDexterity);
 
@@ -961,7 +965,7 @@ void Creature::cancelCombat() {
 	_attackRound = 0;
 }
 
-void Creature::executeAttack(Object *target) {
+void Creature::executeAttack(Object *target, int babPenalty, int damageMod) {
 	if (!target) {
 		cancelCombat();
 		return;
@@ -985,68 +989,151 @@ void Creature::executeAttack(Object *target) {
 	const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
 	const Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
 
-	// Determine attack modifier: use Dex for ranged weapons, Str for melee
+	// Determine attack stat: Dex for ranged, Str for melee.
 	bool ranged = (rightWeapon && rightWeapon->isRangedWeapon()) ||
 	              (leftWeapon  && leftWeapon->isRangedWeapon());
-	int attackMod = ranged ? _info.getAbilityModifier(kAbilityDexterity)
-	                       : _info.getAbilityModifier(kAbilityStrength);
+	int abMod = ranged ? _info.getAbilityModifier(kAbilityDexterity)
+	                   : _info.getAbilityModifier(kAbilityStrength);
 
-	// Roll d20 (1..20 inclusive) + attack modifier vs target AC
+	// Feat modifiers: attack/damage bonuses from active combat feats.
+	int featAttackMod = 0;
+	int featDamageMod = damageMod; // caller may pass per-attack bonuses
+
+	if (!ranged) {
+		if (_info.hasFeat(kFeatImprovedPowerAttack))
+			{ featAttackMod -= 3; featDamageMod += 6; }
+		else if (_info.hasFeat(kFeatPowerAttack))
+			{ featAttackMod -= 3; featDamageMod += 3; }
+	}
+
+	// Weapon Focus / Specialization bonuses.
+	if (rightWeapon || leftWeapon) {
+		if (ranged) {
+			if (_info.hasFeat(kFeatWeaponFocusBlaster) || _info.hasFeat(kFeatWeaponFocusBlasterRifle))
+				featAttackMod += 1;
+			if (_info.hasFeat(kFeatWeaponSpecializationBlaster) || _info.hasFeat(kFeatWeaponSpecializationBlasterRifle))
+				featDamageMod += 2;
+		} else {
+			if (_info.hasFeat(kFeatWeaponFocusMelee))
+				featAttackMod += 1;
+			if (_info.hasFeat(kFeatWeaponSpecializationMelee))
+				featDamageMod += 2;
+		}
+	}
+
+	// Full attack bonus = BAB - iterative penalty + ability mod + feats.
+	int bab = getBAB();
+	int attackBonus = (bab + babPenalty) + abMod + featAttackMod;
+
+	// Roll d20 (1..20 inclusive) vs target AC.
 	int d20 = RNG.getNext(1, 21);
-	int attackRoll = d20 + attackMod;
+	int attackRoll = d20 + attackBonus;
+	int targetAC   = targetCreature ? targetCreature->getAC() : 10;
 
-	int targetAC = targetCreature ? targetCreature->getAC() : 10;
-
-	// Natural 1 always misses; natural 20 always hits; otherwise compare totals
+	// Natural 1 always misses; natural 20 always hits.
 	bool hit = (d20 == 20) || (d20 != 1 && attackRoll >= targetAC);
 
 	if (!hit) {
 		debugC(Common::kDebugEngineLogic, 1,
-		       "Object \"%s\" missed \"%s\" (roll %d+%d=%d vs AC %d)",
+		       "Object \"%s\" missed \"%s\" (d20=%d bab=%d abMod=%d feat=%d total=%d vs AC %d)",
 		       _tag.c_str(), target->getTag().c_str(),
-		       d20, attackMod, attackRoll, targetAC);
+		       d20, bab + babPenalty, abMod, featAttackMod, attackRoll, targetAC);
 		return;
 	}
 
+	// --- Critical hit system ---
+	// Threat on natural 20 (weapons may lower this, but 20 is the universal minimum).
+	// Critical Strike feat: threat on 19-20; Improved: 18-20.
+	int critThreat = 20;
+	if (_info.hasFeat(kFeatImprovedCriticalStrike))
+		critThreat = 18;
+	else if (_info.hasFeat(kFeatCriticalStrike))
+		critThreat = 19;
+
+	bool isThreat = (d20 >= critThreat);
+	bool isCrit   = false;
+	if (isThreat) {
+		// Confirmation roll — same bonus, must also hit AC.
+		int confirmD20   = RNG.getNext(1, 21);
+		int confirmRoll  = confirmD20 + attackBonus;
+		isCrit = (confirmD20 == 20) || (confirmD20 != 1 && confirmRoll >= targetAC);
+	}
+
+	// --- Damage calculation ---
 	int damage;
 	if (rightWeapon && leftWeapon)
 		damage = computeWeaponDamage(leftWeapon) + computeWeaponDamage(rightWeapon);
 	else if (rightWeapon)
 		damage = computeWeaponDamage(rightWeapon);
 	else
+		// Unarmed: 1 + Str modifier (minimum 1 die).
 		damage = 1 + _info.getAbilityModifier(kAbilityStrength);
 
-	// Combat should never heal via negative/zero damage rolls.
+	// On a confirmed critical, double the weapon dice (not the fixed modifiers).
+	if (isCrit) {
+		int dieDamage;
+		int modDamage;
+		if (rightWeapon && leftWeapon) {
+			int rMod = _info.getAbilityModifier(kAbilityStrength);
+			int lMod = _info.getAbilityModifier(kAbilityStrength);
+			dieDamage = damage - rMod - lMod;
+			modDamage  = rMod + lMod;
+		} else if (rightWeapon) {
+			int mod = ranged ? _info.getAbilityModifier(kAbilityDexterity)
+			                 : _info.getAbilityModifier(kAbilityStrength);
+			dieDamage = damage - mod;
+			modDamage  = mod;
+		} else {
+			// Unarmed: the "1" is the die, Str mod is the modifier.
+			int mod = _info.getAbilityModifier(kAbilityStrength);
+			dieDamage = damage - mod;
+			modDamage  = mod;
+		}
+		// Double the dice portion only.
+		damage = dieDamage * 2 + modDamage;
+	}
+
+	// Apply feat damage bonus and floor at 1.
+	damage += featDamageMod;
 	if (damage < 1)
 		damage = 1;
 
-	int hp = target->getCurrentHitPoints() - damage;
+	int hp    = target->getCurrentHitPoints() - damage;
 	int minHp = target->getMinOneHitPoints() ? 1 : 0;
-
-	if (hp <= minHp) {
+	if (hp < minHp)
 		hp = minHp;
-	}
 
 	target->setCurrentHitPoints(hp);
 
+	debugC(Common::kDebugEngineLogic, 1,
+	       "Object \"%s\" was %shit by \"%s\" (d20=%d bab=%d abMod=%d total=%d vs AC %d), %d dmg, %d/%d HP",
+	       target->getTag().c_str(), isCrit ? "CRITICALLY " : "",
+	       _tag.c_str(), d20, bab + babPenalty, abMod, attackRoll, targetAC,
+	       damage, hp, target->getMaxHitPoints());
+
 	if (hp <= minHp) {
 		cancelCombat();
-		
 		if (targetCreature) {
 			targetCreature->cancelCombat();
-			targetCreature->handleDeath();
+			if (targetCreature->handleDeath()) {
+				// Signal the module to award XP to the killer's party.
+				// We use userDefinedEvent 1007 (already fired by handleCreaturesDeath) — XP
+				// is awarded there via the module's updateXPOnKill() call.
+			}
 		}
 	}
-
-	debugC(Common::kDebugEngineLogic, 1,
-	       "Object \"%s\" was hit by \"%s\" (roll %d+%d=%d vs AC %d), %d damage, %d/%d HP remaining",
-	       target->getTag().c_str(), _tag.c_str(),
-	       d20, attackMod, attackRoll, targetAC,
-	       damage, hp, target->getMaxHitPoints());
 }
 
 bool Creature::isDead() const {
 	return _dead;
+}
+
+bool Creature::isXPAwarded() const {
+	return _xpAwarded;
+}
+
+void Creature::markXPAwarded() {
+	_xpAwarded = true;
 }
 
 bool Creature::handleDeath() {
