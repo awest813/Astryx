@@ -27,6 +27,7 @@
 
 #include <set>
 #include <map>
+#include <array>
 #include <memory>
 
 #include "src/common/types.h"
@@ -165,7 +166,7 @@ public:
 	/** Compute the Base Attack Bonus from class/level. */
 	int getBAB() const;
 
-	/** Compute the full armor class (10 + Dex modifier + equipped armour bonus). */
+	/** Compute the full armor class (10 + Dex modifier + equipped armour bonus + runtime effects). */
 	int getAC() const;
 
 	// Animation
@@ -214,9 +215,19 @@ public:
 	Object *getAttemptedAttackTarget() const;
 	Object *getLastHostileActor() const;
 	int getLastCombatFeatUsed() const;
+	int getQueuedCombatFeat() const;
 
 	void setAttemptedAttackTarget(Object *target);
 	void setLastCombatFeatUsed(int featID);
+	void queueCombatFeat(int featID);
+	int consumeQueuedCombatFeat();
+
+	void adjustAttackModifier(int amount);
+	void adjustArmorClassModifier(int amount);
+	void adjustSkillModifier(Skill skill, int amount);
+	int getAttackModifier() const;
+	int getArmorClassModifier() const;
+	int getSkillModifier(Skill skill) const;
 
 	void startCombat(Object *target, int round);
 	void cancelCombat();
@@ -227,8 +238,9 @@ public:
 	 * @param babPenalty Iterative-attack penalty applied to this swing (0 for the
 	 *                   primary attack, -5 for the second, -10 for the third…).
 	 * @param damageMod  Additional flat damage modifier (e.g. from caller-selected feats).
+	 * @param activeFeat Activated combat feat for this attack sequence, or -1.
 	 */
-	void executeAttack(Object *target, int babPenalty = 0, int damageMod = 0);
+	void executeAttack(Object *target, int babPenalty = 0, int damageMod = 0, int activeFeat = -1);
 
 	// Death
 
@@ -275,6 +287,10 @@ private:
 	Object *_attemptedAttackTarget { nullptr };
 	Object *_lastHostileActor { nullptr };
 	int _lastCombatFeatUsed { -1 };
+	int _queuedCombatFeat { -1 };
+	int _attackModifier { 0 };
+	int _armorClassModifier { 0 };
+	std::array<int, kSkillMAX> _skillModifiers {{}};
 
 
 	bool _isPC; ///< Is the creature a PC?

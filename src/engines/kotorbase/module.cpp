@@ -813,6 +813,11 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 		const CreatureInfo &info = c->getCreatureInfo();
 		const Item *rightWeapon  = c->getEquipedItem(kInventorySlotRightWeapon);
 		const Item *leftWeapon   = c->getEquipedItem(kInventorySlotLeftWeapon);
+		int activeFeat = c->consumeQueuedCombatFeat();
+		if (activeFeat >= 0 && !info.hasFeat(static_cast<uint32_t>(activeFeat)))
+			activeFeat = -1;
+		if (activeFeat >= 0)
+			c->setLastCombatFeatUsed(activeFeat);
 
 		bool ranged = (rightWeapon && rightWeapon->isRangedWeapon()) ||
 		              (leftWeapon  && leftWeapon->isRangedWeapon());
@@ -833,8 +838,9 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 		// Feat: Flurry / Improved Flurry (melee only).
 		// All attacks (including the bonus one) take a -4 penalty (-2 for Improved).
 		// The extra attack is at the highest BAB (same as the primary swing).
-		if (!ranged && (info.hasFeat(kFeatFlurry) || info.hasFeat(kFeatImprovedFlurry))) {
-			int penalty = info.hasFeat(kFeatImprovedFlurry) ? -2 : -4;
+		const bool activatedFlurry = (activeFeat == kFeatFlurry || activeFeat == kFeatImprovedFlurry);
+		if (!ranged && activatedFlurry && (info.hasFeat(kFeatFlurry) || info.hasFeat(kFeatImprovedFlurry))) {
+			int penalty = (activeFeat == kFeatImprovedFlurry && info.hasFeat(kFeatImprovedFlurry)) ? -2 : -4;
 			// First apply the penalty to all existing swings, then add the bonus one
 			// (it is also at full BAB, i.e. penalty=0 relative to base, then shifted).
 			for (auto &s : swings)
@@ -845,8 +851,9 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 
 		// Feat: Rapid Shot (ranged only).
 		// All attacks (including the bonus one) take a -2 penalty (Improved: none).
-		if (ranged && (info.hasFeat(kFeatRapidShot) || info.hasFeat(kFeatImprovedRapidShot))) {
-			int penalty = info.hasFeat(kFeatImprovedRapidShot) ? 0 : -2;
+		const bool activatedRapidShot = (activeFeat == kFeatRapidShot || activeFeat == kFeatImprovedRapidShot);
+		if (ranged && activatedRapidShot && (info.hasFeat(kFeatRapidShot) || info.hasFeat(kFeatImprovedRapidShot))) {
+			int penalty = (activeFeat == kFeatImprovedRapidShot && info.hasFeat(kFeatImprovedRapidShot)) ? 0 : -2;
 			if (penalty != 0) {
 				for (auto &s : swings)
 					s.babPenalty += penalty;
@@ -867,7 +874,7 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 		for (const auto &s : swings) {
 			if (target->isDead())
 				break;
-			c->executeAttack(target, s.babPenalty, s.damageMod);
+			c->executeAttack(target, s.babPenalty, s.damageMod, activeFeat);
 		}
 
 		c->setAttemptedAttackTarget(nullptr);

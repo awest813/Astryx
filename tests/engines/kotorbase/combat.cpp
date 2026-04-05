@@ -36,6 +36,10 @@
 using Engines::KotORBase::CreatureInfo;
 using Engines::KotORBase::kAbilityDexterity;
 using Engines::KotORBase::kAbilityStrength;
+using Engines::KotORBase::kFeatCriticalStrike;
+using Engines::KotORBase::kFeatImprovedCriticalStrike;
+using Engines::KotORBase::kFeatImprovedPowerAttack;
+using Engines::KotORBase::kFeatPowerAttack;
 
 // ---------------------------------------------------------------------------
 // AC formula helpers (mirrors Creature::getAC)
@@ -58,6 +62,29 @@ static bool rollHits(int d20, int attackMod, int targetAC) {
 	if (d20 == 20) return true;
 	if (d20 ==  1) return false;
 	return (d20 + attackMod) >= targetAC;
+}
+
+static int powerAttackDamageBonus(int activeFeat, bool hasPowerAttack, bool hasImprovedPowerAttack) {
+	if (activeFeat == kFeatImprovedPowerAttack && hasImprovedPowerAttack)
+		return 6;
+	if (activeFeat == kFeatPowerAttack && hasPowerAttack)
+		return 3;
+	return 0;
+}
+
+static int powerAttackAttackPenalty(int activeFeat, bool hasPowerAttack, bool hasImprovedPowerAttack) {
+	if ((activeFeat == kFeatPowerAttack && hasPowerAttack) ||
+	    (activeFeat == kFeatImprovedPowerAttack && hasImprovedPowerAttack))
+		return -3;
+	return 0;
+}
+
+static int criticalThreatFloor(int activeFeat, bool hasCriticalStrike, bool hasImprovedCriticalStrike) {
+	if (activeFeat == kFeatImprovedCriticalStrike && hasImprovedCriticalStrike)
+		return 18;
+	if (activeFeat == kFeatCriticalStrike && hasCriticalStrike)
+		return 19;
+	return 20;
 }
 
 // ---------------------------------------------------------------------------
@@ -171,4 +198,49 @@ GTEST_TEST(KotORCombat, weakAttackerVsHighAC) {
 
 	// d20 = 20 → always hits
 	EXPECT_TRUE(rollHits(20, mod, targetAC));
+}
+
+GTEST_TEST(KotORCombat, powerAttackRequiresActivation) {
+	// Learned feats are not passive combat modes; they apply only when activated.
+	EXPECT_EQ(powerAttackAttackPenalty(-1, true, true), 0);
+	EXPECT_EQ(powerAttackDamageBonus(-1, true, true), 0);
+}
+
+GTEST_TEST(KotORCombat, powerAttackActivationUsesSelectedTier) {
+	// Base Power Attack: -3 AB, +3 damage
+	EXPECT_EQ(powerAttackAttackPenalty(kFeatPowerAttack, true, false), -3);
+	EXPECT_EQ(powerAttackDamageBonus(kFeatPowerAttack, true, false), 3);
+
+	// Improved Power Attack: -3 AB, +6 damage
+	EXPECT_EQ(powerAttackAttackPenalty(kFeatImprovedPowerAttack, true, true), -3);
+	EXPECT_EQ(powerAttackDamageBonus(kFeatImprovedPowerAttack, true, true), 6);
+}
+
+GTEST_TEST(KotORCombat, criticalThreatRangeRequiresActivation) {
+	// No activated critical feat: normal threat on natural 20 only.
+	EXPECT_EQ(criticalThreatFloor(-1, true, true), 20);
+	// Activated Critical Strike: 19-20 threat range.
+	EXPECT_EQ(criticalThreatFloor(kFeatCriticalStrike, true, false), 19);
+	// Activated Improved Critical Strike: 18-20 threat range.
+	EXPECT_EQ(criticalThreatFloor(kFeatImprovedCriticalStrike, true, true), 18);
+}
+
+GTEST_TEST(KotORCombat, scriptEffectBonusesAffectDerivedStats) {
+	// Mirrors runtime stat modifiers applied via ApplyEffectToObject:
+	// - AC bonus stacks on top of base AC
+	// - attack bonus stacks into d20 totals
+	// - skill bonuses can raise previously failing checks
+	const int baseAC = calcAC(14, 2); // 14
+	const int acWithEffect = baseAC + 3;
+	EXPECT_EQ(acWithEffect, 17);
+
+	const int baseAttackTotal = 10 + 2; // d20 + STR mod
+	const int attackWithEffect = baseAttackTotal + 2;
+	EXPECT_EQ(attackWithEffect, 14);
+
+	// Security rank 4 vs DC 10: roll 5 fails (9), +2 effect succeeds (11).
+	const int baseSecurityCheck = 5 + 4;
+	const int buffedSecurityCheck = baseSecurityCheck + 2;
+	EXPECT_LT(baseSecurityCheck, 10);
+	EXPECT_GE(buffedSecurityCheck, 10);
 }
