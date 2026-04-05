@@ -194,7 +194,9 @@ float Creature::getRunRate() const {
 }
 
 int Creature::getSkillRank(Skill skill) {
-	return _info.getSkillRank(skill);
+	const int baseRank = _info.getSkillRank(skill);
+	const int modified = baseRank + getSkillModifier(skill);
+	return (modified < 0) ? 0 : modified;
 }
 
 int Creature::getAbilityScore(Ability ability) {
@@ -752,6 +754,7 @@ int Creature::getAC() const {
 	if (armor)
 		ac += armor->getACBonus();
 
+	ac += _armorClassModifier;
 	return ac;
 }
 
@@ -938,12 +941,56 @@ int Creature::getLastCombatFeatUsed() const {
 	return _lastCombatFeatUsed;
 }
 
+int Creature::getQueuedCombatFeat() const {
+	return _queuedCombatFeat;
+}
+
 void Creature::setAttemptedAttackTarget(Object *target) {
 	_attemptedAttackTarget = target;
 }
 
 void Creature::setLastCombatFeatUsed(int featID) {
 	_lastCombatFeatUsed = featID;
+}
+
+void Creature::queueCombatFeat(int featID) {
+	_queuedCombatFeat = featID;
+}
+
+int Creature::consumeQueuedCombatFeat() {
+	const int queuedFeat = _queuedCombatFeat;
+	_queuedCombatFeat = -1;
+	return queuedFeat;
+}
+
+void Creature::adjustAttackModifier(int amount) {
+	_attackModifier += amount;
+}
+
+void Creature::adjustArmorClassModifier(int amount) {
+	_armorClassModifier += amount;
+}
+
+void Creature::adjustSkillModifier(Skill skill, int amount) {
+	if (skill < kSkillComputerUse || skill >= kSkillMAX)
+		return;
+
+	_skillModifiers[static_cast<int>(skill)] += amount;
+}
+
+int Creature::getAttackModifier() const {
+	return _attackModifier;
+}
+
+int Creature::getArmorClassModifier() const {
+	return _armorClassModifier;
+}
+
+int Creature::getSkillModifier(Skill skill) const {
+	if (skill < kSkillComputerUse || skill >= kSkillMAX)
+		return 0;
+
+	return _skillModifiers[static_cast<int>(skill)];
 }
 
 void Creature::startCombat(Object *target, int round) {
@@ -965,7 +1012,7 @@ void Creature::cancelCombat() {
 	_attackRound = 0;
 }
 
-void Creature::executeAttack(Object *target, int babPenalty, int damageMod) {
+void Creature::executeAttack(Object *target, int babPenalty, int damageMod, int activeFeat) {
 	if (!target) {
 		cancelCombat();
 		return;
@@ -999,8 +1046,11 @@ void Creature::executeAttack(Object *target, int babPenalty, int damageMod) {
 	int featAttackMod = 0;
 	int featDamageMod = damageMod; // caller may pass per-attack bonuses
 
-	if (!ranged) {
-		if (_info.hasFeat(kFeatImprovedPowerAttack))
+	const bool hasActivePowerAttack = (activeFeat == kFeatPowerAttack || activeFeat == kFeatImprovedPowerAttack);
+	const bool hasActiveCriticalStrike = (activeFeat == kFeatCriticalStrike || activeFeat == kFeatImprovedCriticalStrike);
+
+	if (!ranged && hasActivePowerAttack) {
+		if (activeFeat == kFeatImprovedPowerAttack && _info.hasFeat(kFeatImprovedPowerAttack))
 			{ featAttackMod -= 3; featDamageMod += 6; }
 		else if (_info.hasFeat(kFeatPowerAttack))
 			{ featAttackMod -= 3; featDamageMod += 3; }
@@ -1023,7 +1073,7 @@ void Creature::executeAttack(Object *target, int babPenalty, int damageMod) {
 
 	// Full attack bonus = BAB - iterative penalty + ability mod + feats.
 	int bab = getBAB();
-	int attackBonus = (bab + babPenalty) + abMod + featAttackMod;
+	int attackBonus = (bab + babPenalty) + abMod + featAttackMod + _attackModifier;
 
 	// Roll d20 (1..20 inclusive) vs target AC.
 	int d20 = RNG.getNext(1, 21);
@@ -1035,9 +1085,9 @@ void Creature::executeAttack(Object *target, int babPenalty, int damageMod) {
 
 	if (!hit) {
 		debugC(Common::kDebugEngineLogic, 1,
-		       "Object \"%s\" missed \"%s\" (d20=%d bab=%d abMod=%d feat=%d total=%d vs AC %d)",
+		       "Object \"%s\" missed \"%s\" (d20=%d bab=%d abMod=%d feat=%d effect=%d total=%d vs AC %d)",
 		       _tag.c_str(), target->getTag().c_str(),
-		       d20, bab + babPenalty, abMod, featAttackMod, attackRoll, targetAC);
+		       d20, bab + babPenalty, abMod, featAttackMod, _attackModifier, attackRoll, targetAC);
 		return;
 	}
 
@@ -1045,9 +1095,9 @@ void Creature::executeAttack(Object *target, int babPenalty, int damageMod) {
 	// Threat on natural 20 (weapons may lower this, but 20 is the universal minimum).
 	// Critical Strike feat: threat on 19-20; Improved: 18-20.
 	int critThreat = 20;
-	if (_info.hasFeat(kFeatImprovedCriticalStrike))
+	if (hasActiveCriticalStrike && activeFeat == kFeatImprovedCriticalStrike && _info.hasFeat(kFeatImprovedCriticalStrike))
 		critThreat = 18;
-	else if (_info.hasFeat(kFeatCriticalStrike))
+	else if (hasActiveCriticalStrike && _info.hasFeat(kFeatCriticalStrike))
 		critThreat = 19;
 
 	bool isThreat = (d20 >= critThreat);
@@ -1106,9 +1156,9 @@ void Creature::executeAttack(Object *target, int babPenalty, int damageMod) {
 	target->setCurrentHitPoints(hp);
 
 	debugC(Common::kDebugEngineLogic, 1,
-	       "Object \"%s\" was %shit by \"%s\" (d20=%d bab=%d abMod=%d total=%d vs AC %d), %d dmg, %d/%d HP",
+	       "Object \"%s\" was %shit by \"%s\" (d20=%d bab=%d abMod=%d effect=%d total=%d vs AC %d), %d dmg, %d/%d HP",
 	       target->getTag().c_str(), isCrit ? "CRITICALLY " : "",
-	       _tag.c_str(), d20, bab + babPenalty, abMod, attackRoll, targetAC,
+	       _tag.c_str(), d20, bab + babPenalty, abMod, _attackModifier, attackRoll, targetAC,
 	       damage, hp, target->getMaxHitPoints());
 
 	if (hp <= minHp) {

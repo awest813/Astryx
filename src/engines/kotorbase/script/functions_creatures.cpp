@@ -437,35 +437,62 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 
 	int current = target->getCurrentHitPoints();
+	Creature *targetCreature = ObjectContainer::toCreature(target);
 
-	if (effect->getType() == kEffectHeal) {
-		int maxHP = target->getMaxHitPoints();
-		int healed = current + effect->getAmount();
-		if (healed > maxHP)
-			healed = maxHP;
-		target->setCurrentHitPoints(healed);
-	} else if (effect->getType() == kEffectDamage) {
-		int damaged = current - effect->getAmount();
-		target->setCurrentHitPoints(damaged);
-
-		// Check for death on creatures; cancel combat first to keep state consistent
-		// with the executeAttack path, which always calls cancelCombat before handleDeath.
-		Creature *creature = ObjectContainer::toCreature(target);
-		if (creature && creature->getCurrentHitPoints() <= 0) {
-			creature->cancelCombat();
-			creature->handleDeath();
+	switch (effect->getType()) {
+		case kEffectHeal: {
+			int maxHP = target->getMaxHitPoints();
+			int healed = current + effect->getAmount();
+			if (healed > maxHP)
+				healed = maxHP;
+			target->setCurrentHitPoints(healed);
+			break;
 		}
-	} else if (effect->getType() == kEffectTemporaryHitpoints) {
-		// Temporary HP: add to current HP, capped at max HP.
-		int maxHP = target->getMaxHitPoints();
-		int boosted = current + effect->getAmount();
-		if (boosted > maxHP)
-			boosted = maxHP;
-		target->setCurrentHitPoints(boosted);
+		case kEffectDamage: {
+			int minHp = target->getMinOneHitPoints() ? 1 : 0;
+			int damaged = current - effect->getAmount();
+			if (damaged < minHp)
+				damaged = minHp;
+			target->setCurrentHitPoints(damaged);
+
+			// Keep death transitions consistent with direct attack resolution.
+			if (targetCreature && targetCreature->getCurrentHitPoints() <= 0) {
+				targetCreature->cancelCombat();
+				targetCreature->handleDeath();
+			}
+			break;
+		}
+		case kEffectTemporaryHitpoints: {
+			// Temporary HP: add to current HP, capped at max HP.
+			int maxHP = target->getMaxHitPoints();
+			int boosted = current + effect->getAmount();
+			if (boosted > maxHP)
+				boosted = maxHP;
+			target->setCurrentHitPoints(boosted);
+			break;
+		}
+		case kEffectACIncrease:
+			if (targetCreature)
+				targetCreature->adjustArmorClassModifier(effect->getAmount());
+			break;
+		case kEffectAttackIncrease:
+			if (targetCreature)
+				targetCreature->adjustAttackModifier(effect->getAmount());
+			break;
+		case kEffectSkillIncrease:
+			if (targetCreature) {
+				const int skillID = effect->getDamageType();
+				if (skillID >= kSkillComputerUse && skillID < kSkillMAX) {
+					targetCreature->adjustSkillModifier(static_cast<Skill>(skillID), effect->getAmount());
+				} else {
+					warning("Functions::applyEffectToObject(): invalid skill id %d for EffectSkillIncrease", skillID);
+				}
+			}
+			break;
+		case kEffectVisual:
+		default:
+			break;
 	}
-	// ACIncrease / AttackIncrease / SkillIncrease are passive bonuses stored on the
-	// creature's stat block; applying them via ApplyEffectToObject is a no-op here
-	// until the full buff/debuff system is implemented.
 }
 
 void Functions::getGoodEvilValue(Aurora::NWScript::FunctionContext &ctx) {
