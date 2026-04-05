@@ -439,7 +439,10 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 	int current = target->getCurrentHitPoints();
 
 	if (effect->getType() == kEffectHeal) {
+		int maxHP = target->getMaxHitPoints();
 		int healed = current + effect->getAmount();
+		if (healed > maxHP)
+			healed = maxHP;
 		target->setCurrentHitPoints(healed);
 	} else if (effect->getType() == kEffectDamage) {
 		int damaged = current - effect->getAmount();
@@ -604,9 +607,7 @@ void Functions::setXP(Aurora::NWScript::FunctionContext &ctx) {
 	if (!creature)
 		return;
 
-	// Reset to zero then add the desired total (addPlotXP accumulates).
-	int current = creature->getCurrentXP();
-	creature->addPlotXP(amount - current);
+	creature->setCurrentXP(amount);
 }
 
 void Functions::getXP(Aurora::NWScript::FunctionContext &ctx) {

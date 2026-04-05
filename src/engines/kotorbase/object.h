@@ -156,8 +156,10 @@ public:
 
 	/** Get the current accumulated XP. */
 	int getCurrentXP() const;
-	/** Add plot (non-combat) experience points. */
+	/** Add plot (non-combat) experience points (ignored if xp <= 0). */
 	void addPlotXP(int xp);
+	/** Directly set the total XP (can decrease). */
+	void setCurrentXP(int xp);
 
 	// Object/Cursor interactions
 

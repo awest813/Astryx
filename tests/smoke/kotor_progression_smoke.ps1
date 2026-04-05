@@ -73,6 +73,14 @@ $tests = @(
 		)
 	},
 	@{
+		Name = "Dantooine Progression"
+		Paths = @(
+			"tests/engines/kotorbase/test_dantooine_progression$platformExt",
+			"bin/Release/tests_engines_kotorbase_test_dantooine_progression$platformExt",
+			"bin/Debug/tests_engines_kotorbase_test_dantooine_progression$platformExt"
+		)
+	},
+	@{
 		Name = "Crash Regression Guards"
 		Paths = @(
 			"tests/smoke/crash_regression$platformExt",

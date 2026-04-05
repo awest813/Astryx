@@ -259,6 +259,10 @@ void Object::addPlotXP(int xp) {
 		_currentXP += xp;
 }
 
+void Object::setCurrentXP(int xp) {
+	_currentXP = xp;
+}
+
 const Common::UString &Object::getCursor() const {
 	static Common::UString cursor("");
 	return cursor;
