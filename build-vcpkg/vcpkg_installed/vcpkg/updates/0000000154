@@ -1,0 +1,10 @@
+Package: libmad
+Version: 0.16.4
+Port-Version: 4
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 5bb590e74a4ab8e7ed0d0e97c32dd411a9c0b43fe3c421797ca2df6a7ec0184a
+Description: high-quality MPEG audio decoder
+Default-Features: aso
+Status: install ok half-installed

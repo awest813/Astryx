@@ -56,6 +56,10 @@ const CreatureInfo::Skills &CharacterGenerationInfo::getSkills() const {
 	return _skills;
 }
 
+const std::vector<uint32_t> &CharacterGenerationInfo::getFeats() const {
+	return _feats;
+}
+
 void CharacterGenerationInfo::setName(const Common::UString &name) {
 	_name = name;
 }
@@ -94,6 +98,10 @@ void CharacterGenerationInfo::setSkillRank(Skill skill, uint32_t rank) {
 	}
 }
 
+void CharacterGenerationInfo::addFeat(uint32_t feat) {
+	_feats.push_back(feat);
+}
+
 CharacterGenerationInfo::CharacterGenerationInfo(const CharacterGenerationInfo &info) {
 	_class = info._class;
 	_gender = info._gender;
@@ -102,7 +110,9 @@ CharacterGenerationInfo::CharacterGenerationInfo(const CharacterGenerationInfo &
 	_name = info._name;
 	_abilities = info._abilities;
 	_skills = info._skills;
+	_feats = info._feats;
 }
+
 
 CharacterGenerationInfo::~CharacterGenerationInfo() {
 }
@@ -115,7 +125,9 @@ void CharacterGenerationInfo::operator=(const CharacterGenerationInfo &info) {
 	_name = info._name;
 	_abilities = info._abilities;
 	_skills = info._skills;
+	_feats = info._feats;
 }
+
 
 CharacterGenerationInfo::CharacterGenerationInfo() {
 }

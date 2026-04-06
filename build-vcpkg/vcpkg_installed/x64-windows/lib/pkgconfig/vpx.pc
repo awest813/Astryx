@@ -5,9 +5,9 @@ includedir=${prefix}/include
 
 Name: vpx
 Description: WebM Project VPx codec implementation
-Version: 1.15.2
+Version: 1.16.0
+Requires:
 Conflicts:
-
 Libs: "-L${libdir}" -lvpx
-Requires: 
 Cflags: -I"${includedir}"
+

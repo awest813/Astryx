@@ -234,77 +234,16 @@ void Functions::getLoadFromSaveGame(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = _game->getModule().isLoadedFromSaveGame() ? 1 : 0;
 }
 
-void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &ctx) {
-	// ShowLevelUpGUI() — presents the level-up screen for the PC.
-	// Milestone 3: auto-allocate the level instead of showing an interactive GUI.
-	// Full interactive level-up UI is deferred to a future milestone.
-
-	ctx.getReturn() = 0;
-
-	Creature *pc = _game->getModule().getPC();
-	if (!pc)
-		return;
-
-	const int currentXP = pc->getCurrentXP();
-	const int currentLevel = pc->getHitDice();
-
-	// KotOR uses the standard D&D 3.5 formula: XP threshold for level N = N*(N-1)/2 * 1000.
-	// So to reach level (currentLevel+1) we need currentLevel*(currentLevel+1)/2 * 1000 XP.
-	const int nextLevelThreshold = currentLevel * (currentLevel + 1) / 2 * 1000;
-
-	if (currentXP < nextLevelThreshold)
-		return; // not enough XP yet
-
-	// Determine which class to advance (first class in the level vector).
-	CreatureInfo &info = pc->getCreatureInfo();
-	if (info.getNumClasses() == 0)
-		return;
-
-	Class primaryClass = info.getClassByPosition(0);
-
-	// Hit die per class (KotOR standard):
-	// Soldier/JediGuardian/Minion: d10; Scout/JediSentinel: d8; Scoundrel/JediConsular: d6.
-	int hitDie = 8;
-	if (primaryClass == kClassSoldier || primaryClass == kClassJediGuardian)
-		hitDie = 10;
-	else if (primaryClass == kClassScoundrel || primaryClass == kClassJediConsular)
-		hitDie = 6;
-
-	// Add average hit die roll (floor(hitDie/2)+1) + Con modifier.
-	int conMod = info.getAbilityModifier(kAbilityConstitution);
-	int hpGain = hitDie / 2 + 1 + conMod;
-	if (hpGain < 1)
-		hpGain = 1;
-
-	// Increment class level.
-	info.incrementClassLevel(primaryClass);
-
-	// Increase max HP and heal the same amount.
-	int newMaxHP = pc->getMaxHitPoints() + hpGain;
-	pc->setMaxHitPoints(newMaxHP);
-	pc->setCurrentHitPoints(pc->getCurrentHitPoints() + hpGain);
-
-	// Auto-distribute skill points: add 1 rank to up to 4 skills (capped at level).
-	const int newLevel = currentLevel + 1;
-	const Skill autoSkills[] = {
-		kSkillComputerUse, kSkillRepair, kSkillAwareness, kSkillTreatInjury
-	};
-	for (Skill sk : autoSkills) {
-		int current = info.getSkillRank(sk);
-		if (current < newLevel)
-			info.setSkillRank(sk, current + 1);
-	}
-
-	warning("Functions::showLevelUpGUI: PC levelled up to %d (class %d, +%d HP)",
-	        newLevel, static_cast<int>(primaryClass), hpGain);
-
-	ctx.getReturn() = 1;
+void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &) {
+	// presents the level-up screen for the PC.
+	_game->showLevelUpGUI();
 }
 
 void Functions::openStore(Aurora::NWScript::FunctionContext &ctx) {
-	// OpenStore(object oStore, object oPC, int nBonusMarkUp=0, int nBonusMarkDown=0)
-	// Merchant UI is out of scope for Milestone 2; log so scripts are not blocked.
-	warning("Functions::openStore: merchant GUI not yet implemented");
+	// OpenStore(object oStore, object oPC, int nBonusMarkUp=0, int nMarkDown=0)
+	// Presents the store GUI to the player.
+	Common::UString tag = ctx.getParams()[0].getCommonUString();
+	_game->openStoreGUI(tag);
 }
 
 void Functions::setReturnStrref(Aurora::NWScript::FunctionContext &ctx) {

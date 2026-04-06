@@ -49,6 +49,8 @@
 #include "src/engines/kotor/gui/main/main.h"
 
 #include "src/engines/kotor/script/functions.h"
+#include "src/engines/kotor/gui/ingame/levelup.h"
+#include "src/engines/kotor/gui/ingame/store.h"
 
 namespace Engines {
 
@@ -154,6 +156,21 @@ bool Game::hasModule(const Common::UString &module) const {
 	});
 
 	return found != _modules.end();
+}
+
+void Game::showLevelUpGUI() {
+	Creature *pc = static_cast<Module *>(_module.get())->getPC();
+	if (!pc)
+		return;
+
+	LevelUpGUI gui(*_module, *pc, _console);
+	gui.run();
+}
+
+void Game::openStoreGUI(const Common::UString &tag) {
+	// In a real implementation, we would load the store data for 'tag'
+	StoreGUI gui(*_module, _console);
+	gui.run();
 }
 
 } // End of namespace KotOR

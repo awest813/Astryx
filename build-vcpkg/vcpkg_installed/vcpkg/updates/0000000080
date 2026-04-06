@@ -1,0 +1,9 @@
+Package: boost-any
+Version: 1.90.0
+Port-Version: 1
+Depends: boost-assert, boost-cmake, boost-config, boost-headers, boost-throw-exception, boost-type-index
+Architecture: x64-windows
+Multi-Arch: same
+Abi: b0e9aad0f0b8519611f3b3dd04ca18ef0d9ffa8036c4fa9d8f6ff47c961ee252
+Description: Boost any module
+Status: install ok half-installed

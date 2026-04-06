@@ -1,0 +1,9 @@
+Package: boost-unordered
+Version: 1.90.0
+Port-Version: 1
+Depends: boost-assert, boost-cmake, boost-config, boost-container-hash, boost-core, boost-headers, boost-mp11, boost-predef, boost-throw-exception
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 3de25003f059d192404f4cccc87386f4ecde49e403427b43698f2d60f26d90b6
+Description: Boost unordered module
+Status: install ok installed

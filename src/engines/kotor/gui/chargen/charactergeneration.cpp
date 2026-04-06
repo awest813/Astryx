@@ -48,6 +48,7 @@
 #include "src/engines/kotor/gui/chargen/chargenname.h"
 #include "src/engines/kotor/gui/chargen/chargenabilities.h"
 #include "src/engines/kotor/gui/chargen/chargenskills.h"
+#include "src/engines/kotor/gui/chargen/chargenfeats.h"
 
 namespace Engines {
 
@@ -249,6 +250,19 @@ void CharacterGenerationMenu::showSkills() {
 	CharacterGenerationInfo info = *_pc;
 
 	_charGenMenu = std::make_unique<CharacterGenerationSkillsMenu>(info);
+
+	sub(*_charGenMenu);
+	if (_charGenMenu->isAccepted()) {
+		*_pc = info;
+		_step += 1;
+	}
+}
+
+void CharacterGenerationMenu::showFeats() {
+	// Operate on a copy of the character object
+	CharacterGenerationInfo info = *_pc;
+
+	_charGenMenu = std::make_unique<CharacterGenerationFeatsMenu>(info);
 
 	sub(*_charGenMenu);
 	if (_charGenMenu->isAccepted()) {

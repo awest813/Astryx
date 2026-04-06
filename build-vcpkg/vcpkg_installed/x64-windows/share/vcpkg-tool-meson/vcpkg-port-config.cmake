@@ -3,7 +3,7 @@ include("${CURRENT_HOST_INSTALLED_DIR}/share/vcpkg-cmake-get-vars/vcpkg-port-con
 include("${CMAKE_CURRENT_LIST_DIR}/vcpkg_configure_meson.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/vcpkg_install_meson.cmake")
 
-set(meson_short_hash d1fcc2)
+set(meson_short_hash 4452e3)
 
 # Setup meson:
 set(program MESON)

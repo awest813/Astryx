@@ -57,6 +57,8 @@ public:
 	const CreatureInfo::Abilities &getAbilities() const;
 	/** Get skills of the character. */
 	const CreatureInfo::Skills &getSkills() const;
+	/** Get feats of the character. */
+	const std::vector<uint32_t> &getFeats() const;
 
 	/** Set the name of the Character. */
 	void setName(const Common::UString &name);
@@ -68,6 +70,8 @@ public:
 	void setAbilityScore(Ability ability, uint32_t score);
 	/** Set a skill rank. */
 	void setSkillRank(Skill skill, uint32_t rank);
+	/** Add a feat. */
+	void addFeat(uint32_t feat);
 
 protected:
 	Class _class;
@@ -76,6 +80,7 @@ protected:
 	uint8_t _face;
 	CreatureInfo::Abilities _abilities;
 	CreatureInfo::Skills _skills;
+	std::vector<uint32_t> _feats;
 
 	Common::UString _name;
 

@@ -31,6 +31,7 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/gui/chargen/chargeninfo.h \
     src/engines/kotor/gui/chargen/chargenabilities.h \
     src/engines/kotor/gui/chargen/chargenskills.h \
+    src/engines/kotor/gui/chargen/chargenfeats.h \
     $(EMPTY)
 
 src_engines_kotor_libkotor_la_SOURCES += \
@@ -45,4 +46,5 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/gui/chargen/chargeninfo.cpp \
     src/engines/kotor/gui/chargen/chargenabilities.cpp \
     src/engines/kotor/gui/chargen/chargenskills.cpp \
+    src/engines/kotor/gui/chargen/chargenfeats.cpp \
     $(EMPTY)

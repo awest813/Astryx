@@ -3,13 +3,13 @@
   "spdxVersion": "SPDX-2.2",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "documentNamespace": "https://spdx.org/spdxdocs/vcpkg-tool-meson-x64-windows-1.9.0#3-90b2a2ab-273a-4f5f-8f51-d7b8a361782c",
-  "name": "vcpkg-tool-meson:x64-windows@1.9.0#3 5db7d10db6ccee42fe4161469999e44ecfc3647b7665eaf88b7875ac02ca07f8",
+  "documentNamespace": "https://spdx.org/spdxdocs/vcpkg-tool-meson-x64-windows-1.9.0#4-ab44bf77-1ca3-44e0-ac82-2b3c8aa366cd",
+  "name": "vcpkg-tool-meson:x64-windows@1.9.0#4 3e4ecee61b06ee9cea9ffc236dcbace52d1643f839efdd4899945c6fb4474fe3",
   "creationInfo": {
     "creators": [
-      "Tool: vcpkg-2025-12-16-44bb3ce006467fc13ba37ca099f64077b8bbf84d"
+      "Tool: vcpkg-2026-03-04-4b3e4c276b5b87a649e66341e11553e8c577459c"
     ],
-    "created": "2026-03-23T00:56:28Z"
+    "created": "2026-04-06T20:06:55Z"
   },
   "relationships": [
     {
@@ -142,7 +142,7 @@
     {
       "name": "vcpkg-tool-meson",
       "SPDXID": "SPDXRef-port",
-      "versionInfo": "1.9.0#3",
+      "versionInfo": "1.9.0#4",
       "downloadLocation": "git+https://github.com/Microsoft/vcpkg#ports/vcpkg-tool-meson",
       "homepage": "https://github.com/mesonbuild/meson",
       "licenseConcluded": "Apache-2.0",
@@ -154,7 +154,7 @@
     {
       "name": "vcpkg-tool-meson:x64-windows",
       "SPDXID": "SPDXRef-binary",
-      "versionInfo": "5db7d10db6ccee42fe4161469999e44ecfc3647b7665eaf88b7875ac02ca07f8",
+      "versionInfo": "3e4ecee61b06ee9cea9ffc236dcbace52d1643f839efdd4899945c6fb4474fe3",
       "downloadLocation": "NONE",
       "licenseConcluded": "Apache-2.0",
       "licenseDeclared": "NOASSERTION",
@@ -292,7 +292,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "6f7329441898d3ee8354937ca5b63ad3416f5b58d15f9d2fb10fc553056be04d"
+          "checksumValue": "2b193a2ab856cf7e0b8f0821387773b5188ae02c9c90fee8ffcadc935f0d0e6d"
         }
       ],
       "licenseConcluded": "NOASSERTION",
@@ -304,7 +304,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "e9de4f5993cb2d237dcabe388e2161942ce81e5170cff8eec6a814cd412777c1"
+          "checksumValue": "52de2a3d7a094cb0a6f547d7728b29af8c1d1b2d07d553ca3db3efa44fd93bb1"
         }
       ],
       "licenseConcluded": "NOASSERTION",
@@ -424,7 +424,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cfc881be3cc2ffd838e85d96c63cbc1e71d27bd59b95edc7d1cb0ca9424d545a"
+          "checksumValue": "859df87a97e8718a37f39beff30a4f0ed384de320173b1e06c61b47664afc342"
         }
       ],
       "licenseConcluded": "NOASSERTION",
@@ -436,7 +436,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "e9de4f5993cb2d237dcabe388e2161942ce81e5170cff8eec6a814cd412777c1"
+          "checksumValue": "52de2a3d7a094cb0a6f547d7728b29af8c1d1b2d07d553ca3db3efa44fd93bb1"
         }
       ],
       "licenseConcluded": "NOASSERTION",

@@ -3,13 +3,13 @@
   "spdxVersion": "SPDX-2.2",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "documentNamespace": "https://spdx.org/spdxdocs/vcpkg-pkgconfig-get-modules-x64-windows-2024-04-03-d53eccdc-05b4-44c7-9317-19b62bba7c22",
-  "name": "vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03 c3a5148e05596f2eb35a18b6d1346ae380504ddb4c9fdf49a0d58b85c35c8e4e",
+  "documentNamespace": "https://spdx.org/spdxdocs/vcpkg-pkgconfig-get-modules-x64-windows-2024-04-03-927f2903-6e8f-4fc3-bac1-43f99ea3beeb",
+  "name": "vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03 0161f66e9c31daa8cbe29eeea5b26550b500e1efbffa19396269969407235499",
   "creationInfo": {
     "creators": [
-      "Tool: vcpkg-2025-12-16-44bb3ce006467fc13ba37ca099f64077b8bbf84d"
+      "Tool: vcpkg-2026-03-04-4b3e4c276b5b87a649e66341e11553e8c577459c"
     ],
-    "created": "2026-03-23T00:56:41Z"
+    "created": "2026-04-06T20:07:12Z"
   },
   "relationships": [
     {
@@ -77,7 +77,7 @@
     {
       "name": "vcpkg-pkgconfig-get-modules:x64-windows",
       "SPDXID": "SPDXRef-binary",
-      "versionInfo": "c3a5148e05596f2eb35a18b6d1346ae380504ddb4c9fdf49a0d58b85c35c8e4e",
+      "versionInfo": "0161f66e9c31daa8cbe29eeea5b26550b500e1efbffa19396269969407235499",
       "downloadLocation": "NONE",
       "licenseConcluded": "MIT",
       "licenseDeclared": "NOASSERTION",

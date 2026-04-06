@@ -1,0 +1,800 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F09C2D1A-F80E-3AEA-9BAD-23D93B3B557A}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>check</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;D:\Games\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;D:\Games\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;D:\Games\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;D:\Games\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\Games\Astryx\build-new\CMakeFiles\fa657b3132aeaad255e39f94438c536e\check.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd D:\Games\Astryx\build-new
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo CWD=D:/Games/Astryx/build-new
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo "CMD=C:/Program Files/CMake/bin/ctest.exe" -C Debug
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo ----------------------------------
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E env CTEST_OUTPUT_ON_FAILURE=1 "C:/Program Files/CMake/bin/ctest.exe" -C Debug
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Games\Astryx\build-new\CMakeFiles\check</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</VerifyInputsAndOutputsExist>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd D:\Games\Astryx\build-new
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo CWD=D:/Games/Astryx/build-new
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo "CMD=C:/Program Files/CMake/bin/ctest.exe" -C Release
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo ----------------------------------
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E env CTEST_OUTPUT_ON_FAILURE=1 "C:/Program Files/CMake/bin/ctest.exe" -C Release
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Games\Astryx\build-new\CMakeFiles\check</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</VerifyInputsAndOutputsExist>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd D:\Games\Astryx\build-new
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo CWD=D:/Games/Astryx/build-new
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo "CMD=C:/Program Files/CMake/bin/ctest.exe" -C MinSizeRel
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo ----------------------------------
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E env CTEST_OUTPUT_ON_FAILURE=1 "C:/Program Files/CMake/bin/ctest.exe" -C MinSizeRel
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\Games\Astryx\build-new\CMakeFiles\check</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</VerifyInputsAndOutputsExist>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd D:\Games\Astryx\build-new
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo CWD=D:/Games/Astryx/build-new
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo "CMD=C:/Program Files/CMake/bin/ctest.exe" -C RelWithDebInfo
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo ----------------------------------
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E env CTEST_OUTPUT_ON_FAILURE=1 "C:/Program Files/CMake/bin/ctest.exe" -C RelWithDebInfo
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\Games\Astryx\build-new\CMakeFiles\check</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</VerifyInputsAndOutputsExist>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\Games\Astryx\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/Games/Astryx/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/Games/Astryx -BD:/Games/Astryx/build-new --check-stamp-file D:/Games/Astryx/build-new/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeFindDependencyMacro.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakePushCheckState.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXSymbolExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckIncludeFileCXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckSymbolExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckTypeSize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindBoost.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindGit.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindIconv.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindOpenAL.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindOpenGL.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindZLIB.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\SelectLibraryConfigurations.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\TestBigEndian.cmake;C:\vcpkg\scripts\buildsystems\vcpkg.cmake;D:\Games\Astryx\.git\logs\HEAD;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeCCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeCXXCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeRCCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeSystem.cmake;D:\Games\Astryx\build-new\doc\rules.mk.cmake;D:\Games\Astryx\build-new\external\glew\rules.mk.cmake;D:\Games\Astryx\build-new\external\imgui\rules.mk.cmake;D:\Games\Astryx\build-new\external\lua\rules.mk.cmake;D:\Games\Astryx\build-new\external\mspack\rules.mk.cmake;D:\Games\Astryx\build-new\external\toluapp\rules.mk.cmake;D:\Games\Astryx\build-new\man\rules.mk.cmake;D:\Games\Astryx\build-new\src\rules.mk.cmake;D:\Games\Astryx\build-new\tests\rules.mk.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\BoostConfig.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\BoostConfigVersion.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\iconv\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\liblzma\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\zlib\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\cmake\CMakeAM.cmake;D:\Games\Astryx\cmake\CMakeUninstall.cmake;D:\Games\Astryx\cmake\FindFaad.cmake;D:\Games\Astryx\cmake\FindGLEW.cmake;D:\Games\Astryx\cmake\FindLibLZMA.cmake;D:\Games\Astryx\cmake\FindMad.cmake;D:\Games\Astryx\cmake\FindOgg.cmake;D:\Games\Astryx\cmake\FindSDL2.cmake;D:\Games\Astryx\cmake\FindVPX.cmake;D:\Games\Astryx\cmake\FindVorbis.cmake;D:\Games\Astryx\cmake\FindXviD.cmake;D:\Games\Astryx\cmake\SetCheckCompilerFlag.cmake;D:\Games\Astryx\vcpkg.json;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Games\Astryx\build-new\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/Games/Astryx/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/Games/Astryx -BD:/Games/Astryx/build-new --check-stamp-file D:/Games/Astryx/build-new/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeFindDependencyMacro.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakePushCheckState.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXSymbolExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckIncludeFileCXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckSymbolExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckTypeSize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindBoost.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindGit.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindIconv.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindOpenAL.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindOpenGL.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindZLIB.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\SelectLibraryConfigurations.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\TestBigEndian.cmake;C:\vcpkg\scripts\buildsystems\vcpkg.cmake;D:\Games\Astryx\.git\logs\HEAD;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeCCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeCXXCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeRCCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeSystem.cmake;D:\Games\Astryx\build-new\doc\rules.mk.cmake;D:\Games\Astryx\build-new\external\glew\rules.mk.cmake;D:\Games\Astryx\build-new\external\imgui\rules.mk.cmake;D:\Games\Astryx\build-new\external\lua\rules.mk.cmake;D:\Games\Astryx\build-new\external\mspack\rules.mk.cmake;D:\Games\Astryx\build-new\external\toluapp\rules.mk.cmake;D:\Games\Astryx\build-new\man\rules.mk.cmake;D:\Games\Astryx\build-new\src\rules.mk.cmake;D:\Games\Astryx\build-new\tests\rules.mk.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\BoostConfig.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\BoostConfigVersion.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\iconv\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\liblzma\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\zlib\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\cmake\CMakeAM.cmake;D:\Games\Astryx\cmake\CMakeUninstall.cmake;D:\Games\Astryx\cmake\FindFaad.cmake;D:\Games\Astryx\cmake\FindGLEW.cmake;D:\Games\Astryx\cmake\FindLibLZMA.cmake;D:\Games\Astryx\cmake\FindMad.cmake;D:\Games\Astryx\cmake\FindOgg.cmake;D:\Games\Astryx\cmake\FindSDL2.cmake;D:\Games\Astryx\cmake\FindVPX.cmake;D:\Games\Astryx\cmake\FindVorbis.cmake;D:\Games\Astryx\cmake\FindXviD.cmake;D:\Games\Astryx\cmake\SetCheckCompilerFlag.cmake;D:\Games\Astryx\vcpkg.json;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Games\Astryx\build-new\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule D:/Games/Astryx/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/Games/Astryx -BD:/Games/Astryx/build-new --check-stamp-file D:/Games/Astryx/build-new/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeFindDependencyMacro.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakePushCheckState.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXSymbolExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckIncludeFileCXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckSymbolExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckTypeSize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindBoost.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindGit.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindIconv.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindOpenAL.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindOpenGL.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindZLIB.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\SelectLibraryConfigurations.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\TestBigEndian.cmake;C:\vcpkg\scripts\buildsystems\vcpkg.cmake;D:\Games\Astryx\.git\logs\HEAD;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeCCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeCXXCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeRCCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeSystem.cmake;D:\Games\Astryx\build-new\doc\rules.mk.cmake;D:\Games\Astryx\build-new\external\glew\rules.mk.cmake;D:\Games\Astryx\build-new\external\imgui\rules.mk.cmake;D:\Games\Astryx\build-new\external\lua\rules.mk.cmake;D:\Games\Astryx\build-new\external\mspack\rules.mk.cmake;D:\Games\Astryx\build-new\external\toluapp\rules.mk.cmake;D:\Games\Astryx\build-new\man\rules.mk.cmake;D:\Games\Astryx\build-new\src\rules.mk.cmake;D:\Games\Astryx\build-new\tests\rules.mk.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\BoostConfig.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\BoostConfigVersion.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\iconv\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\liblzma\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\zlib\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\cmake\CMakeAM.cmake;D:\Games\Astryx\cmake\CMakeUninstall.cmake;D:\Games\Astryx\cmake\FindFaad.cmake;D:\Games\Astryx\cmake\FindGLEW.cmake;D:\Games\Astryx\cmake\FindLibLZMA.cmake;D:\Games\Astryx\cmake\FindMad.cmake;D:\Games\Astryx\cmake\FindOgg.cmake;D:\Games\Astryx\cmake\FindSDL2.cmake;D:\Games\Astryx\cmake\FindVPX.cmake;D:\Games\Astryx\cmake\FindVorbis.cmake;D:\Games\Astryx\cmake\FindXviD.cmake;D:\Games\Astryx\cmake\SetCheckCompilerFlag.cmake;D:\Games\Astryx\vcpkg.json;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\Games\Astryx\build-new\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule D:/Games/Astryx/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/Games/Astryx -BD:/Games/Astryx/build-new --check-stamp-file D:/Games/Astryx/build-new/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeFindDependencyMacro.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakePushCheckState.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckCXXSymbolExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckIncludeFileCXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckSymbolExists.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\CheckTypeSize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindBoost.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindGit.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindIconv.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindOpenAL.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindOpenGL.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\FindZLIB.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Linker\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\SelectLibraryConfigurations.cmake;C:\Program Files\CMake\share\cmake-4.2\Modules\TestBigEndian.cmake;C:\vcpkg\scripts\buildsystems\vcpkg.cmake;D:\Games\Astryx\.git\logs\HEAD;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeCCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeCXXCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeRCCompiler.cmake;D:\Games\Astryx\build-new\CMakeFiles\4.2.3\CMakeSystem.cmake;D:\Games\Astryx\build-new\doc\rules.mk.cmake;D:\Games\Astryx\build-new\external\glew\rules.mk.cmake;D:\Games\Astryx\build-new\external\imgui\rules.mk.cmake;D:\Games\Astryx\build-new\external\lua\rules.mk.cmake;D:\Games\Astryx\build-new\external\mspack\rules.mk.cmake;D:\Games\Astryx\build-new\external\toluapp\rules.mk.cmake;D:\Games\Astryx\build-new\man\rules.mk.cmake;D:\Games\Astryx\build-new\src\rules.mk.cmake;D:\Games\Astryx\build-new\tests\rules.mk.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\BoostConfig.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\BoostConfigVersion.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_algorithm\boost_algorithm-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_align\boost_align-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_array\boost_array-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_assert\boost_assert-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_atomic\boost_atomic-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_bind\boost_bind-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_charconv\boost_charconv-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_chrono\boost_chrono-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_concept_check\boost_concept_check-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_config\boost_config-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container\boost_container-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_container_hash\boost_container_hash-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_conversion\boost_conversion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_core\boost_core-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_date_time\boost_date_time-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_describe\boost_describe-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_detail\boost_detail-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_exception\boost_exception-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_filesystem\boost_filesystem-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function\boost_function-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_function_types\boost_function_types-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_functional\boost_functional-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_fusion\boost_fusion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_headers\boost_headers-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_integer\boost_integer-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_intrusive\boost_intrusive-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_io\boost_io-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_iterator\boost_iterator-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_lexical_cast\boost_lexical_cast-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_locale\boost_locale-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_move\boost_move-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mp11\boost_mp11-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_mpl\boost_mpl-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_numeric_conversion\boost_numeric_conversion-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_optional\boost_optional-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_predef\boost_predef-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_preprocessor\boost_preprocessor-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_range\boost_range-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_ratio\boost_ratio-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_regex\boost_regex-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_scope\boost_scope-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_smart_ptr\boost_smart_ptr-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_static_assert\boost_static_assert-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_system\boost_system-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_thread\boost_thread-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_throw_exception\boost_throw_exception-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tokenizer\boost_tokenizer-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_tuple\boost_tuple-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_type_traits\boost_type_traits-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_typeof\boost_typeof-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_unordered\boost_unordered-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_utility\boost_utility-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_variant2\boost_variant2-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost_winapi\boost_winapi-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\freetype-targets.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\freetype\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\iconv\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\liblzma\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-config-version.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-config.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export-debug.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export-release.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\libxml2-export.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\libxml2\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\zlib\vcpkg-cmake-wrapper.cmake;D:\Games\Astryx\cmake\CMakeAM.cmake;D:\Games\Astryx\cmake\CMakeUninstall.cmake;D:\Games\Astryx\cmake\FindFaad.cmake;D:\Games\Astryx\cmake\FindGLEW.cmake;D:\Games\Astryx\cmake\FindLibLZMA.cmake;D:\Games\Astryx\cmake\FindMad.cmake;D:\Games\Astryx\cmake\FindOgg.cmake;D:\Games\Astryx\cmake\FindSDL2.cmake;D:\Games\Astryx\cmake\FindVPX.cmake;D:\Games\Astryx\cmake\FindVorbis.cmake;D:\Games\Astryx\cmake\FindXviD.cmake;D:\Games\Astryx\cmake\SetCheckCompilerFlag.cmake;D:\Games\Astryx\vcpkg.json;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\Games\Astryx\build-new\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\Games\Astryx\build-new\CMakeFiles\check">
+    </None>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="D:\Games\Astryx\build-new\ZERO_CHECK.vcxproj">
+      <Project>{F5367099-4532-39EA-92CA-9ADCF9257E87}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\aurora.vcxproj">
+      <Project>{77C703A5-772D-3047-BE10-F324410D0A52}</Project>
+      <Name>aurora</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\aurora_actionscript.vcxproj">
+      <Project>{55DED6BF-70D4-3B59-A6C0-88789B6B3511}</Project>
+      <Name>aurora_actionscript</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\aurora_lua_libluascript.la.vcxproj">
+      <Project>{2B3B2B2A-D42C-3B03-9291-8A831F39D165}</Project>
+      <Name>aurora_lua_libluascript.la</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\aurora_nwscript.vcxproj">
+      <Project>{E4A0FE21-430D-31D4-9E81-E6DC89E9498B}</Project>
+      <Name>aurora_nwscript</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\common.vcxproj">
+      <Project>{3BD5551D-88B9-3826-9A77-D78633C3A93E}</Project>
+      <Name>common</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines.vcxproj">
+      <Project>{3E736FFC-38BE-3F47-BF16-33550E259E56}</Project>
+      <Name>engines</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_aurora.vcxproj">
+      <Project>{5E5B202C-501D-370C-A79B-0E88E347B847}</Project>
+      <Name>engines_aurora</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_dragonage.vcxproj">
+      <Project>{8211206E-2B64-3C4C-BB44-832E5AD5A9A6}</Project>
+      <Name>engines_dragonage</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_dragonage2.vcxproj">
+      <Project>{824A9C3D-F1FA-382C-A7B4-7C1066CC50A4}</Project>
+      <Name>engines_dragonage2</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_eclipse.vcxproj">
+      <Project>{504E3F86-9A41-3E10-9C04-B020353725BE}</Project>
+      <Name>engines_eclipse</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_jade.vcxproj">
+      <Project>{59A51800-86E2-3127-B441-3D88F64CEDE5}</Project>
+      <Name>engines_jade</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_kotor.vcxproj">
+      <Project>{3AE2C098-8337-3F62-A43A-0552C070EF7B}</Project>
+      <Name>engines_kotor</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_kotor2.vcxproj">
+      <Project>{2FB6E8BA-D17F-3415-A744-424BA9AC90D9}</Project>
+      <Name>engines_kotor2</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_kotorbase.vcxproj">
+      <Project>{7415F804-8273-31B1-B71E-F409B9128EC0}</Project>
+      <Name>engines_kotorbase</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_nwn.vcxproj">
+      <Project>{FBB75A13-43FE-3371-9E04-0BB0F94C0FCA}</Project>
+      <Name>engines_nwn</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_nwn2.vcxproj">
+      <Project>{BE00C8B1-8472-3037-B2B3-1648F16259FF}</Project>
+      <Name>engines_nwn2</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_odyssey.vcxproj">
+      <Project>{FFBB1538-4021-3644-98E5-1915BDFB8D56}</Project>
+      <Name>engines_odyssey</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_sonic.vcxproj">
+      <Project>{AF11601C-96F3-35F5-BB34-8C3E211EE477}</Project>
+      <Name>engines_sonic</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\engines_witcher.vcxproj">
+      <Project>{41EE8D0A-389F-30E4-821D-3EE7E93DB6DA}</Project>
+      <Name>engines_witcher</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\events.vcxproj">
+      <Project>{EE6DA0CE-BBE4-3268-BB25-1264CC36A8F2}</Project>
+      <Name>events</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\graphics.vcxproj">
+      <Project>{6A157F3C-720D-3CCA-BCF7-5039FCF9D5D5}</Project>
+      <Name>graphics</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\graphics_images.vcxproj">
+      <Project>{1D7A9E70-5750-38AD-8995-A0D56C5F96BD}</Project>
+      <Name>graphics_images</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\graphics_mesh.vcxproj">
+      <Project>{D7F4F17E-2C4E-3A68-B97B-7EA53B79162D}</Project>
+      <Name>graphics_mesh</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\graphics_render.vcxproj">
+      <Project>{B1B91851-031B-3BD0-A7F2-5280D924EDCB}</Project>
+      <Name>graphics_render</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\graphics_shader.vcxproj">
+      <Project>{00A453A2-DAA0-376A-88C3-4B6AB4854CEA}</Project>
+      <Name>graphics_shader</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\sound.vcxproj">
+      <Project>{D2D0C906-CEEE-3FB6-85F9-170DB2009529}</Project>
+      <Name>sound</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\sound_decoders.vcxproj">
+      <Project>{05C51368-06CA-3286-AA17-618BDE3096EB}</Project>
+      <Name>sound_decoders</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_2dafile.vcxproj">
+      <Project>{E42DDE55-F1A0-3DD6-8336-11EDABD157BE}</Project>
+      <Name>tests_aurora_test_2dafile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_actionscript.vcxproj">
+      <Project>{AE7368E9-F413-31DD-829A-79DE87B00266}</Project>
+      <Name>tests_aurora_test_actionscript</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_biffile.vcxproj">
+      <Project>{929A595C-F1B9-395D-9E8D-F4A37C3061B3}</Project>
+      <Name>tests_aurora_test_biffile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_bzffile.vcxproj">
+      <Project>{540508F9-A785-37DB-9B9B-66AFCACCB57F}</Project>
+      <Name>tests_aurora_test_bzffile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_dlgfile.vcxproj">
+      <Project>{2F8DBF7E-1614-3122-ABC5-F263128B0445}</Project>
+      <Name>tests_aurora_test_dlgfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_erffile.vcxproj">
+      <Project>{5D3493BC-7EB2-3DD2-B981-B37D0E0A79CC}</Project>
+      <Name>tests_aurora_test_erffile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_erfwriter.vcxproj">
+      <Project>{E0F2D88D-0E50-3BFC-9239-7A568DC902B7}</Project>
+      <Name>tests_aurora_test_erfwriter</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_gdafile.vcxproj">
+      <Project>{35E1F36B-4C20-366B-B0E1-F17AF3E1BE90}</Project>
+      <Name>tests_aurora_test_gdafile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_gff3file.vcxproj">
+      <Project>{AE2AE2F3-F5EE-3034-85B9-00060F7564F9}</Project>
+      <Name>tests_aurora_test_gff3file</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_gff3writer.vcxproj">
+      <Project>{D28EEE7E-C228-3BFA-B7F0-2280901BD5D6}</Project>
+      <Name>tests_aurora_test_gff3writer</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_gff4file.vcxproj">
+      <Project>{412AAAAC-1E26-3E7B-82D0-709BF22B388E}</Project>
+      <Name>tests_aurora_test_gff4file</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_herffile.vcxproj">
+      <Project>{41F60EAC-80F7-321D-B044-97779B95C9E6}</Project>
+      <Name>tests_aurora_test_herffile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_ifofile.vcxproj">
+      <Project>{3AB55B4B-B99F-3A5B-B960-B4D351210000}</Project>
+      <Name>tests_aurora_test_ifofile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_keyfile.vcxproj">
+      <Project>{6BF1520B-8A29-3244-949A-A548371CA8FC}</Project>
+      <Name>tests_aurora_test_keyfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_language.vcxproj">
+      <Project>{788097A5-1D9E-3A6D-AC1E-2F4CF7996781}</Project>
+      <Name>tests_aurora_test_language</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_locstring.vcxproj">
+      <Project>{2D974E9D-1F0F-3FE7-9F14-37C2A2DBF5A8}</Project>
+      <Name>tests_aurora_test_locstring</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_ltrfile.vcxproj">
+      <Project>{A687879F-6D07-3E94-B005-58CCCC8DC7FA}</Project>
+      <Name>tests_aurora_test_ltrfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_lytfile.vcxproj">
+      <Project>{0E1D42D9-E27D-3579-AF93-D10C16B17CE9}</Project>
+      <Name>tests_aurora_test_lytfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_ndsrom.vcxproj">
+      <Project>{DC3D3327-26F4-33D4-A4D1-C655BD736605}</Project>
+      <Name>tests_aurora_test_ndsrom</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_nfofile.vcxproj">
+      <Project>{F35BA080-A394-3F85-A228-13CBA7594A73}</Project>
+      <Name>tests_aurora_test_nfofile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_rimfile.vcxproj">
+      <Project>{7B121340-DA7C-3B3F-B257-556E1BA2E1D8}</Project>
+      <Name>tests_aurora_test_rimfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_smallfile.vcxproj">
+      <Project>{6AC5D65F-571E-3E7A-9D64-1B4F3AAE02F5}</Project>
+      <Name>tests_aurora_test_smallfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_ssffile.vcxproj">
+      <Project>{AD644FE1-B73B-3A91-B8EB-8903FCFB661B}</Project>
+      <Name>tests_aurora_test_ssffile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_talktable_gff.vcxproj">
+      <Project>{B0A316BF-D678-3D76-BBA9-17BC521B63AB}</Project>
+      <Name>tests_aurora_test_talktable_gff</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_talktable_tlk.vcxproj">
+      <Project>{373BD4FC-D565-305F-A972-C2B5ED100858}</Project>
+      <Name>tests_aurora_test_talktable_tlk</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_textureatlasfile.vcxproj">
+      <Project>{9C4AB8B8-E1B1-39F3-91BD-343B2A828DF5}</Project>
+      <Name>tests_aurora_test_textureatlasfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_thewitchersavefile.vcxproj">
+      <Project>{D8035BB7-2372-3690-9A5C-484DE5838BDB}</Project>
+      <Name>tests_aurora_test_thewitchersavefile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_thewitchersavewriter.vcxproj">
+      <Project>{26D0A3BF-D5AA-396C-83A4-0EF0AA7487E3}</Project>
+      <Name>tests_aurora_test_thewitchersavewriter</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_util.vcxproj">
+      <Project>{FD5D39C9-0DC2-3192-BA09-FF7FC8EBDDA5}</Project>
+      <Name>tests_aurora_test_util</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_visfile.vcxproj">
+      <Project>{51388708-24C3-3D5A-8E0F-5DAAE1F84208}</Project>
+      <Name>tests_aurora_test_visfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_xmlfixer.vcxproj">
+      <Project>{CE0E860C-C688-3088-B135-1D25333742C5}</Project>
+      <Name>tests_aurora_test_xmlfixer</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_aurora_test_zipfile.vcxproj">
+      <Project>{479B2E63-BB3A-3DE5-B5CD-9642F8550735}</Project>
+      <Name>tests_aurora_test_zipfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_aabbnode.vcxproj">
+      <Project>{D4108557-88B8-352B-A8D2-81E5EB261651}</Project>
+      <Name>tests_common_test_aabbnode</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_binsearch.vcxproj">
+      <Project>{113B1429-33F5-3B1B-B89B-D147ED8B6BD0}</Project>
+      <Name>tests_common_test_binsearch</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_bitstream.vcxproj">
+      <Project>{4157BB5D-E399-3DC3-B2CE-DAC6FEFB4297}</Project>
+      <Name>tests_common_test_bitstream</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_bitstreamwriter.vcxproj">
+      <Project>{A69FE34E-4BED-3083-8751-81AF4204AA5D}</Project>
+      <Name>tests_common_test_bitstreamwriter</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_blowfish.vcxproj">
+      <Project>{D10342F3-CF14-3219-A6F7-604F4E0A4ECB}</Project>
+      <Name>tests_common_test_blowfish</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_boundingbox.vcxproj">
+      <Project>{B2ED998C-3CC8-3702-9E6E-506414AAAACB}</Project>
+      <Name>tests_common_test_boundingbox</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_configfile.vcxproj">
+      <Project>{F45E959C-A78F-35AC-A3C6-A737A579F735}</Project>
+      <Name>tests_common_test_configfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_configman.vcxproj">
+      <Project>{868C562A-4E1B-3428-A7AD-AC43235A840A}</Project>
+      <Name>tests_common_test_configman</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_datetime.vcxproj">
+      <Project>{D0CC3A42-44C5-3472-BD73-00C8E0C8846D}</Project>
+      <Name>tests_common_test_datetime</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_deflate.vcxproj">
+      <Project>{43445951-C982-3E7A-8D5F-7E9B046FF56C}</Project>
+      <Name>tests_common_test_deflate</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_disposableptr.vcxproj">
+      <Project>{8A5ED8ED-739B-3ABD-8090-83818BF20D5F}</Project>
+      <Name>tests_common_test_disposableptr</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_ascii.vcxproj">
+      <Project>{0C3898A3-3E7A-3FAB-BEC3-CAC1E8B6C112}</Project>
+      <Name>tests_common_test_encoding_ascii</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_cp1250.vcxproj">
+      <Project>{7EB2B0E9-6AA2-396E-88FB-3C378932BBE9}</Project>
+      <Name>tests_common_test_encoding_cp1250</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_cp1251.vcxproj">
+      <Project>{92DFEE3A-0A31-3D5D-B8A8-2259B17E8AB8}</Project>
+      <Name>tests_common_test_encoding_cp1251</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_cp1252.vcxproj">
+      <Project>{F50D98C4-7996-357E-9E86-8BA682CC1BDE}</Project>
+      <Name>tests_common_test_encoding_cp1252</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_cp932.vcxproj">
+      <Project>{D18A1561-38BB-346B-A028-20496A7274AE}</Project>
+      <Name>tests_common_test_encoding_cp932</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_cp936.vcxproj">
+      <Project>{9BF1880A-DA37-3FB7-8B75-B2D6AE71FAA4}</Project>
+      <Name>tests_common_test_encoding_cp936</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_cp949.vcxproj">
+      <Project>{01411ECA-D222-3745-B3F5-F0553AEFDB26}</Project>
+      <Name>tests_common_test_encoding_cp949</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_cp950.vcxproj">
+      <Project>{C632590E-0D6A-3433-B385-85305F6F65A9}</Project>
+      <Name>tests_common_test_encoding_cp950</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_latin9.vcxproj">
+      <Project>{E5FA1A16-A3D1-386C-80BC-1863F5DB8B59}</Project>
+      <Name>tests_common_test_encoding_latin9</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_utf16be.vcxproj">
+      <Project>{18560CA3-5781-387F-8D2C-6924165B26D6}</Project>
+      <Name>tests_common_test_encoding_utf16be</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_utf16le.vcxproj">
+      <Project>{5CB96DBC-1FFD-34A0-BE5D-C5C2BCF8EB57}</Project>
+      <Name>tests_common_test_encoding_utf16le</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_encoding_utf8.vcxproj">
+      <Project>{DC3EBBA2-9E1B-3F44-8106-0C5A76754D1B}</Project>
+      <Name>tests_common_test_encoding_utf8</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_filelist.vcxproj">
+      <Project>{CB303F36-C71C-3A55-A6B2-0320EF9A0417}</Project>
+      <Name>tests_common_test_filelist</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_filepath.vcxproj">
+      <Project>{7D8BEF13-1CDE-3C68-AB18-E58955F12C05}</Project>
+      <Name>tests_common_test_filepath</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_geometry.vcxproj">
+      <Project>{210D5C16-90DC-3896-A5E2-0BFA0DD4EF3C}</Project>
+      <Name>tests_common_test_geometry</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_hash.vcxproj">
+      <Project>{7ED1C6C7-1680-3AD9-A490-C4E981F8918D}</Project>
+      <Name>tests_common_test_hash</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_huffman.vcxproj">
+      <Project>{23C0A977-9B8C-33BC-94D8-4D53D058E16C}</Project>
+      <Name>tests_common_test_huffman</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_lzma.vcxproj">
+      <Project>{28197729-81C8-35F0-840F-69B82724EF69}</Project>
+      <Name>tests_common_test_lzma</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_maths.vcxproj">
+      <Project>{CD243719-FEA2-30C2-947A-AE7B3538ED3D}</Project>
+      <Name>tests_common_test_maths</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_md5.vcxproj">
+      <Project>{35A03EA5-3777-3FE8-BF93-DE30F4C607C8}</Project>
+      <Name>tests_common_test_md5</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_memreadstream.vcxproj">
+      <Project>{3B78B00F-7909-372A-ADBD-37DED25412C2}</Project>
+      <Name>tests_common_test_memreadstream</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_memwritestream.vcxproj">
+      <Project>{EA9D2C05-E0BD-3C0A-97BC-46E6A5514D7A}</Project>
+      <Name>tests_common_test_memwritestream</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_readfile.vcxproj">
+      <Project>{77528F88-746F-3323-925B-F21B50BE555E}</Project>
+      <Name>tests_common_test_readfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_rect.vcxproj">
+      <Project>{31668F2B-1AFA-3C79-A5EF-224072FABCD2}</Project>
+      <Name>tests_common_test_rect</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_serializationstream.vcxproj">
+      <Project>{1EBF59CE-1F74-382F-AC16-9CD18AC3C6DD}</Project>
+      <Name>tests_common_test_serializationstream</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_streamtokenizer.vcxproj">
+      <Project>{B8D51A6E-367C-3D10-A55D-53EAE5525999}</Project>
+      <Name>tests_common_test_streamtokenizer</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_string.vcxproj">
+      <Project>{158367B4-2979-3E94-A870-D68D668371A4}</Project>
+      <Name>tests_common_test_string</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_strutil.vcxproj">
+      <Project>{AFC0D8DC-DCB5-3669-B903-5AA094CABC20}</Project>
+      <Name>tests_common_test_strutil</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_ustring.vcxproj">
+      <Project>{4E1AC02C-6F95-3A8F-835F-7F979FFF607D}</Project>
+      <Name>tests_common_test_ustring</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_util.vcxproj">
+      <Project>{0EF95310-6EEB-38C6-BFED-2564BA37234A}</Project>
+      <Name>tests_common_test_util</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_writefile.vcxproj">
+      <Project>{5BDF1527-7CDF-3455-9481-2908EF62EB95}</Project>
+      <Name>tests_common_test_writefile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_xml.vcxproj">
+      <Project>{FFA2A386-F2EF-34E9-BE30-99BE33935A9E}</Project>
+      <Name>tests_common_test_xml</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_common_test_zipfile.vcxproj">
+      <Project>{99025ACC-F6C3-32DE-AA0A-C31AA97A1FDD}</Project>
+      <Name>tests_common_test_zipfile</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_alignment_xp.vcxproj">
+      <Project>{7024DA4D-CE26-34E8-8CCD-5E0E8D3007FA}</Project>
+      <Name>tests_engines_kotorbase_test_alignment_xp</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_cinematic_scripting.vcxproj">
+      <Project>{401E66E9-FA02-311F-8046-375C655A2DBD}</Project>
+      <Name>tests_engines_kotorbase_test_cinematic_scripting</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_combat.vcxproj">
+      <Project>{4F28CCC8-A465-300D-86DE-AD45E247D4CB}</Project>
+      <Name>tests_engines_kotorbase_test_combat</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_creatureinfo.vcxproj">
+      <Project>{1314BF09-DD18-3368-A7ED-6FF52DF0FC24}</Project>
+      <Name>tests_engines_kotorbase_test_creatureinfo</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_dantooine_progression.vcxproj">
+      <Project>{520A54B2-4FE8-3ED0-887C-3E2EAF57817F}</Project>
+      <Name>tests_engines_kotorbase_test_dantooine_progression</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_effect.vcxproj">
+      <Project>{E5F32971-379B-351A-A814-951EC5581F40}</Project>
+      <Name>tests_engines_kotorbase_test_effect</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_endar_spire_golden.vcxproj">
+      <Project>{098D7091-787C-3C54-823C-5CA8B2F46AC0}</Project>
+      <Name>tests_engines_kotorbase_test_endar_spire_golden</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_inventory.vcxproj">
+      <Project>{26961F5B-8592-377D-942C-8150B72193A2}</Project>
+      <Name>tests_engines_kotorbase_test_inventory</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_nwscript_functions.vcxproj">
+      <Project>{2DABD229-77A3-3159-8F75-C6B3E7C13217}</Project>
+      <Name>tests_engines_kotorbase_test_nwscript_functions</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_taris_progression.vcxproj">
+      <Project>{1F951A2B-1C0E-320C-BCC8-011A218F3251}</Project>
+      <Name>tests_engines_kotorbase_test_taris_progression</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_kotorbase_test_taris_upper_city.vcxproj">
+      <Project>{5F490B48-A49C-3B58-979E-FC303D8EECB1}</Project>
+      <Name>tests_engines_kotorbase_test_taris_upper_city</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_nwn2_test_creature.vcxproj">
+      <Project>{1A103CCB-36FD-352D-B4F6-253E9559AACA}</Project>
+      <Name>tests_engines_nwn2_test_creature</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_nwn2_test_door.vcxproj">
+      <Project>{4F4DB691-D2F5-3FCD-9559-21EA03D12D68}</Project>
+      <Name>tests_engines_nwn2_test_door</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_nwn2_test_roster.vcxproj">
+      <Project>{69967291-E279-3134-8A67-5832421A00A1}</Project>
+      <Name>tests_engines_nwn2_test_roster</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_nwn2_test_waypoint.vcxproj">
+      <Project>{612FB0DD-2D11-3EDF-91E8-3DED78DB3093}</Project>
+      <Name>tests_engines_nwn2_test_waypoint</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_engines_test_trigger.vcxproj">
+      <Project>{DA382EA1-6E93-3B5A-8DAF-A2B5F7157038}</Project>
+      <Name>tests_engines_test_trigger</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_googletest_libgtest.la.vcxproj">
+      <Project>{964B016E-DD3B-38F2-A5BD-933B214FDB55}</Project>
+      <Name>tests_googletest_libgtest.la</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_googletest_libgtest_main.la.vcxproj">
+      <Project>{62E7A2EE-BE6B-3D03-99CC-344D16E9043C}</Project>
+      <Name>tests_googletest_libgtest_main.la</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_images_test_surface.vcxproj">
+      <Project>{BB9CD72E-FAF0-353D-873E-9539D1C7F0BD}</Project>
+      <Name>tests_images_test_surface</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_images_test_util.vcxproj">
+      <Project>{9D431094-43D1-35F1-BBCF-3A8492392E3A}</Project>
+      <Name>tests_images_test_util</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_images_test_xoreositex.vcxproj">
+      <Project>{247D9EA3-6AD5-3B6C-817D-FD48B2D78BA4}</Project>
+      <Name>tests_images_test_xoreositex</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_smoke_crash_regression.vcxproj">
+      <Project>{15D027B5-DFD4-398A-9027-5A2A04592E7A}</Project>
+      <Name>tests_smoke_crash_regression</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\tests_version.vcxproj">
+      <Project>{0B0D92C8-5A24-36A3-8BC3-32CF9A5340E7}</Project>
+      <Name>tests_version</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\version.vcxproj">
+      <Project>{245D982E-D2FF-35A3-BFFB-1F7030D4A9D2}</Project>
+      <Name>version</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\video.vcxproj">
+      <Project>{8B8E7B3C-AFFF-364F-A3B8-964A62B0EE3F}</Project>
+      <Name>video</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\video_codecs.vcxproj">
+      <Project>{68FBDB05-E33E-389D-8619-2F12462E7C5B}</Project>
+      <Name>video_codecs</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\Games\Astryx\build-new\xoreos.vcxproj">
+      <Project>{9CE64D84-4E88-30B3-9CCE-E95C7F3077EC}</Project>
+      <Name>xoreos</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

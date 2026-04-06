@@ -1,0 +1,9 @@
+Package: boost-scope-exit
+Version: 1.90.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-function, boost-headers, boost-preprocessor, boost-type-traits, boost-typeof
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 32020ffe5d3e349dd25eb0ae941e8d750d9f78185616d065757de16ef557ef02
+Description: Boost scope_exit module
+Status: install ok installed
