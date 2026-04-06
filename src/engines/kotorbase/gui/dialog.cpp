@@ -189,9 +189,16 @@ void DialogGUI::refresh() {
 		_curSpeaker = curEntry->speaker;
 
 	if (!_curSpeaker.empty()) {
-		makeLookAtPC(_curSpeaker);
-		playTalkAnimations(_curSpeaker);
+		Object *speakerObj = _module.getCurrentArea()->getObjectByTag(_curSpeaker);
+		if (speakerObj) {
+			makeLookAtPC(_curSpeaker);
+			playTalkAnimations(_curSpeaker);
+			_module.setCinematicFocus(speakerObj);
+		}
+	} else {
+		_module.setCinematicFocus(nullptr);
 	}
+	_module.setCinematicCamera(curEntry->cameraID, curEntry->cameraAngle, curEntry->cameraModel);
 
 	lblMessage->setText(text);
 	_replyIds.clear();
@@ -250,6 +257,7 @@ void DialogGUI::pickReply(int index) {
 	_dlg->pickReply(_replyIds[index]);
 	if (_dlg->hasEnded()) {
 		stopSounds();
+		_module.resetToOrbit();
 		_isActive = false;
 	} else
 		refresh();
@@ -298,7 +306,14 @@ void DialogGUI::playTalkAnimations(const Common::UString &tag) {
 	if (!creature)
 		return;
 
-	creature->playAnimation("tlknorm", true, -1.0f);
+	const Aurora::DLGFile::Line* entry = _dlg->getCurrentEntry();
+	// animationID 0: tlknorm, 1: tlkslow, 2: tlksad, 3: tlkforce, etc.
+	Common::UString anim = "tlknorm";
+	if (entry->animation == 1) anim = "tlkslow";
+	else if (entry->animation == 2) anim = "tlksad";
+	else if (entry->animation == 3) anim = "tlkforce";
+
+	creature->playAnimation(anim, true, -1.0f);
 	creature->playHeadAnimation("talk", true, -1.0f, 0.25f);
 }
 

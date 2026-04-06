@@ -41,18 +41,19 @@ public:
 		float frameTime { 0.0f };
 	};
 
-	static void execute(const Action &action, const ExecutionContext &ctx);
+	static void execute(Action &action, const ExecutionContext &ctx);
 
 private:
 	/** Get if the current creature has reached a specified location. */
 	static bool isLocationReached(const glm::vec2 &location, float range, const ExecutionContext &ctx);
 
-	static void executeMoveToPoint(const Action &action, const ExecutionContext &ctx);
-	static void executeFollowLeader(const Action &action, const ExecutionContext &ctx);
-	static void executeOpenLock(const Action &action, const ExecutionContext &ctx);
-	static void executeUseObject(const Action &action, const ExecutionContext &ctx);
-	static void executeAttackObject(const Action &action, const ExecutionContext &ctx);
-	static void executePickUpItem(const Action &action, const ExecutionContext &ctx);
+	static void executeMoveToPoint(Action &action, const ExecutionContext &ctx);
+	static void executeFollowLeader(Action &action, const ExecutionContext &ctx);
+	static void executeOpenLock(Action &action, const ExecutionContext &ctx);
+	static void executeUseObject(Action &action, const ExecutionContext &ctx);
+	static void executeAttackObject(Action &action, const ExecutionContext &ctx);
+	static void executePickUpItem(Action &action, const ExecutionContext &ctx);
+	static void executeWait(Action &action, const ExecutionContext &ctx);
 
 	/**
 	 * Move the current creature towards a specified location. Returns

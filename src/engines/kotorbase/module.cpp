@@ -1639,6 +1639,18 @@ void Module::setCameraYaw(float yaw) {
 	_cameraController.syncOrbitingCamera();
 }
 
+void Module::setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel) {
+	_cameraController.setCinematicCamera(cameraID, cameraAngle, cameraModel);
+}
+
+void Module::setCinematicFocus(Object *target) {
+	_cameraController.setCinematicFocus(target);
+}
+
+void Module::resetToOrbit() {
+	_cameraController.resetToOrbit();
+}
+
 void Module::delayConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
 	_delayedConversation = std::make_unique<DelayedConversation>(name, owner);
 }

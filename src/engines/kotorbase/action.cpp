@@ -28,10 +28,10 @@ namespace Engines {
 
 namespace KotORBase {
 
-Action::Action() : type(kActionInvalid), object(0), range(0.0f) {
+Action::Action() : type(kActionInvalid), object(0), range(0.0f), startTime(-1.0f), initialized(false) {
 }
 
-Action::Action(ActionType _type) : type(_type), object(0), range(0.0f) {
+Action::Action(ActionType _type) : type(_type), object(0), range(0.0f), startTime(-1.0f), initialized(false) {
 }
 
 } // End of namespace KotORBase

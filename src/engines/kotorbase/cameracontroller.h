@@ -18,15 +18,14 @@
  * along with xoreos. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file
- *  Handles camera movement in KotOR games.
- */
-
 #ifndef ENGINES_KOTORBASE_CAMERACONTROLLER_H
 #define ENGINES_KOTORBASE_CAMERACONTROLLER_H
 
+#include <cstdint>
+
 #include "external/glm/vec3.hpp"
 
+#include "src/common/ustring.h"
 #include "src/events/types.h"
 
 namespace Engines {
@@ -34,6 +33,7 @@ namespace Engines {
 namespace KotORBase {
 
 class Module;
+class Object;
 
 class CameraController {
 public:
@@ -61,14 +61,29 @@ public:
 	 *  scripts or dialogue set facing so the view matches KotOR without waiting a frame. */
 	void syncOrbitingCamera();
 
+	// Cinematic camera
+	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
+	void setCinematicFocus(Object *target);
+	void resetToOrbit();
+
 private:
 	Module *_module;
 	bool _flycam { false };
+	bool _cinematic { false };
+
 	glm::vec3 _target;
 	float _distance { 0.0f };
 	float _yaw { 0.0f };
 	float _pitch { 0.0f };
 	float _height { 0.0f };
+
+	// Cinematic settings
+	uint32_t        _cinematicID { 0 };
+	float           _cinematicAngle { 0.0f };
+	Common::UString _cinematicModel;
+	Object         *_cinematicFocus { nullptr };
+
+
 	bool _clockwiseMovementWanted { false };
 	bool _counterClockwiseMovementWanted { false };
 	bool _dirty { false };

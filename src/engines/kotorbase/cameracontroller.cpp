@@ -22,7 +22,11 @@
  *  Handles camera movement in KotOR games.
  */
 
+#include <cmath>
+#include <cstdint>
+
 #include "src/common/maths.h"
+#include "src/common/util.h"
 
 #include "src/graphics/camera.h"
 
@@ -37,8 +41,8 @@ namespace Engines {
 
 namespace KotORBase {
 
-static const float kRotationSpeed = M_PI / 2.0f;
-static const float kMovementSpeed = 2.0f * M_PI;
+static const float kRotationSpeed = Common::kPi / 2.0f;
+static const float kMovementSpeed = 2.0f * Common::kPi;
 
 CameraController::CameraController(Module *module) : _module(module) {
 }
@@ -124,12 +128,25 @@ void CameraController::processRotation(float frameTime) {
 	if (_flycam)
 		return;
 
+	if (_cinematic) {
+		// In cinematic mode, orientation is driven by the angle or the focus target.
+		if (_cinematicFocus) {
+			float tx, ty, tz;
+			_cinematicFocus->getPosition(tx, ty, tz);
+			float dx = tx - _target.x;
+			float dy = ty - _target.y;
+			_yaw = atan2(dy, dx);
+		}
+		CameraMan.setOrientation(_pitch, 0.0f, Common::rad2deg(_yaw));
+		return;
+	}
+
 	if (shouldMoveClockwise()) {
 		_yaw -= kRotationSpeed * frameTime;
-		_yaw = fmodf(_yaw, 2.0f * M_PI);
+		_yaw = fmodf(_yaw, 2.0f * Common::kPi);
 	} else if (shouldMoveCounterClockwise()) {
 		_yaw += kRotationSpeed * frameTime;
-		_yaw = fmodf(_yaw, 2.0f * M_PI);
+		_yaw = fmodf(_yaw, 2.0f * Common::kPi);
 	}
 
 	CameraMan.setOrientation(_pitch, 0.0f, Common::rad2deg(_yaw));
@@ -137,6 +154,21 @@ void CameraController::processRotation(float frameTime) {
 
 void CameraController::processMovement(float frameTime) {
 	if (_flycam) {
+		CameraMan.update();
+		return;
+	}
+
+	if (_cinematic) {
+		// If focusing on someone, update our anchor point.
+		if (_cinematicFocus) {
+			float fx, fy, fz;
+			_cinematicFocus->getPosition(fx, fy, fz);
+			_target = glm::vec3(fx, fy, fz + 1.2f); // focus slightly above feet
+		}
+
+		// Simple implementation: move camera to cinematic position
+		glm::vec3 actualPosition = getCameraPosition(_distance);
+		CameraMan.setPosition(actualPosition.x, actualPosition.y, actualPosition.z);
 		CameraMan.update();
 		return;
 	}
@@ -188,6 +220,30 @@ void CameraController::syncOrbitingCamera() {
 
 	processRotation(0.0f);
 	processMovement(0.0f);
+}
+
+void CameraController::setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel) {
+	_cinematic = true;
+	_cinematicFocus = nullptr; // Clear any dynamic focus; setCinematicFocus must be called after if needed.
+	_cinematicID = cameraID;
+	_cinematicAngle = cameraAngle;
+	_cinematicModel = cameraModel;
+
+	// For now, let's just adjust the yaw based on cameraAngle
+	_yaw = Common::deg2rad(cameraAngle);
+	_dirty = true;
+}
+
+void CameraController::setCinematicFocus(Object *target) {
+	_cinematicFocus = target;
+	_dirty = true;
+}
+
+void CameraController::resetToOrbit() {
+	_cinematic = false;
+	_cinematicFocus = nullptr;
+	updateTarget();
+	_dirty = true;
 }
 
 glm::vec3 CameraController::getCameraPosition(float distance) const {

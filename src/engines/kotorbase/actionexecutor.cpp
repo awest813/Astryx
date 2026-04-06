@@ -41,7 +41,12 @@ namespace Engines {
 
 namespace KotORBase {
 
-void ActionExecutor::execute(const Action &action, const ExecutionContext &ctx) {
+void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
+	if (!action.initialized) {
+		action.startTime = 0.0f;
+		action.initialized = true;
+	}
+
 	switch (action.type) {
 		case kActionMoveToPoint:
 			executeMoveToPoint(action, ctx);
@@ -62,8 +67,7 @@ void ActionExecutor::execute(const Action &action, const ExecutionContext &ctx) 
 			executePickUpItem(action, ctx);
 			break;
 		case kActionWait:
-			// Wait actions complete immediately on the first tick.
-			ctx.creature->popAction();
+			executeWait(action, ctx);
 			break;
 		default:
 			warning("TODO: Handle action %u", (uint)action.type);
@@ -71,12 +75,12 @@ void ActionExecutor::execute(const Action &action, const ExecutionContext &ctx) 
 	}
 }
 
-void ActionExecutor::executeMoveToPoint(const Action &action, const ExecutionContext &ctx) {
+void ActionExecutor::executeMoveToPoint(Action &action, const ExecutionContext &ctx) {
 	if (moveTo(action.location, action.range, ctx))
 		ctx.creature->popAction();
 }
 
-void ActionExecutor::executeFollowLeader(const Action &action, const ExecutionContext &ctx) {
+void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext &ctx) {
 	Creature *partyLeader = ctx.area->_module->getPartyLeader();
 
 	float x, y, _;
@@ -85,7 +89,7 @@ void ActionExecutor::executeFollowLeader(const Action &action, const ExecutionCo
 	moveTo(glm::vec2(x, y), action.range, ctx);
 }
 
-void ActionExecutor::executeOpenLock(const Action &action, const ExecutionContext &ctx) {
+void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx) {
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
@@ -116,7 +120,7 @@ void ActionExecutor::executeOpenLock(const Action &action, const ExecutionContex
 	warning("Cannot unlock an object that is not a door or a placeable");
 }
 
-void ActionExecutor::executeUseObject(const Action &action, const ExecutionContext &ctx) {
+void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ctx) {
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
@@ -159,7 +163,7 @@ void ActionExecutor::executeUseObject(const Action &action, const ExecutionConte
 	}
 }
 
-void ActionExecutor::executeAttackObject(const Action &action, const ExecutionContext &ctx) {
+void ActionExecutor::executeAttackObject(Action &action, const ExecutionContext &ctx) {
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
@@ -170,7 +174,7 @@ void ActionExecutor::executeAttackObject(const Action &action, const ExecutionCo
 	ctx.creature->startCombat(action.object, ctx.area->_module->getNextCombatRound());
 }
 
-void ActionExecutor::executePickUpItem(const Action &action, const ExecutionContext &ctx) {
+void ActionExecutor::executePickUpItem(Action &action, const ExecutionContext &ctx) {
 	if (!action.object)
 		return;
 
@@ -246,6 +250,13 @@ bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const Execut
 	}
 
 	return false;
+}
+
+void ActionExecutor::executeWait(Action &action, const ExecutionContext &ctx) {
+	action.startTime += ctx.frameTime;
+
+	if (action.startTime >= action.range)
+		ctx.creature->popAction();
 }
 
 } // End of namespace KotORBase

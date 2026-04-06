@@ -40,6 +40,8 @@ struct Action {
 	glm::vec3 location;
 	Object *object;
 	float range;
+	float startTime { -1.0f }; ///< Time the action started (for timed actions).
+	bool  initialized { false };
 
 	Action();
 	Action(ActionType type);

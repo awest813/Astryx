@@ -35,6 +35,7 @@ namespace KotORBase {
 
 class ActionQueue {
 public:
+	Action *getCurrent();
 	const Action *getCurrent() const;
 
 	void clear();

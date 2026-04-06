@@ -286,10 +286,12 @@ public:
 	virtual KotORBase::CharacterGenerationInfo *createCharGenInfo(const CharacterGenerationInfo &info) const = 0;
 
 	// Camera
-
 	float getCameraYaw() const;
-
 	void setCameraYaw(float yaw);
+
+	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
+	void setCinematicFocus(Object *target);
+	void resetToOrbit();
 
 	// Delayed object interactions
 

@@ -28,6 +28,10 @@ namespace Engines {
 
 namespace KotORBase {
 
+Action *ActionQueue::getCurrent() {
+	return _actions.empty() ? nullptr : &_actions.front();
+}
+
 const Action *ActionQueue::getCurrent() const {
 	return _actions.empty() ? nullptr : &_actions.front();
 }
