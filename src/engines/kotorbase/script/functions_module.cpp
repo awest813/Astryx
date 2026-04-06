@@ -131,6 +131,28 @@ void Functions::getDifficultyModifier(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = m;
 }
 
+void Functions::setCameraMode(Aurora::NWScript::FunctionContext &ctx) {
+	// SetCameraMode(object oPlayer, int nCameraMode)
+	// Retail switches between exploration / combat / dialog camera modes.
+	// We log and no-op — camera mode selection is handled by the render loop.
+	int mode = ctx.getParams()[1].getInt();
+	info("SetCameraMode(%d) requested (not yet implemented)", mode);
+}
+
+void Functions::setLockOrientationInDialog(Aurora::NWScript::FunctionContext &ctx) {
+	// SetLockOrientationInDialog(object oCreature, int nValue)
+	// Prevents the creature from rotating to face the conversation partner.
+	// Stub: no orientation tracking per-creature yet.
+	(void)ctx;
+}
+
+void Functions::setLockHeadFollowInDialog(Aurora::NWScript::FunctionContext &ctx) {
+	// SetLockHeadFollowInDialog(object oCreature, int nValue)
+	// Prevents head-tracking look-at behaviour during a dialog.
+	// Stub: no head-tracking system yet.
+	(void)ctx;
+}
+
 void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {
 	// NWScript SetCameraFacing always passes degrees; convert unconditionally.
 	float yaw = Common::deg2rad(ctx.getParams()[0].getFloat());

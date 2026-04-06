@@ -133,6 +133,13 @@ public:
 	/** Set if the object has a minimum of one hp. */
 	void setMinOneHitPoints(bool enabled);
 
+	// Plot flag
+
+	/** Return whether this object is flagged as plot-critical (immune to permanent death). */
+	bool getPlotFlag() const;
+	/** Set the plot-critical flag. */
+	void setPlotFlag(bool plot);
+
 	// Faction
 
 	/** Get the faction this object belongs to. */
@@ -218,6 +225,7 @@ protected:
 	int _currentHitPoints; ///< The current hitpoints of the object.
 	int _maxHitPoints;     ///< The maximum hitpoints of the object.
 	bool _minOneHitPoint;  ///< If the object should have at least one hitpoint.
+	bool _plotFlag;        ///< If true, this object is plot-critical and immune to permanent death.
 
 	float _position[3];    ///< The object's position.
 	float _orientation[4]; ///< The object's orientation.

@@ -187,6 +187,9 @@ protected:
 	void getPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx);
 	void getGameDifficulty(Aurora::NWScript::FunctionContext &ctx);
 	void getDifficultyModifier(Aurora::NWScript::FunctionContext &ctx);
+	void setCameraMode(Aurora::NWScript::FunctionContext &ctx);
+	void setLockOrientationInDialog(Aurora::NWScript::FunctionContext &ctx);
+	void setLockHeadFollowInDialog(Aurora::NWScript::FunctionContext &ctx);
 	void setCameraFacing(Aurora::NWScript::FunctionContext &ctx);
 	void getListenPatternNumber(Aurora::NWScript::FunctionContext &ctx);
 	void getLastSpeaker(Aurora::NWScript::FunctionContext &ctx);
@@ -285,6 +288,13 @@ protected:
 	void getIsEnemy  (Aurora::NWScript::FunctionContext &ctx);
 	void getIsFriend (Aurora::NWScript::FunctionContext &ctx);
 	void getIsNeutral(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionEqual(Aurora::NWScript::FunctionContext &ctx);
+
+	void getPlotFlag(Aurora::NWScript::FunctionContext &ctx);
+	void setPlotFlag(Aurora::NWScript::FunctionContext &ctx);
+
+	void getEffectType(Aurora::NWScript::FunctionContext &ctx);
+	void getLastDamager(Aurora::NWScript::FunctionContext &ctx);
 
 	void getName(Aurora::NWScript::FunctionContext &ctx);
 

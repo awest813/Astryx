@@ -52,7 +52,8 @@ Object::Object(ObjectType type) :
 		_currentXP(0),
 		_currentHitPoints(0),
 		_maxHitPoints(0),
-		_minOneHitPoint(false) {
+		_minOneHitPoint(false),
+	_plotFlag(false) {
 	_id = Common::generateIDNumber();
 	ObjectMan.registerObject(this);
 
@@ -216,6 +217,14 @@ void Object::setCurrentHitPoints(int hitpoints) {
 
 void Object::setMinOneHitPoints(bool enabled) {
 	_minOneHitPoint = enabled;
+}
+
+bool Object::getPlotFlag() const {
+	return _plotFlag;
+}
+
+void Object::setPlotFlag(bool plot) {
+	_plotFlag = plot;
 }
 
 Faction Object::getFaction() const {

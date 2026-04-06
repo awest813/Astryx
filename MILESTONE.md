@@ -394,3 +394,154 @@ Milestone 3 is **complete** when Taris Upper City scripts run without
 "unimplemented function" warnings for the eight functions listed above, the
 new unit tests all pass under CI, and the PC can gain at least one level
 automatically after accumulating sufficient XP in-session.
+
+---
+
+---
+
+# Milestone 4 — Dantooine Arrival: Cinematic Scripting, Plot Flags & Camera
+
+This milestone carries xoreos from the end of Taris through the galaxy map
+and into the **Dantooine** entry module (`danm13`).  Dantooine's scripts make
+heavy use of cinematic choreography functions (cutscene attacks, cutscene
+crowd-control effects), camera mode control, plot flags, and difficulty
+scaling.  None of these were implemented.
+
+**Goal:** Wire and implement all NWScript functions needed for `danm13` to
+load, play its arrival cutscene, and hand control to the PC without crashing
+on script errors.
+
+---
+
+## Scope
+
+KotOR I's Dantooine entry module (`danm13`) and the Taris → galaxy map →
+Dantooine transition.  KotOR II and other planets remain on the long-term
+roadmap.
+
+---
+
+## Acceptance Criteria
+
+1. **Configurable start module** — `KOTOR_startModule` config key lets
+   developers jump directly to any module (e.g. `danm13`) after character
+   creation, enabling rapid iteration without replaying Endar Spire.
+2. **GetGameDifficulty / GetDifficultyModifier** — return clamped integer
+   difficulty (0–2) and float scaling factor (0.8 / 1.0 / 1.2) respectively;
+   all combat AI range scripts stop throwing "unimplemented" warnings.
+3. **CutsceneAttack / CutsceneMove** — choreographed attack and movement
+   actions queue correctly on the target creature; arrival cutscene proceeds
+   without script errors.
+4. **EffectCutSceneHorrified / EffectCutSceneParalyze / EffectCutSceneStunned**
+   — construct correctly typed `Effect` objects (Stunned / Paralyze / Stunned);
+   `applyEffectToObject` handles them without crashing.
+5. **GetPlotFlag / SetPlotFlag** — round-trip correctly on any `Object`;
+   plot-critical NPCs (Jedi Masters, Bastila) are correctly flagged and immune
+   to permanent death in scripted sequences.
+6. **GetFactionEqual** — returns TRUE when both objects share the same faction
+   ID; used by Dantooine AI to avoid friendly-fire.
+7. **GetEffectType** — returns the integer `EffectType` stored in any `Effect`
+   engine type; required by buff/debuff checking scripts.
+8. **GetLastDamager** — returns the last creature that struck the target; used
+   by `OnDamaged` handlers throughout Dantooine combat scripts.
+9. **SetCameraMode** — logs the requested camera mode and returns without
+   crashing; cutscene camera transitions no longer halt the script system.
+10. **SetLockOrientationInDialog / SetLockHeadFollowInDialog** — both are safe
+    no-ops; dialog sequencing scripts proceed without "unimplemented" warnings.
+
+---
+
+## Required Work
+
+### Configurable start module
+
+- [x] Add `KOTOR_startModule` config key written during `initGameConfig()`
+      and read in `CharacterGenerationMenu::start()` so developers can jump
+      to any module after char-gen.
+
+### Difficulty system
+
+- [x] `GetGameDifficulty` (ID 513) — reads `ConfigMan.getInt("difficulty", 1)`,
+      clamps to `[0, 2]`; wired in kotor + kotor2 tables.
+- [x] `GetDifficultyModifier` (ID 523) — returns `0.8f` / `1.0f` / `1.2f` per
+      difficulty; wired in both tables.
+
+### Cutscene action functions
+
+- [x] `CutsceneAttack` (ID 503) — queues `kActionAttackObject` on the script
+      caller targeting `oTarget`; choreography flags (point / modifier / miss)
+      are logged but not yet modelled.
+- [x] `CutsceneMove` (ID 507) — queues `kActionMoveToPoint` to `vDestination`
+      on `oCreature`; movement-rate parameter accepted but not yet applied.
+
+### Cutscene crowd-control effects
+
+- [x] `EffectCutSceneHorrified` (ID 754) — returns `Effect(kEffectStunned, 0)`.
+- [x] `EffectCutSceneParalyze` (ID 755) — returns `Effect(kEffectParalyze, 0)`.
+- [x] `EffectCutSceneStunned` (ID 756) — returns `Effect(kEffectStunned, 0)`.
+
+### Object — plot flag
+
+- [x] Add `_plotFlag` (`bool`, default `false`) to `Object`.
+- [x] Expose `getPlotFlag() const` and `setPlotFlag(bool)` on `Object`.
+- [x] `GetPlotFlag` (ID 455) — delegates to `Object::getPlotFlag()`; wired in
+      both tables.
+- [x] `SetPlotFlag` (ID 456) — delegates to `Object::setPlotFlag()`; wired in
+      both tables.
+
+### Faction / effect introspection
+
+- [x] `GetFactionEqual` (ID 172) — returns 1 if both objects share the same
+      non-invalid faction; wired in both tables.
+- [x] `GetEffectType` (ID 170) — dynamic-casts the `EngineType` parameter to
+      `Effect` and returns `static_cast<int>(e->getType())`; wired in both
+      tables.
+- [x] `GetLastDamager` (ID 346) — returns `Creature::getLastHostileActor()` on
+      the target; wired in both tables.
+
+### Camera / dialog stubs
+
+- [x] `SetCameraMode` (ID 504) — logs mode and returns; wired in both tables.
+- [x] `SetLockOrientationInDialog` (ID 505) — safe no-op; wired in both tables.
+- [x] `SetLockHeadFollowInDialog` (ID 506) — safe no-op; wired in both tables.
+
+### CI Test Coverage
+
+- [x] Unit tests for difficulty clamping and modifier scaling (`GetGameDifficulty`,
+      `GetDifficultyModifier`).
+      *(`tests/engines/kotorbase/dantooine_cinematic.cpp` added.)*
+- [x] Unit tests for cutscene effect types (`EffectCutSceneHorrified`,
+      `EffectCutSceneParalyze`, `EffectCutSceneStunned`).
+      *(same file.)*
+- [x] Unit tests for plot flag round-trip (`GetPlotFlag` / `SetPlotFlag`).
+      *(same file.)*
+- [x] Unit tests for `GetFactionEqual` covering same-faction, different-faction,
+      and self-equality.
+      *(same file.)*
+- [x] Unit tests for `GetEffectType` accessor covering all Dantooine-relevant
+      effect types.
+      *(same file.)*
+- [x] Unit tests for `GetLastDamager` null guard and post-hit state.
+      *(same file.)*
+- [x] Unit tests for camera stub behaviour (`SetCameraMode`,
+      `SetLockOrientationInDialog`, `SetLockHeadFollowInDialog`).
+      *(same file.)*
+
+---
+
+## Out of Scope for Milestone 4
+
+- Dantooine Jedi Enclave interior scripting.
+- Basilisk War Droid crash cutscene full fidelity (choreography flags).
+- `SetCameraMode` runtime camera-mode switching.
+- Force powers and Force alignment (separate track).
+- Saving to disk.
+
+---
+
+## Success Metric
+
+Milestone 4 is **complete** when `danm13` loads and runs its arrival scripts
+without "unimplemented function" warnings for the functions listed above, all
+new unit tests pass under CI, and the PC can walk through the Dantooine entry
+area without the engine crashing on script errors.

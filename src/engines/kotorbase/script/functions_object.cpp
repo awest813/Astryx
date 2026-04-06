@@ -43,6 +43,7 @@
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creaturesearch.h"
+#include "src/engines/kotorbase/effect.h"
 
 #include "src/engines/kotorbase/script/functions.h"
 
@@ -1065,6 +1066,56 @@ void Functions::getNearestCreatureToLocation(Aurora::NWScript::FunctionContext &
 // ---------------------------------------------------------------------------
 // BeginConversation — start a conversation from a script
 // ---------------------------------------------------------------------------
+
+void Functions::getFactionEqual(Aurora::NWScript::FunctionContext &ctx) {
+	// GetFactionEqual(object oCreatureToTest, object oCreature=OBJECT_SELF) → int
+	// Returns TRUE if both objects belong to the same faction.
+	ctx.getReturn() = 0;
+	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!target || !source)
+		return;
+	Faction tf = target->getFaction();
+	Faction sf = source->getFaction();
+	ctx.getReturn() = (tf != kFactionInvalid && tf == sf) ? 1 : 0;
+}
+
+void Functions::getPlotFlag(Aurora::NWScript::FunctionContext &ctx) {
+	// GetPlotFlag(object oTarget=OBJECT_SELF) → int
+	// Returns TRUE if the target has the plot flag set (immune to permanent death).
+	ctx.getReturn() = 0;
+	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	if (target)
+		ctx.getReturn() = target->getPlotFlag() ? 1 : 0;
+}
+
+void Functions::setPlotFlag(Aurora::NWScript::FunctionContext &ctx) {
+	// SetPlotFlag(object oTarget, int nPlotFlag)
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	bool plot = ctx.getParams()[1].getInt() != 0;
+	if (target)
+		target->setPlotFlag(plot);
+}
+
+void Functions::getEffectType(Aurora::NWScript::FunctionContext &ctx) {
+	// GetEffectType(effect eEffect) → int
+	// Returns the integer EffectType of the given effect engine type.
+	ctx.getReturn() = -1;
+	Aurora::NWScript::EngineType *raw = ctx.getParams()[0].getEngineType();
+	const Effect *e = dynamic_cast<const Effect *>(raw);
+	if (e)
+		ctx.getReturn() = static_cast<int>(e->getType());
+}
+
+void Functions::getLastDamager(Aurora::NWScript::FunctionContext &ctx) {
+	// GetLastDamager(object oCreature=OBJECT_SELF) → object
+	// Returns the last creature that inflicted damage on oCreature.
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Creature *c = dynamic_cast<Creature *>(target);
+	if (c)
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(c->getLastHostileActor());
+}
 
 void Functions::beginConversation(Aurora::NWScript::FunctionContext &ctx) {
 	// BeginConversation(string sResRef="", object oObjectToDialog=OBJECT_SELF) → int

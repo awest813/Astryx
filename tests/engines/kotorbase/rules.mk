@@ -87,3 +87,8 @@ check_PROGRAMS                                                 += tests/engines/
 tests_engines_kotorbase_test_dantooine_progression_SOURCES     = tests/engines/kotorbase/dantooine_progression.cpp
 tests_engines_kotorbase_test_dantooine_progression_LDADD       = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_dantooine_progression_CXXFLAGS    = $(test_CXXFLAGS)
+
+check_PROGRAMS                                                 += tests/engines/kotorbase/test_dantooine_cinematic
+tests_engines_kotorbase_test_dantooine_cinematic_SOURCES       = tests/engines/kotorbase/dantooine_cinematic.cpp
+tests_engines_kotorbase_test_dantooine_cinematic_LDADD         = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_dantooine_cinematic_CXXFLAGS      = $(test_CXXFLAGS)
