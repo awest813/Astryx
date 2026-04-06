@@ -27,31 +27,77 @@ foundation intact for the other targets.
 
 ## Status
 
-### KotOR I — Milestone 1 & 2 complete ✅
+### KotOR I — Milestones 1–4 complete ✅
 
-The _Endar Spire_ tutorial is fully playable end-to-end:
+Development has progressed through four formal milestones, each verified by CI
+unit tests.  The playable path now runs from character creation on the _Endar
+Spire_ through Taris and into the _Dantooine_ entry module (`danm13`).
 
-- Character creation (class, attributes, skills, appearance) ✅
+**Milestone 1 — Endar Spire tutorial**
+- Character creation: class selection, attribute/skill point allocation, appearance ✅
 - Starting equipment looted from footlocker and equipped ✅
-- Dialogue with Trask Ulgo, door interactions ✅
-- Turn-based combat with hit/miss animations, HP reduction, and death ✅
+- Dialogue with Trask Ulgo and door interactions ✅
+- Turn-based combat: d20 attack rolls, hit/miss animations, HP reduction, death ✅
 - Module-exit script fires and returns to main menu ✅
 
-The first Taris module (`tar_m02aa`) now loads cleanly after the tutorial:
-
+**Milestone 2 — Taris entry (`tar_m02aa`)**
+- Module transition from Endar Spire loads without script errors ✅
 - Party formation (`AddPartyMember` / Carth joining) ✅
 - XP accumulation and alignment system ✅
-- Saving throws (Fortitude / Reflex / Will) ✅
+- Saving throws (Fortitude / Reflex / Will) with natural-1/20 rules ✅
 - Global string / boolean / number variable persistence across area transitions ✅
+
+**Milestone 3 — Taris Upper City**
+- Faction reputation queries and adjustments (`GetReputation` / `AdjustReputation`) ✅
+- Distance-based NPC AI range checks (`GetDistanceBetween`) ✅
+- Buff/debuff effect types: AC increase, attack increase, skill increase, temporary HP ✅
+- Item base-type query (`GetBaseItemType`) ✅
+- Auto-assign level-up path so the PC gains HP and skills when `ShowLevelUpGUI` fires ✅
+
+**Milestone 4 — Dantooine arrival (`danm13`)**
+- Configurable start module (`KOTOR_startModule` config key) for developer iteration ✅
+- Difficulty system (`GetGameDifficulty` / `GetDifficultyModifier`) ✅
+- Cutscene choreography actions (`CutsceneAttack` / `CutsceneMove`) ✅
+- Cutscene crowd-control effects (horrified, paralyze, stunned) ✅
+- Plot flag system (`GetPlotFlag` / `SetPlotFlag`) for plot-critical NPCs ✅
+- Camera-mode and dialog-orientation stubs so cutscene scripts proceed ✅
+
+#### Honest caveats
+
+A number of systems are stubs or partially implemented:
+
+- **Level-up GUI** — skill points are auto-assigned; no feat selection or manual
+  attribute spending yet.
+- **OpenStore** — logs a warning and returns; no merchant/barter screen.
+- **Cutscene camera** — `SetCameraMode` is a logged no-op; camera does not
+  actually switch modes during cinematics.
+- **Cinematic choreography flags** — `CutsceneAttack` queues the attack action
+  but does not honour point-of-impact or miss-direction modifiers.
+- **Audio** — ambient sound and voiced dialogue are not yet reliably playing for
+  these areas.
+- **Saving to disk** — in-session state is maintained across area transitions, but
+  writing and reloading a full saved game is not yet supported.
+- **~750 NWScript functions** remain unimplemented out of ~850 per game; areas
+  beyond Dantooine will surface more stubs.
 
 For the full acceptance-criteria checklist and upcoming work, see
 [MILESTONE.md](MILESTONE.md) and [ROADMAP.md](ROADMAP.md).
 
+### KotOR II
+
+KotOR II shares the `kotorbase` engine layer and benefits from all NWScript
+functions wired for KotOR I.  The prologue can be skipped and intro sequences
+play.  Area rendering and walkmesh are functional.  The KotOR II GUI is
+minimal compared to KotOR I — full option screens, advanced menus, and
+influence/prestige systems are not yet implemented.
+
 ### Other games
 
-All other targeted games show partial in-game graphics (area geometry, objects,
-walkmesh) and can be explored in a "spectator mode". Some show partial menus.
-Full gameplay for those titles remains a long-term goal.
+Neverwinter Nights, Neverwinter Nights 2, Jade Empire, Sonic Chronicles,
+The Witcher, Dragon Age: Origins, and Dragon Age II all reach an in-engine
+spectator state (area geometry, objects, and walkmesh visible) via the
+upstream xoreos foundation.  Some show partial menus.  Full gameplay for
+those titles remains a long-term goal.
 
 Contributions are very welcome — please read [CONTRIBUTING.md](CONTRIBUTING.md)
 before sending a pull request.
