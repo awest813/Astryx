@@ -496,6 +496,8 @@ void KotOREngine::initConfig() {
 void KotOREngine::initGameConfig() {
 	ConfigMan.setString(Common::kConfigRealmGameTemp, "KOTOR_moduleDir",
 		Common::FilePath::findSubDirectory(_target, "modules", true));
+	// After chargen, load this module (e.g. "danm13" to jump to Dantooine for testing).
+	ConfigMan.setString(Common::kConfigRealmGameTemp, "KOTOR_startModule", "end_m01aa");
 }
 
 void KotOREngine::checkConfig() {

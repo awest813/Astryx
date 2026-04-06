@@ -24,6 +24,7 @@
 
 #include "src/common/maths.h"
 #include "src/common/util.h"
+#include "src/common/configman.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
 
@@ -102,6 +103,32 @@ void Functions::setPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::getPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
 	ctx.getReturn() = _game->getModule().getGlobalNumber("__player_restrict_mode");
+}
+
+void Functions::getGameDifficulty(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	int d = ConfigMan.getInt("difficulty", 1);
+	if (d < 0)
+		d = 0;
+	if (d > 2)
+		d = 2;
+	ctx.getReturn() = d;
+}
+
+void Functions::getDifficultyModifier(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	int d = ConfigMan.getInt("difficulty", 1);
+	if (d < 0)
+		d = 0;
+	if (d > 2)
+		d = 2;
+	// Simple scaling hook for combat scripts (retail uses a richer table).
+	float m = 1.0f;
+	if (d == 0)
+		m = 0.8f;
+	else if (d == 2)
+		m = 1.2f;
+	ctx.getReturn() = m;
 }
 
 void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {

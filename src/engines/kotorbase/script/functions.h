@@ -185,6 +185,8 @@ protected:
 	void pauseGame(Aurora::NWScript::FunctionContext &ctx);
 	void setPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx);
 	void getPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx);
+	void getGameDifficulty(Aurora::NWScript::FunctionContext &ctx);
+	void getDifficultyModifier(Aurora::NWScript::FunctionContext &ctx);
 	void setCameraFacing(Aurora::NWScript::FunctionContext &ctx);
 	void getListenPatternNumber(Aurora::NWScript::FunctionContext &ctx);
 	void getLastSpeaker(Aurora::NWScript::FunctionContext &ctx);
@@ -335,6 +337,8 @@ protected:
 	void actionEquipItem(Aurora::NWScript::FunctionContext &ctx);
 	void actionPickUpItem(Aurora::NWScript::FunctionContext &ctx);
 	void actionAttack(Aurora::NWScript::FunctionContext &ctx);
+	void cutsceneAttack(Aurora::NWScript::FunctionContext &ctx);
+	void cutsceneMove(Aurora::NWScript::FunctionContext &ctx);
 	void actionUseFeat(Aurora::NWScript::FunctionContext &ctx);
 	void actionUseTalentOnObject(Aurora::NWScript::FunctionContext &ctx);
 	void actionUseTalentAtLocation(Aurora::NWScript::FunctionContext &ctx);
@@ -434,6 +438,9 @@ protected:
 	void effectAbilityIncrease(Aurora::NWScript::FunctionContext &ctx);
 	void effectMovementSpeedIncrease(Aurora::NWScript::FunctionContext &ctx);
 	void effectResurrection(Aurora::NWScript::FunctionContext &ctx);
+	void effectCutSceneHorrified(Aurora::NWScript::FunctionContext &ctx);
+	void effectCutSceneParalyze(Aurora::NWScript::FunctionContext &ctx);
+	void effectCutSceneStunned(Aurora::NWScript::FunctionContext &ctx);
 	void applyEffectToObject(Aurora::NWScript::FunctionContext &ctx);
 
 	void touchAttackMelee(Aurora::NWScript::FunctionContext &ctx);

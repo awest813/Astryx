@@ -814,6 +814,19 @@ void Functions::effectResurrection(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = new Effect(kEffectResurrection, 1);
 }
 
+void Functions::effectCutSceneHorrified(Aurora::NWScript::FunctionContext &ctx) {
+	// Cut-scene variant: treat as hard crowd-control for script progression.
+	ctx.getReturn() = new Effect(kEffectStunned, 0);
+}
+
+void Functions::effectCutSceneParalyze(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kEffectParalyze, 0);
+}
+
+void Functions::effectCutSceneStunned(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kEffectStunned, 0);
+}
+
 // ---------------------------------------------------------------------------
 // Touch attacks — Force power delivery mechanism
 // ---------------------------------------------------------------------------

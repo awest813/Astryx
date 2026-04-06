@@ -23,6 +23,7 @@
  */
 
 #include "external/glm/geometric.hpp"
+#include "external/glm/vec3.hpp"
 
 #include "src/common/error.h"
 #include "src/common/util.h"
@@ -314,6 +315,35 @@ void Functions::actionAttack(Aurora::NWScript::FunctionContext &ctx) {
 	Action action(kActionAttackObject);
 	action.object = target;
 	caller->addAction(action);
+}
+
+void Functions::cutsceneAttack(Aurora::NWScript::FunctionContext &ctx) {
+	// CutsceneAttack(object oTarget, int nAttackerPoint, int nModifier, int nMiss)
+	// Cinematic attack staging: queue a normal attack on the script caller.  Point /
+	// modifier / miss flags are not modeled yet (retail uses them for choreography).
+	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	Creature *attacker = ObjectContainer::toCreature(ctx.getCaller());
+	if (!attacker || !target)
+		return;
+
+	Action action(kActionAttackObject);
+	action.object = target;
+	attacker->addAction(action);
+}
+
+void Functions::cutsceneMove(Aurora::NWScript::FunctionContext &ctx) {
+	// CutsceneMove(object oCreature, vector vDestination, int nMovementRate)
+	Creature *who = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	if (!who)
+		return;
+
+	float x, y, z;
+	ctx.getParams()[1].getVector(x, y, z);
+
+	Action action(kActionMoveToPoint);
+	action.range = 0.1f;
+	action.location = glm::vec3(x, y, z);
+	who->addAction(action);
 }
 
 void Functions::getLastAttacker(Aurora::NWScript::FunctionContext &ctx) {

@@ -29,6 +29,7 @@
 #include "external/glm/gtc/matrix_transform.hpp"
 
 #include "src/common/util.h"
+#include "src/common/configman.h"
 
 #include "src/aurora/talkman.h"
 
@@ -269,7 +270,10 @@ void CharacterGenerationMenu::start() {
 
 	try {
 		_module->usePC(*_pc);
-		_module->load("end_m01aa");
+		Common::UString firstModule = ConfigMan.getString("KOTOR_startModule", "end_m01aa");
+		if (firstModule.empty())
+			firstModule = "end_m01aa";
+		_module->load(firstModule);
 	} catch (...) {
 		Common::exceptionDispatcherWarning();
 		return;
