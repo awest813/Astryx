@@ -49,6 +49,9 @@ public:
 	int getACBonus() const;
 	int getBaseItem() const;
 
+	int  getStackSize() const;
+	void setStackSize(int size);
+
 	// Visual properties
 
 	int getBodyVariation() const;
@@ -70,6 +73,7 @@ private:
 	int _bodyVariation;
 	int _textureVariation;
 	int _acBonus;
+	int _stackSize; ///< Stack count (grenades, medpacs, etc. — default 1).
 
 	void load(const Aurora::GFF3Struct &gff);
 };

@@ -217,6 +217,15 @@ public:
 	int getLastCombatFeatUsed() const;
 	int getQueuedCombatFeat() const;
 
+	// Perception results (set by handleObjectSeen / handleObjectVanished).
+	Object *getLastPerceived() const;
+	bool getLastPerceptionSeen() const;
+	bool getLastPerceptionVanished() const;
+	bool getLastPerceptionHeard() const;
+	bool getLastPerceptionInaudible() const;
+	bool hasSeenObject(const Object *obj) const;
+	bool hasHeardObject(const Object *obj) const;
+
 	void setAttemptedAttackTarget(Object *target);
 	void setLastCombatFeatUsed(int featID);
 	void queueCombatFeat(int featID);
@@ -291,6 +300,13 @@ private:
 	int _attackModifier { 0 };
 	int _armorClassModifier { 0 };
 	std::array<int, kSkillMAX> _skillModifiers {{}};
+
+	// Perception state — updated by handleObjectSeen/Vanished/Heard/Inaudible.
+	Object *_lastPerceived { nullptr };
+	bool _lastPerceptionSeen       { false };
+	bool _lastPerceptionVanished   { false };
+	bool _lastPerceptionHeard      { false };
+	bool _lastPerceptionInaudible  { false };
 
 
 	bool _isPC; ///< Is the creature a PC?

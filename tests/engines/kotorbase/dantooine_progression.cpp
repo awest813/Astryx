@@ -464,7 +464,6 @@ TEST(DantooineProgression, TarisDepartureGlobalSetBeforeTransition) {
 
 	// Simulate the Taris departure script
 	g.booleans["K_GLOBAL_TARIS_COMPLETE"] = true;
-	g.available[3]  = true; // Dantooine (unused in this model, but for clarity)
 
 	// Partial unload (module transition, not menu return)
 	g.unload(false);

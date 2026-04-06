@@ -154,27 +154,28 @@ GTEST_TEST(KotORBaseReputation, adjustClampsAt100) {
 GTEST_TEST(KotORBaseReputation, adjustClampsAt0) {
 	ReputationStore rs;
 	// Neutral starts at 50, reduce by 200 → clamps to 0
+	// adjustReputation(tgt=5, src=6) stores under key (src=6, tgt=5)
 	rs.adjustReputation(5, 6, -200);
-	EXPECT_EQ(rs.getReputation(5, 6), 0);
+	EXPECT_EQ(rs.getReputation(6, 5), 0);
 }
 
 GTEST_TEST(KotORBaseReputation, pairsAreIndependent) {
 	ReputationStore rs;
-	rs.adjustReputation(1, 2, 25); // (src=2, tgt=1) changes
+	rs.adjustReputation(1, 2, 25); // (src=2, tgt=1) changes; key=(2,1)
 	// (src=1, tgt=2) should be unchanged
-	EXPECT_EQ(rs.getReputation(2, 1), 0);  // still hostile default
-	EXPECT_EQ(rs.getReputation(1, 2), 25); // adjusted pair
+	EXPECT_EQ(rs.getReputation(2, 1), 25); // adjusted pair (src=2, tgt=1)
+	EXPECT_EQ(rs.getReputation(1, 2), 0);  // still hostile default (src=1, tgt=2)
 }
 
 // ---------------------------------------------------------------------------
 // Effect sub-type constructors
 // ---------------------------------------------------------------------------
 
-using KotORBase::Effect;
-using KotORBase::kEffectACIncrease;
-using KotORBase::kEffectAttackIncrease;
-using KotORBase::kEffectSkillIncrease;
-using KotORBase::kEffectTemporaryHitpoints;
+using Engines::KotORBase::Effect;
+using Engines::KotORBase::kEffectACIncrease;
+using Engines::KotORBase::kEffectAttackIncrease;
+using Engines::KotORBase::kEffectSkillIncrease;
+using Engines::KotORBase::kEffectTemporaryHitpoints;
 
 GTEST_TEST(KotORBaseEffectM3, effectACIncreaseTypeAndAmount) {
 	Effect e(kEffectACIncrease, 4);

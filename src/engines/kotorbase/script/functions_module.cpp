@@ -246,8 +246,8 @@ void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &ctx) {
 			info.setSkillRank(sk, current + 1);
 	}
 
-	info("Functions::showLevelUpGUI: PC levelled up to %d (class %d, +%d HP)",
-	     newLevel, static_cast<int>(primaryClass), hpGain);
+	warning("Functions::showLevelUpGUI: PC levelled up to %d (class %d, +%d HP)",
+	        newLevel, static_cast<int>(primaryClass), hpGain);
 
 	ctx.getReturn() = 1;
 }

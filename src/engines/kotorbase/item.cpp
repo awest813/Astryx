@@ -34,7 +34,7 @@ namespace Engines {
 
 namespace KotORBase {
 
-Item::Item(const Common::UString &item) : Object(kObjectTypeItem) {
+Item::Item(const Common::UString &item) : Object(kObjectTypeItem), _stackSize(1) {
 	std::unique_ptr<Aurora::GFF3File> uti = std::make_unique<Aurora::GFF3File>(item, Aurora::kFileTypeUTI);
 
 	load(uti->getTopLevel());
@@ -62,6 +62,7 @@ void Item::load(const Aurora::GFF3Struct &gff) {
 	_modelVariation = gff.getSint("ModelVariation");
 	_bodyVariation = gff.getSint("BodyVariation");
 	_textureVariation = gff.getSint("TextureVar");
+	_stackSize = gff.getSint("StackSize", 1);
 }
 
 const Common::UString &Item::getName() const {
@@ -101,6 +102,14 @@ int Item::getACBonus() const {
 
 int Item::getBaseItem() const {
 	return _baseItem;
+}
+
+int Item::getStackSize() const {
+	return _stackSize;
+}
+
+void Item::setStackSize(int size) {
+	_stackSize = (size >= 0) ? size : 0;
 }
 
 int Item::getBodyVariation() const {

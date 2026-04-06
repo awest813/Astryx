@@ -32,13 +32,21 @@ namespace Engines {
 namespace KotORBase {
 
 enum EffectType {
-	kEffectHeal                = 0,
-	kEffectDamage              = 1,
-	kEffectVisual              = 2,
-	kEffectACIncrease          = 3,
-	kEffectAttackIncrease      = 4,
-	kEffectSkillIncrease       = 5,
-	kEffectTemporaryHitpoints  = 6
+	kEffectHeal                  = 0,
+	kEffectDamage                = 1,
+	kEffectVisual                = 2,
+	kEffectACIncrease            = 3,
+	kEffectAttackIncrease        = 4,
+	kEffectSkillIncrease         = 5,
+	kEffectTemporaryHitpoints    = 6,
+	kEffectDeath                 = 7,  ///< Immediately kill the target.
+	kEffectKnockdown             = 8,  ///< Knock the target prone (stun for one round).
+	kEffectParalyze              = 9,  ///< Paralyse the target (Force Stasis etc.).
+	kEffectStunned               = 10, ///< Stun the target (interrupts actions).
+	kEffectHaste                 = 11, ///< Grant haste (extra attack per round).
+	kEffectAbilityIncrease       = 12, ///< Temporarily raise an ability score.
+	kEffectMovementSpeedIncrease = 13, ///< Increase movement speed by a percentage.
+	kEffectResurrection          = 14  ///< Revive a dead creature at 1 HP.
 };
 
 class Effect : public Aurora::NWScript::EngineType {

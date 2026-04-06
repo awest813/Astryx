@@ -27,6 +27,7 @@
 #include "src/common/error.h"
 #include "src/common/util.h"
 #include "src/common/string.h"
+#include "src/common/maths.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
 #include "src/aurora/talkman.h"
@@ -566,6 +567,127 @@ void Functions::actionBarkString(Aurora::NWScript::FunctionContext &ctx) {
 	Object *caller = ObjectContainer::toObject(ctx.getCaller());
 	const Common::UString who = caller ? caller->getTag() : Common::UString("(unknown)");
 	status("ActionBarkString [%s]: %s", who.c_str(), text.c_str());
+}
+
+// ---------------------------------------------------------------------------
+// Item transfer actions
+// ---------------------------------------------------------------------------
+
+void Functions::actionGiveItem(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionGiveItem(object oItem, object oGiveTo)
+	// Transfer an item from the caller's inventory to oGiveTo's inventory.
+	Object *itemObj  = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	Object *giveTo   = ObjectContainer::toObject(ctx.getParams()[1].getObject());
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Creature *target = ObjectContainer::toCreature(giveTo);
+
+	if (!itemObj || !target)
+		return;
+
+	// Determine the item's resRef to add to the target's inventory.
+	Common::UString resRef = itemObj->getTemplateResRef();
+	if (resRef.empty())
+		resRef = itemObj->getTag();
+	if (resRef.empty())
+		return;
+
+	target->getInventory().addItem(resRef);
+
+	// Remove from caller's inventory if they own it.
+	if (caller)
+		caller->getInventory().removeItem(resRef);
+}
+
+void Functions::actionTakeItem(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionTakeItem(object oItem, object oTakeFrom)
+	// Remove an item from oTakeFrom's inventory (give it to the caller).
+	Object *itemObj   = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	Object *takeFrom  = ObjectContainer::toObject(ctx.getParams()[1].getObject());
+	Creature *caller  = ObjectContainer::toCreature(ctx.getCaller());
+	Creature *source  = ObjectContainer::toCreature(takeFrom);
+
+	if (!itemObj || !source)
+		return;
+
+	Common::UString resRef = itemObj->getTemplateResRef();
+	if (resRef.empty())
+		resRef = itemObj->getTag();
+	if (resRef.empty())
+		return;
+
+	source->getInventory().removeItem(resRef);
+
+	if (caller)
+		caller->getInventory().addItem(resRef);
+}
+
+void Functions::giveItem(Aurora::NWScript::FunctionContext &ctx) {
+	// GiveItem(object oItem, object oGiveTo) — immediate, non-queued form.
+	// Delegates to the queued implementation since our executor handles
+	// ActionGiveItem instantly.
+	actionGiveItem(ctx);
+}
+
+// ---------------------------------------------------------------------------
+// ActionDoCommand — execute a captured script state now
+// ---------------------------------------------------------------------------
+
+void Functions::actionDoCommand(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionDoCommand(action aAction)
+	// The script state (closure) in aAction is executed immediately as part of
+	// the caller's action queue. We execute it synchronously here since our
+	// action queue does not model deferred closures.
+	Common::UString script = ctx.getScriptName();
+	if (script.empty())
+		return;
+
+	const Aurora::NWScript::ScriptState &state = ctx.getParams()[0].getScriptState();
+	_game->getModule().delayScript(script, state, ctx.getCaller(), ctx.getTriggerer(), 0);
+}
+
+// ---------------------------------------------------------------------------
+// ActionUseSkill
+// ---------------------------------------------------------------------------
+
+void Functions::actionUseSkill(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionUseSkill(int nSkill, object oTarget, int nSubSkill=0, object oItemUsed=OBJECT_INVALID)
+	// Queue a UseObject action — skill check is handled by the object's OnUsed script.
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Object   *target = ObjectContainer::toObject(ctx.getParams()[1].getObject());
+	if (!caller || !target)
+		return;
+
+	Action action(kActionUseObject);
+	action.object = target;
+	action.range  = 1.5f;
+	caller->addAction(action);
+}
+
+// ---------------------------------------------------------------------------
+// SetFacingPoint — rotate caller toward a world position
+// ---------------------------------------------------------------------------
+
+void Functions::setFacingPoint(Aurora::NWScript::FunctionContext &ctx) {
+	// SetFacingPoint(vector vTarget)
+	// Rotate the calling object so it faces vTarget.
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	if (!caller)
+		return;
+
+	float tx, ty, tz;
+	ctx.getParams()[0].getVector(tx, ty, tz);
+	(void)tz;
+
+	float cx, cy, cz;
+	caller->getPosition(cx, cy, cz);
+	(void)cz;
+
+	float dx = tx - cx;
+	float dy = ty - cy;
+
+	// Compute the yaw angle and apply it.
+	float angle = Common::rad2deg(std::atan2(dy, dx));
+	caller->setOrientation(0.0f, 0.0f, 1.0f, angle);
 }
 
 } // End of namespace KotORBase

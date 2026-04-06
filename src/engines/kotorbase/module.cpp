@@ -898,6 +898,9 @@ void Module::updateCombatAI() {
 	if (!_area || !_pc)
 		return;
 
+	// Disambiguate from Module::Action (the delayed-script action struct).
+	using CombatAction = ::Engines::KotORBase::Action;
+
 	const std::vector<Creature *> &creatures = _area->getCreatures();
 
 	// Build a list of active party members for fast lookup.
@@ -919,7 +922,7 @@ void Module::updateCombatAI() {
 		// nearest party member they can perceive.
 		// ---------------------------------------------------------------
 		if (!isPartyMember) {
-			const Action *currentAction = c->getCurrentAction();
+			const CombatAction *currentAction = c->getCurrentAction();
 
 			// If in combat, ensure we're either attacking or chasing the target.
 			if (c->isInCombat()) {
@@ -930,7 +933,7 @@ void Module::updateCombatAI() {
 					bool idle = (!currentAction || currentAction->type == kActionFollowLeader);
 					if (outOfRange && idle) {
 						c->clearActions();
-						Action attack(kActionAttackObject);
+						CombatAction attack(kActionAttackObject);
 						attack.object = t;
 						attack.range  = c->getMaxAttackRange();
 						c->addAction(attack);
@@ -968,7 +971,7 @@ void Module::updateCombatAI() {
 
 			if (bestTarget) {
 				c->clearActions();
-				Action attack(kActionAttackObject);
+				CombatAction attack(kActionAttackObject);
 				attack.object = bestTarget;
 				attack.range  = c->getMaxAttackRange();
 				c->addAction(attack);
@@ -986,7 +989,7 @@ void Module::updateCombatAI() {
 			continue;
 
 		// Non-leader: if idle, mirror the leader's attack target.
-		const Action *ca = c->getCurrentAction();
+		const CombatAction *ca = c->getCurrentAction();
 		bool idle = (!ca || ca->type == kActionFollowLeader);
 		if (!idle)
 			continue;
@@ -1020,7 +1023,7 @@ void Module::updateCombatAI() {
 
 		if (leaderTarget && !leaderTarget->isDead()) {
 			c->clearActions();
-			Action attack(kActionAttackObject);
+			CombatAction attack(kActionAttackObject);
 			attack.object = leaderTarget;
 			attack.range  = c->getMaxAttackRange();
 			c->addAction(attack);
@@ -1690,6 +1693,18 @@ void Module::updateCurrentPartyGUI() {
 
 	if (partySize > 2)
 		_ingame->setPartyMember2(_partyController.getPartyMemberByIndex(2).second);
+}
+
+Creature *Module::createCreatureByTemplate(const Common::UString &resRef) const {
+	return createCreature(resRef);
+}
+
+Object *Module::getLastAcquiredItem() const {
+	return _lastAcquiredItem;
+}
+
+void Module::setLastAcquiredItem(Object *item) {
+	_lastAcquiredItem = item;
 }
 
 } // End of namespace KotORBase

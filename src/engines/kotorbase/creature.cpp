@@ -1143,8 +1143,31 @@ void Creature::executeAttack(Object *target, int babPenalty, int damageMod, int 
 		damage = dieDamage * 2 + modDamage;
 	}
 
-	// Apply feat damage bonus and floor at 1.
+	// Apply feat damage bonus.
 	damage += featDamageMod;
+
+	// Sneak Attack (Scoundrel class feature): roll +1d6 per rank when the
+	// target is flat-footed (not currently in combat) or knocked down/paralysed.
+	// Condition: target is a creature not in combat (hasn't acted yet this round).
+	bool targetFlatFooted = targetCreature && !targetCreature->isInCombat();
+	if (hit && targetFlatFooted) {
+		// Count sneak attack ranks.
+		int sneakRanks = 0;
+		for (int rank = kFeatSneakAttack1; rank <= kFeatSneakAttack9; ++rank) {
+			if (_info.hasFeat(static_cast<uint32_t>(rank)))
+				++sneakRanks;
+		}
+		if (sneakRanks > 0) {
+			int sneakDamage = 0;
+			for (int i = 0; i < sneakRanks; ++i)
+				sneakDamage += RNG.getNext(1, 7); // 1d6 per rank
+			damage += sneakDamage;
+			debugC(Common::kDebugEngineLogic, 1,
+			       "Sneak Attack x%d: +%d damage on \"%s\"",
+			       sneakRanks, sneakDamage, target->getTag().c_str());
+		}
+	}
+
 	if (damage < 1)
 		damage = 1;
 
@@ -1201,28 +1224,78 @@ bool Creature::handleDeath() {
 	return false;
 }
 
+Object *Creature::getLastPerceived() const {
+	return _lastPerceived;
+}
+bool Creature::getLastPerceptionSeen() const {
+	return _lastPerceptionSeen;
+}
+bool Creature::getLastPerceptionVanished() const {
+	return _lastPerceptionVanished;
+}
+bool Creature::getLastPerceptionHeard() const {
+	return _lastPerceptionHeard;
+}
+bool Creature::getLastPerceptionInaudible() const {
+	return _lastPerceptionInaudible;
+}
+
+bool Creature::hasSeenObject(const Object *obj) const {
+	return _seenObjects.count(const_cast<Object *>(obj)) > 0;
+}
+
+bool Creature::hasHeardObject(const Object *obj) const {
+	return _heardObjects.count(const_cast<Object *>(obj)) > 0;
+}
+
 void Creature::handleObjectSeen(Object &object) {
 	bool inserted = _seenObjects.insert(&object).second;
-	if (inserted)
+	if (inserted) {
+		_lastPerceived           = &object;
+		_lastPerceptionSeen      = true;
+		_lastPerceptionVanished  = false;
+		_lastPerceptionHeard     = false;
+		_lastPerceptionInaudible = false;
 		debugC(Common::kDebugEngineLogic, 2,
 			"Creature \"%s\" have seen \"%s\"",
 			_tag.c_str(), object.getTag().c_str());
+	}
 }
 
 void Creature::handleObjectVanished(Object &object) {
 	size_t countErased = _seenObjects.erase(&object);
-	if (countErased != 0)
+	if (countErased != 0) {
+		_lastPerceived           = &object;
+		_lastPerceptionSeen      = false;
+		_lastPerceptionVanished  = true;
+		_lastPerceptionHeard     = false;
+		_lastPerceptionInaudible = false;
 		debugC(Common::kDebugEngineLogic, 2,
 			"Object \"%s\" have vanished from \"%s\"",
 			object.getTag().c_str(), _tag.c_str());
+	}
 }
 
 void Creature::handleObjectHeard(Object &object) {
-	_heardObjects.insert(&object);
+	bool inserted = _heardObjects.insert(&object).second;
+	if (inserted) {
+		_lastPerceived           = &object;
+		_lastPerceptionSeen      = false;
+		_lastPerceptionVanished  = false;
+		_lastPerceptionHeard     = true;
+		_lastPerceptionInaudible = false;
+	}
 }
 
 void Creature::handleObjectInaudible(Object &object) {
-	_heardObjects.erase(&object);
+	size_t countErased = _heardObjects.erase(&object);
+	if (countErased != 0) {
+		_lastPerceived           = &object;
+		_lastPerceptionSeen      = false;
+		_lastPerceptionVanished  = false;
+		_lastPerceptionHeard     = false;
+		_lastPerceptionInaudible = true;
+	}
 }
 
 void Creature::playHeadAnimation(const Common::UString &anim, bool restart, float length, float speed) {

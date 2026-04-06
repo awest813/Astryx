@@ -26,6 +26,7 @@
 #define ENGINES_KOTORBASE_SCRIPT_FUNCTIONS_H
 
 #include <cstddef>
+#include <map>
 #include <vector>
 
 #include "src/common/ustring.h"
@@ -234,6 +235,28 @@ protected:
 	void changeToStandardFaction(Aurora::NWScript::FunctionContext &ctx);
 	void getReputation(Aurora::NWScript::FunctionContext &ctx);
 	void adjustReputation(Aurora::NWScript::FunctionContext &ctx);
+	void changeFaction(Aurora::NWScript::FunctionContext &ctx);
+
+	void getFirstObjectInShape(Aurora::NWScript::FunctionContext &ctx);
+	void getNextObjectInShape(Aurora::NWScript::FunctionContext &ctx);
+
+	void createObject(Aurora::NWScript::FunctionContext &ctx);
+
+	void getModuleItemAcquired(Aurora::NWScript::FunctionContext &ctx);
+	void getModuleItemAcquiredFrom(Aurora::NWScript::FunctionContext &ctx);
+	void setCustomToken(Aurora::NWScript::FunctionContext &ctx);
+
+	void getLastPerceived(Aurora::NWScript::FunctionContext &ctx);
+	void getLastPerceptionHeard(Aurora::NWScript::FunctionContext &ctx);
+	void getLastPerceptionInaudible(Aurora::NWScript::FunctionContext &ctx);
+	void getLastPerceptionSeen(Aurora::NWScript::FunctionContext &ctx);
+	void getLastPerceptionVanished(Aurora::NWScript::FunctionContext &ctx);
+
+	void getObjectSeen(Aurora::NWScript::FunctionContext &ctx);
+	void getObjectHeard(Aurora::NWScript::FunctionContext &ctx);
+
+	void getNearestCreatureToLocation(Aurora::NWScript::FunctionContext &ctx);
+	void beginConversation(Aurora::NWScript::FunctionContext &ctx);
 
 	void createItemOnObject(Aurora::NWScript::FunctionContext &ctx);
 	void destroyObject(Aurora::NWScript::FunctionContext &ctx);
@@ -330,6 +353,12 @@ protected:
 	void actionWait(Aurora::NWScript::FunctionContext &ctx);
 	void getUserActionsPending(Aurora::NWScript::FunctionContext &ctx);
 	void noClicksFor(Aurora::NWScript::FunctionContext &ctx);
+	void actionGiveItem(Aurora::NWScript::FunctionContext &ctx);
+	void actionTakeItem(Aurora::NWScript::FunctionContext &ctx);
+	void giveItem(Aurora::NWScript::FunctionContext &ctx);
+	void actionDoCommand(Aurora::NWScript::FunctionContext &ctx);
+	void actionUseSkill(Aurora::NWScript::FunctionContext &ctx);
+	void setFacingPoint(Aurora::NWScript::FunctionContext &ctx);
 
 	// Sound, functions_sound.cpp
 
@@ -397,10 +426,23 @@ protected:
 	void effectAttackIncrease(Aurora::NWScript::FunctionContext &ctx);
 	void effectSkillIncrease(Aurora::NWScript::FunctionContext &ctx);
 	void effectTemporaryHitpoints(Aurora::NWScript::FunctionContext &ctx);
+	void effectDeath(Aurora::NWScript::FunctionContext &ctx);
+	void effectKnockdown(Aurora::NWScript::FunctionContext &ctx);
+	void effectParalyze(Aurora::NWScript::FunctionContext &ctx);
+	void effectStunned(Aurora::NWScript::FunctionContext &ctx);
+	void effectHaste(Aurora::NWScript::FunctionContext &ctx);
+	void effectAbilityIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectMovementSpeedIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectResurrection(Aurora::NWScript::FunctionContext &ctx);
 	void applyEffectToObject(Aurora::NWScript::FunctionContext &ctx);
+
+	void touchAttackMelee(Aurora::NWScript::FunctionContext &ctx);
+	void touchAttackRanged(Aurora::NWScript::FunctionContext &ctx);
 
 	// Items
 	void getBaseItemType(Aurora::NWScript::FunctionContext &ctx);
+	void getItemStackSize(Aurora::NWScript::FunctionContext &ctx);
+	void setItemStackSize(Aurora::NWScript::FunctionContext &ctx);
 
 	// Global values, functions_global.cpp
 
@@ -517,6 +559,13 @@ private:
 	// State for GetFirstObjectInArea / GetNextObjectInArea
 	std::vector<Object *> _areaIterObjects;
 	size_t _areaIterIndex { 0 };
+
+	// State for GetFirstObjectInShape / GetNextObjectInShape
+	std::vector<Object *> _shapeIterObjects;
+	size_t _shapeIterIndex { 0 };
+
+	// Custom token store (SetCustomToken / GetCustomToken replacements in dialogue)
+	std::map<int, Common::UString> _customTokens;
 };
 
 } // End of namespace KotOR

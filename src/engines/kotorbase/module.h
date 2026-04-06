@@ -303,6 +303,14 @@ public:
 	void toggleTriggers();
 	int getNextCombatRound() const;
 
+	/** Create a creature from a blueprint template name (for script use). */
+	Creature *createCreatureByTemplate(const Common::UString &resRef) const;
+
+	/** Return the last item acquired via script events (may be null). */
+	Object *getLastAcquiredItem() const;
+	/** Record the last item acquired (called from createItemOnObject etc.). */
+	void setLastAcquiredItem(Object *item);
+
 protected:
 	std::unique_ptr<IngameGUI> _ingame; ///< The ingame GUI.
 	std::unique_ptr<DialogGUI> _dialog; ///< Conversation/cutscene GUI.
@@ -413,6 +421,7 @@ private:
 	bool _soloMode;
 	int _userDefinedEventNumber { 0 };
 	bool _inBattleMusic { false };  ///< Is the battle music track currently playing?
+	Object *_lastAcquiredItem { nullptr }; ///< Last item acquired via script events.
 
 	// Unloading
 

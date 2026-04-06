@@ -24,6 +24,7 @@
 
 // TODO: check what happens on using invalid objects.
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 
@@ -803,6 +804,285 @@ void Functions::adjustReputation(Aurora::NWScript::FunctionContext &ctx) {
 	int srcFaction = static_cast<int>(source->getFaction());
 	int tgtFaction = static_cast<int>(target->getFaction());
 	_game->getModule().adjustReputation(tgtFaction, srcFaction, delta);
+}
+
+// ---------------------------------------------------------------------------
+// ChangeFaction — switch a creature's faction to match another creature's
+// ---------------------------------------------------------------------------
+
+void Functions::changeFaction(Aurora::NWScript::FunctionContext &ctx) {
+	// ChangeFaction(object oObjectToChangeFaction, object oMemberOfFactionToJoin)
+	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	Object *source = ObjectContainer::toObject(ctx.getParams()[1].getObject());
+	if (!target || !source)
+		return;
+
+	target->setFaction(source->getFaction());
+}
+
+// ---------------------------------------------------------------------------
+// GetFirstObjectInShape / GetNextObjectInShape — AoE radius iteration
+// ---------------------------------------------------------------------------
+
+void Functions::getFirstObjectInShape(Aurora::NWScript::FunctionContext &ctx) {
+	// GetFirstObjectInShape(int nShape, float fSize, location lTarget,
+	//                       int bLineOfSight=FALSE, int nObjectFilter=OBJECT_TYPE_CREATURE,
+	//                       vector vOrigin=...)
+	// nShape: 0=SHAPE_SPHERE, 1=SHAPE_CUBE, etc.  We treat all as a sphere (radius fSize).
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	_shapeIterObjects.clear();
+	_shapeIterIndex = 0;
+
+	float radius    = ctx.getParams()[1].getFloat();
+	int   objFilter = ctx.getParams()[4].getInt();
+
+	// Determine the centre from the location parameter.
+	Location *loc = ObjectContainer::toLocation(ctx.getParams()[2].getEngineType());
+	float cx = 0.0f, cy = 0.0f, cz = 0.0f;
+	if (loc)
+		loc->getPosition(cx, cy, cz);
+
+	// Gather all objects of the requested type(s) within the radius.
+	for (int bit = 1; bit < static_cast<int>(kObjectTypeMAX); bit <<= 1) {
+		if (!(objFilter & bit))
+			continue;
+
+		std::unique_ptr<Aurora::NWScript::ObjectSearch> search(
+			_game->getModule().findObjectsByType(static_cast<ObjectType>(bit)));
+
+		Aurora::NWScript::Object *raw = nullptr;
+		while ((raw = search->next())) {
+			Object *obj = ObjectContainer::toObject(raw);
+			if (!obj)
+				continue;
+			float ox, oy, oz;
+			obj->getPosition(ox, oy, oz);
+			float dx = ox - cx, dy = oy - cy, dz = oz - cz;
+			float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+			if (dist <= radius)
+				_shapeIterObjects.push_back(obj);
+		}
+	}
+
+	if (!_shapeIterObjects.empty())
+		ctx.getReturn() = _shapeIterObjects[_shapeIterIndex++];
+}
+
+void Functions::getNextObjectInShape(Aurora::NWScript::FunctionContext &ctx) {
+	// GetNextObjectInShape(...) — same signature as GetFirstObjectInShape, ignored.
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	if (_shapeIterIndex < _shapeIterObjects.size())
+		ctx.getReturn() = _shapeIterObjects[_shapeIterIndex++];
+}
+
+// ---------------------------------------------------------------------------
+// CreateObject — spawn a creature or item in the world
+// ---------------------------------------------------------------------------
+
+void Functions::createObject(Aurora::NWScript::FunctionContext &ctx) {
+	// CreateObject(int nObjectType, string sTemplate, location lLocation, int bUseAppearAnimation=FALSE)
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	int objectType = ctx.getParams()[0].getInt();
+	const Common::UString &tmpl = ctx.getParams()[1].getString();
+	Location *loc = ObjectContainer::toLocation(ctx.getParams()[2].getEngineType());
+
+	if (tmpl.empty() || !loc)
+		return;
+
+	float x, y, z;
+	loc->getPosition(x, y, z);
+
+	if (objectType & kObjectTypeCreature) {
+		// Create a creature from its blueprint template.
+		Creature *creature = nullptr;
+		try {
+			creature = _game->getModule().createCreatureByTemplate(tmpl);
+		} catch (...) {
+			warning("Functions::createObject(): failed to create creature \"%s\"", tmpl.c_str());
+			return;
+		}
+		if (!creature)
+			return;
+
+		creature->setPosition(x, y, z);
+		_game->getModule().getCurrentArea()->addCreature(creature);
+		ctx.getReturn() = creature;
+	}
+	// Item creation via CreateObject is rare in the progression path;
+	// CreateItemOnObject covers most use-cases and is already implemented.
+}
+
+// ---------------------------------------------------------------------------
+// GetModuleItemAcquired / GetModuleItemAcquiredFrom
+// ---------------------------------------------------------------------------
+
+void Functions::getModuleItemAcquired(Aurora::NWScript::FunctionContext &ctx) {
+	// Returns the item last acquired (set by the module's OnAcquireItem event).
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(
+	    _game->getModule().getLastAcquiredItem());
+}
+
+void Functions::getModuleItemAcquiredFrom(Aurora::NWScript::FunctionContext &ctx) {
+	// Returns the object from which the item was acquired.
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+}
+
+// ---------------------------------------------------------------------------
+// SetCustomToken — dialogue token replacement
+// ---------------------------------------------------------------------------
+
+void Functions::setCustomToken(Aurora::NWScript::FunctionContext &ctx) {
+	// SetCustomToken(int nCustomTokenNumber, string sTokenValue)
+	int tokenNum = ctx.getParams()[0].getInt();
+	const Common::UString &value = ctx.getParams()[1].getString();
+	_customTokens[tokenNum] = value;
+}
+
+// ---------------------------------------------------------------------------
+// Perception state queries — OnPerceive script support
+// ---------------------------------------------------------------------------
+
+void Functions::getLastPerceived(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (caller)
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(caller->getLastPerceived());
+}
+
+void Functions::getLastPerceptionHeard(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = (caller && caller->getLastPerceptionHeard()) ? 1 : 0;
+}
+
+void Functions::getLastPerceptionInaudible(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = (caller && caller->getLastPerceptionInaudible()) ? 1 : 0;
+}
+
+void Functions::getLastPerceptionSeen(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = (caller && caller->getLastPerceptionSeen()) ? 1 : 0;
+}
+
+void Functions::getLastPerceptionVanished(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = (caller && caller->getLastPerceptionVanished()) ? 1 : 0;
+}
+
+// ---------------------------------------------------------------------------
+// GetObjectSeen / GetObjectHeard — perception membership queries
+// ---------------------------------------------------------------------------
+
+void Functions::getObjectSeen(Aurora::NWScript::FunctionContext &ctx) {
+	// GetObjectSeen(object oTarget, object oSource=OBJECT_SELF) → int
+	const Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	const Creature *source = ObjectContainer::toCreature(ctx.getParams()[1].getObject()
+	                             ? ctx.getParams()[1].getObject() : ctx.getCaller());
+	if (!target || !source) {
+		ctx.getReturn() = 0;
+		return;
+	}
+	ctx.getReturn() = source->hasSeenObject(target) ? 1 : 0;
+}
+
+void Functions::getObjectHeard(Aurora::NWScript::FunctionContext &ctx) {
+	// GetObjectHeard(object oTarget, object oSource=OBJECT_SELF) → int
+	const Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	const Creature *source = ObjectContainer::toCreature(ctx.getParams()[1].getObject()
+	                             ? ctx.getParams()[1].getObject() : ctx.getCaller());
+	if (!target || !source) {
+		ctx.getReturn() = 0;
+		return;
+	}
+	ctx.getReturn() = source->hasHeardObject(target) ? 1 : 0;
+}
+
+// ---------------------------------------------------------------------------
+// GetNearestCreatureToLocation
+// ---------------------------------------------------------------------------
+
+void Functions::getNearestCreatureToLocation(Aurora::NWScript::FunctionContext &ctx) {
+	// GetNearestCreatureToLocation(int nFirstCriteriaType, int nFirstCriteriaValue,
+	//   location lLocation, int nNth=1, ...) → object
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	Location *loc = ObjectContainer::toLocation(ctx.getParams()[2].getEngineType());
+	if (!loc)
+		return;
+
+	float lx, ly, lz;
+	loc->getPosition(lx, ly, lz);
+
+	int nth = ctx.getParams()[3].getInt();
+	if (nth < 1) nth = 1;
+
+	CreatureSearchCriteria criteria;
+	criteria.firstCriteriaType  = static_cast<CreatureType>(ctx.getParams()[0].getInt());
+	criteria.firstCriteriaValue = ctx.getParams()[1].getInt();
+	criteria.secondCriteriaType  = static_cast<CreatureType>(ctx.getParams()[4].getInt());
+	criteria.secondCriteriaValue = ctx.getParams()[5].getInt();
+	criteria.thirdCriteriaType   = static_cast<CreatureType>(ctx.getParams()[6].getInt());
+	criteria.thirdCriteriaValue  = ctx.getParams()[7].getInt();
+
+	// Use a temporary location object as the reference point.
+	Location refLoc;
+	refLoc.setPosition(lx, ly, lz);
+
+	// Walk through all creatures sorted by distance to lLocation.
+	const std::vector<Creature *> &creatures =
+	    _game->getModule().getCurrentArea()->getCreatures();
+
+	// Sort a copy by distance to the target location.
+	std::vector<std::pair<float, Creature *>> sorted;
+	for (Creature *c : creatures) {
+		if (!c || c->isDead())
+			continue;
+		float cx, cy, cz;
+		c->getPosition(cx, cy, cz);
+		float dx = cx - lx, dy = cy - ly, dz = cz - lz;
+		float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+		sorted.push_back({dist, c});
+	}
+	std::sort(sorted.begin(), sorted.end(),
+	          [](const std::pair<float, Creature *> &a, const std::pair<float, Creature *> &b) {
+	              return a.first < b.first;
+	          });
+
+	int count = 0;
+	for (auto &p : sorted) {
+		Creature *c = p.second;
+		if (c->matchSearchCriteria(nullptr, criteria)) {
+			++count;
+			if (count == nth) {
+				ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(c);
+				return;
+			}
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// BeginConversation — start a conversation from a script
+// ---------------------------------------------------------------------------
+
+void Functions::beginConversation(Aurora::NWScript::FunctionContext &ctx) {
+	// BeginConversation(string sResRef="", object oObjectToDialog=OBJECT_SELF) → int
+	const Common::UString &resRef = ctx.getParams()[0].getString();
+	Aurora::NWScript::Object *raw = ctx.getParams()[1].getObject()
+	                                ? ctx.getParams()[1].getObject() : ctx.getCaller();
+	Creature *target = ObjectContainer::toCreature(raw);
+
+	Common::UString convName = resRef;
+	if (convName.empty() && target)
+		convName = target->getConversation();
+
+	ctx.getReturn() = 0;
+	if (convName.empty())
+		return;
+
+	_game->getModule().delayConversation(convName, target);
+	ctx.getReturn() = 1;
 }
 
 } // End of namespace KotORBase

@@ -24,6 +24,8 @@
 
 #include "src/common/error.h"
 #include "src/common/util.h"
+#include "src/common/random.h"
+#include "src/common/debug.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
 
@@ -489,6 +491,67 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 				}
 			}
 			break;
+		case kEffectDeath: {
+			// Immediately kill the target (scripted death — Force Choke kill, etc.).
+			int minHp = target->getMinOneHitPoints() ? 1 : 0;
+			target->setCurrentHitPoints(minHp);
+			if (targetCreature && !targetCreature->isDead()) {
+				targetCreature->cancelCombat();
+				targetCreature->handleDeath();
+			}
+			break;
+		}
+		case kEffectKnockdown:
+			// Knock the target prone: lose Dex bonus to AC for one round.
+			// We model this as a temporary -4 AC penalty (standard d20 prone penalty).
+			if (targetCreature)
+				targetCreature->adjustArmorClassModifier(-4);
+			debugC(Common::kDebugEngineLogic, 1,
+			       "Object \"%s\" was knocked down", target->getTag().c_str());
+			break;
+		case kEffectParalyze:
+			// Force Stasis etc. — target cannot act.  Clear their action queue.
+			if (targetCreature) {
+				targetCreature->clearActions();
+				targetCreature->adjustArmorClassModifier(-4);
+			}
+			debugC(Common::kDebugEngineLogic, 1,
+			       "Object \"%s\" was paralysed", target->getTag().c_str());
+			break;
+		case kEffectStunned:
+			// Stunned: clear action queue, impose AC penalty.
+			if (targetCreature) {
+				targetCreature->clearActions();
+				targetCreature->adjustArmorClassModifier(-2);
+			}
+			debugC(Common::kDebugEngineLogic, 1,
+			       "Object \"%s\" was stunned", target->getTag().c_str());
+			break;
+		case kEffectHaste:
+			// Haste grants one extra attack per round (not yet modelled in round
+			// loop — log for now, future: add an extra swing in notifyCombatRoundEnded).
+			debugC(Common::kDebugEngineLogic, 1,
+			       "Object \"%s\" is hasted", target->getTag().c_str());
+			break;
+		case kEffectAbilityIncrease:
+			// Temporary ability score increase — log for now.
+			// Full implementation requires per-creature ability modifiers on a stack.
+			debugC(Common::kDebugEngineLogic, 1,
+			       "Object \"%s\" ability %d increased by %d",
+			       target->getTag().c_str(), effect->getDamageType(), effect->getAmount());
+			break;
+		case kEffectMovementSpeedIncrease:
+			// Movement speed boost — logged (full implementation needs creature move-rate stack).
+			debugC(Common::kDebugEngineLogic, 1,
+			       "Object \"%s\" movement speed increased by %d%%",
+			       target->getTag().c_str(), effect->getAmount());
+			break;
+		case kEffectResurrection:
+			// Resurrection requires clearing internal dead state — handled by
+			// Creature::revive() when called from scripts.  Here we only set HP.
+			if (!targetCreature || targetCreature->isDead())
+				target->setCurrentHitPoints(1);
+			break;
 		case kEffectVisual:
 		default:
 			break;
@@ -666,26 +729,26 @@ void Functions::givePlotXP(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::effectACIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectACIncrease(int nValue, int nModifyType=0, int nDamageType=8199)
 	int bonus = ctx.getParams()[0].getInt();
-	ctx.getReturn().setEngineType(new Effect(kEffectACIncrease, bonus));
+	ctx.getReturn() = new Effect(kEffectACIncrease, bonus);
 }
 
 void Functions::effectAttackIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectAttackIncrease(int nBonus, int nModifierType=0)
 	int bonus = ctx.getParams()[0].getInt();
-	ctx.getReturn().setEngineType(new Effect(kEffectAttackIncrease, bonus));
+	ctx.getReturn() = new Effect(kEffectAttackIncrease, bonus);
 }
 
 void Functions::effectSkillIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectSkillIncrease(int nSkill, int nValue)
 	int skill  = ctx.getParams()[0].getInt();
 	int amount = ctx.getParams()[1].getInt();
-	ctx.getReturn().setEngineType(new Effect(kEffectSkillIncrease, amount, skill));
+	ctx.getReturn() = new Effect(kEffectSkillIncrease, amount, skill);
 }
 
 void Functions::effectTemporaryHitpoints(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectTemporaryHitpoints(int nHitPoints)
 	int amount = ctx.getParams()[0].getInt();
-	ctx.getReturn().setEngineType(new Effect(kEffectTemporaryHitpoints, amount));
+	ctx.getReturn() = new Effect(kEffectTemporaryHitpoints, amount);
 }
 
 // ---------------------------------------------------------------------------
@@ -700,6 +763,134 @@ void Functions::getBaseItemType(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 	}
 	ctx.getReturn() = item->getBaseItem();
+}
+
+// ---------------------------------------------------------------------------
+// New effect constructors — combat/status effects for Dantooine parity
+// ---------------------------------------------------------------------------
+
+void Functions::effectDeath(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectDeath(int bSpectacularDeath=FALSE, int bDisplayFeedback=TRUE)
+	// Instantly kills the target when applied.
+	ctx.getReturn() = new Effect(kEffectDeath, 0);
+}
+
+void Functions::effectKnockdown(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectKnockdown() — knocks target prone, losing any Dex bonus to AC.
+	ctx.getReturn() = new Effect(kEffectKnockdown, 0);
+}
+
+void Functions::effectParalyze(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectParalyze() — used by Force Stasis; target cannot act or dodge.
+	ctx.getReturn() = new Effect(kEffectParalyze, 0);
+}
+
+void Functions::effectStunned(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectStunned() — stuns target (interrupts action queue).
+	ctx.getReturn() = new Effect(kEffectStunned, 0);
+}
+
+void Functions::effectHaste(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectHaste() — grants one extra attack per round.
+	ctx.getReturn() = new Effect(kEffectHaste, 0);
+}
+
+void Functions::effectAbilityIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectAbilityIncrease(int nAbilityToIncrease, int nModifyBy)
+	int ability  = ctx.getParams()[0].getInt();
+	int modifyBy = ctx.getParams()[1].getInt();
+	// Pack ability type into damageType field, amount into amount field.
+	ctx.getReturn() = new Effect(kEffectAbilityIncrease, modifyBy, ability);
+}
+
+void Functions::effectMovementSpeedIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectMovementSpeedIncrease(int nNewSpeedPercent)
+	int percent = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Effect(kEffectMovementSpeedIncrease, percent);
+}
+
+void Functions::effectResurrection(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectResurrection() — revives a dead creature at 1 HP.
+	ctx.getReturn() = new Effect(kEffectResurrection, 1);
+}
+
+// ---------------------------------------------------------------------------
+// Touch attacks — Force power delivery mechanism
+// ---------------------------------------------------------------------------
+
+void Functions::touchAttackMelee(Aurora::NWScript::FunctionContext &ctx) {
+	// TouchAttackMelee(object oTarget, int bDisplayFeedback=TRUE) → int
+	// Returns: 0=miss, 1=hit, 2=critical.  Touch attacks ignore armour AC.
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller || !target) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	Creature *targetCreature = ObjectContainer::toCreature(target);
+
+	// Touch AC = 10 + Dex modifier only (no armour).
+	int touchAC = 10;
+	if (targetCreature)
+		touchAC += targetCreature->getCreatureInfo().getAbilityModifier(kAbilityDexterity);
+
+	int bab      = caller->getBAB();
+	int strMod   = caller->getCreatureInfo().getAbilityModifier(kAbilityStrength);
+	int d20Roll  = RNG.getNext(1, 21);
+	int total    = d20Roll + bab + strMod;
+
+	bool hit  = (d20Roll == 20) || (d20Roll != 1 && total >= touchAC);
+	bool crit = hit && (d20Roll == 20);
+
+	ctx.getReturn() = crit ? 2 : (hit ? 1 : 0);
+}
+
+void Functions::touchAttackRanged(Aurora::NWScript::FunctionContext &ctx) {
+	// TouchAttackRanged(object oTarget, int bDisplayFeedback=TRUE) → int
+	// Same as melee touch but uses Dex for the attack roll.
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller || !target) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	Creature *targetCreature = ObjectContainer::toCreature(target);
+
+	int touchAC = 10;
+	if (targetCreature)
+		touchAC += targetCreature->getCreatureInfo().getAbilityModifier(kAbilityDexterity);
+
+	int bab     = caller->getBAB();
+	int dexMod  = caller->getCreatureInfo().getAbilityModifier(kAbilityDexterity);
+	int d20Roll = RNG.getNext(1, 21);
+	int total   = d20Roll + bab + dexMod;
+
+	bool hit  = (d20Roll == 20) || (d20Roll != 1 && total >= touchAC);
+	bool crit = hit && (d20Roll == 20);
+
+	ctx.getReturn() = crit ? 2 : (hit ? 1 : 0);
+}
+
+// ---------------------------------------------------------------------------
+// Item stack size queries
+// ---------------------------------------------------------------------------
+
+void Functions::getItemStackSize(Aurora::NWScript::FunctionContext &ctx) {
+	// GetItemStackSize(object oItem) → int
+	Item *item = ObjectContainer::toItem(getParamObject(ctx, 0));
+	// Stack size is stored on the item (all KotOR items default to 1 unless
+	// they are stackable — grenades, medpacs, etc.).
+	ctx.getReturn() = item ? item->getStackSize() : 0;
+}
+
+void Functions::setItemStackSize(Aurora::NWScript::FunctionContext &ctx) {
+	// SetItemStackSize(object oItem, int nSize)
+	Item *item = ObjectContainer::toItem(getParamObject(ctx, 0));
+	int  size  = ctx.getParams()[1].getInt();
+	if (item && size >= 0)
+		item->setStackSize(size);
 }
 
 } // End of namespace KotORBase
