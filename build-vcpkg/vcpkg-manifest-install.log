@@ -1,0 +1,782 @@
+Detecting compiler hash for triplet x64-windows...
+Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/cl.exe
+The following packages will be built and installed:
+    boost-algorithm:x64-windows@1.90.0#1
+  * boost-align:x64-windows@1.90.0#1
+    boost-any:x64-windows@1.90.0#1
+  * boost-array:x64-windows@1.90.0#1
+  * boost-assert:x64-windows@1.90.0#1
+  * boost-atomic:x64-windows@1.90.0#1
+  * boost-bind:x64-windows@1.90.0#1
+  * boost-charconv:x64-windows@1.90.0#1
+  * boost-chrono:x64-windows@1.90.0#1
+  * boost-cmake:x64-windows@1.90.0#1
+  * boost-concept-check:x64-windows@1.90.0#1
+  * boost-config:x64-windows@1.90.0#1
+  * boost-container:x64-windows@1.90.0#1
+  * boost-container-hash:x64-windows@1.90.0#1
+  * boost-conversion:x64-windows@1.90.0#1
+  * boost-core:x64-windows@1.90.0#1
+    boost-date-time:x64-windows@1.90.0#1
+  * boost-describe:x64-windows@1.90.0#1
+  * boost-detail:x64-windows@1.90.0#1
+  * boost-exception:x64-windows@1.90.0#1
+    boost-filesystem:x64-windows@1.90.0#1
+  * boost-function:x64-windows@1.90.0#1
+  * boost-function-types:x64-windows@1.90.0#1
+  * boost-functional:x64-windows@1.90.0#1
+  * boost-fusion:x64-windows@1.90.0#1
+  * boost-headers:x64-windows@1.90.0#1
+  * boost-integer:x64-windows@1.90.0#1
+  * boost-intrusive:x64-windows@1.90.0#1
+  * boost-io:x64-windows@1.90.0#1
+  * boost-iterator:x64-windows@1.90.0#1
+  * boost-lexical-cast:x64-windows@1.90.0#1
+    boost-locale:x64-windows@1.90.0#1
+  * boost-move:x64-windows@1.90.0#1
+  * boost-mp11:x64-windows@1.90.0#1
+  * boost-mpl:x64-windows@1.90.0#1
+  * boost-numeric-conversion:x64-windows@1.90.0#1
+  * boost-optional:x64-windows@1.90.0#1
+  * boost-predef:x64-windows@1.90.0#1
+  * boost-preprocessor:x64-windows@1.90.0#1
+  * boost-range:x64-windows@1.90.0#1
+  * boost-ratio:x64-windows@1.90.0#1
+  * boost-regex:x64-windows@1.90.0#1
+  * boost-scope:x64-windows@1.90.0#1
+    boost-scope-exit:x64-windows@1.90.0#1
+    boost-smart-ptr:x64-windows@1.90.0#1
+  * boost-static-assert:x64-windows@1.90.0#1
+    boost-system:x64-windows@1.90.0#1
+  * boost-thread:x64-windows@1.90.0#1
+  * boost-throw-exception:x64-windows@1.90.0#1
+  * boost-tokenizer:x64-windows@1.90.0#1
+  * boost-tuple:x64-windows@1.90.0#1
+  * boost-type-index:x64-windows@1.90.0#1
+    boost-type-traits:x64-windows@1.90.0#1
+  * boost-typeof:x64-windows@1.90.0#1
+  * boost-uninstall:x64-windows@1.90.0#1
+  * boost-unordered:x64-windows@1.90.0#1
+    boost-utility:x64-windows@1.90.0#1
+    boost-uuid:x64-windows@1.90.0#1
+    boost-variant:x64-windows@1.90.0#1
+  * boost-variant2:x64-windows@1.90.0#1
+  * boost-winapi:x64-windows@1.90.0#1
+  * brotli:x64-windows@1.2.0
+  * bzip2[core,tool]:x64-windows@1.0.8#6
+    faad2:x64-windows@2.11.2
+  * fmt:x64-windows@12.1.0
+    freetype[brotli,bzip2,core,png,zlib]:x64-windows@2.14.3
+    libiconv:x64-windows@1.18#3
+    liblzma:x64-windows@5.8.3
+    libmad[aso,core]:x64-windows@0.16.4#4
+    libogg:x64-windows@1.3.6#1
+    libpng:x64-windows@1.6.56
+    libvorbis:x64-windows@1.3.7#4
+    libvpx:x64-windows@1.16.0
+    libxml2[core,iconv,zlib]:x64-windows@2.15.2
+    openal-soft:x64-windows@1.25.1
+  * pkgconf:x64-windows@2.5.1#4
+    sdl2:x64-windows@2.32.10
+  * vcpkg-boost:x64-windows@2025-03-29
+  * vcpkg-cmake:x64-windows@2024-04-23
+  * vcpkg-cmake-config:x64-windows@2024-05-23
+  * vcpkg-cmake-get-vars:x64-windows@2025-05-29
+  * vcpkg-msbuild:x64-windows@2023-08-08
+  * vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03
+  * vcpkg-tool-meson:x64-windows@1.9.0#4
+    zlib:x64-windows@1.3.1
+Additional packages (*) will be modified to complete this operation.
+Restored 76 package(s) from C:\Users\allen\AppData\Local\vcpkg\archives in 7 s. Use --debug to see more details.
+Installing 1/85 vcpkg-cmake-config:x64-windows@2024-05-23...
+vcpkg-cmake-config:x64-windows@2024-05-23 package ABI: d42fbdab9949bb590dcee948f83d094e5966fe27dcbaa0bf4aa8db6c71ed9915
+Elapsed time to handle vcpkg-cmake-config:x64-windows: 37.3 ms
+Installing 2/85 vcpkg-cmake:x64-windows@2024-04-23...
+vcpkg-cmake:x64-windows@2024-04-23 package ABI: deb96b89d34095ec9c6e7b14fc2cfa81a7ff832ca5a571554d55bf38d6852206
+Elapsed time to handle vcpkg-cmake:x64-windows: 77.1 ms
+Installing 3/85 vcpkg-boost:x64-windows@2025-03-29...
+vcpkg-boost:x64-windows@2025-03-29 package ABI: 821532e4b6e70c105321280400a871e25f5ef67dccd0df98324b041f2cc96439
+Elapsed time to handle vcpkg-boost:x64-windows: 47.8 ms
+Installing 4/85 boost-uninstall:x64-windows@1.90.0#1...
+boost-uninstall:x64-windows@1.90.0#1 package ABI: b70ef1cfe700f6d2d750b7d5d2ffeae7c46448d6f4543fd546bddcb0735d45ba
+Elapsed time to handle boost-uninstall:x64-windows: 30.1 ms
+Installing 5/85 boost-cmake:x64-windows@1.90.0#1...
+boost-cmake:x64-windows@1.90.0#1 package ABI: 75923a92ed203306db6ec7023bcdd0cf4e437a637c73d3cfc8602d0ed5d651f7
+Elapsed time to handle boost-cmake:x64-windows: 78.4 ms
+Installing 6/85 boost-headers:x64-windows@1.90.0#1...
+boost-headers:x64-windows@1.90.0#1 package ABI: 60a51a4bf91ccc93acd112244039894c4fd24a367bbcbd7a607255e0daca2c85
+Elapsed time to handle boost-headers:x64-windows: 47.2 ms
+Installing 7/85 boost-config:x64-windows@1.90.0#1...
+boost-config:x64-windows@1.90.0#1 package ABI: 2d9d2748f559532e3fff5e7e42e309d1d865200d86f854adc07c26dd82799101
+Elapsed time to handle boost-config:x64-windows: 143 ms
+Installing 8/85 boost-assert:x64-windows@1.90.0#1...
+boost-assert:x64-windows@1.90.0#1 package ABI: f1e3ebdbea39b3ac6d2fe26503a8617e1b74c9bbf9db646ac1bca33906a7cb88
+Elapsed time to handle boost-assert:x64-windows: 27.2 ms
+Installing 9/85 boost-throw-exception:x64-windows@1.90.0#1...
+boost-throw-exception:x64-windows@1.90.0#1 package ABI: dc25a446c1d5eb2d74c85d79da6253716041f209ba152748072824ace76ddcad
+Elapsed time to handle boost-throw-exception:x64-windows: 9.42 ms
+Installing 10/85 boost-predef:x64-windows@1.90.0#1...
+boost-predef:x64-windows@1.90.0#1 package ABI: 1777cf1035594e30632efc8dd8b3fc3856b99a1e17b88a0fd0521946d829c701
+Elapsed time to handle boost-predef:x64-windows: 88.2 ms
+Installing 11/85 boost-mp11:x64-windows@1.90.0#1...
+boost-mp11:x64-windows@1.90.0#1 package ABI: 91eecaa7d14ceb77652670baf3fd36adafea9e35992c17c1f20514c953102afc
+Elapsed time to handle boost-mp11:x64-windows: 153 ms
+Installing 12/85 boost-core:x64-windows@1.90.0#1...
+boost-core:x64-windows@1.90.0#1 package ABI: 0bb166e79704ae8f17f86cf74fdecccdf747f9df9910661fe698589a80112334
+Elapsed time to handle boost-core:x64-windows: 169 ms
+Installing 13/85 boost-describe:x64-windows@1.90.0#1...
+boost-describe:x64-windows@1.90.0#1 package ABI: 3a18036682fa3100199b0a75ddebf205a3f1614e8204fc1fa5fcf41a6aafd23b
+Elapsed time to handle boost-describe:x64-windows: 139 ms
+Installing 14/85 boost-container-hash:x64-windows@1.90.0#1...
+boost-container-hash:x64-windows@1.90.0#1 package ABI: ec372e61369b4d3c1ef363bd7ce750a3216f08f538524d373bfd4a1dc121a845
+Elapsed time to handle boost-container-hash:x64-windows: 140 ms
+Installing 15/85 boost-unordered:x64-windows@1.90.0#1...
+boost-unordered:x64-windows@1.90.0#1 package ABI: 3de25003f059d192404f4cccc87386f4ecde49e403427b43698f2d60f26d90b6
+Elapsed time to handle boost-unordered:x64-windows: 154 ms
+Installing 16/85 boost-static-assert:x64-windows@1.90.0#1...
+boost-static-assert:x64-windows@1.90.0#1 package ABI: f71fc639c1e493133e06d2b7fe3050c99ee30d82df76f0b15914a5aca408ae54
+Elapsed time to handle boost-static-assert:x64-windows: 45.2 ms
+Installing 17/85 boost-type-traits:x64-windows@1.90.0#1...
+boost-type-traits:x64-windows@1.90.0#1 package ABI: cf770955493ce70db9c7a70e80b6b07b53143ae2e7022e452726456c0ea29397
+Elapsed time to handle boost-type-traits:x64-windows: 157 ms
+Installing 18/85 boost-tuple:x64-windows@1.90.0#1...
+boost-tuple:x64-windows@1.90.0#1 package ABI: 1469d2530f07f0852cade2ce35c9ea146c843bff9d5011f0aea24403e0178f67
+Elapsed time to handle boost-tuple:x64-windows: 27.9 ms
+Installing 19/85 boost-preprocessor:x64-windows@1.90.0#1...
+boost-preprocessor:x64-windows@1.90.0#1 package ABI: ca92f6ee3bace0366fc453cec8969f515eff690c05b8e600bec48e2b5dd7c911
+Elapsed time to handle boost-preprocessor:x64-windows: 143 ms
+Installing 20/85 boost-concept-check:x64-windows@1.90.0#1...
+boost-concept-check:x64-windows@1.90.0#1 package ABI: 990416796c23a8d2ef949ecda49c495d7f28c22ed7b4ab341b99fb05047eda54
+Elapsed time to handle boost-concept-check:x64-windows: 77 ms
+Installing 21/85 boost-regex:x64-windows@1.90.0#1...
+boost-regex:x64-windows@1.90.0#1 package ABI: a7a431efff714bdcc989acb621864854653a7c15b387b6b62ab1a06956ef6ac9
+Elapsed time to handle boost-regex:x64-windows: 158 ms
+Installing 22/85 boost-io:x64-windows@1.90.0#1...
+boost-io:x64-windows@1.90.0#1 package ABI: 5638ee69e332dc0dd1df65e54de6cc99956b17b08aa56315a5cc514664d9d005
+Elapsed time to handle boost-io:x64-windows: 61 ms
+Installing 23/85 boost-utility:x64-windows@1.90.0#1...
+boost-utility:x64-windows@1.90.0#1 package ABI: 978da79b0999295f599362ef417212155836c327734e0588534d3dd3e3e9d77d
+Elapsed time to handle boost-utility:x64-windows: 139 ms
+Installing 24/85 boost-optional:x64-windows@1.90.0#1...
+boost-optional:x64-windows@1.90.0#1 package ABI: b3bdf9c7036b7122d4c2af78285be1780c816dc92f05d5ad0a2acac284414959
+Elapsed time to handle boost-optional:x64-windows: 124 ms
+Installing 25/85 boost-mpl:x64-windows@1.90.0#1...
+boost-mpl:x64-windows@1.90.0#1 package ABI: c8bfef7b1e0d2a4d04dedc372db3153703af4049d1cf4f3bfc25f0fd47374982
+Elapsed time to handle boost-mpl:x64-windows: 161 ms
+Installing 26/85 boost-typeof:x64-windows@1.90.0#1...
+boost-typeof:x64-windows@1.90.0#1 package ABI: dd0750cc49279c89facbcf2ee475daa14da30dfc68e8fafb09d2bcfac8dfb072
+Elapsed time to handle boost-typeof:x64-windows: 149 ms
+Installing 27/85 boost-detail:x64-windows@1.90.0#1...
+boost-detail:x64-windows@1.90.0#1 package ABI: 6a5a02ee3ad4fa6b37a66e5e4a477af64a67618b3f0ca24d6740b33a43da66a6
+Elapsed time to handle boost-detail:x64-windows: 152 ms
+Installing 28/85 boost-function-types:x64-windows@1.90.0#1...
+boost-function-types:x64-windows@1.90.0#1 package ABI: 4f86a474de52942163b99527684994dfbdcc39a51c177497b61cd5a93189ae9b
+Elapsed time to handle boost-function-types:x64-windows: 137 ms
+Installing 29/85 boost-bind:x64-windows@1.90.0#1...
+boost-bind:x64-windows@1.90.0#1 package ABI: 3cfb395cf5a9068a35d5500eb07583bece330388da2553e30f1e461e21065cca
+Elapsed time to handle boost-bind:x64-windows: 92.3 ms
+Installing 30/85 boost-function:x64-windows@1.90.0#1...
+boost-function:x64-windows@1.90.0#1 package ABI: b1a829341397de83bfb861ff2b92722b59f63ad2cc77f8d39f2049febbfa69f9
+Elapsed time to handle boost-function:x64-windows: 154 ms
+Installing 31/85 boost-functional:x64-windows@1.90.0#1...
+boost-functional:x64-windows@1.90.0#1 package ABI: e7a3f10dcf4c5f13f38d1d39e7e0859f6ad2976b8c524e2b4b8154917435e6f8
+Elapsed time to handle boost-functional:x64-windows: 76.9 ms
+Installing 32/85 boost-fusion:x64-windows@1.90.0#1...
+boost-fusion:x64-windows@1.90.0#1 package ABI: 0c82dfe23034f0c9b3f83bb8178e745db6064a3c2b14c6fe6dc69d9f41502dbe
+Elapsed time to handle boost-fusion:x64-windows: 173 ms
+Installing 33/85 boost-iterator:x64-windows@1.90.0#1...
+boost-iterator:x64-windows@1.90.0#1 package ABI: 95b8a7fdc9ce2bd2c51d67700232adf70e6f28f84d2a76cc371c80d79de71899
+Elapsed time to handle boost-iterator:x64-windows: 166 ms
+Installing 34/85 boost-smart-ptr:x64-windows@1.90.0#1...
+boost-smart-ptr:x64-windows@1.90.0#1 package ABI: 2b2fa7f0a02a829a069b9bea59857dabb27550d87444cb333fe17ebe1950a4fc
+Elapsed time to handle boost-smart-ptr:x64-windows: 155 ms
+Installing 35/85 boost-conversion:x64-windows@1.90.0#1...
+boost-conversion:x64-windows@1.90.0#1 package ABI: 90f8d69885b7536087ef2aa580c2b8b664123f08364483220dc689dbab9f37de
+Elapsed time to handle boost-conversion:x64-windows: 30 ms
+Installing 36/85 boost-array:x64-windows@1.90.0#1...
+boost-array:x64-windows@1.90.0#1 package ABI: 18d998cfc55f2930714fa83232c19e55ce932984e9a4d10789cb8bbe316c1918
+Elapsed time to handle boost-array:x64-windows: 30.5 ms
+Installing 37/85 boost-range:x64-windows@1.90.0#1...
+boost-range:x64-windows@1.90.0#1 package ABI: a330bd4f0a68414983bc7c553cfadc80a5ddc919d9ad1f6f582e12cc66efa436
+Elapsed time to handle boost-range:x64-windows: 156 ms
+Installing 38/85 boost-exception:x64-windows@1.90.0#1...
+boost-exception:x64-windows@1.90.0#1 package ABI: 966c71e024f500e46e929fd6ac38b0428c12c2f14a1bbbc1e336af2db0f2572f
+Elapsed time to handle boost-exception:x64-windows: 154 ms
+Installing 39/85 boost-algorithm:x64-windows@1.90.0#1...
+boost-algorithm:x64-windows@1.90.0#1 package ABI: b7235d0ade84c677a6c2fed34fcb8ec2a8efce87660de0b656eec395b4fe85df
+Elapsed time to handle boost-algorithm:x64-windows: 153 ms
+Installing 40/85 boost-type-index:x64-windows@1.90.0#1...
+boost-type-index:x64-windows@1.90.0#1 package ABI: c41e8c6663bda0e404e5219c541617b6b3982d2d6c7550f8d14506e754163008
+Elapsed time to handle boost-type-index:x64-windows: 61.6 ms
+Installing 41/85 boost-any:x64-windows@1.90.0#1...
+boost-any:x64-windows@1.90.0#1 package ABI: b0e9aad0f0b8519611f3b3dd04ca18ef0d9ffa8036c4fa9d8f6ff47c961ee252
+Elapsed time to handle boost-any:x64-windows: 31.2 ms
+Installing 42/85 boost-winapi:x64-windows@1.90.0#1...
+boost-winapi:x64-windows@1.90.0#1 package ABI: d20601590e8f51ce6f6e6cbf9af7472f6bb8b7f435ec2ae935bf88445c124799
+Elapsed time to handle boost-winapi:x64-windows: 157 ms
+Installing 43/85 boost-tokenizer:x64-windows@1.90.0#1...
+boost-tokenizer:x64-windows@1.90.0#1 package ABI: 56dc657342bc71230fadcdbd6091656885248d22d5045dd1763926d0e4f8fbe7
+Elapsed time to handle boost-tokenizer:x64-windows: 45.4 ms
+Installing 44/85 boost-numeric-conversion:x64-windows@1.90.0#1...
+boost-numeric-conversion:x64-windows@1.90.0#1 package ABI: 039a18fc506a3bed92434b533493c346fcfac09f6a6f9d923b1374205b1eb985
+Elapsed time to handle boost-numeric-conversion:x64-windows: 153 ms
+Installing 45/85 boost-move:x64-windows@1.90.0#1...
+boost-move:x64-windows@1.90.0#1 package ABI: ec1cd0d7e180197640d3f58bba39d8aa296c284e26ba8d929055f4b09674c2ca
+Elapsed time to handle boost-move:x64-windows: 123 ms
+Installing 46/85 boost-intrusive:x64-windows@1.90.0#1...
+boost-intrusive:x64-windows@1.90.0#1 package ABI: 76c752040d79fdd639c1cabdf295c54dc01ad6798a24a605f09acd96cc3c40c2
+Elapsed time to handle boost-intrusive:x64-windows: 157 ms
+Installing 47/85 boost-container:x64-windows@1.90.0#1...
+boost-container:x64-windows@1.90.0#1 package ABI: 3a1e46937eb8452f7c347fabc36041bfcbd81be8cbdecb4ce15e047a78e03340
+Elapsed time to handle boost-container:x64-windows: 155 ms
+Installing 48/85 boost-lexical-cast:x64-windows@1.90.0#1...
+boost-lexical-cast:x64-windows@1.90.0#1 package ABI: 09bacd0e84e36b4d1624a4d6459a139c5cf442b6ab56a740c2a8c0f365f61495
+Elapsed time to handle boost-lexical-cast:x64-windows: 138 ms
+Installing 49/85 boost-date-time:x64-windows@1.90.0#1...
+boost-date-time:x64-windows@1.90.0#1 package ABI: 8f1f45542d79c007b5da50db927c51b76ced980b91c922face9824157ad9e87f
+Elapsed time to handle boost-date-time:x64-windows: 156 ms
+Installing 50/85 boost-variant2:x64-windows@1.90.0#1...
+boost-variant2:x64-windows@1.90.0#1 package ABI: f65bb0adc70846508aa6dbf15b62bdc681ff3b48f451383698c3f0d9cdfa2ae1
+Elapsed time to handle boost-variant2:x64-windows: 44.9 ms
+Installing 51/85 boost-system:x64-windows@1.90.0#1...
+boost-system:x64-windows@1.90.0#1 package ABI: c8b44d30a3cadbb8ced91fe76bc0f3b5d873579f9f70fcae4754dee1f0d149c9
+Elapsed time to handle boost-system:x64-windows: 155 ms
+Installing 52/85 boost-scope:x64-windows@1.90.0#1...
+boost-scope:x64-windows@1.90.0#1 package ABI: 301a52851917cd5b2c7b2c4ab4476d96e77ecaaf3a3438ca5af40954e5c0cd7f
+Elapsed time to handle boost-scope:x64-windows: 108 ms
+Installing 53/85 boost-align:x64-windows@1.90.0#1...
+boost-align:x64-windows@1.90.0#1 package ABI: 09f5923973064981fac5c5dd910c8c9c329a1699b1a5fe922dd4dc048c8e3bae
+Elapsed time to handle boost-align:x64-windows: 124 ms
+Installing 54/85 boost-atomic:x64-windows@1.90.0#1...
+boost-atomic:x64-windows@1.90.0#1 package ABI: aa361ccb0329a84050f9830512078422a42f16e50d8967bba1005678df1ff064
+Elapsed time to handle boost-atomic:x64-windows: 156 ms
+Installing 55/85 boost-filesystem:x64-windows@1.90.0#1...
+boost-filesystem:x64-windows@1.90.0#1 package ABI: 57e496a0ef843f082d476bde91e6ad83f9b5935c603db862a9a97a29ed57b8c6
+Elapsed time to handle boost-filesystem:x64-windows: 92.7 ms
+Installing 56/85 boost-ratio:x64-windows@1.90.0#1...
+boost-ratio:x64-windows@1.90.0#1 package ABI: 2844cbf7eefa60e6683b369e2e1b315b86dfd56e79dd8be25df6be3994eefa80
+Elapsed time to handle boost-ratio:x64-windows: 47 ms
+Installing 57/85 boost-integer:x64-windows@1.90.0#1...
+boost-integer:x64-windows@1.90.0#1 package ABI: 3ca2b469b94dc6c7fae880abae8f43ddfeac7c1cb28a62ee2e22d5d395135185
+Elapsed time to handle boost-integer:x64-windows: 108 ms
+Installing 58/85 boost-chrono:x64-windows@1.90.0#1...
+boost-chrono:x64-windows@1.90.0#1 package ABI: 18f2729431eadd349a01b74daeae36bac79c00cd72a163591bc6fbbefa609684
+Elapsed time to handle boost-chrono:x64-windows: 109 ms
+Installing 59/85 boost-thread:x64-windows@1.90.0#1...
+boost-thread:x64-windows@1.90.0#1 package ABI: 6005e58d9eb95dbcbf845c441407ab196d4ddfb9ff7b4b30d34fd662780dad6b
+Elapsed time to handle boost-thread:x64-windows: 156 ms
+Installing 60/85 boost-charconv:x64-windows@1.90.0#1...
+boost-charconv:x64-windows@1.90.0#1 package ABI: 24732b297f339406f6a1a8c5c531de80c76459a56bd14655238a79816e546e5e
+Elapsed time to handle boost-charconv:x64-windows: 138 ms
+Installing 61/85 boost-locale:x64-windows@1.90.0#1...
+boost-locale:x64-windows@1.90.0#1 package ABI: 8d0c20ca918a98e35c41568dea086aeb314b1a791eee8e38a4da80fd09efddf2
+Elapsed time to handle boost-locale:x64-windows: 189 ms
+Installing 62/85 boost-scope-exit:x64-windows@1.90.0#1...
+boost-scope-exit:x64-windows@1.90.0#1 package ABI: 32020ffe5d3e349dd25eb0ae941e8d750d9f78185616d065757de16ef557ef02
+Elapsed time to handle boost-scope-exit:x64-windows: 42.2 ms
+Installing 63/85 boost-uuid:x64-windows@1.90.0#1...
+boost-uuid:x64-windows@1.90.0#1 package ABI: 62371d63bba015a60d58390b8d5012af8785c900ef32aa8070bc48244a0f7199
+Elapsed time to handle boost-uuid:x64-windows: 158 ms
+Installing 64/85 boost-variant:x64-windows@1.90.0#1...
+boost-variant:x64-windows@1.90.0#1 package ABI: 2bec7700cb9d2c2ae0d8a973875e34af34e0c19d5322d172b9387bab553605d1
+Elapsed time to handle boost-variant:x64-windows: 155 ms
+Installing 65/85 faad2:x64-windows@2.11.2...
+faad2:x64-windows@2.11.2 package ABI: 3c3b83bca04c7abdb1f9511bbf0e4b83dddf4722fda652628d02ec319dd064ec
+Elapsed time to handle faad2:x64-windows: 45.8 ms
+Installing 66/85 zlib:x64-windows@1.3.1...
+zlib:x64-windows@1.3.1 package ABI: e014aafc8c6c3fe13b91d7ebaad3ea837c53f2939babae432e705c8d2f97bf48
+Elapsed time to handle zlib:x64-windows: 76.7 ms
+Installing 67/85 libpng:x64-windows@1.6.56...
+libpng:x64-windows@1.6.56 package ABI: 63f7f90c671846e2150163e2cfdaeddd12a66b94ba37db13fa75463cebfa1c29
+Building libpng:x64-windows@1.6.56...
+-- Using cached pnggroup-libpng-v1.6.56.tar.gz
+-- Cleaning sources at D:/Games/Astryx/.deps/vcpkg/buildtrees/libpng/src/v1.6.56-aacd911510.clean. Use --editable to skip cleaning for the packages you specify.
+-- Extracting source D:/Games/Astryx/.deps/vcpkg/downloads/pnggroup-libpng-v1.6.56.tar.gz
+-- Applying patch cmake.patch
+-- Using source at D:/Games/Astryx/.deps/vcpkg/buildtrees/libpng/src/v1.6.56-aacd911510.clean
+-- Configuring x64-windows
+-- Building x64-windows-dbg
+-- Building x64-windows-rel
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libpng_x64-windows/share/png/vcpkg-cmake-wrapper.cmake
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libpng_x64-windows/share/libpng/libpng-config.cmake
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/libpng_x64-windows/lib/pkgconfig/libpng16.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at D:/Games/Astryx/.deps/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/libpng_x64-windows/debug/lib/pkgconfig/libpng16.pc
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libpng_x64-windows/debug/lib/pkgconfig/libpng.pc
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libpng_x64-windows/lib/pkgconfig/libpng.pc
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libpng_x64-windows/share/libpng/usage
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libpng_x64-windows/share/libpng/copyright
+-- Performing post-build validation
+Starting submission of libpng:x64-windows@1.6.56 to 1 binary cache(s) in the background
+Elapsed time to handle libpng:x64-windows: 3.8 s
+Installing 68/85 bzip2[core,tool]:x64-windows@1.0.8#6...
+bzip2[core,tool]:x64-windows@1.0.8#6 package ABI: 02082f9f3c025b0ed7f5623cf17f976d7b48889710297d9cb1bf6291024ecc67
+Elapsed time to handle bzip2:x64-windows: 61.6 ms
+Installing 69/85 brotli:x64-windows@1.2.0...
+brotli:x64-windows@1.2.0 package ABI: 8657a2218ee9b15ef41c0587eb685e59f2d34c554518c081b53875170b5ace24
+Elapsed time to handle brotli:x64-windows: 109 ms
+Installing 70/85 freetype[brotli,bzip2,core,png,zlib]:x64-windows@2.14.3...
+freetype[brotli,bzip2,core,png,zlib]:x64-windows@2.14.3 package ABI: 61621d9ccbdb1b9079e24524110a412302148f531af3da91cdb89ac44f301762
+Building freetype[brotli,bzip2,core,png,zlib]:x64-windows@2.14.3...
+Downloading https://gitlab.freedesktop.org//freetype/freetype/-/archive/VER-2-14-3/freetype-VER-2-14-3.tar.gz -> freetype-freetype-VER-2-14-3.tar.gz
+Successfully downloaded freetype-freetype-VER-2-14-3.tar.gz
+-- Extracting source D:/Games/Astryx/.deps/vcpkg/downloads/freetype-freetype-VER-2-14-3.tar.gz
+-- Applying patch 0003-Fix-UWP.patch
+-- Applying patch brotli-static.patch
+-- Applying patch bzip2.patch
+-- Applying patch fix-exports.patch
+-- Using source at D:/Games/Astryx/.deps/vcpkg/buildtrees/freetype/src/VER-2-14-3-46d5ca34ec.clean
+-- Configuring x64-windows
+-- Building x64-windows-dbg
+-- Building x64-windows-rel
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/freetype_x64-windows/lib/pkgconfig/freetype2.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at D:/Games/Astryx/.deps/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/freetype_x64-windows/debug/lib/pkgconfig/freetype2.pc
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/freetype_x64-windows/share/freetype/usage
+-- Performing post-build validation
+Starting submission of freetype[brotli,bzip2,core,png,zlib]:x64-windows@2.14.3 to 1 binary cache(s) in the background
+Elapsed time to handle freetype:x64-windows: 9.8 s
+Completed submission of libpng:x64-windows@1.6.56 to 1 binary cache(s) in 179 ms
+Installing 71/85 libiconv:x64-windows@1.18#3...
+libiconv:x64-windows@1.18#3 package ABI: 6a9b73bafa6a4cdfad8255b0dd8efe7aa142c376a010888aefed7e1ddaba1bb4
+Elapsed time to handle libiconv:x64-windows: 58.2 ms
+Installing 72/85 liblzma:x64-windows@5.8.3...
+liblzma:x64-windows@5.8.3 package ABI: 2bc554a3760db8188d20f91a6253befda0e0c0adb6a296b454c3ec5a8bf867ce
+Building liblzma:x64-windows@5.8.3...
+Downloading https://github.com/tukaani-project/xz/archive/v5.8.3.tar.gz -> tukaani-project-xz-v5.8.3.tar.gz
+Successfully downloaded tukaani-project-xz-v5.8.3.tar.gz
+-- Extracting source D:/Games/Astryx/.deps/vcpkg/downloads/tukaani-project-xz-v5.8.3.tar.gz
+-- Applying patch build-tools.patch
+-- Using source at D:/Games/Astryx/.deps/vcpkg/buildtrees/liblzma/src/v5.8.3-6de1f0384d.clean
+-- Configuring x64-windows
+CMake Warning at D:/Games/Astryx/build-vcpkg/vcpkg_installed/x64-windows/share/vcpkg-cmake/vcpkg_cmake_configure.cmake:344 (message):
+  The following variables are not used in CMakeLists.txt:
+
+      XZ_SANDBOX
+
+  Please recheck them and remove the unnecessary options from the
+  `vcpkg_cmake_configure` call.
+
+  If these options should still be passed for whatever reason, please use the
+  `MAYBE_UNUSED_VARIABLES` argument.
+Call Stack (most recent call first):
+  ports/liblzma/portfile.cmake:26 (vcpkg_cmake_configure)
+  scripts/ports.cmake:206 (include)
+
+
+-- Building x64-windows-dbg
+-- Building x64-windows-rel
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/liblzma_x64-windows/lib/pkgconfig/liblzma.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at D:/Games/Astryx/.deps/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/liblzma_x64-windows/debug/lib/pkgconfig/liblzma.pc
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/liblzma_x64-windows/share/liblzma/copyright
+-- Performing post-build validation
+Starting submission of liblzma:x64-windows@5.8.3 to 1 binary cache(s) in the background
+Elapsed time to handle liblzma:x64-windows: 15 s
+Completed submission of freetype[brotli,bzip2,core,png,zlib]:x64-windows@2.14.3 to 1 binary cache(s) in 298 ms
+Installing 73/85 libmad[aso,core]:x64-windows@0.16.4#4...
+libmad[aso,core]:x64-windows@0.16.4#4 package ABI: 5bb590e74a4ab8e7ed0d0e97c32dd411a9c0b43fe3c421797ca2df6a7ec0184a
+Elapsed time to handle libmad:x64-windows: 62.8 ms
+Installing 74/85 libogg:x64-windows@1.3.6#1...
+libogg:x64-windows@1.3.6#1 package ABI: c2bbb08485fd415d6548f0e99a91717e67b76f69fd8c292df3196307c4cc2391
+Elapsed time to handle libogg:x64-windows: 77.5 ms
+Installing 75/85 libvorbis:x64-windows@1.3.7#4...
+libvorbis:x64-windows@1.3.7#4 package ABI: 963463999b3d153c4d173be56f302fd625410b1c3d183a53bf05387b92504fb4
+Elapsed time to handle libvorbis:x64-windows: 78 ms
+Completed submission of liblzma:x64-windows@5.8.3 to 1 binary cache(s) in 173 ms
+Installing 76/85 vcpkg-cmake-get-vars:x64-windows@2025-05-29...
+vcpkg-cmake-get-vars:x64-windows@2025-05-29 package ABI: d68a1e457a35459c07489bf0b1e5e7bf1e5010ae5b0377aaca8bbc3ec6a2280e
+Elapsed time to handle vcpkg-cmake-get-vars:x64-windows: 45.4 ms
+Installing 77/85 vcpkg-tool-meson:x64-windows@1.9.0#4...
+vcpkg-tool-meson:x64-windows@1.9.0#4 package ABI: 3e4ecee61b06ee9cea9ffc236dcbace52d1643f839efdd4899945c6fb4474fe3
+Building vcpkg-tool-meson:x64-windows@1.9.0#4...
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-tool-meson_x64-windows/share/vcpkg-tool-meson/copyright
+Downloading https://github.com/mesonbuild/meson/archive/1.9.0.tar.gz -> meson-1.9.0.tar.gz
+Successfully downloaded meson-1.9.0.tar.gz
+cmake -E tar: warning: skipping symbolic link "meson-1.9.0/test cases/frameworks/35 boost symlinks/boost/lib/boost_python-vc142-mt-gd-x32-0_3.lib" -> "../Cellar/boost-python/0.3.0/lib/boost_python-vc142-mt-gd-x32-0_3.lib".
+cmake -E tar: warning: skipping symbolic link "meson-1.9.0/test cases/frameworks/35 boost symlinks/boost/lib/boost_python-vc142-mt-gd-x64-0_3.lib" -> "../Cellar/boost-python/0.3.0/lib/boost_python-vc142-mt-gd-x64-0_3.lib".
+cmake -E tar: warning: skipping symbolic link "meson-1.9.0/test cases/frameworks/35 boost symlinks/boost/lib/boost_regex-vc142-mt-gd-x32-0_3.lib" -> "../Cellar/boost/0.3.0/lib/boost_regex-vc142-mt-gd-x32-0_3.lib".
+cmake -E tar: warning: skipping symbolic link "meson-1.9.0/test cases/frameworks/35 boost symlinks/boost/lib/boost_regex-vc142-mt-gd-x64-0_3.lib" -> "../Cellar/boost/0.3.0/lib/boost_regex-vc142-mt-gd-x64-0_3.lib".
+cmake -E tar: warning: skipping symbolic link "meson-1.9.0/test cases/frameworks/35 boost symlinks/boost/lib/libboost_python.so.0.3.0" -> "../Cellar/boost-python/0.3.0/lib/libboost_python.so.0.3.0".
+cmake -E tar: warning: skipping symbolic link "meson-1.9.0/test cases/frameworks/35 boost symlinks/boost/lib/libboost_regex.so.0.3.0" -> "../Cellar/boost/0.3.0/lib/libboost_regex.so.0.3.0".
+-- Applying patch D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-tool-meson_x64-windows/share/vcpkg-tool-meson/meson-intl.patch
+-- Applying patch D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-tool-meson_x64-windows/share/vcpkg-tool-meson/adjust-python-dep.patch
+-- Applying patch D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-tool-meson_x64-windows/share/vcpkg-tool-meson/adjust-args.patch
+-- Applying patch D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-tool-meson_x64-windows/share/vcpkg-tool-meson/remove-pkgconfig-specialization.patch
+-- Applying patch D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-tool-meson_x64-windows/share/vcpkg-tool-meson/meson-56879d5.diff
+Downloading https://www.python.org/ftp/python/3.14.2/python-3.14.2-embed-amd64.zip -> python-3.14.2-embed-amd64.zip
+Successfully downloaded python-3.14.2-embed-amd64.zip
+-- Found Python version '3.14.2 at D:/Games/Astryx/.deps/vcpkg/downloads/tools/python/python-3.14.2-x64-1/python.exe'
+-- Using meson: D:/Games/Astryx/.deps/vcpkg/downloads/tools/meson-1.9.0-4452e3/meson.py
+-- Performing post-build validation
+Starting submission of vcpkg-tool-meson:x64-windows@1.9.0#4 to 1 binary cache(s) in the background
+Elapsed time to handle vcpkg-tool-meson:x64-windows: 6.1 s
+Installing 78/85 pkgconf:x64-windows@2.5.1#4...
+pkgconf:x64-windows@2.5.1#4 package ABI: c4b809df6135c33ad31715e82b476f4276dcd16dd2a6eefe1aa5644924c88462
+Building pkgconf:x64-windows@2.5.1#4...
+-- Found Python version '3.14.2 at D:/Games/Astryx/.deps/vcpkg/downloads/tools/python/python-3.14.2-x64-1/python.exe'
+-- Using meson: D:/Games/Astryx/.deps/vcpkg/downloads/tools/meson-1.9.0-4452e3/meson.py
+Downloading https://github.com/pkgconf/pkgconf/archive/pkgconf-2.5.1.tar.gz -> pkgconf-pkgconf-pkgconf-2.5.1.tar.gz
+Successfully downloaded pkgconf-pkgconf-pkgconf-2.5.1.tar.gz
+-- Extracting source D:/Games/Astryx/.deps/vcpkg/downloads/pkgconf-pkgconf-pkgconf-2.5.1.tar.gz
+-- Applying patch 001-unveil-fixes.patch
+-- Using source at D:/Games/Astryx/.deps/vcpkg/buildtrees/pkgconf/src/conf-2.5.1-5bc6f0da3f.clean
+-- Configuring x64-windows-dbg
+-- Getting CMake variables for x64-windows
+-- Loading CMake variables from D:/Games/Astryx/.deps/vcpkg/buildtrees/pkgconf/cmake-get-vars_C_CXX-x64-windows.cmake.log
+-- Configuring x64-windows-dbg done
+-- Configuring x64-windows-rel
+-- Configuring x64-windows-rel done
+-- Package x64-windows-dbg
+-- Package x64-windows-rel
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/pkgconf_x64-windows/lib/pkgconfig/libpkgconf.pc
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/pkgconf_x64-windows/debug/lib/pkgconfig/libpkgconf.pc
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/pkgconf_x64-windows/share/pkgconf/copyright
+-- Performing post-build validation
+Starting submission of pkgconf:x64-windows@2.5.1#4 to 1 binary cache(s) in the background
+Elapsed time to handle pkgconf:x64-windows: 17 s
+Completed submission of vcpkg-tool-meson:x64-windows@1.9.0#4 to 1 binary cache(s) in 84.7 ms
+Installing 79/85 vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03...
+vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03 package ABI: 0161f66e9c31daa8cbe29eeea5b26550b500e1efbffa19396269969407235499
+Building vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03...
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-pkgconfig-get-modules_x64-windows/share/vcpkg-pkgconfig-get-modules/copyright
+-- Performing post-build validation
+Starting submission of vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03 to 1 binary cache(s) in the background
+Elapsed time to handle vcpkg-pkgconfig-get-modules:x64-windows: 124 ms
+Completed submission of pkgconf:x64-windows@2.5.1#4 to 1 binary cache(s) in 117 ms
+Installing 80/85 vcpkg-msbuild:x64-windows@2023-08-08...
+vcpkg-msbuild:x64-windows@2023-08-08 package ABI: 76624e89aa154f36193c161b06de04ddf375207042ea0304dbc2f815c75c3d35
+Building vcpkg-msbuild:x64-windows@2023-08-08...
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-msbuild_x64-windows/share/vcpkg-msbuild/vcpkg_msbuild.props.in
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-msbuild_x64-windows/share/vcpkg-msbuild/vcpkg_msbuild.targets.in
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-msbuild_x64-windows/share/vcpkg-msbuild/z_vcpkg_msbuild_create_props.cmake
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-msbuild_x64-windows/share/vcpkg-msbuild/vcpkg_msbuild_install.cmake
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-msbuild_x64-windows/share/vcpkg-msbuild/vcpkg-port-config.cmake
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/vcpkg-msbuild_x64-windows/share/vcpkg-msbuild/copyright
+-- Performing post-build validation
+Starting submission of vcpkg-msbuild:x64-windows@2023-08-08 to 1 binary cache(s) in the background
+Elapsed time to handle vcpkg-msbuild:x64-windows: 188 ms
+Completed submission of vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03 to 1 binary cache(s) in 45.1 ms
+Installing 81/85 libvpx:x64-windows@1.16.0...
+libvpx:x64-windows@1.16.0 package ABI: 274431d42e053b2b4a96d5bf6935bdb91016de33f696f8b850f0d5a9f0bcb8c6
+Building libvpx:x64-windows@1.16.0...
+Downloading https://github.com/webmproject/libvpx/archive/v1.16.0.tar.gz -> webmproject-libvpx-v1.16.0.tar.gz
+Successfully downloaded webmproject-libvpx-v1.16.0.tar.gz
+-- Extracting source D:/Games/Astryx/.deps/vcpkg/downloads/webmproject-libvpx-v1.16.0.tar.gz
+-- Applying patch 0003-add-uwp-v142-and-v143-support.patch
+-- Applying patch 0004-remove-library-suffixes.patch
+-- Applying patch 0005-dont-expect-gnu-diff.patch
+-- Using source at D:/Games/Astryx/.deps/vcpkg/buildtrees/libvpx/src/v1.16.0-49fe04bb5a.clean
+Downloading msys2-make-4.4.1-2-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/make-4.4.1-2-x86_64.pkg.tar.zst
+Successfully downloaded msys2-make-4.4.1-2-x86_64.pkg.tar.zst
+Downloading msys2-perl-5.40.3-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/perl-5.40.3-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-perl-5.40.3-1-x86_64.pkg.tar.zst
+Downloading msys2-bash-5.3.009-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/bash-5.3.009-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-bash-5.3.009-1-x86_64.pkg.tar.zst
+Downloading msys2-coreutils-8.32-5-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/coreutils-8.32-5-x86_64.pkg.tar.zst
+Successfully downloaded msys2-coreutils-8.32-5-x86_64.pkg.tar.zst
+Downloading msys2-file-5.46-2-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/file-5.46-2-x86_64.pkg.tar.zst
+Successfully downloaded msys2-file-5.46-2-x86_64.pkg.tar.zst
+Downloading msys2-gawk-5.3.2-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/gawk-5.3.2-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-gawk-5.3.2-1-x86_64.pkg.tar.zst
+Downloading msys2-grep-1~3.0-7-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/grep-1~3.0-7-x86_64.pkg.tar.zst
+Successfully downloaded msys2-grep-1~3.0-7-x86_64.pkg.tar.zst
+Downloading msys2-gzip-1.14-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/gzip-1.14-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-gzip-1.14-1-x86_64.pkg.tar.zst
+Downloading msys2-diffutils-3.12-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/diffutils-3.12-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-diffutils-3.12-1-x86_64.pkg.tar.zst
+Downloading msys2-pkgconf-2.5.1-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/pkgconf-2.5.1-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-pkgconf-2.5.1-1-x86_64.pkg.tar.zst
+Downloading msys2-sed-4.9-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/sed-4.9-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-sed-4.9-1-x86_64.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+Downloading msys2-libintl-0.22.5-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libintl-0.22.5-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libintl-0.22.5-1-x86_64.pkg.tar.zst
+Downloading msys2-libxcrypt-4.5.2-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libxcrypt-4.5.2-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libxcrypt-4.5.2-1-x86_64.pkg.tar.zst
+Downloading msys2-libiconv-1.18-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libiconv-1.18-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libiconv-1.18-1-x86_64.pkg.tar.zst
+Downloading msys2-gmp-6.3.0-2-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/gmp-6.3.0-2-x86_64.pkg.tar.zst
+Successfully downloaded msys2-gmp-6.3.0-2-x86_64.pkg.tar.zst
+Downloading msys2-gcc-libs-15.2.0-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/gcc-libs-15.2.0-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-gcc-libs-15.2.0-1-x86_64.pkg.tar.zst
+Downloading msys2-libbz2-1.0.8-4-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libbz2-1.0.8-4-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libbz2-1.0.8-4-x86_64.pkg.tar.zst
+Downloading msys2-liblzma-5.8.2-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/liblzma-5.8.2-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-liblzma-5.8.2-1-x86_64.pkg.tar.zst
+Downloading msys2-libzstd-1.5.7-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libzstd-1.5.7-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libzstd-1.5.7-1-x86_64.pkg.tar.zst
+Downloading msys2-zlib-1.3.1-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/zlib-1.3.1-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-zlib-1.3.1-1-x86_64.pkg.tar.zst
+Downloading msys2-libreadline-8.3.003-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libreadline-8.3.003-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libreadline-8.3.003-1-x86_64.pkg.tar.zst
+Downloading msys2-mpfr-4.2.2-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/mpfr-4.2.2-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-mpfr-4.2.2-1-x86_64.pkg.tar.zst
+Downloading msys2-libpcre-8.45-5-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libpcre-8.45-5-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libpcre-8.45-5-x86_64.pkg.tar.zst
+Downloading msys2-ncurses-6.5.20240831-2-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/ncurses-6.5.20240831-2-x86_64.pkg.tar.zst
+Successfully downloaded msys2-ncurses-6.5.20240831-2-x86_64.pkg.tar.zst
+-- Using msys root at D:/Games/Astryx/.deps/vcpkg/downloads/tools/msys2/9181087bf6e6a4f1
+Downloading nasm-3.01-win64.zip, trying https://www.nasm.us/pub/nasm/releasebuilds/3.01/win64/nasm-3.01-win64.zip
+Successfully downloaded nasm-3.01-win64.zip
+-- Generating makefile
+-- Generating MSBuild projects
+-- Getting CMake variables for x64-windows
+-- Loading CMake variables from D:/Games/Astryx/.deps/vcpkg/buildtrees/libvpx/cmake-get-vars_C_CXX-x64-windows.cmake.log
+-- Building vpx.vcxproj for Release
+-- Building vpx.vcxproj for Debug
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vp8.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vp8cx.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vp8dx.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vpx_codec.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vpx_decoder.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vpx_encoder.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vpx_ext_ratectrl.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vpx_frame_buffer.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vpx_image.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vpx_integer.h
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/include/vpx/vpx_tpl.h
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/lib/pkgconfig/vpx.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at D:/Games/Astryx/.deps/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/debug/lib/pkgconfig/vpx.pc
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libvpx_x64-windows/share/libvpx/copyright
+-- Performing post-build validation
+Starting submission of libvpx:x64-windows@1.16.0 to 1 binary cache(s) in the background
+Elapsed time to handle libvpx:x64-windows: 2.2 min
+Completed submission of vcpkg-msbuild:x64-windows@2023-08-08 to 1 binary cache(s) in 49.8 ms
+Installing 82/85 libxml2[core,iconv,zlib]:x64-windows@2.15.2...
+libxml2[core,iconv,zlib]:x64-windows@2.15.2 package ABI: e0b41a4ecd03b4e7c0e1b5f0a83cdddfe95e79c733c9edd1b56b615807d9e528
+Building libxml2[core,iconv,zlib]:x64-windows@2.15.2...
+Downloading https://github.com/GNOME/libxml2/archive/v2.15.2.tar.gz -> GNOME-libxml2-v2.15.2.tar.gz
+Successfully downloaded GNOME-libxml2-v2.15.2.tar.gz
+-- Extracting source D:/Games/Astryx/.deps/vcpkg/downloads/GNOME-libxml2-v2.15.2.tar.gz
+-- Applying patch cxx-for-icu.diff
+-- Applying patch disable-xml2-config.diff
+-- Applying patch fix_cmakelist.patch
+-- Applying patch fix_ios_compilation.patch
+-- Using source at D:/Games/Astryx/.deps/vcpkg/buildtrees/libxml2/src/v2.15.2-8b9d444b5d.clean
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at D:/Games/Astryx/.deps/vcpkg/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Configuring x64-windows
+-- Building x64-windows-dbg
+-- Building x64-windows-rel
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/libxml2_x64-windows/lib/pkgconfig/libxml-2.0.pc
+-- Fixing pkgconfig file: D:/Games/Astryx/.deps/vcpkg/packages/libxml2_x64-windows/debug/lib/pkgconfig/libxml-2.0.pc
+-- Installing: D:/Games/Astryx/.deps/vcpkg/packages/libxml2_x64-windows/share/libxml2/copyright
+-- Performing post-build validation
+Starting submission of libxml2[core,iconv,zlib]:x64-windows@2.15.2 to 1 binary cache(s) in the background
+Elapsed time to handle libxml2:x64-windows: 11 s
+Completed submission of libvpx:x64-windows@1.16.0 to 1 binary cache(s) in 3.4 s
+Installing 83/85 fmt:x64-windows@12.1.0...
+fmt:x64-windows@12.1.0 package ABI: 73b2e4cca2d59b8d2a5aa5fb069ad29f7ee7da53fea4391acda4ee8bd7aee181
+Elapsed time to handle fmt:x64-windows: 162 ms
+Installing 84/85 openal-soft:x64-windows@1.25.1...
+openal-soft:x64-windows@1.25.1 package ABI: 18d233211e996b3ce4f074bf743034fced203268282598256c61113ad64849e5
+Elapsed time to handle openal-soft:x64-windows: 77 ms
+Installing 85/85 sdl2:x64-windows@2.32.10...
+sdl2:x64-windows@2.32.10 package ABI: bcc24a8781a239ecd66f7621c0a151c2038b51f01b29f1298dcf50811189363c
+Elapsed time to handle sdl2:x64-windows: 170 ms
+Installed contents are licensed to you by owners. Microsoft is not responsible for, nor does it grant any licenses to, third-party packages.
+Some packages did not declare an SPDX license. Check the `copyright` file for each package for more information about their licensing.
+Packages installed in this vcpkg installation declare the following licenses:
+(FTL OR GPL-2.0-or-later)
+Apache-2.0
+BSD-3-Clause
+BSL-1.0
+GPL-2.0-or-later
+LGPL-2.0-or-later
+MIT
+Zlib
+bzip2-1.0.6
+libpng-2.0
+boost-type-traits provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_type_traits CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::type_traits)
+
+boost-utility provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_utility CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::utility)
+
+boost-smart-ptr provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_smart_ptr CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::smart_ptr)
+
+boost-algorithm provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_algorithm CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::algorithm)
+
+boost-any provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_any CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::any)
+
+boost-date-time provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_date_time CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::date_time)
+
+boost-system provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_system CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::system)
+
+boost-filesystem provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_filesystem CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::filesystem)
+
+boost-locale provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_locale CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::locale)
+
+boost-scope-exit provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_scope_exit CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::scope_exit)
+
+boost-uuid provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_uuid CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::uuid)
+
+boost-variant provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(boost_variant CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Boost::variant)
+
+faad2 provides pkg-config modules:
+
+  # Freeware Advanced Audio (AAC) Decoder
+  faad2
+
+The package zlib is compatible with built-in CMake targets:
+
+    find_package(ZLIB REQUIRED)
+    target_link_libraries(main PRIVATE ZLIB::ZLIB)
+
+libpng provides CMake targets:
+
+  find_package(PNG REQUIRED)
+  target_link_libraries(main PRIVATE PNG::PNG)
+
+freetype is compatible with built-in CMake targets:
+
+    find_package(Freetype REQUIRED)
+    target_link_libraries(main PRIVATE Freetype::Freetype) # since CMake 3.10
+
+libiconv provides CMake targets:
+
+  find_package(Iconv REQUIRED)
+  target_link_libraries(main PRIVATE Iconv::Iconv)
+
+liblzma is compatible with built-in CMake targets:
+
+    find_package(LibLZMA REQUIRED)
+    target_link_libraries(main PRIVATE LibLZMA::LibLZMA)
+
+liblzma provides CMake targets:
+
+    find_package(liblzma CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE liblzma::liblzma)
+
+libmad provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(mad CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE mad::mad)
+
+libmad provides pkg-config modules:
+
+  # MPEG audio decoder library
+  mad
+
+libogg provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(Ogg CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE Ogg::ogg)
+
+libogg provides pkg-config modules:
+
+  # ogg is a library for manipulating ogg bitstreams
+  ogg
+
+The package libvorbis provides CMake targets:
+
+    # Vorbis reference encoder and decoder, low-level API
+    find_package(Vorbis CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE Vorbis::vorbis)
+
+    # Audio stream decoding and basic manipulation, high-level API
+    find_package(Vorbis CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE Vorbis::vorbisfile)
+
+    # Convenience API for setting up an encoding environment
+    find_package(Vorbis CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE Vorbis::vorbisenc)
+
+libvpx provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(unofficial-libvpx CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE unofficial::libvpx::libvpx)
+
+libvpx provides pkg-config modules:
+
+  # WebM Project VPx codec implementation
+  vpx
+
+The package libxml2 is compatible with built-in CMake targets:
+
+    find_package(LibXml2 REQUIRED)
+    target_link_libraries(main PRIVATE LibXml2::LibXml2)
+
+openal-soft provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(OpenAL CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE OpenAL::OpenAL)
+
+openal-soft provides pkg-config modules:
+
+  # OpenAL is a cross-platform 3D audio API
+  openal
+
+sdl2 provides CMake targets:
+
+    find_package(SDL2 CONFIG REQUIRED)
+    target_link_libraries(main
+        PRIVATE
+        $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+    )
+
+Completed submission of libxml2[core,iconv,zlib]:x64-windows@2.15.2 to 1 binary cache(s) in 371 ms
+All requested installations completed successfully in: 3.4 min

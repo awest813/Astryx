@@ -1,8 +1,0 @@
-Package: libvpx
-Version: 1.16.0
-Depends: vcpkg-cmake-get-vars, vcpkg-msbuild
-Architecture: x64-windows
-Multi-Arch: same
-Abi: 274431d42e053b2b4a96d5bf6935bdb91016de33f696f8b850f0d5a9f0bcb8c6
-Description: The reference software implementation for the video coding formats VP8 and VP9.
-Status: install ok half-installed

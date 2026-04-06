@@ -1,6 +1,0 @@
-Package: libmad
-Feature: aso
-Architecture: x64-windows
-Multi-Arch: same
-Description: Enable CPU architecture-specific optimizations (x86, ARM and MIPS only)
-Status: install ok installed
