@@ -41,8 +41,8 @@ namespace Engines {
 
 namespace KotORBase {
 
-static const float kRotationSpeed = Common::kPi / 2.0f;
-static const float kMovementSpeed = 2.0f * Common::kPi;
+static const float kRotationSpeed = static_cast<float>(M_PI) / 2.0f;
+static const float kMovementSpeed = 2.0f * static_cast<float>(M_PI);
 
 CameraController::CameraController(Module *module) : _module(module) {
 }
@@ -143,10 +143,10 @@ void CameraController::processRotation(float frameTime) {
 
 	if (shouldMoveClockwise()) {
 		_yaw -= kRotationSpeed * frameTime;
-		_yaw = fmodf(_yaw, 2.0f * Common::kPi);
+		_yaw = fmodf(_yaw, 2.0f * static_cast<float>(M_PI));
 	} else if (shouldMoveCounterClockwise()) {
 		_yaw += kRotationSpeed * frameTime;
-		_yaw = fmodf(_yaw, 2.0f * Common::kPi);
+		_yaw = fmodf(_yaw, 2.0f * static_cast<float>(M_PI));
 	}
 
 	CameraMan.setOrientation(_pitch, 0.0f, Common::rad2deg(_yaw));

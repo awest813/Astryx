@@ -22,8 +22,10 @@
  *  The character level-up GUI.
  */
 
-#include "src/engines/kotor/creature.h"
+#include "src/engines/aurora/widget.h"
+
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/creature.h"
 
 #include "src/engines/kotor/gui/ingame/levelup.h"
 
@@ -31,7 +33,7 @@ namespace Engines {
 
 namespace KotOR {
 
-LevelUpGUI::LevelUpGUI(KotORBase::Module &module, Creature &pc, ::Engines::Console *console) :
+LevelUpGUI::LevelUpGUI(KotORBase::Module &module, KotORBase::Creature &pc, ::Engines::Console *console) :
 		KotORBase::GUI(console),
 		_module(module),
 		_pc(pc) {
@@ -44,7 +46,7 @@ LevelUpGUI::LevelUpGUI(KotORBase::Module &module, Creature &pc, ::Engines::Conso
 LevelUpGUI::~LevelUpGUI() {
 }
 
-void LevelUpGUI::callbackActive(Widget &widget) {
+void LevelUpGUI::callbackActive(::Engines::Widget &widget) {
 	if (widget.getTag() == "BTN_CANCEL") {
 		_returnCode = 1;
 		return;

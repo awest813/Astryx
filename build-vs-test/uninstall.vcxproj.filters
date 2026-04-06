@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\Games\Astryx\build-vs-test\CMakeFiles\d3f1dd640a0024b00fc397d572be05ed\uninstall.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\Games\Astryx\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\Games\Astryx\build-vs-test\CMakeFiles\uninstall" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{CFB33CA5-1EF6-3EF2-914D-BA7F0BFBD906}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

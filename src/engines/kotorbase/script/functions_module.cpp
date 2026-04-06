@@ -242,7 +242,7 @@ void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &) {
 void Functions::openStore(Aurora::NWScript::FunctionContext &ctx) {
 	// OpenStore(object oStore, object oPC, int nBonusMarkUp=0, int nMarkDown=0)
 	// Presents the store GUI to the player.
-	Common::UString tag = ctx.getParams()[0].getCommonUString();
+	Common::UString tag = ctx.getParams()[0].getString();
 	_game->openStoreGUI(tag);
 }
 

@@ -819,7 +819,7 @@ void Area::processCreaturesActions(float dt) {
 		if (c->isDead())
 			continue;
 
-		Action *action = c->getCurrent();
+		Action *action = const_cast<Action *>(c->getCurrentAction());
 		if (!action)
 			continue;
 

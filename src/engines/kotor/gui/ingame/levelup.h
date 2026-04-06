@@ -31,11 +31,10 @@ namespace Engines {
 
 namespace KotORBase {
 	class Module;
+	class Creature;
 }
 
 namespace KotOR {
-
-class Creature;
 
 /** The character level-up GUI.
  *
@@ -43,12 +42,12 @@ class Creature;
  */
 class LevelUpGUI : public KotORBase::GUI {
 public:
-	LevelUpGUI(KotORBase::Module &module, Creature &pc, ::Engines::Console *console = 0);
+	LevelUpGUI(KotORBase::Module &module, KotORBase::Creature &pc, ::Engines::Console *console = 0);
 	~LevelUpGUI();
 
 private:
 	KotORBase::Module &_module;
-	Creature &_pc;
+	KotORBase::Creature &_pc;
 
 	void callbackActive(Widget &widget);
 };

@@ -39,6 +39,8 @@ namespace Common {
 
 namespace Aurora {
 
+class GFF3Struct;
+
 namespace NWScript {
 	class Object;
 }
@@ -46,12 +48,6 @@ namespace NWScript {
 // TODO: KotOR:
 //       - "ConversationType", "StuntList", "Skippable", "AmbientTrack",
 //         "AnimatedCut", ...
-//       - Sound resrefs in field "VO_ResRef"
-//       - Quest IDs in field "PlotIndex"
-//       - Camera: "CameraModel", "CameraAngle", "CameraID", "CamVidEffect", "FadeType"
-// TODO: KotOR2:
-//       - "Emotion", "FacialAnim"
-//       - "Logic"
 
 class DLGFile {
 public:
@@ -71,6 +67,20 @@ public:
 
 		Common::UString quest;      ///< Quest name to modify when speaking this entry.
 		uint32_t        questEntry; ///< Entry ID to set the quest to.
+
+
+		Common::UString cameraModel; ///< KotOR: Camera model to use.
+		uint32_t        cameraID;    ///< KotOR: Camera ID to use.
+		float           cameraAngle; ///< KotOR: Camera angle to use.
+		uint32_t        camVidEffect;///< KotOR: Camera video effect.
+		uint32_t        fadeType;    ///< KotOR: Screen fade type.
+
+		uint32_t        emotion;     ///< KotOR2: Emotion to display.
+		uint32_t        facialAnim;  ///< KotOR2: Facial animation to play.
+
+		uint32_t        waitFlags;   ///< Flags to wait for (VO, animation etc.).
+		uint32_t        cameraHostile; ///< Whether the camera should be hostile.
+
 
 		bool isEnd; ///< Are there no replies to this line?
 	};
@@ -92,6 +102,12 @@ public:
 	uint32_t getDelayEntry() const;
 	/** Return the number of seconds to wait before showing each reply. */
 	uint32_t getDelayReply() const;
+
+	/** KotOR: Is the conversation skippable? */
+	bool isSkippable() const;
+
+	/** KotOR: Return the stunt list. */
+	Common::UString getStuntList() const;
 
 	bool hasEnded() const;
 
@@ -142,6 +158,9 @@ private:
 	Script _convEnd;   ///< Script to run when the conversation ended normally.
 
 	bool _noZoomIn; ///< Starting the conversation does not zoom the camera onto the speaker.
+
+	bool            _skippable; ///< KotOR: Is the conversation skippable?
+	Common::UString _stuntList; ///< KotOR: Stunt list for the conversation.
 
 	std::vector<Entry> _entriesNPC; ///< NPC dialog lines ("entries").
 	std::vector<Entry> _entriesPC;  ///< PC dialog lines ("replies").

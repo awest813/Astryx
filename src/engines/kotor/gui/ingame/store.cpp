@@ -22,6 +22,8 @@
  *  The ingame store GUI.
  */
 
+#include "src/engines/aurora/widget.h"
+
 #include "src/engines/kotorbase/module.h"
 
 #include "src/engines/kotor/gui/ingame/store.h"
@@ -42,7 +44,7 @@ StoreGUI::StoreGUI(KotORBase::Module &module, ::Engines::Console *console) :
 StoreGUI::~StoreGUI() {
 }
 
-void StoreGUI::callbackActive(Widget &widget) {
+void StoreGUI::callbackActive(::Engines::Widget &widget) {
 	if (widget.getTag() == "BTN_EXIT") {
 		_returnCode = 1;
 		return;

@@ -79,6 +79,14 @@ uint32_t DLGFile::getDelayReply() const {
 	return _delayReply;
 }
 
+bool DLGFile::isSkippable() const {
+	return _skippable;
+}
+
+Common::UString DLGFile::getStuntList() const {
+	return _stuntList;
+}
+
 bool DLGFile::hasEnded() const {
 	return _ended;
 }
@@ -179,6 +187,9 @@ void DLGFile::load(const GFF3Struct &dlg) {
 
 	_noZoomIn = !dlg.getBool("PreventZoomIn", true);
 
+	_skippable = dlg.getBool("Skippable", true);
+	_stuntList = dlg.getString("StuntList");
+
 	// NPC lines ("entries")
 
 	const GFF3List &entries = dlg.getList("EntryList");
@@ -249,6 +260,18 @@ void DLGFile::readEntry(const GFF3Struct &gff, Entry &entry) {
 
 	entry.line.quest      = gff.getString("Quest");
 	entry.line.questEntry = gff.getUint("QuestEntry", 0xFFFFFFFF);
+
+	entry.line.cameraModel = gff.getString("CameraModel");
+	entry.line.cameraID    = gff.getUint("CameraID", 0);
+	entry.line.cameraAngle = static_cast<float>(gff.getDouble("CameraAngle", 0.0));
+	entry.line.camVidEffect= gff.getUint("CamVidEffect", 0);
+	entry.line.fadeType    = gff.getUint("FadeType", 0);
+
+	entry.line.emotion     = gff.getUint("Emotion", 0);
+	entry.line.facialAnim  = gff.getUint("FacialAnim", 0);
+
+	entry.line.waitFlags   = gff.getUint("WaitFlags", 0);
+	entry.line.cameraHostile = gff.getUint("CameraHostile", 0);
 
 	const GFF3List *replies = 0;
 

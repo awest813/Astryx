@@ -46,6 +46,8 @@ public:
 	bool hasModule(const Common::UString &module) const override;
 
 	void run() override;
+	void showLevelUpGUI() override;
+	void openStoreGUI(const Common::UString &tag) override;
 
 private:
 	KotOR2Engine *_engine;

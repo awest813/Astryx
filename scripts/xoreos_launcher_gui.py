@@ -58,6 +58,7 @@ def get_xoreos_executable(repo_root: Path) -> Path | None:
     for candidate in [
         repo_root / "bin" / "Release" / "xoreos.exe",
         repo_root / "bin" / "Debug" / "xoreos.exe",
+        repo_root / "build-vcpkg-portable" / "bin" / "Release" / "xoreos.exe",
         repo_root / "build-vcpkg" / "bin" / "Release" / "xoreos.exe",
         repo_root / "build-vcpkg-portable" / "bin" / "Debug" / "xoreos.exe",
         repo_root / "build-vcpkg" / "bin" / "Debug" / "xoreos.exe",

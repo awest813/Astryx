@@ -18,8 +18,22 @@ function Require-Command {
 	}
 }
 
+function Test-NinjaCompilerSupport {
+	if (-not (Get-Command ninja -ErrorAction SilentlyContinue)) {
+		return $false
+	}
+
+	foreach ($compiler in @("cl", "clang++", "g++")) {
+		if (Get-Command $compiler -ErrorAction SilentlyContinue) {
+			return $true
+		}
+	}
+
+	return $false
+}
+
 function Get-PreferredGenerator {
-	if (Get-Command ninja -ErrorAction SilentlyContinue) {
+	if (Test-NinjaCompilerSupport) {
 		return @{
 			Name = "Ninja Multi-Config"
 			Args = @()
@@ -48,6 +62,40 @@ function Get-PreferredGenerator {
 	}
 
 	throw "Neither Ninja nor a supported Visual Studio C++ toolchain was found. Install Ninja or Visual Studio Build Tools with Desktop C++."
+}
+
+function Reset-BuildDirectoryIfGeneratorChanged {
+	param(
+		[string]$BuildPath,
+		[string]$GeneratorName
+	)
+
+	$cachePath = Join-Path $BuildPath "CMakeCache.txt"
+	if (-not (Test-Path $cachePath)) {
+		return
+	}
+
+	$cachedGenerator = $null
+	foreach ($line in Get-Content $cachePath) {
+		if ($line -match '^CMAKE_GENERATOR:INTERNAL=(.+)$') {
+			$cachedGenerator = $matches[1].Trim()
+			break
+		}
+	}
+
+	if (-not $cachedGenerator -or $cachedGenerator -eq $GeneratorName) {
+		return
+	}
+
+	Write-Host "Existing build directory uses '$cachedGenerator'; resetting cache for '$GeneratorName'."
+
+	$cmakeFilesPath = Join-Path $BuildPath "CMakeFiles"
+	if (Test-Path $cachePath) {
+		Remove-Item -LiteralPath $cachePath -Force
+	}
+	if (Test-Path $cmakeFilesPath) {
+		Remove-Item -LiteralPath $cmakeFilesPath -Recurse -Force
+	}
 }
 
 if (-not $VcpkgRoot) {
@@ -91,6 +139,7 @@ if (-not (Test-Path $vcpkgExe)) {
 $env:VCPKG_ROOT = $VcpkgRoot
 $buildPath = Join-Path $repoRoot $BuildDir
 $generator = Get-PreferredGenerator
+Reset-BuildDirectoryIfGeneratorChanged -BuildPath $buildPath -GeneratorName $generator.Name
 
 Write-Host "Configuring xoreos"
 Write-Host "Generator       : $($generator.Name)"

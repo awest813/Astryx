@@ -26,6 +26,7 @@
 
 #include <algorithm>
 
+#include "src/common/error.h"
 #include "src/common/filepath.h"
 #include "src/common/filelist.h"
 #include "src/common/configman.h"
@@ -150,6 +151,14 @@ bool Game::hasModule(const Common::UString &module) const {
 	});
 
 	return found != _modules.end();
+}
+
+void Game::showLevelUpGUI() {
+	warning("KotOR II level-up GUI is not implemented yet");
+}
+
+void Game::openStoreGUI(const Common::UString &tag) {
+	warning("KotOR II store GUI is not implemented yet for store \"%s\"", tag.c_str());
 }
 
 } // End of namespace KotOR2

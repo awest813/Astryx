@@ -159,7 +159,7 @@ bool Game::hasModule(const Common::UString &module) const {
 }
 
 void Game::showLevelUpGUI() {
-	Creature *pc = static_cast<Module *>(_module.get())->getPC();
+	KotORBase::Creature *pc = static_cast<Module *>(_module.get())->getPC();
 	if (!pc)
 		return;
 

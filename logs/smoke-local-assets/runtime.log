@@ -1,0 +1,33 @@
+[2026-04-06T21:11:23] xoreos 0.0.6+.dirty [.dirty] (2026-04-06T21:05:20Z)
+[2026-04-06T21:11:23] Full command line: D:\Games\Astryx\build-vcpkg-portable\bin\Debug\xoreos.exe -pD:\SteamLibrary\steamapps\common\swkotor --fullscreen=false --width=640 --height=480 --logfile=D:\Games\Astryx\logs\smoke-local-assets\runtime.log --consolelog=D:\Games\Astryx\logs\smoke-local-assets\console.log
+[2026-04-06T21:11:23] Target "swkotor"
+[2026-04-06T21:11:24] Found Max FSAA: 0x
+[2026-04-06T21:11:24] OpenGL context successfully created:
+[2026-04-06T21:11:24] OpenGL version: 2.1
+[2026-04-06T21:11:24] FSAA level    : 0x
+[2026-04-06T21:11:24] Initialising shaders...
+[2026-04-06T21:11:24] shader default/text.vert loaded
+[2026-04-06T21:11:24] shader default/text.frag loaded
+[2026-04-06T21:11:24] shader default/texture.vert loaded
+[2026-04-06T21:11:24] shader default/texture.frag loaded
+[2026-04-06T21:11:24] shader default/textureMatrix.vert loaded
+[2026-04-06T21:11:24] shader default/default.vert loaded
+[2026-04-06T21:11:24] shader default/colour.frag loaded
+[2026-04-06T21:11:24] Initialising default surfaces...
+[2026-04-06T21:11:24] Initialising default materials...
+[2026-04-06T21:11:24] Initialising default mesh containers...
+[2026-04-06T21:11:24] Graphics subsystem initialized
+[2026-04-06T21:11:24] Sound subsystem initialized
+[2026-04-06T21:11:24] Event subsystem initialized
+[2026-04-06T21:11:24] Detected game "Star Wars: Knights of the Old Republic"
+[2026-04-06T21:11:24] [  0%] Declare languages (0.00s)
+[2026-04-06T21:11:24] [  5%] Detecting game version (0.00s)
+[2026-04-06T21:11:25] This is Star Wars: Knights of the Old Republic Windows v1.03.514077
+[2026-04-06T21:11:25] Available languages:
+[2026-04-06T21:11:25] - English
+[2026-04-06T21:11:25] Using the first available language (English)
+[2026-04-06T21:11:25] Setting the language to English
+[2026-04-06T21:11:25] [ 11%] Loading user game config (0.45s)
+[2026-04-06T21:11:25] [ 16%] Setting base directory (0.45s)
+[2026-04-06T21:11:25] [ 22%] Adding extra archive directories (0.46s)
+[2026-04-06T21:11:25] [ 27%] Loading main KEY (0.79s)
