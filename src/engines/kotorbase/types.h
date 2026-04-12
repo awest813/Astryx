@@ -212,6 +212,25 @@ enum Ability {
 	kAbilityCharisma
 };
 
+enum SavingThrow {
+	kSavingThrowFortitude = 0,
+	kSavingThrowReflex,
+	kSavingThrowWill
+};
+
+enum DamageType {
+	kDamageTypeBludgeoning = 1,
+	kDamageTypePiercing    = 2,
+	kDamageTypeSlashing    = 4,
+	kDamageTypeEnergy      = 8,
+	kDamageTypeFire        = 16,
+	kDamageTypeCold        = 32,
+	kDamageTypeLightSide   = 64,
+	kDamageTypeDarkSide    = 128,
+	kDamageTypeSonic       = 256,
+	kDamageTypeUniversal   = 512
+};
+
 enum InventorySlot {
 	kInventorySlotHead         = 0,
 	kInventorySlotBody         = 1,
@@ -261,7 +280,11 @@ enum ActionType {
 	kActionWait          = 36,
 	kActionSit           = 37,
 	kActionFollowLeader  = 38,
+	kActionMoveToObject  = 39,
+	kActionDoCommand     = 40,
 	kActionCutsceneAttack = 42,
+	kActionGiveItem      = 43,
+	kActionTakeItem      = 44,
 	kActionQueueEmpty    = 65534,
 	kActionInvalid       = 65535
 };
@@ -370,7 +393,11 @@ enum EffectType {
 	kEffectSpeed  = 2,
 	kEffectShield = 3,
 	kEffectHeal   = 4,
-	kEffectVFX    = 5
+	kEffectVFX    = 5,
+	kEffectKnockdown = 6,
+	kEffectDamage = 7,
+	kEffectConfusion = 8,
+	kEffectDazed = 9
 };
 
 } // End of namespace KotORBase

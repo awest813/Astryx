@@ -57,12 +57,17 @@ protected:
 
 private:
 	KotORBase::InventorySlot _selectedSlot;
-	bool _slotFixated;
+	bool                     _slotFixated;
+
+	bool _dirty;
+	int  _selectedItem;
+
 	std::vector<Common::UString> _visibleItems;
 
 	void fillEquipedItems();
 	Common::UString getEquipedItemIcon(KotORBase::InventorySlot slot) const;
 	void fillEquipableItemsList();
+	void updateDescription();
 	KotORBase::InventorySlot getSlotByWidgetTag(const Common::UString &tag) const;
 	Odyssey::WidgetButton *getSlotButton(KotORBase::InventorySlot slot);
 	Common::UString getSlotName(KotORBase::InventorySlot slot) const;

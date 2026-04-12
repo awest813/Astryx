@@ -110,20 +110,42 @@ void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx
 	}
 
 	Door *door = ObjectContainer::toDoor(action.object);
-	if (door) {
-		ctx.creature->playAnimation("unlockdr", false);
-		door->unlock(ctx.creature);
-		return;
-	}
-
 	Placeable *placeable = ObjectContainer::toPlaceable(action.object);
-	if (placeable) {
-		ctx.creature->playAnimation("unlockcntr", false);
-		placeable->unlock(ctx.creature);
+	Situated *situated = door ? (Situated *)door : (Situated *)placeable;
+
+	if (!situated) {
+		warning("Cannot unlock an object that is not a door or a placeable");
 		return;
 	}
 
-	warning("Cannot unlock an object that is not a door or a placeable");
+	if (situated->isKeyRequired()) {
+		Common::UString keyTag = situated->getKeyTag();
+		if (ctx.creature->getInventory().hasItem(keyTag)) {
+			ctx.creature->playAnimation(door ? "unlockdr" : "unlockcntr", false);
+			situated->setLocked(false);
+			if (door) door->open(ctx.creature);
+			info("Object unlocked with key: %s", keyTag.c_str());
+		} else {
+			ctx.creature->speakString(Common::UString("A specific key is required to open this."));
+		}
+		return;
+	}
+
+	// Security skill check: d20 + Security Rank vs LockDC
+	int securityRank = ctx.creature->getSkillRank(kSkillSecurity);
+	int d20Roll = RNG.getNext(1, 21);
+	int total = d20Roll + securityRank;
+	int dc = situated->getLockDC();
+
+	if (total >= dc) {
+		ctx.creature->playAnimation(door ? "unlockdr" : "unlockcntr", false);
+		situated->setLocked(false);
+		if (door) door->open(ctx.creature);
+		info("Security Check SUCCESS: %d + %d = %d vs DC %d", d20Roll, securityRank, total, dc);
+	} else {
+		ctx.creature->speakString(Common::UString("Security check failed."));
+		info("Security Check FAILURE: %d + %d = %d vs DC %d", d20Roll, securityRank, total, dc);
+	}
 }
 
 void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ctx) {
@@ -273,12 +295,27 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 	Creature *caster = ctx.creature;
 	int cost = 0;
 
-	// Determine cost (placeholder logic, normally from spells.2da)
-	switch (action.actionID) {
-		case 1: cost = 15; break; // Heal
-		case 2: cost = 10; break; // Push
-		case 3: cost = 15; break; // Speed
-		default: break;
+	if (!_spellsLoaded)
+		loadSpells();
+
+	const SpellInfo *spell = getSpellInfo(action.actionID);
+	if (spell)
+		cost = spell->cost;
+
+	// Alignment adjustments (KotOR rule: Opposite side costs more)
+	int alignment = caster->getAlignment(); // 0-100, 100 is Light, 0 is Dark
+	if (spell) {
+		// Simplified heuristic: Hostile powers are Dark (category 3), 
+		// Non-hostile are Light (category 2). In real game we use category column.
+		if (spell->hostile) {
+			// Dark Side Power
+			if (alignment > 60)      cost = (cost * 3) / 2; // +50% for Light side users
+			else if (alignment < 40) cost = (cost * 3) / 4; // -25% for Dark side users
+		} else {
+			// Light Side / Neutral (Simplified)
+			if (alignment < 40)      cost = (cost * 3) / 2; // +50% for Dark side users
+			else if (alignment > 60) cost = (cost * 3) / 4; // -25% for Light side users
+		}
 	}
 
 	if (caster->getForcePoints() < cost) {
@@ -300,13 +337,36 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 			}
 			break;
 
-		case 2: // Force Push (Single target)
+		case 5: // Force Stun (Single target)
 			if (action.object) {
-				caster->playAnimation("castout", false);
 				Creature *target = ObjectContainer::toCreature(action.object);
 				if (target) {
-					target->applyEffect(Effect(kEffectDamage, 10));
-					target->applyEffect(Effect(kEffectKnockdown));
+					caster->playAnimation("castout", false);
+					int level = caster->getHitDice();
+					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					if (!target->rollSavingThrow(kSavingThrowWill, dc)) {
+						target->applyEffect(Effect(kEffectStun, 9.0f));
+						debugC(Common::kDebugEngineLogic, 1, "Force Stun SUCCESS on %s", target->getTag().c_str());
+					}
+				}
+			}
+			break;
+
+		case 2: // Force Push (Single target)
+			if (action.object) {
+				Creature *target = ObjectContainer::toCreature(action.object);
+				if (target) {
+					caster->playAnimation("castout", false);
+					int level = caster->getHitDice();
+					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
+						target->applyEffect(Effect(kEffectKnockdown, 3.0f));
+						target->applyEffect(Effect(kEffectDamage, (float)level));
+						debugC(Common::kDebugEngineLogic, 1, "Force Push SUCCESS on %s", target->getTag().c_str());
+					} else {
+						// Half damage on save
+						target->applyEffect(Effect(kEffectDamage, (float)level / 2.0f));
+					}
 				}
 			}
 			break;
@@ -314,6 +374,54 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 		case 3: // Burst of Speed (Self)
 			caster->playAnimation("castself", false);
 			caster->applyEffect(Effect(kEffectMovementSpeedIncrease, 50));
+			break;
+
+		case 14: // Shock (Single target lightning)
+		case 15: // Force Lightning (Cone/Radius)
+			if (action.object) {
+				Creature *target = ObjectContainer::toCreature(action.object);
+				if (target) {
+					caster->playAnimation("castout", false);
+					int level = caster->getHitDice();
+					int damage = level * 3; // Simplified 1d6 per level approx
+					
+					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					bool saved = target->rollSavingThrow(kSavingThrowWill, dc);
+					if (saved) damage /= 2;
+
+					target->applyEffect(Effect(kEffectDamage, damage));
+					// Visual effect hook would go here
+					debugC(Common::kDebugEngineLogic, 1, "Force Lightning hit %s for %d", target->getTag().c_str(), damage);
+				}
+			}
+			break;
+
+		case 25: // Plague (Unstoppable DoT)
+			if (action.object) {
+				Creature *target = ObjectContainer::toCreature(action.object);
+				if (target) {
+					caster->playAnimation("castout", false);
+					// Plague is special: DC 100 (Unstoppable)
+					target->applyEffect(kEffectPoison, 12.0f, 5); // 5 dmg per sec for 12s
+				}
+			}
+			break;
+
+		case 33: // Wound
+		case 34: // Choke
+			if (action.object) {
+				Creature *target = ObjectContainer::toCreature(action.object);
+				if (target) {
+					caster->playAnimation("castout", false);
+					int level = caster->getHitDice();
+					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					
+					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
+						target->applyEffect(Effect(kEffectStun, 6.0f));
+						target->applyEffect(Effect(kEffectDamage, level * 2));
+					}
+				}
+			}
 			break;
 
 		case 4: // Affect Mind
@@ -330,7 +438,6 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 			break;
 	}
 
-	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->popAction();
 }
 
@@ -343,6 +450,42 @@ void ActionExecutor::executeCutsceneAttack(Action &action, const ExecutionContex
 
 	ctx.creature->popAction();
 	ctx.creature->performCutsceneAttack(action.object, action.choreographyFlags);
+}
+
+void ActionExecutor::loadSpells() {
+	if (_spellsLoaded)
+		return;
+
+	try {
+		const Aurora::TwoDAFile &twoda = TwoDAReg.get2DA("spells");
+		for (size_t i = 0; i < twoda.getRows(); ++i) {
+			const Aurora::TwoDARow &row = twoda.getRow(i);
+			
+			SpellInfo info;
+			info.id = i;
+			info.label = row.getString("label");
+			info.cost = row.getInt("forcepoints");
+			info.impactScript = row.getString("impactscript");
+			info.hostile = row.getInt("hostile") != 0;
+			
+			_spells[info.id] = info;
+		}
+	} catch (...) {
+		warning("ActionExecutor::loadSpells(): Could not load spells.2da");
+	}
+
+	_spellsLoaded = true;
+}
+
+const ActionExecutor::SpellInfo *ActionExecutor::getSpellInfo(uint32_t id) {
+	if (!_spellsLoaded)
+		loadSpells();
+
+	auto it = _spells.find(id);
+	if (it != _spells.end())
+		return &it->second;
+
+	return nullptr;
 }
 
 } // End of namespace KotORBase

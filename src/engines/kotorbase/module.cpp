@@ -437,6 +437,11 @@ void Module::changeModule(const Common::UString &module, const Common::UString &
 	_entryLocationType = entryLocationType;
 }
 
+void Module::replaceModule(const Common::UString &module) {
+	_newModule = module;
+	replaceModule();
+}
+
 void Module::replaceModule() {
 	if (_newModule.empty())
 		return;
@@ -864,7 +869,13 @@ void Module::notifyCombatRoundBegan(int round) {
 		return;
 
 	for (auto &c : _area->getCreatures()) {
-		if (c->isDead() || !c->isInCombat())
+		if (c->isDead())
+			continue;
+
+		if (!c->isPC())
+			c->updateCombatAI();
+
+		if (!c->isInCombat())
 			continue;
 
 		Object *target = c->getAttackTarget();
@@ -2060,6 +2071,29 @@ void Module::loadState(const Aurora::GFF3File &gff) {
 			_areaObjectSaves[key] = state;
 		}
 	}
+}
+
+void Module::cameraTransitionToTarget(const Common::UString &target, float duration) {
+	Object *obj = findObjectByTag(target);
+	if (!obj) {
+		warning("Module::cameraTransitionToTarget(): target \"%s\" not found", target.c_str());
+		return;
+	}
+
+	float x, y, z;
+	obj->getPosition(x, y, z);
+	
+	debug("Module::cameraTransitionToTarget(): moving camera to %s (%.2f, %.2f, %.2f) over %.2fs", 
+	      target.c_str(), x, y, z, duration);
+	
+	// Hook into the CameraController's easeToPosition logic
+	_cameraController.easeToPosition(glm::vec3(x, y, z), duration);
+}
+
+void Module::playMovie(const Common::UString &resRef) {
+	// Real implementation would stop music, pause game, and invoke Graphics::MoviePlayer.
+	// For now, we status-log it to allow script verification.
+	status("Module::playMovie(): %s", resRef.c_str());
 }
 
 } // End of namespace KotORBase

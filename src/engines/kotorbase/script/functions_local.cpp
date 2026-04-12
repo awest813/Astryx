@@ -31,11 +31,55 @@
 #include "src/aurora/nwscript/types.h"
 #include "src/aurora/nwscript/object.h"
 
+#include "src/engines/kotorbase/objectcontainer.h"
+#include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/script/functions.h"
 
 namespace Engines {
 
 namespace KotORBase {
+
+void Functions::getLocalInt(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	if (object)
+		ctx.getReturn() = object->getLocalInt(ctx.getParams()[1].getString());
+	else
+		ctx.getReturn() = (int32_t) 0;
+}
+
+void Functions::setLocalInt(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	if (object)
+		object->setLocalInt(ctx.getParams()[1].getString(), ctx.getParams()[2].getInt());
+}
+
+void Functions::getLocalFloat(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	if (object)
+		ctx.getReturn() = object->getLocalFloat(ctx.getParams()[1].getString());
+	else
+		ctx.getReturn() = 0.0f;
+}
+
+void Functions::setLocalFloat(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	if (object)
+		object->setLocalFloat(ctx.getParams()[1].getString(), ctx.getParams()[2].getFloat());
+}
+
+void Functions::getLocalString(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	if (object)
+		ctx.getReturn() = object->getLocalString(ctx.getParams()[1].getString());
+	else
+		ctx.getReturn() = Common::UString("");
+}
+
+void Functions::setLocalString(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	if (object)
+		object->setLocalString(ctx.getParams()[1].getString(), ctx.getParams()[2].getString());
+}
 
 void Functions::getLocalBoolean(Aurora::NWScript::FunctionContext &ctx) {
 	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();

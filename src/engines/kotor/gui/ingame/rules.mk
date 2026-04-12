@@ -40,6 +40,8 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/gui/ingame/levelup_feats.h \
     src/engines/kotor/gui/ingame/levelup_forcepowers.h \
     src/engines/kotor/gui/ingame/store.h \
+    src/engines/kotor/gui/ingame/galaxymap.h \
+    src/engines/kotor/gui/ingame/workbench.h \
     $(EMPTY)
 
 src_engines_kotor_libkotor_la_SOURCES += \
@@ -63,4 +65,6 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/gui/ingame/levelup_feats.cpp \
     src/engines/kotor/gui/ingame/levelup_forcepowers.cpp \
     src/engines/kotor/gui/ingame/store.cpp \
+    src/engines/kotor/gui/ingame/galaxymap.cpp \
+    src/engines/kotor/gui/ingame/workbench.cpp \
     $(EMPTY)

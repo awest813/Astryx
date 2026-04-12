@@ -54,11 +54,14 @@ MenuEquipment::MenuEquipment(KotORBase::Module &module, Console *console) :
 	if (!desc)
 		throw Common::Exception("MenuEquipment: No desription listbox");
 
-	desc->setInvisible(true);
+	desc->setInvisible(false);
 
 	Odyssey::WidgetLabel *cantEquip = getLabel("LBL_CANTEQUIP");
 	if (cantEquip)
 		cantEquip->setInvisible(true);
+
+	_dirty = true;
+	_selectedItem = -1;
 
 	Odyssey::WidgetLabel *slotName = getLabel("LBL_SLOTNAME");
 	if (slotName)
@@ -76,30 +79,53 @@ MenuEquipment::MenuEquipment(KotORBase::Module &module, Console *console) :
 }
 
 void MenuEquipment::update() {
+	bool leaderChanged = updatePartyLeader("LBL_PORTRAIT");
+	if (leaderChanged)
+		_dirty = true;
+
+	if (_dirty) {
+		fillEquipedItems();
+		fillEquipableItemsList();
+		_dirty = false;
+	}
+
+	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
+	int selected = lbItems->getSelectedIndex();
+	if (selected != _selectedItem) {
+		_selectedItem = selected;
+		updateDescription();
+	}
+
 	MenuBase::update();
-	updatePartyLeader("LBL_PORTRAIT");
-
-	fillEquipedItems();
-	fillEquipableItemsList();
 }
 
-void MenuEquipment::show() {
-	GUI::show();
+void MenuEquipment::updateDescription() {
+	Odyssey::WidgetListBox *lbDesc = getListBox("LB_DESC");
+	if (!lbDesc) return;
 
-	if (_selectedSlot != KotORBase::kInventorySlotInvalid)
-		getSlotButton(_selectedSlot)->setHighlight(true);
-}
+	lbDesc->clear();
 
-void MenuEquipment::hide() {
-	if (_selectedSlot != KotORBase::kInventorySlotInvalid)
-		getSlotButton(_selectedSlot)->setHighlight(false);
+	if (_selectedItem <= 0) {
+		lbDesc->add("Select an item to see its properties and description.");
+		return;
+	}
 
-	GUI::hide();
+	Common::UString itemTag = _visibleItems[_selectedItem - 1];
+	try {
+		KotORBase::Item item(itemTag);
+		lbDesc->add(item.getName());
+		lbDesc->add("");
+		lbDesc->add(item.getDescription());
+	} catch (...) {
+		lbDesc->add("Unable to reach item data.");
+	}
 }
 
 void MenuEquipment::callbackRun() {
-	KotORBase::InventorySlot newSlot;
+	if (_slotFixated) return;
 
+	KotORBase::InventorySlot newSlot = KotORBase::kInventorySlotInvalid;
+	
 	if (getLabel("LBL_INV_IMPLANT")->isHovered())
 		newSlot = KotORBase::kInventorySlotImplant;
 	else if (getLabel("LBL_INV_HEAD")->isHovered())
@@ -118,17 +144,15 @@ void MenuEquipment::callbackRun() {
 		newSlot = KotORBase::kInventorySlotBelt;
 	else if (getLabel("LBL_INV_WEAP_R")->isHovered())
 		newSlot = KotORBase::kInventorySlotRightWeapon;
-	else
-		return;
 
-	if (newSlot != _selectedSlot) {
+	if (newSlot != KotORBase::kInventorySlotInvalid && newSlot != _selectedSlot) {
 		if (_selectedSlot != KotORBase::kInventorySlotInvalid)
 			getSlotButton(_selectedSlot)->setHighlight(false);
 
 		_selectedSlot = newSlot;
 		getSlotButton(_selectedSlot)->setHighlight(true);
 		getLabel("LBL_SLOTNAME")->setText(getSlotName(_selectedSlot));
-		fillEquipableItemsList();
+		_dirty = true;
 	}
 }
 

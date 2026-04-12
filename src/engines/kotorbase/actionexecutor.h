@@ -43,7 +43,20 @@ public:
 
 	static void execute(Action &action, const ExecutionContext &ctx);
 
+	struct SpellInfo {
+		uint32_t id;
+		Common::UString label;
+		int cost;
+		Common::UString impactScript;
+		bool hostile;
+	};
+
+	const SpellInfo *getSpellInfo(uint32_t id);
+	void loadSpells();
+
 private:
+	std::map<uint32_t, SpellInfo> _spells;
+	bool _spellsLoaded { false };
 	/** Get if the current creature has reached a specified location. */
 	static bool isLocationReached(const glm::vec2 &location, float range, const ExecutionContext &ctx);
 

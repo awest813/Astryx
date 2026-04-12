@@ -119,17 +119,23 @@ void LevelUpSkillsMenu::callbackActive(Widget &widget) {
 
 	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
 		if (tag == kSkillTags[i].plusTag) {
-			if (_remainingPoints > 0) {
+			KotORBase::Class pcClass = _info.getLatestClass();
+			int cost = isClassSkill(pcClass, static_cast<KotORBase::Skill>(i)) ? 1 : 2;
+
+			if (_remainingPoints >= cost) {
 				_ranks[i]++;
-				_remainingPoints--;
+				_remainingPoints -= cost;
 				updateLabels();
 			}
 			return;
 		}
 		if (tag == kSkillTags[i].minusTag) {
 			if (_ranks[i] > _originalRanks[i]) {
+				KotORBase::Class pcClass = _info.getLatestClass();
+				int cost = isClassSkill(pcClass, static_cast<KotORBase::Skill>(i)) ? 1 : 2;
+
 				_ranks[i]--;
-				_remainingPoints++;
+				_remainingPoints += cost;
 				updateLabels();
 			}
 			return;
@@ -150,6 +156,35 @@ void LevelUpSkillsMenu::callbackActive(Widget &widget) {
 			_returnCode = 1;
 		}
 		return;
+	}
+}
+
+bool LevelUpSkillsMenu::isClassSkill(KotORBase::Class c, KotORBase::Skill s) const {
+	switch (c) {
+		case KotORBase::kClassScout:
+			return (s == KotORBase::kSkillComputerUse || s == KotORBase::kSkillDemolitions || 
+			        s == KotORBase::kSkillStealth || s == KotORBase::kSkillAwareness || 
+			        s == KotORBase::kSkillRepair || s == KotORBase::kSkillTreatInjury);
+		case KotORBase::kClassScoundrel:
+			return (s == KotORBase::kSkillDemolitions || s == KotORBase::kSkillStealth || 
+			        s == KotORBase::kSkillAwareness || s == KotORBase::kSkillPersuade || 
+			        s == KotORBase::kSkillSecurity || s == KotORBase::kSkillTreatInjury);
+		case KotORBase::kClassSoldier:
+			return (s == KotORBase::kSkillDemolitions || s == KotORBase::kSkillAwareness || 
+			        s == KotORBase::kSkillTreatInjury);
+		case KotORBase::kClassJediGuardian:
+			return (s == KotORBase::kSkillAwareness || s == KotORBase::kSkillPersuade || 
+			        s == KotORBase::kSkillTreatInjury);
+		case KotORBase::kClassJediSentinel:
+			return (s == KotORBase::kSkillComputerUse || s == KotORBase::kSkillDemolitions || 
+			        s == KotORBase::kSkillAwareness || s == KotORBase::kSkillPersuade || 
+			        s == KotORBase::kSkillSecurity || s == KotORBase::kSkillTreatInjury);
+		case KotORBase::kClassJediConsular:
+			return (s == KotORBase::kSkillComputerUse || s == KotORBase::kSkillDemolitions || 
+			        s == KotORBase::kSkillAwareness || s == KotORBase::kSkillPersuade || 
+			        s == KotORBase::kSkillRepair || s == KotORBase::kSkillTreatInjury);
+		default:
+			return false;
 	}
 }
 

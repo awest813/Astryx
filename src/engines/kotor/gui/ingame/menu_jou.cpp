@@ -33,7 +33,7 @@ namespace Engines {
 
 namespace KotOR {
 
-MenuJournal::MenuJournal(Console *console) : KotORBase::GUI(console) {
+MenuJournal::MenuJournal(Console *console) : KotORBase::GUI(console), _category(kCategoryActive) {
 	load("journal");
 }
 
@@ -58,23 +58,41 @@ void MenuJournal::fillJournal() {
 
 	const std::map<Common::UString, uint32_t> &journal = _module->getJournal();
 	for (auto const& [quest, state] : journal) {
-		// In a full implementation, we would use the quest ID to look up
-		// the localized name and description from journal.gff.
-		// For now, we display the quest tag as a placeholder.
+		// Mock logic for completion
+		bool completed = (state >= 100); 
+		
+		if ((_category == kCategoryActive && completed) ||
+		    (_category == kCategoryCompleted && !completed))
+			continue;
+
 		list->add(quest);
 	}
 
 	Odyssey::WidgetLabel *desc = getLabel("LBL_QUESTDESC");
 	if (desc) {
-		if (journal.empty())
-			desc->setText("Your journal is currently empty.");
-		else
-			desc->setText("Select a quest to see more details.");
+		if (list->isEmpty()) {
+			desc->setText(_category == kCategoryActive ? 
+				"No active missions in your log." : 
+				"No completed missions in your log.");
+		} else {
+			desc->setText("Select a mission to review your progress and historical data.");
+		}
 	}
 }
 
 void MenuJournal::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
+
+	if (tag == "BTN_ACTIVE") {
+		_category = kCategoryActive;
+		fillJournal();
+		return;
+	}
+	if (tag == "BTN_COMPLETED") {
+		_category = kCategoryCompleted;
+		fillJournal();
+		return;
+	}
 
 	if (tag == "LIST_QUESTS") {
 		Odyssey::WidgetListBox *list = dynamic_cast<Odyssey::WidgetListBox *>(&widget);

@@ -77,13 +77,23 @@ void StoreGUI::updatePrice() {
 	int selectedStoreIdx = lbStore->getSelectedIndex();
 	int selectedPlayerIdx = lbPlayer->getSelectedIndex();
 
+	// Charisma-based price modifiers (1.0 +/- 0.05 per mod point)
+	float chaMod = pc->getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f;
+	float buyMultiplier = 1.0f - chaMod;
+	float sellMultiplier = 1.0f + chaMod;
+
 	if (selectedStoreIdx >= 0) {
 		// Calculate Buy Price
 		auto items = _store.getInventory().getItems();
 		auto it = items.begin();
 		std::advance(it, selectedStoreIdx);
 		KotORBase::Item item(it->second.tag);
-		lblPrice->setText(Common::String::format("Buy: %d Credits", _store.getBuyPrice(item, *pc)));
+		
+		int basePrice = _store.getBuyPrice(item, *pc);
+		int finalPrice = static_cast<int>(basePrice * buyMultiplier);
+		
+		lblPrice->setText(Common::String::format("Buy: %d Credits (Cha Disc: %d%%)", 
+		                  finalPrice, static_cast<int>(chaMod * 100)));
 		lblPrice->setTextColor(0.0f, 0.8f, 1.0f, 1.0f); // Teal
 	} else if (selectedPlayerIdx >= 0) {
 		// Calculate Sell Price
@@ -91,7 +101,12 @@ void StoreGUI::updatePrice() {
 		auto it = items.begin();
 		std::advance(it, selectedPlayerIdx);
 		KotORBase::Item item(it->second.tag);
-		lblPrice->setText(Common::String::format("Sell: %d Credits", _store.getSellPrice(item, *pc)));
+
+		int basePrice = _store.getSellPrice(item, *pc);
+		int finalPrice = static_cast<int>(basePrice * sellMultiplier);
+
+		lblPrice->setText(Common::String::format("Sell: %d Credits (Cha Bonus: %d%%)", 
+		                  finalPrice, static_cast<int>(chaMod * 100)));
 		lblPrice->setTextColor(1.0f, 0.6f, 0.0f, 1.0f); // Orange
 	} else {
 		lblPrice->setText("Select an item to trade");
@@ -103,8 +118,64 @@ StoreGUI::~StoreGUI() {
 }
 
 void StoreGUI::callbackActive(::Engines::Widget &widget) {
-	if (widget.getTag() == "BTN_EXIT") {
+	const Common::UString &tag = widget.getTag();
+
+	if (tag == "BTN_EXIT") {
 		_returnCode = 1;
+		return;
+	}
+
+	if (tag == "BTN_BUY") {
+		Odyssey::WidgetListBox *lbStore = getListBox("LB_STORE_ITEMS");
+		int selectedIdx = lbStore->getSelectedIndex();
+		if (selectedIdx < 0) return;
+
+		KotORBase::Creature *pc = _module.getPC();
+		auto items = _store.getInventory().getItems();
+		auto it = items.begin();
+		std::advance(it, selectedIdx);
+		KotORBase::Item item(it->second.tag);
+
+		float buyMultiplier = 1.0f - (pc->getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
+		int price = static_cast<int>(_store.getBuyPrice(item, *pc) * buyMultiplier);
+
+		if (pc->getInventory().getGold() >= (uint32_t)price) {
+			pc->getInventory().addGold(-price);
+			_store.getInventory().addGold(price);
+
+			pc->getInventory().addItem(it->second.tag, 1);
+			_store.getInventory().removeItem(it->second.tag, 1);
+
+			fillStoreInventory();
+			fillPlayerInventory();
+			updatePrice();
+		}
+		return;
+	}
+
+	if (tag == "BTN_SELL") {
+		Odyssey::WidgetListBox *lbPlayer = getListBox("LB_PLAYER_ITEMS");
+		int selectedIdx = lbPlayer->getSelectedIndex();
+		if (selectedIdx < 0) return;
+
+		KotORBase::Creature *pc = _module.getPC();
+		auto items = pc->getInventory().getItems();
+		auto it = items.begin();
+		std::advance(it, selectedIdx);
+		KotORBase::Item item(it->second.tag);
+
+		float sellMultiplier = 1.0f + (pc->getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
+		int price = static_cast<int>(_store.getSellPrice(item, *pc) * sellMultiplier);
+
+		_store.getInventory().addGold(-price);
+		pc->getInventory().addGold(price);
+
+		_store.getInventory().addItem(it->second.tag, 1);
+		pc->getInventory().removeItem(it->second.tag, 1);
+
+		fillStoreInventory();
+		fillPlayerInventory();
+		updatePrice();
 		return;
 	}
 }

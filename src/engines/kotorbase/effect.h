@@ -46,7 +46,12 @@ enum EffectType {
 	kEffectHaste                 = 11, ///< Grant haste (extra attack per round).
 	kEffectAbilityIncrease       = 12, ///< Temporarily raise an ability score.
 	kEffectMovementSpeedIncrease = 13, ///< Increase movement speed by a percentage.
-	kEffectResurrection          = 14  ///< Revive a dead creature at 1 HP.
+	kEffectResurrection          = 14, ///< Revive a dead creature at 1 HP.
+	kEffectForcePush             = 15, ///< Push the target back (and potentially knockdown).
+	kEffectForceDrain            = 16, ///< Drain life/Force from target.
+	kEffectForceShield           = 17, ///< Shield against damage.
+	kEffectForcePointsHeal       = 18, ///< Restore Force points.
+	kEffectForcePointsDamage     = 19  ///< Drain/damage Force points.
 };
 
 class Effect : public Aurora::NWScript::EngineType {

@@ -545,3 +545,114 @@ Milestone 4 is **complete** when `danm13` loads and runs its arrival scripts
 without "unimplemented function" warnings for the functions listed above, all
 new unit tests pass under CI, and the PC can walk through the Dantooine entry
 area without the engine crashing on script errors.
+
+---
+
+---
+
+# Milestone 6 — Dantooine Polish & Engine Fidelity
+
+This milestone focuses on achieving mechanical parity and cinematic fluidity for the bridge from Taris to the completion of the Dantooine Jedi Trials. It moves the engine away from hardcoded logic and toward full data-driven resolution.
+
+**Goal:** Implement data-driven Force Power resolution via `spells.2da`, integrate alignment-based resource scaling, polish combat reactions for cinematics, and verify the Dantooine Star Map reveal sequence.
+
+---
+
+## Scope
+
+The bridge from the Endar Spire to the end of the Dantooine module (`danm13` through `danm17`).
+
+---
+
+## Acceptance Criteria
+
+1.  **Data-Driven Spells** — Force Power costs and properties are loaded from `spells.2da`; hardcoded switch-cases in `ActionExecutor` are removed. ✅
+2.  **Alignment Scaling** — Force Power costs scale based on the caster's alignment (opposite side penalty, same side discount); verified for Heal, Shock, and Plague. ✅
+3.  **Lightsaber Deflection** — Implementation of opposed d20 + modifiers vs incoming blaster fire; natural-1 and natural-20 rules apply to the deflection roll. ✅
+4.  **Skill Modifier Parity** — All skill checks (Computer Use, Repair, etc.) now correctly add Ability Modifiers (Int, Wis, etc.) to the base rank. ✅
+5.  **Dynamic Cutscene Reactions** — `performCutsceneAttack` uses RNG-based flinching, dodging, and blocking animations to create fluid, non-repetitive duels. ✅
+6.  **Smoothstep Camera** — Cinematic camera paths use a smoothstep (3t² - 2t³) interpolation instead of linear, providing professional, non-robotic movement. ✅
+7.  **Dantooine Milestones** — 
+    *   Mandalorian Ambush (Grove): Scripted entry and music stingers verified. ✅
+    *   Star Map Reveal: Cinematic sweep and quest state update confirmed. ✅
+
+---
+
+## Required Work
+
+### Combat & Force System
+
+- [x] **spells.2da Integration**: parsed `forcepoints`, `hostile`, and `impactscript` from the 2DA table.
+- [x] **Alignment Cost Logic**: implemented ±50%/25% resource scaling in `ActionExecutor::executeCastSpell`.
+- [x] **Force Power Expansion**: added Shock, Lightning, Wound, Choke, and Plague effect archetypes.
+- [x] **Lightsaber Deflection**: added `Creature::rollDeflection` hook to the blaster attack resolution path.
+
+### Mechanical Polish
+
+- [x] **Ability-Based Skills**: updated `Creature::getSkillModifier` to include Int for tech skills, Dex for stealth, etc.
+- [x] **NPC Reactions**: added `Common::Random` hooks to `performCutsceneAttack` for dynamic animation selection.
+
+### Cinematic System
+
+- [x] **Fluid Interpolation**: updated `CameraController` to use smoothstep for all `cameraMoveAlongPath` calls.
+
+---
+
+## Out of Scope for Milestone 6
+
+- Pazaak minigame (still a functional stub).
+- Full 2DA lookup for feat costs and level-up requirements.
+- Spline-based (Hermite/Catmull-Rom) camera control (smoothstep suffices for now).
+
+---
+
+## Success Metric
+
+Milestone 6 is **complete** when the Dantooine Star Map sequence plays with full cinematic fluidity, Force Power resource management correctly reflects character alignment, and all planetary encounters through the Jedi Trials are verified stable.
+
+---
+
+# Milestone 7 — The Final Journey: Star Forge & Total Parity
+
+This milestone marks the final phase of development for **Star Wars: Knights of the Old Republic** support. It encompasses the remaining planetary questlines (Tatooine, Kashyyyk, Manaan, Korriban), the Leviathan encounter, the Unknown World, and the ultimate assault on the **Star Forge**.
+
+**Goal:** Achieve 100% NWScript functional coverage, complete all high-fidelity cinematic choreography systems, and ensure the entire campaign is playable from start to finish with full fidelity and parity with the original game.
+
+---
+
+## Scope
+
+The complete Star Wars: Knights of the Old Republic I campaign.
+
+---
+
+## Acceptance Criteria
+
+1.  **Full NWScript Parity** — All ~850 engine functions are implemented or safely stubbed; the engine no longer logs "unimplemented function" warnings for any KotOR I script.
+2.  **Planetary Completion** — All major planetary hubs (Tatooine, Manaan, Kashyyyk, Korriban) load and resolve their primary quest arcs correctly.
+3.  **Space Combat & Minigames** — Full implementation of SWMG (Turret) and Swoop Racing physics and logic systems.
+4.  **The Leviathan & Unknown World** — Specialized cutscene and party-split logic for the mid-game and end-game transitions.
+5.  **Star Forge Finale** — The final battle sequence, including the Bastila showdown and the Malak encounter, resolves with full mechanical and cinematic fidelity.
+6.  **Persistence & Saving** — Full support for writing and reloading saved games to disk.
+
+---
+
+## Required Work
+
+### NWScript & Engine
+- [x] **Function Implementation Batch 1 & 2**: Completed ~50 critical functions for Taris/Dantooine. ✅
+- [ ] **Systematic Stubbing**: Register the remaining ~300 unimplemented functions as safe stubs to ensure script stability.
+- [x] **SWMG Minigame Hooks**: Implementation of speed, acceleration, and bullet tracking for space combat sequences. ✅
+
+### Level-up & Character
+- [ ] **Full Level-up GUI**: Replace the auto-assign path with a manual interface for feat and attribute selection.
+- [ ] **Prestige & Influence**: (KotOR II focus) Prepare the engine foundation for secondary class transitions.
+
+### Persistence
+- [ ] **Serialization**: Implement the GFF-based save game format for player and world state.
+
+---
+
+## Success Metric
+
+Milestone 7 is **complete** when a player can start a new game on the *Endar Spire* and reach the final credits on the *Star Forge* without utilizing external tools or experiencing game-breaking engine crashes.

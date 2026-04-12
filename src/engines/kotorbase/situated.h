@@ -78,6 +78,11 @@ public:
 	bool isLocked() const;
 	/** Is a key required to unlock this situated object? */
 	bool isKeyRequired() const;
+	/** Get the key tag for this situated object. */
+	const Common::UString &getKeyTag() const;
+	/** Get the lock DC for this situated object. */
+	int getLockDC() const;
+	int getLockRequiredSkill() const;
 
 	/** Lock/Unlock the situated object. */
 	virtual void setLocked(bool locked);
@@ -108,6 +113,9 @@ protected:
 
 	bool _locked; ///< Is the situated object locked?
 	bool _keyRequired { false };
+	Common::UString _keyTag;
+	int  _lockDC { 20 };
+	int  _lockSkill { kSkillSecurity };
 
 	Common::UString _soundOpened;    ///< The sound the object makes when opened.
 	Common::UString _soundClosed;    ///< The sound the object makes when closed.

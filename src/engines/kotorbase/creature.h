@@ -134,10 +134,13 @@ public:
 	void setForcePoints(int fp);
 	void setMaxForcePoints(int fp);
 
-	/** Get the alignment of this creature (0-100). */
-	int getAlignment() const;
 	/** Adjust the alignment of this creature. */
 	void adjustAlignment(int shift);
+
+	/** Roll a d20 vs the specified DC. Return true if successful. */
+	bool rollSavingThrow(SavingThrow type, int dc);
+	/** Get the total bonus for the specified saving throw. */
+	int getSavingThrowBonus(SavingThrow type);
 
 	// Combat AI
 	enum AIArchetype {
@@ -179,6 +182,9 @@ public:
 
 	void equipItem(Common::UString tag, InventorySlot slot, bool updateModel = true);
 	void equipItem(Common::UString tag, InventorySlot slot, CreatureInfo &invOwner, bool updateModel = true);
+
+	void equipMostDamagingMelee();
+	void equipMostDamagingRanged();
 
 	/** Create a live Item object for an inventory tag, store it and return it. */
 	Item *addScriptItem(const Common::UString &tag);
@@ -300,6 +306,16 @@ public:
 	/** Returns true if the creature has a lightsaber equipped in either hand. */
 	bool hasLightsaberEquipped() const;
 
+	/** Return true if the creature has the specified Force power. */
+	bool hasForcePower(uint32_t power) const;
+
+	// Appearance and Stealth (Tatooine parity)
+	uint32_t getAppearanceType() const { return _appearance; }
+	void setAppearanceType(uint32_t appearance);
+
+	bool getStealthMode() const { return _stealthMode; }
+	void setStealthMode(bool stealth);
+
 	// Death
 
 	bool isDead() const override;
@@ -311,6 +327,16 @@ public:
 	bool isXPAwarded() const;
 	/** Mark kill XP as awarded. */
 	void markXPAwarded();
+
+	// Additional properties for Taris/Dantooine parity
+	bool isResting() const { return _isResting; }
+	void setResting(bool resting) { _isResting = resting; }
+
+	int getInfluence() const { return _influence; }
+	void setInfluence(int influence) { _influence = influence; }
+
+	int getSkillPointBonus() const { return _skillPointBonus; }
+	void setSkillPointBonus(int bonus) { _skillPointBonus = bonus; }
 
 protected:
 	// Parts of a creature's body.
@@ -425,6 +451,11 @@ private:
 
 	int getWeaponAnimationNumber() const;
 	int computeWeaponDamage(const Item *weapon) const;
+
+	int _influence { 50 };
+	int _skillPointBonus { 0 };
+	bool _isResting { false };
+	bool _stealthMode { false };
 };
 
 } // End of namespace KotORBase

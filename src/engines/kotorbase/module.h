@@ -94,6 +94,9 @@ public:
 	/** Exit the currently running module. */
 	void exit();
 
+	/** Change the module to a new one immediately. */
+	void replaceModule(const Common::UString &module);
+
 	// Information about the current module
 
 	/** Return the IFO of the currently loaded module. */
@@ -143,9 +146,15 @@ public:
 	                 uint32_t delay);
 
 	void signalUserDefinedEvent(Object *owner, int number);
+	
+	/** Transition the camera to focus on a target object/waypoint. */
+	virtual void cameraTransitionToTarget(const Common::UString &target, float duration);
 
 	/** Signal an encounter choreography. */
 	virtual void signalEncounter(const Common::UString &id);
+
+	/** Play an intro/cinematic movie. */
+	virtual void playMovie(const Common::UString &resRef);
 
 	// Persistence
 	std::shared_ptr<Aurora::GFF3File> getAreaObjectSave(const Common::UString &key);

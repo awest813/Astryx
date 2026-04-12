@@ -43,9 +43,16 @@ protected:
 	void callbackActive(Widget &widget);
 
 private:
-	KotORBase::Module *_module { nullptr };
-	
 	void fillJournal();
+
+	enum Category {
+		kCategoryActive,
+		kCategoryCompleted
+	};
+
+	Category _category;
+
+	KotORBase::Module *_module { nullptr };
 };
 
 } // End of namespace KotOR

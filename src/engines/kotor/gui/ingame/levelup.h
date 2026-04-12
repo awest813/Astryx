@@ -46,6 +46,7 @@ public:
 	~LevelUpGUI();
 
 	void callbackActive(Widget &widget) override;
+	void callbackRun() override;
 
 	void showAbilities();
 	void showSkills();
@@ -53,6 +54,8 @@ public:
 	void showForcePowers();
 
 private:
+	void finalizeLevelUp();
+
 	KotORBase::Module   &_module;
 	KotORBase::Creature &_pc;
 

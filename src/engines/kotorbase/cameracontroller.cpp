@@ -214,10 +214,12 @@ void CameraController::processMovement(float frameTime) {
 				float x1, y1, z1, x2, y2, z2;
 				_pathStart->getPosition(x1, y1, z1);
 				_pathEnd->getPosition(x2, y2, z2);
+
+				float smooth_t = t * t * (3.0f - 2.0f * t);
 				
-				_target.x = x1 + (x2 - x1) * t;
-				_target.y = y1 + (y2 - y1) * t;
-				_target.z = z1 + (z2 - z1) * t;
+				_target.x = x1 + (x2 - x1) * smooth_t;
+				_target.y = y1 + (y2 - y1) * smooth_t;
+				_target.z = z1 + (z2 - z1) * smooth_t;
 			}
 			_dirty = true;
 		} else if (_cinematicFocus) {

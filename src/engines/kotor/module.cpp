@@ -40,6 +40,9 @@
 #include "src/engines/kotor/encounters_dan.h"
 #include "src/engines/kotor/encounters_end.h"
 #include "src/engines/kotor/encounters_tar.h"
+#include "src/engines/kotor/encounters_ebon.h"
+#include "src/engines/kotor/pazaak.h"
+#include "src/engines/kotor/gui/ingame/pazaak.h"
 
 namespace Engines {
 
@@ -99,7 +102,24 @@ void Module::signalEncounter(const Common::UString &id) {
 	} else if (id == "dan17_reveal") {
 		KotOR::performStarMapReveal(*this);
 	} else if (id == "ebon_galaxymap") {
-		setGlobalBoolean("__open_galaxymap", true);
+		showGalaxyMap();
+	} else if (id == "ebon_hyperspace") {
+		performHyperspaceJump(*this);
+	} else if (id == "ebon_arrival") {
+		performPlanetArrival(*this);
+	} else if (id == "ebon_turret") {
+		performTurretMinigame(*this);
+	} else if (id == "pazaak_start") {
+		PazaakEngine engine;
+		// Fetch side decks from module globals if needed, or use defaults
+		std::vector<int> playerDeck = {1, -1, 2, -2, 3, -3};
+		std::vector<int> opponentDeck = {1, 2, 3, 4, 5, 6};
+		engine.startMatch(playerDeck, opponentDeck);
+
+		PazaakGUI gui(engine, &_console);
+		sub(gui);
+		
+		setGlobalNumber("__pazaak_result", engine.getWinner() == 1 ? 1 : 0);
 	}
 }
 

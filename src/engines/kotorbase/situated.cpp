@@ -103,6 +103,18 @@ bool Situated::isKeyRequired() const {
 	return _keyRequired;
 }
 
+const Common::UString &Situated::getKeyTag() const {
+	return _keyTag;
+}
+
+int Situated::getLockDC() const {
+	return _lockDC;
+}
+
+int Situated::getLockRequiredSkill() const {
+	return _lockSkill;
+}
+
 void Situated::setLocked(bool locked) {
 	_locked = locked;
 }
@@ -224,6 +236,15 @@ void Situated::loadProperties(const Aurora::GFF3Struct &gff) {
 
 	// Key required
 	_keyRequired = gff.getBool("KeyRequired", _keyRequired);
+
+	// Key tag
+	_keyTag = gff.getString("KeyTag", _keyTag);
+
+	// Lock DC
+	_lockDC = gff.getUint("LockDC", _lockDC);
+
+	// Lock Skill
+	_lockSkill = gff.getUint("LockSkill", _lockSkill);
 
 	// Conversation
 	_conversation = gff.getString("Conversation", _conversation);

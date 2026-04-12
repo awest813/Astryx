@@ -332,6 +332,33 @@ void Object::loadState(const Aurora::GFF3Struct &gff) {
 	_usable = gff.getBool("Usable", true);
 }
 
+int32_t Object::getLocalInt(const Common::UString &name) const {
+	auto it = _localInts.find(name);
+	return it != _localInts.end() ? it->second : 0;
+}
+
+void Object::setLocalInt(const Common::UString &name, int32_t value) {
+	_localInts[name] = value;
+}
+
+float Object::getLocalFloat(const Common::UString &name) const {
+	auto it = _localFloats.find(name);
+	return it != _localFloats.end() ? it->second : 0.0f;
+}
+
+void Object::setLocalFloat(const Common::UString &name, float value) {
+	_localFloats[name] = value;
+}
+
+Common::UString Object::getLocalString(const Common::UString &name) const {
+	auto it = _localStrings.find(name);
+	return it != _localStrings.end() ? it->second : Common::UString("");
+}
+
+void Object::setLocalString(const Common::UString &name, const Common::UString &value) {
+	_localStrings[name] = value;
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

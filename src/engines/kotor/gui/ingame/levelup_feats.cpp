@@ -51,6 +51,11 @@ LevelUpFeatsMenu::LevelUpFeatsMenu(KotORBase::CreatureInfo &info, Console *conso
 	_availableFeats.push_back(KotORBase::kFeatPowerAttack);
 	_availableFeats.push_back(KotORBase::kFeatFlurry);
 	_availableFeats.push_back(KotORBase::kFeatCriticalStrike);
+	_availableFeats.push_back(KotORBase::kFeatPowerBlast);
+	_availableFeats.push_back(KotORBase::kFeatRapidShot);
+	_availableFeats.push_back(KotORBase::kFeatSniperShot);
+	_availableFeats.push_back(KotORBase::kFeatConditioning);
+	_availableFeats.push_back(KotORBase::kFeatToughness);
 
 	updateLabels();
 }
@@ -83,6 +88,16 @@ void LevelUpFeatsMenu::callbackActive(Widget &widget) {
 		_selectedFeat = KotORBase::kFeatFlurry;
 	} else if (tag == "BTN_CRITICAL") {
 		_selectedFeat = KotORBase::kFeatCriticalStrike;
+	} else if (tag == "BTN_POWER_BLAST") {
+		_selectedFeat = KotORBase::kFeatPowerBlast;
+	} else if (tag == "BTN_RAPID_SHOT") {
+		_selectedFeat = KotORBase::kFeatRapidShot;
+	} else if (tag == "BTN_SNIPER_SHOT") {
+		_selectedFeat = KotORBase::kFeatSniperShot;
+	} else if (tag == "BTN_CONDITIONING") {
+		_selectedFeat = KotORBase::kFeatConditioning;
+	} else if (tag == "BTN_TOUGHNESS") {
+		_selectedFeat = KotORBase::kFeatToughness;
 	}
 
 	if (tag == "BTN_BACK") {

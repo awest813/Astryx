@@ -234,6 +234,7 @@ int CreatureInfo::getBAB() const {
 	//                  SithAssassin
 	//   1/2         — Scoundrel, Minion
 
+int CreatureInfo::getBAB() const {
 	int bab = 0;
 	for (const auto &cl : _levels) {
 		const int lv = cl.level;
@@ -265,6 +266,56 @@ int CreatureInfo::getBAB() const {
 		}
 	}
 	return bab;
+}
+
+int CreatureInfo::getSavingThrowBonus(SavingThrow type) const {
+	int baseSave = 0;
+	for (const auto &cl : _levels) {
+		const int lv = cl.level;
+		bool good = false;
+
+		switch (type) {
+		case kSavingThrowFortitude:
+			good = (cl.characterClass == kClassSoldier || 
+			        cl.characterClass == kClassScout || 
+			        cl.characterClass == kClassJediGuardian || 
+			        cl.characterClass == kClassJediConsular || 
+			        cl.characterClass == kClassJediSentinel);
+			break;
+		case kSavingThrowReflex:
+			good = (cl.characterClass == kClassScout || 
+			        cl.characterClass == kClassScoundrel || 
+			        cl.characterClass == kClassJediGuardian || 
+			        cl.characterClass == kClassJediConsular || 
+			        cl.characterClass == kClassJediSentinel);
+			break;
+		case kSavingThrowWill:
+			good = (cl.characterClass == kClassJediConsular || 
+			        cl.characterClass == kClassJediSentinel);
+			break;
+		}
+
+		if (good)
+			baseSave += 2 + (lv / 2);
+		else
+			baseSave += (lv / 3);
+	}
+
+	Ability ability = kAbilityConstitution;
+	if (type == kSavingThrowReflex) ability = kAbilityDexterity;
+	if (type == kSavingThrowWill)   ability = kAbilityWisdom;
+
+	return baseSave + getAbilityModifier(ability);
+}
+
+bool CreatureInfo::isJedi() const {
+	for (const auto &cl : _levels) {
+		if (cl.characterClass == kClassJediGuardian || 
+		    cl.characterClass == kClassJediConsular || 
+		    cl.characterClass == kClassJediSentinel)
+			return true;
+	}
+	return false;
 }
 
 void CreatureInfo::incrementClassLevel(Class charClass) {
@@ -570,6 +621,23 @@ void CreatureInfo::setAlignment(int alignment) {
 
 void CreatureInfo::adjustAlignment(int shift) {
 	setAlignment(_alignment + shift);
+}
+
+int CreatureInfo::getFeatRank(uint32_t feat) const {
+	int rank = 0;
+	if (feat == kFeatSneakAttack1) {
+		if (hasFeat(kFeatSneakAttack10)) return 10;
+		if (hasFeat(kFeatSneakAttack9)) return 9;
+		if (hasFeat(kFeatSneakAttack8)) return 8;
+		if (hasFeat(kFeatSneakAttack7)) return 7;
+		if (hasFeat(kFeatSneakAttack6)) return 6;
+		if (hasFeat(kFeatSneakAttack5)) return 5;
+		if (hasFeat(kFeatSneakAttack4)) return 4;
+		if (hasFeat(kFeatSneakAttack3)) return 1; // wait, 3 is 3
+		if (hasFeat(kFeatSneakAttack1)) return 1;
+	}
+	// Fallback: if it's not a ranked feat, return 1 if present.
+	return hasFeat(feat) ? 1 : 0;
 }
 
 } // End of namespace KotORBase

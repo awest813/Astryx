@@ -39,10 +39,25 @@ class MenuInventory : public KotORBase::MenuBase {
 public:
 	MenuInventory(KotORBase::Module &module, ::Engines::Console *console = 0);
 
+	void show();
 	void update();
 
 protected:
 	void callbackActive(Widget &widget);
+
+private:
+	void fillItems();
+
+	enum Category {
+		kCategoryAll,
+		kCategoryWeapons,
+		kCategoryArmor,
+		kCategoryItems,
+		kCategoryMisc
+	};
+
+	Category _category;
+	std::vector<Common::UString> _visibleItems;
 };
 
 } // End of namespace KotOR

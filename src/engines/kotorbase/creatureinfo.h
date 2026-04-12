@@ -78,6 +78,12 @@ public:
 	/** Compute the total Base Attack Bonus from all class levels (KOTOR d20 rules). */
 	int getBAB() const;
 
+	/** Compute the total saving throw bonus for the given category (Class base + Ability mod). */
+	int getSavingThrowBonus(SavingThrow type) const;
+
+	/** Return true if the creature has any Jedi class levels. */
+	bool isJedi() const;
+
 	// Abilities
 
 	struct Abilities {
@@ -126,6 +132,7 @@ public:
 
 	void addFeat(uint32_t feat);
 	bool hasFeat(uint32_t feat) const;
+	int  getFeatRank(uint32_t feat) const;
 	const std::vector<uint32_t> &getFeats() const;
 
 	// Force Powers

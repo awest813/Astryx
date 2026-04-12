@@ -57,52 +57,75 @@ void LevelUpGUI::callbackActive(::Engines::Widget &widget) {
 	}
 
 	if (widget.getTag() == "BTN_ACCEPT") {
-		// New multi-step workflow
-		
-		int totalLevel = _pc.getHitDice();
-		
-		// 1. Ability Scores (every 4 levels)
-		if (totalLevel % 4 == 0) {
-			showAbilities();
-		}
-
-		// 2. Skills (always)
-		showSkills();
-
-		// 3. Feats (based on class progression — placeholder: always for now)
-		showFeats();
-
-		// 4. Force Powers (if Jedi — placeholder: always for now if class > 2)
-		int classID = _pc.getCreatureInfo().getLatestClass();
-		if (classID >= KotORBase::kClassJediGuardian && classID <= KotORBase::kClassJediSentinel) {
-			showForcePowers();
-		}
-
-		// Finalize the level up
-		KotORBase::CreatureInfo &info = _pc.getCreatureInfo();
-		KotORBase::Class pcClass = info.getLatestClass();
-		info.incrementClassLevel(pcClass);
-
-		// HP gain: based on class hit die + CON modifier.
-		int hpGain = 10;
-		if (pcClass == KotORBase::kClassScout)          hpGain = 8;
-		if (pcClass == KotORBase::kClassScoundrel)      hpGain = 6;
-		if (pcClass == KotORBase::kClassJediGuardian)   hpGain = 10;
-		if (pcClass == KotORBase::kClassJediSentinel)   hpGain = 8;
-		if (pcClass == KotORBase::kClassJediConsular)   hpGain = 6;
-
-		hpGain += info.getAbilityModifier(KotORBase::kAbilityConstitution);
-		if (hpGain < 1) hpGain = 1;
-
-		_pc.setMaxHitPoints(_pc.getMaxHitPoints() + hpGain);
-		_pc.setCurrentHitPoints(_pc.getMaxHitPoints());
-
-		_pc.setMaxForcePoints(_pc.computeMaxForcePoints());
-		_pc.setForcePoints(_pc.getMaxForcePoints());
-
-		_returnCode = 1;
+		_step = 1;
+		callbackRun(); // Start the first step
 		return;
 	}
+}
+
+void LevelUpGUI::callbackRun() {
+	if (_step == 0) return;
+
+	// In xoreos, sub-GUIs are pushed to the stack. 
+	// This callbackRun will be skipped while the sub-GUI is active.
+	// When we are back here, it means the sub-GUI has finished.
+
+	int totalLevel = _pc.getHitDice();
+
+	switch (_step) {
+	case 1: // Abilities (Every 4 levels)
+		_step++;
+		if (totalLevel % 4 == 0) {
+			showAbilities();
+			return;
+		}
+		// Fall through
+	case 2: // Skills
+		_step++;
+		showSkills();
+		return;
+	case 3: // Feats
+		_step++;
+		showFeats();
+		return;
+	case 4: // Force Powers
+		_step++;
+		if (_pc.getCreatureInfo().isJedi()) {
+			showForcePowers();
+			return;
+		}
+		// Fall through
+	case 5: // Finalize
+		finalizeLevelUp();
+		_step = 0;
+		_returnCode = 1;
+		break;
+	}
+}
+
+void LevelUpGUI::finalizeLevelUp() {
+	KotORBase::CreatureInfo &info = _pc.getCreatureInfo();
+	KotORBase::Class pcClass = info.getLatestClass();
+	info.incrementClassLevel(pcClass);
+
+	// HP gain: based on class hit die + CON modifier.
+	int hpGain = 10;
+	if (pcClass == KotORBase::kClassScout)          hpGain = 8;
+	if (pcClass == KotORBase::kClassScoundrel)      hpGain = 6;
+	if (pcClass == KotORBase::kClassJediGuardian)   hpGain = 10;
+	if (pcClass == KotORBase::kClassJediSentinel)   hpGain = 8;
+	if (pcClass == KotORBase::kClassJediConsular)   hpGain = 6;
+
+	hpGain += info.getAbilityModifier(KotORBase::kAbilityConstitution);
+	if (hpGain < 1) hpGain = 1;
+
+	_pc.setMaxHitPoints(_pc.getMaxHitPoints() + hpGain);
+	_pc.setCurrentHitPoints(_pc.getMaxHitPoints());
+
+	_pc.setMaxForcePoints(_pc.computeMaxForcePoints());
+	_pc.setForcePoints(_pc.getMaxForcePoints());
+
+	debug("Level Up Finalized for %s. New HitDice: %d", _pc.getName().c_str(), _pc.getHitDice());
 }
 
 void LevelUpGUI::showAbilities() {

@@ -45,7 +45,8 @@ void GalaxyMapMenu::jumpToPlanet(const Common::UString &planetID) {
 	else if (planetID == "DAN") targetResRef = "danm13";    // Dantooine Enclave
 
 	if (!targetResRef.empty()) {
-		_module.replaceModule(targetResRef);
+		_module.playMovie("Hyperspace");
+		_module.changeModule(targetResRef);
 		_returnCode = 2;
 	}
 }

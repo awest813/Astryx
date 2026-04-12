@@ -158,6 +158,18 @@ void Functions::spawnAvailableNPC(Aurora::NWScript::FunctionContext &ctx) {
 	_game->getModule().spawnAvailableNPC(npc, waypointTag);
 }
 
+void Functions::getInfluence(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	ctx.getReturn() = creature ? creature->getInfluence() : 50;
+}
+
+void Functions::setInfluence(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	int influence = ctx.getParams()[1].getInt();
+	if (creature)
+		creature->setInfluence(influence);
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

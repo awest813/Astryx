@@ -26,6 +26,7 @@
 #define ENGINES_KOTORBASE_OBJECT_H
 
 #include <list>
+#include <map>
 
 #include "src/aurora/nwscript/object.h"
 
@@ -213,6 +214,14 @@ public:
 
 	virtual bool isDead() const;
 
+	// Local Variables (NWScript)
+	int32_t getLocalInt(const Common::UString &name) const;
+	void setLocalInt(const Common::UString &name, int32_t value);
+	float getLocalFloat(const Common::UString &name) const;
+	void setLocalFloat(const Common::UString &name, float value);
+	Common::UString getLocalString(const Common::UString &name) const;
+	void setLocalString(const Common::UString &name, const Common::UString &value);
+
 protected:
 	Common::UString _templateResRef;
 	ObjectType _type; ///< The object's type.
@@ -242,6 +251,10 @@ protected:
 	float _orientation[4]; ///< The object's orientation.
 
 	Sound::ChannelHandle _sound; ///< The currently playing object sound.
+	
+	std::map<Common::UString, int32_t> _localInts;
+	std::map<Common::UString, float>   _localFloats;
+	std::map<Common::UString, Common::UString> _localStrings;
 };
 
 } // End of namespace KotORBase
