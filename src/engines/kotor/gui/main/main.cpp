@@ -201,6 +201,9 @@ void MainMenu::callbackActive(Widget &widget) {
 		if (sub(*_classSelection) == 2) {
 			_returnCode = 2;
 			stopMenuMusic();
+			
+			// Start the opening sequence
+			_module->signalEncounter("end_opening");
 			return;
 		}
 

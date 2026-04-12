@@ -49,6 +49,8 @@ public:
 	void showLevelUpGUI() override;
 	void openStoreGUI(const Common::UString &tag) override;
 
+	KotORBase::Functions &getFunctions() override;
+
 private:
 	KotOREngine *_engine;
 

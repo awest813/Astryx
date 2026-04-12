@@ -65,10 +65,11 @@ namespace KotORBase {
 class Area;
 class Creature;
 class LoadScreen;
+class Game;
 
 class Module : public Object, public ObjectContainer {
 public:
-	Module(::Engines::Console &console);
+	Module(Game &game, ::Engines::Console &console);
 	virtual ~Module();
 
 	/** Clear the whole context. */
@@ -106,6 +107,8 @@ public:
 	Area *getCurrentArea();
 	/** Return the player character. */
 	Creature *getPC();
+	/** Return the game context. */
+	Game &getGame() const;
 	/** Return a map between surface type and whether it is walkable. */
 	const std::vector<bool> &getWalkableSurfaces() const;
 	/** Return the fade quad. */
@@ -117,6 +120,15 @@ public:
 
 	/** Show the ingame main menu. */
 	void showMenu();
+
+	/** Show the galaxy map menu. */
+	virtual void showGalaxyMap();
+
+	/** Show the workbench menu. */
+	virtual void showWorkbench();
+
+	/** Show the journal menu. */
+	virtual void showJournal();
 
 	// Scripting
 
@@ -132,6 +144,19 @@ public:
 
 	void signalUserDefinedEvent(Object *owner, int number);
 
+	/** Signal an encounter choreography. */
+	virtual void signalEncounter(const Common::UString &id);
+
+	// Persistence
+	std::shared_ptr<Aurora::GFF3File> getAreaObjectSave(const Common::UString &key);
+	void setAreaObjectSave(const Common::UString &key, std::shared_ptr<Aurora::GFF3File> state);
+
+	// Journal
+
+	// Journal
+	void addJournalQuestEntry(const Common::UString &quest, uint32_t state);
+	const std::map<Common::UString, uint32_t> &getJournal() const { return _journal; }
+
 	// Party transitions
 
 	/** Move the current party to a specified location within the current area. */
@@ -142,6 +167,12 @@ public:
 	void moveParty(const Common::UString &module, const Common::UString &object, ObjectType type = kObjectTypeAll);
 	/** Notify the module that the party leader was moved. */
 	void movedPartyLeader();
+
+	/** Shake the camera. */
+	void shakeCamera(float duration, float intensity);
+
+	/** Play a movie. */
+	void playMovie(const Common::UString &resRef);
 
 	// Party management
 
@@ -288,10 +319,23 @@ public:
 	// Camera
 	float getCameraYaw() const;
 	void setCameraYaw(float yaw);
+	
+	void setMapExplored(const Common::UString &resRef, const std::vector<bool> &data);
+	const std::vector<bool> *getMapExplored(const Common::UString &resRef) const;
 
 	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
+	void setCameraMode(CameraMode mode, Object *target = nullptr);
 	void setCinematicFocus(Object *target);
+	void setCameraTarget(Object *target);
+	void cameraTransitionToTarget(float blendTime);
+	void cameraMoveAlongPath(Object *start, Object *end, float duration);
+	void cameraHold(float duration);
+	void restoreGameplayCamera(float blendTime);
 	void resetToOrbit();
+
+	void setCutsceneMode(bool enabled);
+	void setPlayerInputEnabled(bool enabled);
+	void playMusicStinger(const Common::UString &stinger);
 
 	// Delayed object interactions
 
@@ -351,6 +395,12 @@ private:
 	std::map<Common::UString, bool> _globalBooleans;
 	std::map<Common::UString, int> _globalNumbers;
 	std::map<Common::UString, Common::UString> _globalStrings;
+
+	// Journal: key = quest tag, value = entry ID
+	std::map<Common::UString, uint32_t> _journal;
+
+	// Area Object Persistence: key = "areaTag:objectTag", value = state
+	std::map<Common::UString, std::shared_ptr<Aurora::GFF3File>> _areaObjectSaves;
 
 	// Inter-faction reputation store: key = (sourceFaction, targetFaction), value in [0, 100]
 	std::map<std::pair<int,int>, int> _reputations;
@@ -421,7 +471,11 @@ private:
 	bool _inDialog;
 	int _runScriptVar;
 	bool _soloMode;
+	bool _playerInputEnabled { true };
+	bool _cutsceneMode { false };
 	int _userDefinedEventNumber { 0 };
+	float _playTime { 0.0f };
+	std::map<Common::UString, std::vector<bool>> _exploredMaps;
 	bool _inBattleMusic { false };  ///< Is the battle music track currently playing?
 	Object *_lastAcquiredItem { nullptr }; ///< Last item acquired via script events.
 
@@ -443,6 +497,9 @@ private:
 	// Loading
 
 	void load();
+	void loadState(const Aurora::GFF3File &gff);
+	void saveState(Aurora::GFF3File &gff) const;
+
 	void loadResources();
 	void loadIFO();
 	void loadArea();
@@ -456,8 +513,12 @@ private:
 	                ObjectType entryLocationType);
 
 	/** Schedule a change to a new module. */
-	void changeModule(const Common::UString &module, const Common::UString &entryLocation,
-	                  ObjectType entryLocationType);
+	void changeModule(const Common::UString &module, const Common::UString &entryLocation = "",
+	                  ObjectType entryLocationType = kObjectTypeAll);
+
+	void saveGame(const Common::UString &slot, const Common::UString &name);
+
+	void update(uint32_t frameTime);
 
 	/** Actually replace the currently running module. */
 	void replaceModule();

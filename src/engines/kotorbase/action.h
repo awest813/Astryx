@@ -40,11 +40,15 @@ struct Action {
 	glm::vec3 location;
 	Object *object;
 	float range;
+	int   actionID { -1 }; ///< Spell, feat or power ID.
+	int   choreographyFlags { 0 }; ///< Cinematic attack modifiers (CutsceneAttack).
 	float startTime { -1.0f }; ///< Time the action started (for timed actions).
 	bool  initialized { false };
 
 	Action();
 	Action(ActionType type);
+	Action(ActionType type, int id);
+	Action(ActionType type, Object *target, int flags = 0);
 };
 
 } // End of namespace KotORBase

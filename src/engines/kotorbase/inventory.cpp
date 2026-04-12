@@ -24,6 +24,7 @@
 
 #include <cassert>
 
+#include "src/aurora/gff3file.h"
 #include "src/engines/kotorbase/inventory.h"
 
 namespace Engines {
@@ -48,6 +49,29 @@ Inventory &Inventory::operator=(const Inventory &other) {
 	_items = other._items;
 	_gold = other._gold;
 	return *this;
+}
+
+void Inventory::save(Aurora::GFF3List &list) const {
+	for (auto const& [tag, group] : _items) {
+		Aurora::GFF3Struct &item = list.addStruct(0);
+		item.setString("InventoryRes", tag);
+		item.setUint("Repos_PosX", group.count); // We'll hijack Repos_PosX for quantity if needed, or use a custom field
+		// Actually, standard KotOR just has multiple entries for non-stackable.
+		// For simplicity, we'll use a custom field "Quantity" if it's our own save.
+		item.setUint("Quantity", group.count);
+	}
+}
+
+void Inventory::read(const Aurora::GFF3List &list) {
+	_items.clear();
+	for (Aurora::GFF3List::const_iterator it = list.begin(); it != list.end(); ++it) {
+		const Aurora::GFF3Struct &item = **it;
+		Common::UString tag = item.getString("InventoryRes");
+		uint32_t count = item.getUint("Quantity", 1);
+		if (count == 0) count = 1;
+
+		addItem(tag, count);
+	}
 }
 
 void Inventory::addItem(const Common::UString &tag, int count) {

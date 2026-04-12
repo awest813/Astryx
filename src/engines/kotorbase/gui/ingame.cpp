@@ -107,6 +107,10 @@ void IngameGUI::hideSelection() {
 	_hud->hideSelection();
 }
 
+HUD &IngameGUI::getHUD() {
+	return *_hud;
+}
+
 void IngameGUI::addEvent(const Events::Event &event) {
 	_hud->addEvent(event);
 }

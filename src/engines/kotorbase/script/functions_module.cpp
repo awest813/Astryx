@@ -35,11 +35,23 @@
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/game.h"
 
-#include "src/engines/kotorbase/script/functions.h"
+#include "src/engines/kotor/encounters_dan.h"
+#include "src/engines/kotor/encounters_end.h"
 
 namespace Engines {
 
 namespace KotORBase {
+
+void Functions::signalEncounter(Aurora::NWScript::FunctionContext &ctx) {
+	Common::UString encounterID = ctx.getParams()[0].getString();
+	Module &module = _game->getModule();
+
+	module.signalEncounter(encounterID);
+}
+
+void Functions::actionWorkbench(Aurora::NWScript::FunctionContext &ctx) {
+	_game->getModule().setGlobalBoolean("__open_workbench", true);
+}
 
 void Functions::getModule(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = (Aurora::NWScript::Object *) &_game->getModule();
@@ -133,10 +145,67 @@ void Functions::getDifficultyModifier(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::setCameraMode(Aurora::NWScript::FunctionContext &ctx) {
 	// SetCameraMode(object oPlayer, int nCameraMode)
-	// Retail switches between exploration / combat / dialog camera modes.
-	// We log and no-op — camera mode selection is handled by the render loop.
+	Object *player = ObjectContainer::toObject(ctx.getParams()[0].getObject());
 	int mode = ctx.getParams()[1].getInt();
-	info("SetCameraMode(%d) requested (not yet implemented)", mode);
+
+	_game->getModule().setCameraMode(static_cast<CameraMode>(mode), player);
+}
+
+void Functions::setCutsceneMode(Aurora::NWScript::FunctionContext &ctx) {
+	// SetCutsceneMode(int bEnabled)
+	bool enabled = ctx.getParams()[0].getInt() != 0;
+	_game->getModule().setCutsceneMode(enabled);
+}
+
+void Functions::setPlayerInputEnabled(Aurora::NWScript::FunctionContext &ctx) {
+	// SetPlayerInputEnabled(int bEnabled)
+	bool enabled = ctx.getParams()[0].getInt() != 0;
+	_game->getModule().setPlayerInputEnabled(enabled);
+}
+
+void Functions::setCameraTarget(Aurora::NWScript::FunctionContext &ctx) {
+	// SetCameraTarget(object oTarget)
+	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	_game->getModule().setCameraTarget(target);
+}
+
+void Functions::cameraTransitionToTarget(Aurora::NWScript::FunctionContext &ctx) {
+	// CameraTransitionToTarget(float fBlendTime)
+	float blendTime = ctx.getParams()[0].getFloat();
+	_game->getModule().cameraTransitionToTarget(blendTime);
+}
+
+void Functions::cameraMoveAlongPath(Aurora::NWScript::FunctionContext &ctx) {
+	// CameraMoveAlongPath(object oStart, object oEnd, float fDuration)
+	Object *start = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	Object *end = ObjectContainer::toObject(ctx.getParams()[1].getObject());
+	float duration = ctx.getParams()[2].getFloat();
+	_game->getModule().cameraMoveAlongPath(start, end, duration);
+}
+
+void Functions::cameraHold(Aurora::NWScript::FunctionContext &ctx) {
+	// CameraHold(float fDuration)
+	float duration = ctx.getParams()[0].getFloat();
+	_game->getModule().cameraHold(duration);
+}
+
+void Functions::cameraLookAtObject(Aurora::NWScript::FunctionContext &ctx) {
+	// CameraLookAtObject(object oTarget, float fBlendTime)
+	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	// blendTime ignored in simple implementation
+	_game->getModule().setCameraTarget(target);
+}
+
+void Functions::restoreGameplayCamera(Aurora::NWScript::FunctionContext &ctx) {
+	// RestoreGameplayCamera(float fBlendTime)
+	float blendTime = ctx.getParams()[0].getFloat();
+	_game->getModule().restoreGameplayCamera(blendTime);
+}
+
+void Functions::playMusicStinger(Aurora::NWScript::FunctionContext &ctx) {
+	// PlayMusicStinger(string sStinger)
+	Common::UString stinger = ctx.getParams()[0].getString();
+	_game->getModule().playMusicStinger(stinger);
 }
 
 void Functions::setLockOrientationInDialog(Aurora::NWScript::FunctionContext &ctx) {
@@ -154,9 +223,19 @@ void Functions::setLockHeadFollowInDialog(Aurora::NWScript::FunctionContext &ctx
 }
 
 void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {
-	// NWScript SetCameraFacing always passes degrees; convert unconditionally.
-	float yaw = Common::deg2rad(ctx.getParams()[0].getFloat());
-	_game->getModule().setCameraYaw(yaw);
+	// void SetCameraFacing(float fDirection, float fDistance = -1.0f, float fPitch = -1.0f, int nTransitionType = CAMERA_TRANSITION_TYPE_SNAP)
+	float direction = ctx.getParams()[0].getFloat();
+	float distance = ctx.getParams()[1].getFloat();
+	float pitch = ctx.getParams()[2].getFloat();
+
+	if (direction >= 0.0f)
+		_game->getModule().setCameraYaw(Common::deg2rad(direction));
+	
+	if (distance >= 0.0f)
+		_game->getModule().setCameraDistance(distance);
+
+	if (pitch >= 0.0f)
+		_game->getModule().setCameraPitch(pitch);
 }
 
 void Functions::getListenPatternNumber(Aurora::NWScript::FunctionContext &ctx) {
@@ -237,6 +316,12 @@ void Functions::getLoadFromSaveGame(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &) {
 	// presents the level-up screen for the PC.
 	_game->showLevelUpGUI();
+}
+
+void Functions::addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx) {
+	const Common::UString quest = ctx.getParams()[0].getString();
+	const uint32_t state = ctx.getParams()[1].getUint();
+	_game->getModule().addJournalQuestEntry(quest, state);
 }
 
 void Functions::openStore(Aurora::NWScript::FunctionContext &ctx) {

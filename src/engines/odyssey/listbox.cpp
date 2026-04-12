@@ -118,6 +118,13 @@ void WidgetListBox::addItem(const Common::UString &contents) {
 	_items.push_back(contents);
 }
 
+const Common::UString &WidgetListBox::getItem(int index) const {
+	if ((index < 0) || (static_cast<size_t>(index) >= _items.size()))
+		throw Common::Exception("WidgetListBox::getItem(): index out of bounds");
+
+	return _items[index];
+}
+
 void WidgetListBox::removeAllItems() {
 	_startIndex = 0;
 	_items.clear();

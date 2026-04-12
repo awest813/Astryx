@@ -140,6 +140,16 @@ public:
 	/** Set the plot-critical flag. */
 	void setPlotFlag(bool plot);
 
+	// Persistence
+
+	/** Return whether this object should be persisted in area instances. */
+	bool isPersistent() const;
+	/** Set whether this object should be persisted. */
+	void setPersistent(bool persistent);
+
+	virtual void saveState(Aurora::GFF3Struct &gff) const;
+	virtual void loadState(const Aurora::GFF3Struct &gff);
+
 	// Faction
 
 	/** Get the faction this object belongs to. */
@@ -226,6 +236,7 @@ protected:
 	int _maxHitPoints;     ///< The maximum hitpoints of the object.
 	bool _minOneHitPoint;  ///< If the object should have at least one hitpoint.
 	bool _plotFlag;        ///< If true, this object is plot-critical and immune to permanent death.
+	bool _persistent;      ///< If true, this object's state should be persisted across area reloads.
 
 	float _position[3];    ///< The object's position.
 	float _orientation[4]; ///< The object's orientation.

@@ -83,6 +83,8 @@ public:
 	void updateSelection();
 	void hideSelection();
 
+	HUD &getHUD();
+
 
 	void addEvent(const Events::Event &event);
 	void processEventQueue();

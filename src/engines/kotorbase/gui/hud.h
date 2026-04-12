@@ -80,6 +80,10 @@ public:
 	void updateSelection();
 	void hideSelection();
 
+	virtual void notifyJournalUpdated();
+
+	virtual void update(float dt);
+
 protected:
 	Module &_module;
 
@@ -135,6 +139,9 @@ private:
 	void showTargetInformation(Object *object);
 	void updateTargetInformation(Object *object, float x, float y);
 	void hideTargetInformation();
+
+	Odyssey::WidgetLabel *_journalNotification { nullptr };
+	float                _journalNotificationTime { 0.0f };
 };
 
 } // End of namespace KotORBase

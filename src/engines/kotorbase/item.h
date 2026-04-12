@@ -48,6 +48,7 @@ public:
 
 	int getACBonus() const;
 	int getBaseItem() const;
+	int getCost() const;
 
 	int  getStackSize() const;
 	void setStackSize(int size);

@@ -31,7 +31,13 @@ namespace KotORBase {
 Action::Action() : type(kActionInvalid), object(0), range(0.0f), startTime(-1.0f), initialized(false) {
 }
 
-Action::Action(ActionType _type) : type(_type), object(0), range(0.0f), startTime(-1.0f), initialized(false) {
+Action::Action(ActionType _type) : type(_type), object(0), range(0.0f), actionID(-1), startTime(-1.0f), initialized(false) {
+}
+
+Action::Action(ActionType _type, int _id) : type(_type), object(0), range(0.0f), actionID(_id), startTime(-1.0f), initialized(false) {
+}
+
+Action::Action(ActionType _type, Object *_target, int _flags) : type(_type), object(_target), range(0.0f), actionID(-1), choreographyFlags(_flags), startTime(-1.0f), initialized(false) {
 }
 
 } // End of namespace KotORBase

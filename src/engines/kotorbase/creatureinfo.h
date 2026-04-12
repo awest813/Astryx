@@ -50,6 +50,9 @@ public:
 
 	CreatureInfo &operator=(const CreatureInfo &other);
 
+	void save(Aurora::GFF3Struct &gff) const;
+	void read(const Aurora::GFF3Struct &gff);
+
 	// Class levels
 
 	struct ClassLevel {
@@ -68,6 +71,9 @@ public:
 	int getNumClasses() const;
 	/** Increment the level of the given class by 1 (adds a new ClassLevel entry if needed). */
 	void incrementClassLevel(Class charClass);
+
+	/** Return the class that was most recently added/leveled. */
+	Class getLatestClass() const;
 
 	/** Compute the total Base Attack Bonus from all class levels (KOTOR d20 rules). */
 	int getBAB() const;
@@ -109,11 +115,24 @@ public:
 
 	void setSkillRank(Skill skill, uint32_t rank);
 
+	// Force Points
+
+	uint32_t getForcePoints() const;
+	uint32_t getMaxForcePoints() const;
+	void setForcePoints(uint32_t fp);
+	void setMaxForcePoints(uint32_t fp);
+
 	// Feats
 
 	void addFeat(uint32_t feat);
 	bool hasFeat(uint32_t feat) const;
 	const std::vector<uint32_t> &getFeats() const;
+
+	// Force Powers
+
+	void addForcePower(uint32_t power);
+	bool hasForcePower(uint32_t power) const;
+	const std::vector<uint32_t> &getForcePowers() const;
 
 	// Inventory
 
@@ -131,6 +150,11 @@ public:
 	void equipItem(const Common::UString &tag, InventorySlot slot);
 	void unequipInventorySlot(InventorySlot slot);
 
+	// Alignment
+	int getAlignment() const;
+	void setAlignment(int alignment);
+	void adjustAlignment(int shift);
+
 private:
 	std::vector<ClassLevel> _levels;
 	Abilities _abilities;
@@ -138,11 +162,21 @@ private:
 	Inventory _inventory;
 	std::map<InventorySlot, Common::UString> _equipment;
 	std::vector<uint32_t> _feats;
+	std::vector<uint32_t> _forcePowers;
+
+	uint32_t _forcePointsCurrent { 0 };
+	uint32_t _forcePointsMax     { 0 };
+	int      _alignment          { 50 }; // Neutral by default
+
+	void saveAbilities(Aurora::GFF3Struct &gff) const;
+	void loadAbilities(const Aurora::GFF3Struct &gff);
+
+	void saveSkills(Aurora::GFF3Struct &gff) const;
+	void loadSkills(const Aurora::GFF3Struct &gff);
 
 	void loadClassLevels(const Aurora::GFF3Struct &gff);
-	void loadSkills(const Aurora::GFF3Struct &gff);
-	void loadAbilities(const Aurora::GFF3Struct &gff);
 	void loadFeats(const Aurora::GFF3Struct &gff);
+	void loadForcePowers(const Aurora::GFF3Struct &gff);
 };
 
 } // End of namespace KotORBase

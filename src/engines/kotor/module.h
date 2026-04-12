@@ -48,6 +48,12 @@ public:
 	// Miscellaneous creation
 
 	KotORBase::CharacterGenerationInfo *createCharGenInfo(const KotORBase::CharacterGenerationInfo &info) const;
+
+	void showGalaxyMap() override;
+	void showWorkbench() override;
+	void showJournal() override;
+
+	void signalEncounter(const Common::UString &id) override;
 };
 
 } // End of namespace KotOR

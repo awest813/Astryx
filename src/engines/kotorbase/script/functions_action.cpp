@@ -318,16 +318,24 @@ void Functions::actionAttack(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::cutsceneAttack(Aurora::NWScript::FunctionContext &ctx) {
-	// CutsceneAttack(object oTarget, int nAttackerPoint, int nModifier, int nMiss)
-	// Cinematic attack staging: queue a normal attack on the script caller.  Point /
-	// modifier / miss flags are not modeled yet (retail uses them for choreography).
 	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	int modifier = ctx.getParams()[2].getInt();
+	int miss = ctx.getParams()[3].getInt();
+
 	Creature *attacker = ObjectContainer::toCreature(ctx.getCaller());
 	if (!attacker || !target)
 		return;
 
-	Action action(kActionAttackObject);
-	action.object = target;
+	int flags = 0;
+	if (miss)
+		flags |= kCutsceneAttackForceMiss;
+	else
+		flags |= kCutsceneAttackForceHit;
+
+	if (modifier == 1) // Finishing blow usually
+		flags |= kCutsceneAttackKnockback;
+
+	Action action(kActionCutsceneAttack, target, flags);
 	attacker->addAction(action);
 }
 
@@ -584,8 +592,16 @@ void Functions::actionPutDownItem(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::actionCastSpellAtObject(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	// Spell casting is currently out of scope for this progression slice.
+	// ActionCastSpellAtObject(int nSpell, object oTarget, int nMetaMagic, int bCheat, int nDomainLevel, int nProjectilePathType, int bInstantSpell)
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Object *target = ObjectContainer::toObject(ctx.getParams()[1].getObject());
+	if (!caller)
+		return;
+
+	int spellID = ctx.getParams()[0].getInt();
+	Action action(kActionCastSpell, spellID);
+	action.object = target;
+	caller->addAction(action);
 }
 
 void Functions::actionBarkString(Aurora::NWScript::FunctionContext &ctx) {

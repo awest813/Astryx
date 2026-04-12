@@ -261,6 +261,7 @@ enum ActionType {
 	kActionWait          = 36,
 	kActionSit           = 37,
 	kActionFollowLeader  = 38,
+	kActionCutsceneAttack = 42,
 	kActionQueueEmpty    = 65534,
 	kActionInvalid       = 65535
 };
@@ -304,6 +305,12 @@ enum WeaponWield {
 	kWeaponWieldHeavy  = 6
 };
 
+enum BaseItem {
+	kBaseItemLightsaber       = 9,
+	kBaseItemDoubleLightsaber = 10,
+	kBaseItemShortLightsaber  = 11
+};
+
 /** KOTOR feat IDs (feats.2da row indices). */
 enum FeatID {
 	kFeatAmbidexterity         =  0,
@@ -332,7 +339,38 @@ enum FeatID {
 	kFeatWeaponFocusBlasterRifle = 27,
 	kFeatWeaponSpecializationMelee    = 28,
 	kFeatWeaponSpecializationBlaster  = 29,
-	kFeatWeaponSpecializationBlasterRifle = 30
+	kFeatWeaponSpecializationBlasterRifle = 30,
+	
+	kFeatJediDefense           = 149,
+	kFeatImprovedJediDefense   = 150,
+	kFeatMasterJediDefense     = 151
+};
+
+enum CameraMode {
+	kCameraModeCloseup   = 0,
+	kCameraModeMedium    = 1,
+	kCameraModeWide      = 2,
+	kCameraModeIsometric = 3,
+	kCameraModeReveal    = 4
+};
+
+enum CutsceneAttackFlag {
+	kCutsceneAttackForceHit      = 1 << 0,
+	kCutsceneAttackForceMiss     = 1 << 1,
+	kCutsceneAttackNoDamage      = 1 << 2,
+	kCutsceneAttackPlayReaction  = 1 << 3,
+	kCutsceneAttackKnockback     = 1 << 4,
+	kCutsceneAttackDelayImpact   = 1 << 5,
+	kCutsceneAttackFinishingBlow = 1 << 6
+};
+
+enum EffectType {
+	kEffectPoison = 0,
+	kEffectStun   = 1,
+	kEffectSpeed  = 2,
+	kEffectShield = 3,
+	kEffectHeal   = 4,
+	kEffectVFX    = 5
 };
 
 } // End of namespace KotORBase

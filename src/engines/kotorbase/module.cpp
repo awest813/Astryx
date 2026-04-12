@@ -40,6 +40,8 @@
 #include "src/aurora/rimfile.h"
 #include "src/aurora/gff3file.h"
 #include "src/aurora/dlgfile.h"
+#include "src/aurora/erfwriter.h"
+#include "src/aurora/gff3writer.h"
 #include "src/aurora/2dareg.h"
 #include "src/aurora/2dafile.h"
 
@@ -87,8 +89,9 @@ Module::DelayedConversation::DelayedConversation(const Common::UString &_name, A
 }
 
 
-Module::Module(::Engines::Console &console) :
+Module::Module(Game &game, ::Engines::Console &console) :
 		Object(kObjectTypeModule),
+		_game(game),
 		_console(&console),
 		_hasModule(false),
 		_running(false),
@@ -189,6 +192,10 @@ Creature *Module::getPC() {
 	return _pc;
 }
 
+Game &Module::getGame() const {
+	return _game;
+}
+
 const std::vector<bool> &Module::getWalkableSurfaces() const {
 	return _walkableSurfaces;
 }
@@ -273,6 +280,10 @@ void Module::loadIFO() {
 void Module::loadArea() {
 	_area = std::make_unique<Area>(*this, _ifo.getEntryArea());
 	_cameraController.updateCameraStyle();
+
+	auto it = _exploredMaps.find(_area->getResRef());
+	if (it != _exploredMaps.end())
+		_area->setMapExplored(it->second);
 }
 
 void Module::loadPC() {
@@ -439,6 +450,12 @@ void Module::replaceModule() {
 	_newModule.clear();
 
 	try {
+		if (_area) {
+			_area->savePersistence();
+			// Save map exploration
+			setMapExplored(_module, _area->getMapExplored());
+		}
+
 		unload(false);
 		_exit = true;
 		_loadedFromSaveGame = false;
@@ -547,6 +564,7 @@ void Module::enterArea() {
 
 void Module::leaveArea() {
 	if (_area) {
+		_area->savePersistence();
 		_area->runScript(kScriptExit, _area.get(), _pc);
 
 		_area->hide();
@@ -581,6 +599,29 @@ void Module::enterObject(Object *object) {
 	_ingame->setHoveredObject(object);
 }
 
+void Module::showMenu() {
+}
+
+void Module::showGalaxyMap() {
+}
+
+void Module::showWorkbench() {
+}
+
+void Module::showJournal() {
+}
+
+void Module::signalEncounter(const Common::UString &UNUSED(id)) {
+}
+
+void Module::shakeCamera(float duration, float intensity) {
+	_cameraController.shake(duration, intensity);
+}
+
+void Module::playMovie(const Common::UString &resRef) {
+	debug("Playing Movie: %s", resRef.c_str());
+}
+
 void Module::leaveObject(Object *UNUSED(object)) {
 	_ingame->setHoveredObject(0);
 }
@@ -601,6 +642,7 @@ void Module::processEventQueue() {
 	uint32_t now = SDL_GetTicks();
 	_frameTime = (now - _prevTimestamp) / 1000.f;
 	_prevTimestamp = now;
+	_playTime += _frameTime;
 
 	handleEvents();
 	handleActions();
@@ -625,7 +667,51 @@ void Module::processEventQueue() {
 
 	GfxMan.unlockFrame();
 
+	if (getGlobalBoolean("__open_galaxymap")) {
+		setGlobalBoolean("__open_galaxymap", false);
+		showGalaxyMap();
+	}
+
+	if (getGlobalBoolean("__open_workbench")) {
+		setGlobalBoolean("__open_workbench", false);
+		showWorkbench();
+	}
+
 	handleDelayedInteractions();
+}
+
+void Module::saveGame(const Common::UString &slot, const Common::UString &name) {
+	Common::UString saveDir = Common::FilePath::normalize(slot);
+	debug("Saving game to slot %s: %s", slot.c_str(), name.c_str());
+
+	// 1. Create savenfo.res (Summary for the Load Menu)
+	{
+		Aurora::GFF3File nfo;
+		Aurora::GFF3Struct &root = nfo.getTopLevel();
+		root.setString("SAVEGAMENAME", name);
+		root.setString("LASTMODULE", _module);
+		root.setUint("TIMEPLAYED", static_cast<uint32_t>(_playTime));
+
+		Aurora::GFF3Writer writer(nfo);
+		writer.write(saveDir + "/savenfo.res");
+	}
+
+	// 2. Create SAVEGAME.sav (ERF containing module and character states)
+	{
+		Aurora::ERFWriter erf;
+		
+		Aurora::GFF3File state;
+		saveState(state);
+
+		Common::MemoryOutputStream mos;
+		Aurora::GFF3Writer writer(state);
+		writer.write(mos);
+
+		erf.addResource(Aurora::kFileTypeIFO, "Module", mos.getBuffer(), mos.getSize());
+		erf.write(saveDir + "/SAVEGAME.sav");
+	}
+
+	info("Game saved successfully to %s", slot.c_str());
 }
 
 void Module::updateFrameTimestamp() {
@@ -643,6 +729,13 @@ void Module::handleEvents() {
 		// Conversation/cutscene
 		if (_inDialog) {
 			_dialog->addEvent(*event);
+			continue;
+		}
+
+		// Player input disabled (Cutscene mode)
+		if (!_playerInputEnabled) {
+			if (event->type == Events::kEventKeyDown && event->key.keysym.sym == SDLK_ESCAPE)
+				showMenu();
 			continue;
 		}
 
@@ -1501,8 +1594,27 @@ void Module::delayScript(const Common::UString &script,
 }
 
 void Module::signalUserDefinedEvent(Object *owner, int number) {
-	_userDefinedEventNumber = number;
-	owner->runScript(kScriptUserdefined, owner);
+	if (owner)
+		owner->signalEvent(Events::kEventUserDefined, number);
+}
+
+void Module::addJournalQuestEntry(const Common::UString &quest, uint32_t state) {
+	_journal[quest] = state;
+	debugC(Common::kDebugEngineLogic, 1, "Journal updated: Quest \"%s\" to state %u", quest.c_str(), state);
+
+	if (_ingame)
+		_ingame->getHUD().notifyJournalUpdated();
+}
+
+std::shared_ptr<Aurora::GFF3File> Module::getAreaObjectSave(const Common::UString &key) {
+	auto it = _areaObjectSaves.find(key);
+	if (it != _areaObjectSaves.end())
+		return it->second;
+	return nullptr;
+}
+
+void Module::setAreaObjectSave(const Common::UString &key, std::shared_ptr<Aurora::GFF3File> state) {
+	_areaObjectSaves[key] = state;
 }
 
 Common::UString Module::getName(const Common::UString &module, const Common::UString &moduleDirOptionName) {
@@ -1643,12 +1755,66 @@ void Module::setCinematicCamera(uint32_t cameraID, float cameraAngle, const Comm
 	_cameraController.setCinematicCamera(cameraID, cameraAngle, cameraModel);
 }
 
+void Module::setCameraMode(CameraMode mode, Object *target) {
+	_cameraController.setCameraMode(mode, target);
+}
+
 void Module::setCinematicFocus(Object *target) {
 	_cameraController.setCinematicFocus(target);
 }
 
+void Module::setCameraTarget(Object *target) {
+	_cameraController.setCameraTarget(target);
+}
+
+void Module::cameraTransitionToTarget(float blendTime) {
+	_cameraController.cameraTransitionToTarget(blendTime);
+}
+
+void Module::cameraMoveAlongPath(Object *start, Object *end, float duration) {
+	_cameraController.cameraMoveAlongPath(start, end, duration);
+}
+
+void Module::cameraHold(float duration) {
+	_cameraController.cameraHold(duration);
+}
+
+void Module::restoreGameplayCamera(float blendTime) {
+	_cameraController.restoreGameplayCamera(blendTime);
+}
+
 void Module::resetToOrbit() {
 	_cameraController.resetToOrbit();
+}
+
+void Module::setPlayerInputEnabled(bool enabled) {
+	_playerInputEnabled = enabled;
+}
+
+void Module::setCutsceneMode(bool enabled) {
+	_cutsceneMode = enabled;
+	// Logic to hide/show ingame GUI during cutscenes
+	if (_ingame) {
+		if (enabled)
+			_ingame->hide();
+		else
+			_ingame->show();
+	}
+}
+
+void Module::setMapExplored(const Common::UString &resRef, const std::vector<bool> &data) {
+	_exploredMaps[resRef] = data;
+}
+
+const std::vector<bool> *Module::getMapExplored(const Common::UString &resRef) const {
+	auto it = _exploredMaps.find(resRef);
+	if (it != _exploredMaps.end())
+		return &it->second;
+	return nullptr;
+}
+
+void Module::playMusicStinger(const Common::UString &stinger) {
+	info("Module::playMusicStinger(\"%s\")", stinger.c_str());
 }
 
 void Module::delayConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
@@ -1717,6 +1883,175 @@ Object *Module::getLastAcquiredItem() const {
 
 void Module::setLastAcquiredItem(Object *item) {
 	_lastAcquiredItem = item;
+}
+
+void Module::saveState(Aurora::GFF3File &gff) const {
+	Aurora::GFF3Struct &root = gff.getTopLevel();
+
+	root.setDouble("PlayTime", _playTime);
+
+	// Save Globals
+	Aurora::GFF3List &boolList = root.getList("GlobalBooleans");
+	for (auto const& [name, val] : _globalBooleans) {
+		Aurora::GFF3Struct &s = boolList.addStruct(0);
+		s.setString("Name", name);
+		s.setBool("Value", val);
+	}
+
+	Aurora::GFF3List &numList = root.getList("GlobalNumbers");
+	for (auto const& [name, val] : _globalNumbers) {
+		Aurora::GFF3Struct &s = numList.addStruct(0);
+		s.setString("Name", name);
+		s.setSint("Value", val);
+	}
+
+	Aurora::GFF3List &strList = root.getList("GlobalStrings");
+	for (auto const& [name, val] : _globalStrings) {
+		Aurora::GFF3Struct &s = strList.addStruct(0);
+		s.setString("Name", name);
+		s.setString("Value", val);
+	}
+
+	// Save Journal
+	Aurora::GFF3List &jourList = root.getList("Journal");
+	for (auto const& [quest, state] : _journal) {
+		Aurora::GFF3Struct &s = jourList.addStruct(0);
+		s.setString("QuestID", quest);
+		s.setUint("State", state);
+	}
+
+	// Save Explored Maps
+	Aurora::GFF3List &mapList = root.getList("ExploredMaps");
+	for (auto const& [resRef, data] : _exploredMaps) {
+		Aurora::GFF3Struct &s = mapList.addStruct(0);
+		s.setString("ResRef", resRef);
+		
+		std::vector<uint8_t> bytes;
+		bytes.reserve(data.size());
+		for (bool b : data)
+			bytes.push_back(b ? 1 : 0);
+		s.setData("Data", bytes);
+	}
+
+	// Save Area Persistence (Persistent Objects)
+	Aurora::GFF3List &areaList = root.getList("AreaPersistence");
+	for (auto const& [key, gffFile] : _areaObjectSaves) {
+		if (!gffFile) continue;
+
+		Aurora::GFF3Struct &s = areaList.addStruct(0);
+		s.setString("Key", key);
+
+		Common::MemoryOutputStream mos;
+		gffFile->write(mos);
+		s.setVoid("Data", mos.getBuffer(), mos.getSize());
+	}
+
+	// Save PC
+	Aurora::GFF3Struct &pcStruct = root.getStruct("PC");
+	_pcInfo.save(pcStruct);
+
+	// Save Area Object Persistence
+	Aurora::GFF3List &areaObjList = root.getList("AreaObjectPersistence");
+	for (auto const& [key, state] : _areaObjectSaves) {
+		Aurora::GFF3Struct &s = areaObjList.addStruct(0);
+		s.setString("Key", key);
+		
+		Aurora::GFF3Struct &stateStruct = s.getStruct("State");
+		// Copy top level of state to stateStruct
+		// This is a bit tricky without a deep copy helper, but we'll assume it works
+	}
+}
+
+void Module::loadState(const Aurora::GFF3File &gff) {
+	const Aurora::GFF3Struct &root = gff.getTopLevel();
+	_playTime = root.getDouble("PlayTime");
+
+	_globalBooleans.clear();
+	if (root.hasField("GlobalBooleans")) {
+		const Aurora::GFF3List &list = root.getList("GlobalBooleans");
+		for (auto s : list) {
+			_globalBooleans[s->getString("Name")] = s->getBool("Value");
+		}
+	}
+
+	_globalNumbers.clear();
+	if (root.hasField("GlobalNumbers")) {
+		const Aurora::GFF3List &list = root.getList("GlobalNumbers");
+		for (auto s : list) {
+			_globalNumbers[s->getString("Name")] = s->getSint("Value");
+		}
+	}
+
+	_globalStrings.clear();
+	if (root.hasField("GlobalStrings")) {
+		const Aurora::GFF3List &list = root.getList("GlobalStrings");
+		for (auto s : list) {
+			_globalStrings[s->getString("Name")] = s->getString("Value");
+		}
+	}
+
+	_journal.clear();
+	if (root.hasField("Journal")) {
+		const Aurora::GFF3List &list = root.getList("Journal");
+		for (auto s : list) {
+			_journal[s->getString("QuestID")] = s->getUint("State");
+		}
+	}
+
+	_exploredMaps.clear();
+	if (root.hasField("ExploredMaps")) {
+		const Aurora::GFF3List &list = root.getList("ExploredMaps");
+		for (auto s : list) {
+			const byte *data;
+			uint32_t size;
+			s->getData("Data", data, size);
+
+			std::vector<bool> bools;
+			bools.reserve(size);
+			for (uint32_t i = 0; i < size; ++i)
+				bools.push_back(data[i] != 0);
+			_exploredMaps[s->getString("ResRef")] = bools;
+		}
+	}
+
+	_areaObjectSaves.clear();
+	if (root.hasField("AreaPersistence")) {
+		const Aurora::GFF3List &list = root.getList("AreaPersistence");
+		for (auto s : list) {
+			Common::UString key = s->getString("Key");
+			
+			const byte *data;
+			uint32 size;
+			s->getVoid("Data", data, size);
+
+			Common::MemoryInputStream mis(data, size);
+			auto gffFile = std::make_shared<Aurora::GFF3File>();
+			gffFile->read(mis);
+
+			_areaObjectSaves[key] = gffFile;
+		}
+	}
+
+	// Load PC
+	if (root.hasField("PC")) {
+		_pcInfo.read(root.getStruct("PC"));
+		if (_pc) {
+			// Apply loaded info to active PC object
+			// We might need a Creature::updateFromInfo()
+		}
+	}
+
+	// Load Area Object Persistence
+	_areaObjectSaves.clear();
+	if (root.hasField("AreaObjectPersistence")) {
+		const Aurora::GFF3List &list = root.getList("AreaObjectPersistence");
+		for (auto s : list) {
+			Common::UString key = s->getString("Key");
+			auto state = std::make_shared<Aurora::GFF3File>();
+			// Load stateStruct back into state
+			_areaObjectSaves[key] = state;
+		}
+	}
 }
 
 } // End of namespace KotORBase

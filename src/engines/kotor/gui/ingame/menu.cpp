@@ -78,6 +78,7 @@ Menu::Menu(KotORBase::Module &module, Console *console) :
 	_menu[kMenuTypeAbilities].menu = std::make_unique<MenuAbilities>(_module, console);
 	_menu[kMenuTypeMessages].menu = std::make_unique<MenuMessages>(console);
 	_menu[kMenuTypeJournal].menu = std::make_unique<MenuJournal>(console);
+	dynamic_cast<MenuJournal &>(*_menu[kMenuTypeJournal].menu.get()).setModule(&_module);
 	_menu[kMenuTypeMap].menu = std::make_unique<MenuMap>(console);
 	_menu[kMenuTypeOptions].menu = std::make_unique<MenuOptions>(console);
 

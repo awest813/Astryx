@@ -49,6 +49,10 @@ public:
 	float getYaw() const;
 
 	void setYaw(float value);
+	void setPitch(float value);
+	void setDistance(float value);
+
+	void setCameraMode(CameraMode mode, Object *target = nullptr);
 
 	void updateTarget();
 	void updateCameraStyle();
@@ -64,12 +68,21 @@ public:
 	// Cinematic camera
 	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
 	void setCinematicFocus(Object *target);
+	void setCameraTarget(Object *target);
+	void cameraMoveAlongPath(Object *start, Object *end, float duration);
+	void cameraHold(float duration);
+	void restoreGameplayCamera(float blendTime);
 	void resetToOrbit();
+
+	void shake(float duration, float intensity);
 
 private:
 	Module *_module;
 	bool _flycam { false };
 	bool _cinematic { false };
+
+	float _shakeTime { 0.0f };
+	float _shakeIntensity { 0.0f };
 
 	glm::vec3 _target;
 	float _distance { 0.0f };
@@ -82,6 +95,21 @@ private:
 	float           _cinematicAngle { 0.0f };
 	Common::UString _cinematicModel;
 	Object         *_cinematicFocus { nullptr };
+	Object         *_cameraTarget { nullptr };
+
+	// Pathing/Transitions
+	Object *_pathStart { nullptr };
+	Object *_pathEnd { nullptr };
+	float  _pathTime { 0.0f };
+	float  _pathDuration { 0.0f };
+
+	float  _transitionTime { 0.0f };
+	float  _transitionDuration { 0.0f };
+	float  _sourceYaw { 0.0f };
+	float  _sourcePitch { 0.0f };
+
+	bool   _holding { false };
+	float  _holdTime { 0.0f };
 
 
 	bool _clockwiseMovementWanted { false };

@@ -34,9 +34,18 @@ namespace KotOR {
 class MenuJournal : public KotORBase::GUI {
 public:
 	MenuJournal(::Engines::Console *console = 0);
+	
+	void setModule(KotORBase::Module *module);
+
+	void show();
 
 protected:
 	void callbackActive(Widget &widget);
+
+private:
+	KotORBase::Module *_module { nullptr };
+	
+	void fillJournal();
 };
 
 } // End of namespace KotOR

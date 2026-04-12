@@ -35,6 +35,10 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/gui/ingame/minimap.h \
     src/engines/kotor/gui/ingame/partyselection.h \
     src/engines/kotor/gui/ingame/levelup.h \
+    src/engines/kotor/gui/ingame/levelup_abilities.h \
+    src/engines/kotor/gui/ingame/levelup_skills.h \
+    src/engines/kotor/gui/ingame/levelup_feats.h \
+    src/engines/kotor/gui/ingame/levelup_forcepowers.h \
     src/engines/kotor/gui/ingame/store.h \
     $(EMPTY)
 
@@ -54,5 +58,9 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/gui/ingame/minimap.cpp \
     src/engines/kotor/gui/ingame/partyselection.cpp \
     src/engines/kotor/gui/ingame/levelup.cpp \
+    src/engines/kotor/gui/ingame/levelup_abilities.cpp \
+    src/engines/kotor/gui/ingame/levelup_skills.cpp \
+    src/engines/kotor/gui/ingame/levelup_feats.cpp \
+    src/engines/kotor/gui/ingame/levelup_forcepowers.cpp \
     src/engines/kotor/gui/ingame/store.cpp \
     $(EMPTY)

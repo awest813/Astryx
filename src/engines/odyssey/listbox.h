@@ -73,6 +73,8 @@ public:
 
 	/** Add an item to the list box by it's contents. */
 	void addItem(const Common::UString &contents);
+	/** Get an item from the list box by index. */
+	const Common::UString &getItem(int index) const;
 	/** Remove all items from the list box. */
 	void removeAllItems();
 

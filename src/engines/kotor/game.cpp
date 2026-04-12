@@ -40,6 +40,8 @@
 
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/store.h"
+#include "src/engines/kotorbase/objectcontainer.h"
 
 #include "src/engines/kotor/game.h"
 #include "src/engines/kotor/kotor.h"
@@ -68,8 +70,16 @@ Game::Game(KotOREngine &engine, Engines::Console &console, const Version &gameVe
 Game::~Game() {
 }
 
+KotORBase::Functions &Game::getFunctions() {
+	return *_functions;
+}
+
+void Game::saveGame(const Common::UString &slot, const Common::UString &name) {
+	_module->saveGame(slot, name);
+}
+
 void Game::run() {
-	_module = std::make_unique<Module>(*_console);
+	_module = std::make_unique<Module>(*this, *_console);
 
 	while (!EventMan.quitRequested()) {
 		mainMenu();
@@ -168,8 +178,15 @@ void Game::showLevelUpGUI() {
 }
 
 void Game::openStoreGUI(const Common::UString &tag) {
-	// In a real implementation, we would load the store data for 'tag'
-	StoreGUI gui(*_module, _console);
+	KotORBase::Object *obj = _module->findObject(tag, KotORBase::kObjectTypeStore);
+	KotORBase::Store *store = KotORBase::ObjectContainer::toStore(obj);
+
+	if (!store) {
+		warning("Game::openStoreGUI(%s): Store not found", tag.c_str());
+		return;
+	}
+
+	StoreGUI gui(*_module, *store, _console);
 	gui.run();
 }
 

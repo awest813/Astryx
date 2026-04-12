@@ -126,6 +126,31 @@ public:
 	int getSkillRank(Skill skill);
 	/** Get the current score of the specified ability. */
 	int getAbilityScore(Ability ability);
+	/** Get the current Force Points. */
+	int getForcePoints() const;
+	/** Get the maximum Force Points. */
+	int getMaxForcePoints() const;
+
+	void setForcePoints(int fp);
+	void setMaxForcePoints(int fp);
+
+	/** Get the alignment of this creature (0-100). */
+	int getAlignment() const;
+	/** Adjust the alignment of this creature. */
+	void adjustAlignment(int shift);
+
+	// Combat AI
+	enum AIArchetype {
+		kAIArchetypeNone             = 0,
+		kAIArchetypeBeastMelee       = 1,
+		kAIArchetypeBeastPoison      = 2,
+		kAIArchetypeTacticalHumanoid = 3,
+		kAIArchetypeForceUser        = 4
+	};
+
+	void setAIArchetype(AIArchetype archetype);
+	void think();
+	virtual void update(float dt);
 
 	// Positioning
 
@@ -163,6 +188,9 @@ public:
 	/** Return the total character level (sum of all class levels). */
 	int getHitDice() const;
 
+	/** Compute the maximum Force Points for this creature based on classes and modifiers. */
+	int computeMaxForcePoints() const;
+
 	/** Compute the Base Attack Bonus from class/level. */
 	int getBAB() const;
 
@@ -198,6 +226,20 @@ public:
 	void addAction(const Action &action);
 	/** Remove the current action from the action queue of this creature. */
 	void popAction();
+
+	struct Effect {
+		EffectType type;
+		float duration;
+		int   value;
+		float nextTick { 1.0f };
+		bool  expired { false };
+	};
+
+	void applyEffect(EffectType type, float duration, int value = 0);
+	void updateEffects(float dt);
+	bool hasEffect(EffectType type) const;
+
+	void performCutsceneAttack(Object *target, int flags);
 
 	// Tooltip
 
@@ -240,6 +282,10 @@ public:
 
 	void startCombat(Object *target, int round);
 	void cancelCombat();
+
+	/** Apply an engine effect to this creature. */
+	void applyEffect(const Effect &effect);
+
 	/**
 	 * Execute one attack iteration against target.
 	 *
@@ -250,6 +296,9 @@ public:
 	 * @param activeFeat Activated combat feat for this attack sequence, or -1.
 	 */
 	void executeAttack(Object *target, int babPenalty = 0, int damageMod = 0, int activeFeat = -1);
+	
+	/** Returns true if the creature has a lightsaber equipped in either hand. */
+	bool hasLightsaberEquipped() const;
 
 	// Death
 
@@ -337,6 +386,9 @@ private:
 	float _runRate;
 
 	bool _dead { false };
+	std::vector<Effect> _effects;
+	AIArchetype _aiArchetype { kAIArchetypeNone };
+	float       _aiCooldown  { 0.0f };
 	bool _xpAwarded { false }; ///< Has kill XP for this creature already been awarded?
 
 

@@ -199,8 +199,58 @@ int Creature::getSkillRank(Skill skill) {
 	return (modified < 0) ? 0 : modified;
 }
 
-int Creature::getAbilityScore(Ability ability) {
-	return _info.getAbilityScore(ability);
+void Creature::setForcePoints(int fp) {
+	_info.setForcePoints(MAX(0, fp));
+}
+
+void Creature::setMaxForcePoints(int fp) {
+	_info.setMaxForcePoints(MAX(0, fp));
+}
+
+int Creature::getForcePoints() const {
+	return _info.getForcePoints();
+}
+
+int Creature::getMaxForcePoints() const {
+	return _info.getMaxForcePoints();
+}
+
+int Creature::computeMaxForcePoints() const {
+	int totalFP = 0;
+	int jediLevel = 0;
+
+	for (int i = 0; i < _info.getNumClasses(); ++i) {
+		int lv = _info.getLevelByPosition(i);
+		KotORBase::Class pcClass = _info.getClassByPosition(i);
+
+		int perLevel = 0;
+		switch (pcClass) {
+			case kClassJediGuardian:  perLevel = 4; break;
+			case kClassJediSentinel:  perLevel = 6; break;
+			case kClassJediConsular:  perLevel = 8; break;
+			// Prestige classes (mostly follow the same patterns)
+			case kClassJediWeaponMaster: perLevel = 4; break;
+			case kClassJediWatchMan:     perLevel = 6; break;
+			case kClassJediMaster:       perLevel = 8; break;
+			case kClassSithMarauder:     perLevel = 4; break;
+			case kClassSithAssassin:     perLevel = 6; break;
+			case kClassSithLord:         perLevel = 8; break;
+			default: break;
+		}
+
+		if (perLevel > 0) {
+			totalFP += lv * perLevel;
+			jediLevel += lv;
+		}
+	}
+
+	if (jediLevel > 0) {
+		int wisMod = _info.getAbilityModifier(kAbilityWisdom);
+		int chaMod = _info.getAbilityModifier(kAbilityCharisma);
+		totalFP += (wisMod + chaMod) * jediLevel;
+	}
+
+	return MAX(0, totalFP);
 }
 
 void Creature::setPosition(float x, float y, float z) {
@@ -592,6 +642,9 @@ void Creature::initAsPC(const CharacterGenerationInfo &chargenInfo, const Creatu
 	if (hp < 1)
 		hp = 1;
 	_currentHitPoints = _maxHitPoints = hp;
+
+	setMaxForcePoints(computeMaxForcePoints());
+	setForcePoints(getMaxForcePoints());
 
 	reloadEquipment();
 	loadEquippedModel();
@@ -1008,8 +1061,77 @@ void Creature::startCombat(Object *target, int round) {
 void Creature::cancelCombat() {
 	_inCombat = false;
 	_attackTarget = nullptr;
-	_attemptedAttackTarget = nullptr;
-	_attackRound = 0;
+}
+
+void Creature::applyEffect(const Effect &effect) {
+	int current = getCurrentHitPoints();
+
+	switch (effect.getType()) {
+		case kEffectHeal: {
+			int maxHP = getMaxHitPoints();
+			int healed = current + effect.getAmount();
+			if (healed > maxHP)
+				healed = maxHP;
+			setCurrentHitPoints(healed);
+			break;
+		}
+		case kEffectDamage: {
+			int minHp = getMinOneHitPoints() ? 1 : 0;
+			int damaged = current - effect.getAmount();
+			if (damaged < minHp)
+				damaged = minHp;
+			setCurrentHitPoints(damaged);
+
+			if (getCurrentHitPoints() <= 0) {
+				cancelCombat();
+				handleDeath();
+			}
+			break;
+		}
+		case kEffectTemporaryHitpoints: {
+			int maxHP = getMaxHitPoints();
+			int boosted = current + effect.getAmount();
+			if (boosted > maxHP)
+				boosted = maxHP;
+			setCurrentHitPoints(boosted);
+			break;
+		}
+		case kEffectACIncrease:
+			adjustArmorClassModifier(effect.getAmount());
+			break;
+		case kEffectAttackIncrease:
+			adjustAttackModifier(effect.getAmount());
+			break;
+		case kEffectSkillIncrease: {
+			const int skillID = effect.getDamageType();
+			if (skillID >= kSkillComputerUse && skillID < kSkillMAX)
+				adjustSkillModifier(static_cast<Skill>(skillID), effect.getAmount());
+			break;
+		}
+		case kEffectDeath:
+			setCurrentHitPoints(getMinOneHitPoints() ? 1 : 0);
+			if (!isDead()) {
+				cancelCombat();
+				handleDeath();
+			}
+			break;
+		case kEffectKnockdown:
+			adjustArmorClassModifier(-4);
+			break;
+		case kEffectParalyze:
+			clearActions();
+			adjustArmorClassModifier(-4);
+			break;
+		case kEffectStunned:
+			clearActions();
+			adjustArmorClassModifier(-2);
+			break;
+		case kEffectMovementSpeedIncrease:
+			// Implement movement speed boost logic here in the future
+			break;
+		default:
+			break;
+	}
 }
 
 void Creature::executeAttack(Object *target, int babPenalty, int damageMod, int activeFeat) {
@@ -1079,6 +1201,27 @@ void Creature::executeAttack(Object *target, int babPenalty, int damageMod, int 
 	int d20 = RNG.getNext(1, 21);
 	int attackRoll = d20 + attackBonus;
 	int targetAC   = targetCreature ? targetCreature->getAC() : 10;
+
+	// --- Lightsaber Deflection (Blaster attacks only) ---
+	if (ranged && targetCreature && targetCreature->hasLightsaberEquipped()) {
+		// Rule: Opposed roll. If Deflect roll >= Attack roll, the bolt is deflected.
+		int deflectD20 = RNG.getNext(1, 21);
+		int deflectBonus = targetCreature->getBAB() + targetCreature->getCreatureInfo().getAbilityModifier(kAbilityDexterity);
+		
+		if (targetCreature->getCreatureInfo().hasFeat(kFeatMasterJediDefense))
+			deflectBonus += 10;
+		else if (targetCreature->getCreatureInfo().hasFeat(kFeatImprovedJediDefense))
+			deflectBonus += 6;
+
+		int deflectTotal = deflectD20 + deflectBonus;
+		if (deflectTotal >= attackRoll) {
+			debugC(Common::kDebugEngineLogic, 1,
+			       "DEFLECTED: Blaster bolt from \"%s\" deflected by \"%s\" (Deflect %d vs Attack %d)",
+			       _tag.c_str(), targetCreature->getTag().c_str(), deflectTotal, attackRoll);
+			// In a full implementation, we would trigger a "deflect" animation here.
+			return;
+		}
+	}
 
 	// Natural 1 always misses; natural 20 always hits.
 	bool hit = (d20 == 20) || (d20 != 1 && attackRoll >= targetAC);
@@ -1331,6 +1474,39 @@ void Creature::popAction() {
 	_actions.pop();
 }
 
+void Creature::performCutsceneAttack(Object *target, int flags) {
+	if (!target)
+		return;
+
+	// 1. Ensure we face each other
+	makeLookAt(target);
+	Creature *targetCreature = ObjectContainer::toCreature(target);
+	if (targetCreature)
+		targetCreature->makeLookAt(this);
+
+	// 2. Play attack animation
+	// Standard attack for cutscenes
+	playAnimation("attack1", false, 1.2f);
+
+	// 3. Handle reactions
+	if (flags & kCutsceneAttackForceHit) {
+		if (targetCreature) {
+			// Small delay for impact feel would be better, but for now immediate flinch
+			targetCreature->playAnimation("dodge", false, 0.5f);
+		}
+	} else if (flags & kCutsceneAttackForceMiss) {
+		if (targetCreature) {
+			targetCreature->playAnimation("g8a2", false, 0.8f); // Side dodge
+		}
+	}
+
+	if (flags & kCutsceneAttackKnockback) {
+		if (targetCreature) {
+			targetCreature->playAnimation("die", false, 1.5f);
+		}
+	}
+}
+
 void Creature::setDefaultAnimations() {
 	if (!_model)
 		return;
@@ -1409,6 +1585,120 @@ int Creature::computeWeaponDamage(const Item *weapon) const {
 	return (result < 1) ? 1 : result;
 }
 
-} // End of namespace KotORBase
+bool Creature::hasLightsaberEquipped() const {
+	const Item *right = getEquipedItem(kInventorySlotRightWeapon);
+	const Item *left = getEquipedItem(kInventorySlotLeftWeapon);
+
+	auto isLasso = [](const Item *item) {
+		if (!item) return false;
+		int base = item->getBaseItem();
+		return base == kBaseItemLightsaber || 
+		       base == kBaseItemDoubleLightsaber || 
+		       base == kBaseItemShortLightsaber;
+	};
+
+	return isLasso(right) || isLasso(left);
+}
+
+int Creature::getAlignment() const {
+	return _info.getAlignment();
+}
+
+void Creature::adjustAlignment(int shift) {
+	_info.adjustAlignment(shift);
+}
+
+void Creature::setAIArchetype(AIArchetype archetype) {
+	_aiArchetype = archetype;
+}
+
+void Creature::think() {
+	if (_aiArchetype == kAIArchetypeNone || isPC() || isDead() || !_area)
+		return;
+
+	if (_aiCooldown > 0.0f)
+		return;
+
+	Creature *target = _area->findNearestEnemy(this);
+	if (!target)
+		return;
+
+	switch (_aiArchetype) {
+		case kAIArchetypeBeastMelee:
+			// Aggressive rush towards the nearest hostile.
+			_actions.clear();
+			_actions.add(Action(kActionAttackObject, target));
+			_aiCooldown = 2.0f;
+			break;
+
+		case kAIArchetypeBeastPoison:
+			// Beasts that prioritize applying poison status effects (e.g., Kinrath).
+			_actions.clear();
+			_actions.add(Action(kActionAttackObject, target)); // TODO: Add Poison Effect chance
+			_aiCooldown = 1.5f;
+			break;
+
+		case kAIArchetypeTacticalHumanoid:
+			// Standard Mandalorian or mercenary AI.
+			_actions.clear();
+			_actions.add(Action(kActionAttackObject, target));
+			_aiCooldown = 2.0f;
+			break;
+
+		case kAIArchetypeForceUser:
+			// Advanced Force-using NPCs (Sith/Dark Jedi).
+			_actions.clear();
+			_actions.add(Action(kActionAttackObject, target));
+			_aiCooldown = 1.0f;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void Creature::applyEffect(EffectType type, float duration, int value) {
+	Effect e;
+	e.type = type;
+	e.duration = duration;
+	e.value = value;
+	_effects.push_back(e);
+}
+
+void Creature::updateEffects(float dt) {
+	for (auto it = _effects.begin(); it != _effects.end(); ) {
+		it->duration -= dt;
+
+		if (it->type == kEffectPoison) {
+			// Periodic poison damage (simplified: value is damage per sec)
+			if (_hpCurrent > 0) {
+				float dam = it->value * dt;
+				_hpCurrent -= (int)dam;
+				if (_hpCurrent < 1) _hpCurrent = 1; // Poison usually doesn't kill in KOTOR
+			}
+		}
+
+		if (it->duration <= 0.0f) {
+			it = _effects.erase(it);
+		} else {
+			++it;
+		}
+	}
+}
+
+bool Creature::hasEffect(EffectType type) const {
+	for (const auto &e : _effects) {
+		if (e.type == type)
+			return true;
+	}
+	return false;
+}
+
+void Creature::update(float dt) {
+	if (isDead())
+		return;
+
+	updateEffects(dt);
+	} // End of namespace KotORBase
 
 } // End of namespace Engines

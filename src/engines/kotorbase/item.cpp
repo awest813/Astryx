@@ -40,6 +40,10 @@ Item::Item(const Common::UString &item) : Object(kObjectTypeItem), _stackSize(1)
 	load(uti->getTopLevel());
 }
 
+int Item::getCost() const {
+	return _cost;
+}
+
 void Item::load(const Aurora::GFF3Struct &gff) {
 	// Tag, name and description
 	_tag = gff.getString("Tag");
@@ -63,6 +67,7 @@ void Item::load(const Aurora::GFF3Struct &gff) {
 	_bodyVariation = gff.getSint("BodyVariation");
 	_textureVariation = gff.getSint("TextureVar");
 	_stackSize = gff.getSint("StackSize", 1);
+	_cost = gff.getSint("Cost");
 }
 
 const Common::UString &Item::getName() const {

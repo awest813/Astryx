@@ -45,11 +45,18 @@ public:
 	LevelUpGUI(KotORBase::Module &module, KotORBase::Creature &pc, ::Engines::Console *console = 0);
 	~LevelUpGUI();
 
+	void callbackActive(Widget &widget) override;
+
+	void showAbilities();
+	void showSkills();
+	void showFeats();
+	void showForcePowers();
+
 private:
-	KotORBase::Module &_module;
+	KotORBase::Module   &_module;
 	KotORBase::Creature &_pc;
 
-	void callbackActive(Widget &widget);
+	int _step;
 };
 
 } // End of namespace KotOR

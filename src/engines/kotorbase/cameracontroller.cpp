@@ -64,6 +64,17 @@ void CameraController::setYaw(float value) {
 	_dirty = true;
 }
 
+void CameraController::setPitch(float value) {
+	_pitch = value;
+	_dirty = true;
+}
+
+void CameraController::setDistance(float value) {
+	_distance = value;
+	_actualDistance = value;
+	_dirty = true;
+}
+
 void CameraController::updateTarget() {
 	float x, y, z;
 	Creature *partyLeader = _module->getPartyLeader();
@@ -129,14 +140,37 @@ void CameraController::processRotation(float frameTime) {
 		return;
 
 	if (_cinematic) {
-		// In cinematic mode, orientation is driven by the angle or the focus target.
-		if (_cinematicFocus) {
+		// Priority 1: Transition Blending
+		Object *lookAt = _cameraTarget ? _cameraTarget : _cinematicFocus;
+		if (lookAt && _transitionDuration > 0.0f && _transitionTime < _transitionDuration) {
+			_transitionTime += frameTime;
+			float t = _transitionTime / _transitionDuration;
+			if (t >= 1.0f) {
+				t = 1.0f;
+				_transitionDuration = 0.0f; // Done
+			}
+
 			float tx, ty, tz;
-			_cinematicFocus->getPosition(tx, ty, tz);
-			float dx = tx - _target.x;
-			float dy = ty - _target.y;
+			lookAt->getPosition(tx, ty, tz);
+			float dx = tx - CameraMan.getX();
+			float dy = ty - CameraMan.getY();
+			float destYaw = atan2(dy, dx);
+			
+			// Simple lerp (normalized for wrap-around)
+			float diff = destYaw - _sourceYaw;
+			while (diff < -M_PI) diff += 2.0f * M_PI;
+			while (diff > M_PI) diff -= 2.0f * M_PI;
+			
+			_yaw = _sourceYaw + diff * t;
+		} else if (lookAt) {
+			// Instant Look-at
+			float tx, ty, tz;
+			lookAt->getPosition(tx, ty, tz);
+			float dx = tx - CameraMan.getX();
+			float dy = ty - CameraMan.getY();
 			_yaw = atan2(dy, dx);
 		}
+		
 		CameraMan.setOrientation(_pitch, 0.0f, Common::rad2deg(_yaw));
 		return;
 	}
@@ -159,17 +193,42 @@ void CameraController::processMovement(float frameTime) {
 	}
 
 	if (_cinematic) {
-		// If focusing on someone, update our anchor point.
-		if (_cinematicFocus) {
-			float fx, fy, fz;
-			_cinematicFocus->getPosition(fx, fy, fz);
-			_target = glm::vec3(fx, fy, fz + 1.2f); // focus slightly above feet
+		if (_holding) {
+			_holdTime -= frameTime;
+			if (_holdTime <= 0.0f)
+				_holding = false;
+			return;
 		}
 
-		// Simple implementation: move camera to cinematic position
-		glm::vec3 actualPosition = getCameraPosition(_distance);
-		CameraMan.setPosition(actualPosition.x, actualPosition.y, actualPosition.z);
-		CameraMan.update();
+		if (_pathEnd) {
+			_pathTime += frameTime;
+			float t = _pathTime / _pathDuration;
+			if (t >= 1.0f) {
+				t = 1.0f;
+				// Arrival logic: stay at end point
+				float ex, ey, ez;
+				_pathEnd->getPosition(ex, ey, ez);
+				_target = glm::vec3(ex, ey, ez);
+				_pathEnd = nullptr;
+			} else {
+				float x1, y1, z1, x2, y2, z2;
+				_pathStart->getPosition(x1, y1, z1);
+				_pathEnd->getPosition(x2, y2, z2);
+				
+				_target.x = x1 + (x2 - x1) * t;
+				_target.y = y1 + (y2 - y1) * t;
+				_target.z = z1 + (z2 - z1) * t;
+			}
+			_dirty = true;
+		} else if (_cinematicFocus) {
+			float fx, fy, fz;
+			_cinematicFocus->getPosition(fx, fy, fz);
+			_target = glm::vec3(fx, fy, fz + 1.2f);
+			_dirty = true;
+		}
+
+		CameraMan.setPosition(_target.x, _target.y, _target.z);
+		CameraMan.setDistance(_actualDistance);
 		return;
 	}
 
@@ -203,8 +262,22 @@ void CameraController::processMovement(float frameTime) {
 	_actualDistance = MIN(_actualDistance, 3.5f);
 
 	glm::vec3 actualPosition = getCameraPosition(_actualDistance);
+
+	if (_shakeTime > 0.0f) {
+		_shakeTime -= frameTime;
+		// Pseudo-random jitter
+		actualPosition.x += ((rand() % 100) / 50.0f - 1.0f) * _shakeIntensity;
+		actualPosition.y += ((rand() % 100) / 50.0f - 1.0f) * _shakeIntensity;
+		actualPosition.z += ((rand() % 100) / 50.0f - 1.0f) * _shakeIntensity;
+	}
+
 	CameraMan.setPosition(actualPosition.x, actualPosition.y, actualPosition.z);
 	CameraMan.update();
+}
+
+void CameraController::shake(float duration, float intensity) {
+	_shakeTime = duration;
+	_shakeIntensity = intensity;
 }
 
 void CameraController::stopMovement() {
@@ -224,14 +297,57 @@ void CameraController::syncOrbitingCamera() {
 
 void CameraController::setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel) {
 	_cinematic = true;
-	_cinematicFocus = nullptr; // Clear any dynamic focus; setCinematicFocus must be called after if needed.
+	_cinematicFocus = nullptr;
 	_cinematicID = cameraID;
 	_cinematicAngle = cameraAngle;
 	_cinematicModel = cameraModel;
 
-	// For now, let's just adjust the yaw based on cameraAngle
+	Area *area = _module->getCurrentArea();
+	if (area) {
+		const Area::Camera *staticCam = area->getCamera(cameraID);
+		if (staticCam) {
+			_target = glm::vec3(staticCam->position[0], staticCam->position[1], staticCam->position[2]);
+			
+			// Extract yaw/pitch if possible. 
+			_yaw = Common::deg2rad(cameraAngle); 
+			_pitch = staticCam->pitch;
+			_distance = 0.0f;
+			_dirty = true;
+			return;
+		}
+	}
+
 	_yaw = Common::deg2rad(cameraAngle);
 	_dirty = true;
+}
+
+void CameraController::setCameraMode(CameraMode mode, Object *target) {
+	_cinematic = true;
+	_cinematicFocus = target;
+	_dirty = true;
+
+	switch (mode) {
+	case kCameraModeCloseup:
+		_pitch = -0.5f;
+		_distance = 1.0f;
+		break;
+	case kCameraModeMedium:
+		_pitch = -0.3f;
+		_distance = 4.0f;
+		break;
+	case kCameraModeWide:
+		_pitch = -0.2f;
+		_distance = 8.0f;
+		break;
+	case kCameraModeIsometric:
+		_pitch = -1.0f;
+		_distance = 15.0f;
+		break;
+	case kCameraModeReveal:
+		_pitch = -0.15f;
+		_distance = 25.0f;
+		break;
+	}
 }
 
 void CameraController::setCinematicFocus(Object *target) {
@@ -239,9 +355,44 @@ void CameraController::setCinematicFocus(Object *target) {
 	_dirty = true;
 }
 
+void CameraController::setCameraTarget(Object *target) {
+	_cameraTarget = target;
+	_dirty = true;
+}
+
+void CameraController::cameraTransitionToTarget(float duration) {
+	_sourceYaw = _yaw;
+	_sourcePitch = _pitch;
+	_transitionTime = 0.0f;
+	_transitionDuration = duration > 0.0f ? duration : 0.001f;
+}
+
+void CameraController::cameraMoveAlongPath(Object *start, Object *end, float duration) {
+	_pathStart = start;
+	_pathEnd = end;
+	_pathTime = 0.0f;
+	_pathDuration = duration > 0.0f ? duration : 1.0f;
+}
+
+void CameraController::cameraHold(float duration) {
+	_holding = true;
+	_holdTime = duration;
+}
+
+void CameraController::restoreGameplayCamera(float blendTime) {
+	// For now, snap back. Blending would require a transition state.
+	resetToOrbit();
+}
+
 void CameraController::resetToOrbit() {
 	_cinematic = false;
 	_cinematicFocus = nullptr;
+	_cameraTarget = nullptr;
+	_pathStart = nullptr;
+	_pathEnd = nullptr;
+	_transitionDuration = 0.0f;
+	_holding = false;
+	
 	updateTarget();
 	_dirty = true;
 }

@@ -427,6 +427,35 @@ void HUD::hideTargetInformation() {
 	hideTargetButtons();
 }
 
+void HUD::notifyJournalUpdated() {
+	if (!_journalNotification)
+		_journalNotification = getLabel("LBL_JOURNAL_NOTIFY");
+
+	if (_journalNotification) {
+		_journalNotification->setText("Journal Updated");
+		_journalNotification->setTextColor(0.0f, 0.9f, 1.0f, 1.0f);
+		_journalNotification->show();
+		_journalNotificationTime = 3.0f;
+	}
+}
+
+void HUD::update(float dt) {
+	if (_journalNotificationTime > 0.0f) {
+		_journalNotificationTime -= dt;
+
+		// Smooth fade-out in the last 1 second
+		if (_journalNotificationTime < 1.0f)
+			_journalNotification->setAlpha(_journalNotificationTime);
+		else
+			_journalNotification->setAlpha(1.0f);
+
+		if (_journalNotificationTime <= 0.0f)
+			_journalNotification->hide();
+	}
+
+	updateSelection();
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

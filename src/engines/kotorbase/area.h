@@ -148,6 +148,13 @@ public:
 	void addToObjectMap(Object *object);
 	void removeObject(Object *object);
 
+	// Persistence
+	void loadPersistence();
+	void savePersistence();
+
+	const std::vector<bool> &getMapExplored() const { return _mapExplored; }
+	void setMapExplored(const std::vector<bool> &data) { _mapExplored = data; }
+
 	// Camera style
 
 	struct CameraStyle {
@@ -157,9 +164,12 @@ public:
 		float viewAngle { 0.0f };
 	};
 
-	const CameraStyle &getCameraStyle() const;
+	const Area::CameraStyle &getCameraStyle() const;
 
-	// Room visiblity
+	const std::vector<bool> &getMapExplored() const { return _mapExplored; }
+	void setMapExplored(const std::vector<bool> &explored) { _mapExplored = explored; }
+
+	// Spatial Querying
 
 	const std::vector<Common::UString> &getRoomsVisibleFrom(const Common::UString &room) const;
 	std::set<Common::UString> getRoomsVisibleByPartyLeader() const;
@@ -178,6 +188,18 @@ public:
 
 	void processCreaturesActions(float dt);
 	void handleCreaturesDeath();
+
+	Creature *findNearestEnemy(Creature *origin);
+
+	struct Camera {
+		uint32_t id;
+		float position[3];
+		float orientation[4];
+		float fieldOfView;
+		float pitch;
+	};
+
+	const Camera *getCamera(uint32_t id) const;
 
 protected:
 	void notifyCameraMoved();
@@ -233,6 +255,7 @@ private:
 	Object *_activeObject; ///< The currently active (highlighted) object.
 
 	bool _highlightAll; ///< Are we currently highlighting all objects?
+	std::vector<bool> _mapExplored;
 
 	std::list<Events::Event> _eventQueue; ///< The event queue.
 
@@ -245,6 +268,7 @@ private:
 	Trigger *_activeTrigger;
 
 
+	std::vector<Camera> _cameras;
 	CameraStyle _cameraStyle;
 	bool _walkmeshInvisible;
 	std::list<Situated *> _situatedObjects;
@@ -277,6 +301,7 @@ private:
 	void loadCreatures (const Aurora::GFF3List &list);
 	void loadSounds    (const Aurora::GFF3List &list);
 	void loadTriggers  (const Aurora::GFF3List &list);
+	void loadCameras   (const Aurora::GFF3List &list);
 
 	// Highlight / active helpers
 

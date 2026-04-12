@@ -24,6 +24,8 @@
 
 #include <algorithm>
 
+#include "src/common/debug.h"
+#include "src/aurora/gff3file.h"
 #include "src/common/util.h"
 #include "src/common/error.h"
 
@@ -83,6 +85,8 @@ CreatureInfo::CreatureInfo(const Aurora::GFF3Struct &gff) {
 	loadSkills(gff);
 	loadAbilities(gff);
 	loadFeats(gff);
+
+	_alignment = gff.getSint("GoodEvil", 50);
 }
 
 CreatureInfo::CreatureInfo(const CharacterGenerationInfo &info) {
@@ -100,8 +104,91 @@ CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
 	_inventory = other._inventory;
 	_equipment = other._equipment;
 	_feats = other._feats;
+	_forcePointsCurrent = other._forcePointsCurrent;
+	_forcePointsMax     = other._forcePointsMax;
+	_alignment          = other._alignment;
 
 	return *this;
+}
+
+void CreatureInfo::save(Aurora::GFF3Struct &gff) const {
+	saveAbilities(gff);
+	saveSkills(gff);
+	
+	gff.setUint("CurrentFP", _forcePointsCurrent);
+	gff.setUint("MaxFP", _forcePointsMax);
+	gff.setSint("GoodEvil", _alignment);
+
+	// Save Feats
+	Aurora::GFF3List &featList = gff.getList("FeatList");
+	for (auto feat : _feats) {
+		Aurora::GFF3Struct &f = featList.addStruct(0);
+		f.setUint("Feat", feat);
+	}
+
+	// Save Force Powers
+	Aurora::GFF3List &powerList = gff.getList("PowerList");
+	for (auto power : _forcePowers) {
+		Aurora::GFF3Struct &p = powerList.addStruct(0);
+		p.setUint("Power", power);
+	}
+
+	// Save Class Levels
+	Aurora::GFF3List &classList = gff.getList("ClassList");
+	for (auto const &cl : _levels) {
+		Aurora::GFF3Struct &c = classList.addStruct(0);
+		c.setSint("Class", (int)cl.characterClass);
+		c.setSint("ClassLevel", cl.level);
+	}
+
+	Aurora::GFF3List &invList = gff.getList("ItemList");
+	_inventory.save(invList);
+}
+
+void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
+	loadAbilities(gff);
+	loadSkills(gff);
+	loadFeats(gff);
+	loadForcePowers(gff);
+	loadClassLevels(gff);
+
+	_alignment = gff.getSint("GoodEvil", 50);
+	_forcePointsCurrent = gff.getUint("CurrentFP");
+	_forcePointsMax = gff.getUint("MaxFP");
+
+	if (gff.hasField("ItemList")) {
+		_inventory.read(gff.getList("ItemList"));
+	}
+}
+
+void CreatureInfo::saveAbilities(Aurora::GFF3Struct &gff) const {
+	gff.setUint("Str", _abilities.strength);
+	gff.setUint("Dex", _abilities.dexterity);
+	gff.setUint("Con", _abilities.constitution);
+	gff.setUint("Int", _abilities.intelligence);
+	gff.setUint("Wis", _abilities.wisdom);
+	gff.setUint("Cha", _abilities.charisma);
+}
+
+void CreatureInfo::saveSkills(Aurora::GFF3Struct &gff) const {
+	gff.setUint("SkillRank_Computer", _skills.computerUse);
+	gff.setUint("SkillRank_Demolition", _skills.demolitions);
+	gff.setUint("SkillRank_Stealth", _skills.stealth);
+	gff.setUint("SkillRank_Awareness", _skills.awareness);
+	gff.setUint("SkillRank_Persuade", _skills.persuade);
+	gff.setUint("SkillRank_Repair", _skills.repair);
+	gff.setUint("SkillRank_Security", _skills.security);
+	gff.setUint("SkillRank_TreatInjury", _skills.treatInjury);
+}
+
+void CreatureInfo::loadForcePowers(const Aurora::GFF3Struct &gff) {
+	_forcePowers.clear();
+	if (gff.hasField("PowerList")) {
+		Aurora::GFF3List powerList = gff.getList("PowerList");
+		for (const auto &power : powerList) {
+			_forcePowers.push_back(power->getUint("Power"));
+		}
+	}
 }
 
 int CreatureInfo::getClassLevel(Class charClass) const {
@@ -193,6 +280,12 @@ void CreatureInfo::incrementClassLevel(Class charClass) {
 		newLevel.level = 1;
 		_levels.push_back(newLevel);
 	}
+}
+
+Class CreatureInfo::getLatestClass() const {
+	if (_levels.empty())
+		return kClassInvalid;
+	return _levels.back().characterClass;
 }
 
 int CreatureInfo::getAbilityScore(Ability ability) const {
@@ -331,6 +424,22 @@ void CreatureInfo::setSkillRank(Skill skill, uint32_t rank) {
 	}
 }
 
+uint32_t CreatureInfo::getForcePoints() const {
+	return _forcePointsCurrent;
+}
+
+uint32_t CreatureInfo::getMaxForcePoints() const {
+	return _forcePointsMax;
+}
+
+void CreatureInfo::setForcePoints(uint32_t fp) {
+	_forcePointsCurrent = fp;
+}
+
+void CreatureInfo::setMaxForcePoints(uint32_t fp) {
+	_forcePointsMax = fp;
+}
+
 void CreatureInfo::addFeat(uint32_t feat) {
 	if (hasFeat(feat))
 		return;
@@ -349,6 +458,25 @@ bool CreatureInfo::hasFeat(uint32_t feat) const {
 
 const std::vector<uint32_t> &CreatureInfo::getFeats() const {
 	return _feats;
+}
+
+void CreatureInfo::addForcePower(uint32_t power) {
+	if (hasForcePower(power))
+		return;
+
+	_forcePowers.push_back(power);
+}
+
+bool CreatureInfo::hasForcePower(uint32_t power) const {
+	for (auto p : _forcePowers) {
+		if (p == power)
+			return true;
+	}
+	return false;
+}
+
+const std::vector<uint32_t> &CreatureInfo::getForcePowers() const {
+	return _forcePowers;
 }
 
 void CreatureInfo::loadClassLevels(const Aurora::GFF3Struct &gff) {
@@ -430,6 +558,18 @@ void CreatureInfo::equipItem(const Common::UString &tag, InventorySlot slot) {
 
 void CreatureInfo::unequipInventorySlot(InventorySlot slot) {
 	_equipment.erase(slot);
+}
+
+int CreatureInfo::getAlignment() const {
+	return _alignment;
+}
+
+void CreatureInfo::setAlignment(int alignment) {
+	_alignment = std::clamp(alignment, 0, 100);
+}
+
+void CreatureInfo::adjustAlignment(int shift) {
+	setAlignment(_alignment + shift);
 }
 
 } // End of namespace KotORBase

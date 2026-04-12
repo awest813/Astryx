@@ -27,7 +27,10 @@
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
 
-#include "src/engines/kotor/gui/ingame/levelup.h"
+#include "src/engines/kotor/gui/ingame/levelup_abilities.h"
+#include "src/engines/kotor/gui/ingame/levelup_skills.h"
+#include "src/engines/kotor/gui/ingame/levelup_feats.h"
+#include "src/engines/kotor/gui/ingame/levelup_forcepowers.h"
 
 namespace Engines {
 
@@ -36,7 +39,8 @@ namespace KotOR {
 LevelUpGUI::LevelUpGUI(KotORBase::Module &module, KotORBase::Creature &pc, ::Engines::Console *console) :
 		KotORBase::GUI(console),
 		_module(module),
-		_pc(pc) {
+		_pc(pc),
+		_step(0) {
 
 	load("levelpnl");
 
@@ -53,31 +57,72 @@ void LevelUpGUI::callbackActive(::Engines::Widget &widget) {
 	}
 
 	if (widget.getTag() == "BTN_ACCEPT") {
-		// Minimum parity implementation: perform the same logic as the old auto-level-up script stub.
-		// In a full implementation, this GUI would have its own step-based logic (skills, feats, etc.)
-		// like character generation.
+		// New multi-step workflow
 		
-		int currentLevel = _pc.getHitDice();
-		KotORBase::CreatureInfo &info = _pc.getCreatureInfo();
+		int totalLevel = _pc.getHitDice();
 		
-		if (info.getNumClasses() > 0) {
-			KotORBase::Class pcClass = info.getClassByPosition(0);
-			info.incrementClassLevel(pcClass);
-
-			// HP gain: 6 for scoundrel, 10 for soldier, 8 for scout + CON modifier.
-			int hpGain = 10;
-			if (pcClass == KotORBase::kClassScout)     hpGain = 8;
-			if (pcClass == KotORBase::kClassScoundrel) hpGain = 6;
-			hpGain += info.getAbilityModifier(KotORBase::kAbilityConstitution);
-			if (hpGain < 1) hpGain = 1;
-
-			_pc.setMaxHitPoints(_pc.getMaxHitPoints() + hpGain);
-			_pc.setCurrentHitPoints(_pc.getMaxHitPoints());
+		// 1. Ability Scores (every 4 levels)
+		if (totalLevel % 4 == 0) {
+			showAbilities();
 		}
+
+		// 2. Skills (always)
+		showSkills();
+
+		// 3. Feats (based on class progression — placeholder: always for now)
+		showFeats();
+
+		// 4. Force Powers (if Jedi — placeholder: always for now if class > 2)
+		int classID = _pc.getCreatureInfo().getLatestClass();
+		if (classID >= KotORBase::kClassJediGuardian && classID <= KotORBase::kClassJediSentinel) {
+			showForcePowers();
+		}
+
+		// Finalize the level up
+		KotORBase::CreatureInfo &info = _pc.getCreatureInfo();
+		KotORBase::Class pcClass = info.getLatestClass();
+		info.incrementClassLevel(pcClass);
+
+		// HP gain: based on class hit die + CON modifier.
+		int hpGain = 10;
+		if (pcClass == KotORBase::kClassScout)          hpGain = 8;
+		if (pcClass == KotORBase::kClassScoundrel)      hpGain = 6;
+		if (pcClass == KotORBase::kClassJediGuardian)   hpGain = 10;
+		if (pcClass == KotORBase::kClassJediSentinel)   hpGain = 8;
+		if (pcClass == KotORBase::kClassJediConsular)   hpGain = 6;
+
+		hpGain += info.getAbilityModifier(KotORBase::kAbilityConstitution);
+		if (hpGain < 1) hpGain = 1;
+
+		_pc.setMaxHitPoints(_pc.getMaxHitPoints() + hpGain);
+		_pc.setCurrentHitPoints(_pc.getMaxHitPoints());
+
+		_pc.setMaxForcePoints(_pc.computeMaxForcePoints());
+		_pc.setForcePoints(_pc.getMaxForcePoints());
 
 		_returnCode = 1;
 		return;
 	}
+}
+
+void LevelUpGUI::showAbilities() {
+	LevelUpAbilitiesMenu menu(_pc.getCreatureInfo(), _console);
+	sub(menu);
+}
+
+void LevelUpGUI::showSkills() {
+	LevelUpSkillsMenu menu(_pc.getCreatureInfo(), _console);
+	sub(menu);
+}
+
+void LevelUpGUI::showFeats() {
+	LevelUpFeatsMenu menu(_pc.getCreatureInfo(), _console);
+	sub(menu);
+}
+
+void LevelUpGUI::showForcePowers() {
+	LevelUpForcePowersMenu menu(_pc.getCreatureInfo(), _console);
+	sub(menu);
 }
 
 } // End of namespace KotOR

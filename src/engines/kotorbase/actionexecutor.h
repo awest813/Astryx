@@ -54,6 +54,8 @@ private:
 	static void executeAttackObject(Action &action, const ExecutionContext &ctx);
 	static void executePickUpItem(Action &action, const ExecutionContext &ctx);
 	static void executeWait(Action &action, const ExecutionContext &ctx);
+	static void executeCastSpell(Action &action, const ExecutionContext &ctx);
+	static void executeCutsceneAttack(Action &action, const ExecutionContext &ctx);
 
 	/**
 	 * Move the current creature towards a specified location. Returns

@@ -33,6 +33,7 @@
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/waypoint.h"
 #include "src/engines/kotorbase/sound.h"
+#include "src/engines/kotorbase/store.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/area.h"
@@ -163,6 +164,10 @@ Item *ObjectContainer::toItem(Aurora::NWScript::Object *object) {
 
 SoundObject *ObjectContainer::toSoundObject(Aurora::NWScript::Object *object) {
 	return dynamic_cast<SoundObject *>(object);
+}
+
+Store *ObjectContainer::toStore(Aurora::NWScript::Object *object) {
+	return dynamic_cast<Store *>(object);
 }
 
 Creature *ObjectContainer::toPC(Aurora::NWScript::Object *object) {

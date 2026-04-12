@@ -53,7 +53,8 @@ Object::Object(ObjectType type) :
 		_currentHitPoints(0),
 		_maxHitPoints(0),
 		_minOneHitPoint(false),
-	_plotFlag(false) {
+	_plotFlag(false),
+	_persistent(false) {
 	_id = Common::generateIDNumber();
 	ObjectMan.registerObject(this);
 
@@ -311,6 +312,24 @@ void Object::getTooltipAnchor(float &x, float &y, float &z) const {
 
 bool Object::isDead() const {
 	return false;
+}
+
+bool Object::isPersistent() const {
+	return _persistent;
+}
+
+void Object::setPersistent(bool persistent) {
+	_persistent = persistent;
+}
+
+void Object::saveState(Aurora::GFF3Struct &gff) const {
+	gff.setUint("CurrentHP", _currentHitPoints);
+	gff.setBool("Usable", _usable);
+}
+
+void Object::loadState(const Aurora::GFF3Struct &gff) {
+	_currentHitPoints = gff.getUint("CurrentHP", _maxHitPoints);
+	_usable = gff.getBool("Usable", true);
 }
 
 } // End of namespace KotORBase

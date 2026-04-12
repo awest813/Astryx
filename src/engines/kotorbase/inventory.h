@@ -37,6 +37,9 @@ class Inventory {
 public:
 	Inventory &operator=(const Inventory &other);
 
+	void save(Aurora::GFF3List &list) const;
+	void read(const Aurora::GFF3List &list);
+
 	struct ItemGroup {
 		Common::UString tag;
 		int count { 0 };

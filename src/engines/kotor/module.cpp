@@ -34,6 +34,12 @@
 
 #include "src/engines/kotor/gui/chargen/chargeninfo.h"
 
+#include "src/engines/kotor/gui/ingame/menu_jou.h"
+#include "src/engines/kotor/gui/ingame/galaxymap.h"
+#include "src/engines/kotor/gui/ingame/workbench.h"
+#include "src/engines/kotor/encounters_dan.h"
+#include "src/engines/kotor/encounters_end.h"
+
 namespace Engines {
 
 namespace KotOR {
@@ -62,6 +68,37 @@ KotORBase::Creature *Module::createCreature(const Common::UString &resRef) const
 
 KotORBase::CharacterGenerationInfo *Module::createCharGenInfo(const KotORBase::CharacterGenerationInfo &info) const {
 	return new CharacterGenerationInfo(info);
+}
+
+void Module::showGalaxyMap() {
+	GalaxyMapMenu gui(*this, &_console);
+	sub(gui);
+}
+
+void Module::showWorkbench() {
+	WorkbenchMenu gui(*this, &_console);
+	sub(gui);
+}
+
+void Module::signalEncounter(const Common::UString &id) {
+	if (id == "end_opening") {
+		KotOR::performEndarSpireOpening(*this);
+	} else if (id == "end_trask") {
+		KotOR::performTraskEncounter(*this);
+	} else if (id == "dan14_mand") {
+		KotOR::performMandalorianAmbush(*this);
+	} else if (id == "dan14_kinrath") {
+		KotOR::performKinrathSwarm(*this);
+	} else if (id == "dan17_reveal") {
+		KotOR::performStarMapReveal(*this);
+	} else if (id == "ebon_galaxymap") {
+		setGlobalBoolean("__open_galaxymap", true);
+	}
+}
+
+void Module::showJournal() {
+	MenuJournal gui(*this, &_console); // Assuming MenuJournal constructor matches
+	sub(gui);
 }
 
 } // End of namespace KotOR

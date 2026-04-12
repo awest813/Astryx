@@ -69,6 +69,12 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 		case kActionWait:
 			executeWait(action, ctx);
 			break;
+		case kActionCastSpell:
+			executeCastSpell(action, ctx);
+			break;
+		case kActionCutsceneAttack:
+			executeCutsceneAttack(action, ctx);
+			break;
 		default:
 			warning("TODO: Handle action %u", (uint)action.type);
 			break;
@@ -171,7 +177,11 @@ void ActionExecutor::executeAttackObject(Action &action, const ExecutionContext 
 		return;
 
 	ctx.creature->popAction();
-	ctx.creature->startCombat(action.object, ctx.area->_module->getNextCombatRound());
+	
+	if (action.choreographyFlags > 0)
+		ctx.creature->performCutsceneAttack(action.object, action.choreographyFlags);
+	else
+		ctx.creature->startCombat(action.object, ctx.area->_module->getNextCombatRound());
 }
 
 void ActionExecutor::executePickUpItem(Action &action, const ExecutionContext &ctx) {
@@ -257,6 +267,82 @@ void ActionExecutor::executeWait(Action &action, const ExecutionContext &ctx) {
 
 	if (action.startTime >= action.range)
 		ctx.creature->popAction();
+}
+
+void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ctx) {
+	Creature *caster = ctx.creature;
+	int cost = 0;
+
+	// Determine cost (placeholder logic, normally from spells.2da)
+	switch (action.actionID) {
+		case 1: cost = 15; break; // Heal
+		case 2: cost = 10; break; // Push
+		case 3: cost = 15; break; // Speed
+		default: break;
+	}
+
+	if (caster->getForcePoints() < cost) {
+		debugC(Common::kDebugEngineLogic, 1, "Not enough Force Points to cast power %d", action.actionID);
+		caster->popAction();
+		return;
+	}
+
+	caster->setForcePoints(caster->getForcePoints() - cost);
+
+	// Apply power effects
+	switch (action.actionID) {
+		case 1: // Force Heal (Party heal)
+			caster->playAnimation("castheal", false);
+			for (int i = 0; i < ctx.area->_module->getPartyMemberCount(); ++i) {
+				Creature *member = ctx.area->_module->getPartyMemberByIndex(i);
+				if (member && !member->isDead())
+					member->applyEffect(Effect(kEffectHeal, 15));
+			}
+			break;
+
+		case 2: // Force Push (Single target)
+			if (action.object) {
+				caster->playAnimation("castout", false);
+				Creature *target = ObjectContainer::toCreature(action.object);
+				if (target) {
+					target->applyEffect(Effect(kEffectDamage, 10));
+					target->applyEffect(Effect(kEffectKnockdown));
+				}
+			}
+			break;
+
+		case 3: // Burst of Speed (Self)
+			caster->playAnimation("castself", false);
+			caster->applyEffect(Effect(kEffectMovementSpeedIncrease, 50));
+			break;
+
+		case 4: // Affect Mind
+			if (action.object) {
+				caster->playAnimation("castself", false);
+				Creature *target = ObjectContainer::toCreature(action.object);
+				if (target)
+					target->applyEffect(Effect(kEffectStun, 6.0f));
+			}
+			break;
+
+		default:
+			warning("ActionExecutor::executeCastSpell(): Unknown power ID %d", action.actionID);
+			break;
+	}
+
+	caster->setForcePoints(caster->getForcePoints() - cost);
+	caster->popAction();
+}
+
+void ActionExecutor::executeCutsceneAttack(Action &action, const ExecutionContext &ctx) {
+	float x, y, _;
+	action.object->getPosition(x, y, _);
+
+	if (!moveTo(glm::vec2(x, y), ctx.creature->getMaxAttackRange(), ctx))
+		return;
+
+	ctx.creature->popAction();
+	ctx.creature->performCutsceneAttack(action.object, action.choreographyFlags);
 }
 
 } // End of namespace KotORBase

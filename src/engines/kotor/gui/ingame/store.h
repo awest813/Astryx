@@ -31,6 +31,7 @@ namespace Engines {
 
 namespace KotORBase {
 	class Module;
+	class Store;
 }
 
 namespace KotOR {
@@ -41,13 +42,19 @@ namespace KotOR {
  */
 class StoreGUI : public KotORBase::GUI {
 public:
-	StoreGUI(KotORBase::Module &module, ::Engines::Console *console = 0);
+	StoreGUI(KotORBase::Module &module, KotORBase::Store &store, ::Engines::Console *console = 0);
 	~StoreGUI();
 
 private:
 	KotORBase::Module &_module;
+	KotORBase::Store  &_store;
+
+	void fillStoreInventory();
+	void fillPlayerInventory();
+	void updatePrice();
 
 	void callbackActive(Widget &widget);
+	void callbackRun();
 };
 
 } // End of namespace KotOR

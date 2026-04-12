@@ -116,6 +116,28 @@ void Area::load() {
 
 	Aurora::GFF3File git(_resRef, Aurora::kFileTypeGIT, MKTAG('G', 'I', 'T', ' '));
 	loadGIT(git.getTopLevel());
+
+	loadPersistence();
+}
+
+void Area::loadPersistence() {
+	for (auto &o : _objects) {
+		Common::UString key = _resRef + ":" + o->getTag();
+		if (_module->getAreaObjectSave(key)) {
+			o->loadState(_module->getAreaObjectSave(key)->getTopLevel());
+		}
+	}
+}
+
+void Area::savePersistence() {
+	for (auto &o : _objects) {
+		if (o->isPersistent()) {
+			Common::UString key = _resRef + ":" + o->getTag();
+			auto state = std::make_shared<Aurora::GFF3File>();
+			o->saveState(state->getTopLevel());
+			_module->setAreaObjectSave(key, state);
+		}
+	}
 }
 
 void Area::clear() {
@@ -396,6 +418,33 @@ void Area::loadGIT(const Aurora::GFF3Struct &git) {
 
 	if (git.hasField("TriggerList"))
 		loadTriggers(git.getList("TriggerList"));
+
+	if (git.hasField("Camera List"))
+		loadCameras(git.getList("Camera List"));
+}
+
+void Area::loadCameras(const Aurora::GFF3List &list) {
+	for (auto &c : list) {
+		if (!c) continue;
+		Camera camera;
+		camera.id = c->getUint("CameraID");
+		camera.fieldOfView = c->getFloat("FieldOfView");
+		camera.pitch = c->getFloat("MicRange"); // MicRange is often reused for pitch in some gffs? No, Pitch exists.
+		camera.pitch = c->getFloat("Pitch");
+		
+		c->getVector("Position", camera.position[0], camera.position[1], camera.position[2]);
+		c->getOrientation("Orientation", camera.orientation[0], camera.orientation[1], camera.orientation[2], camera.orientation[3]);
+		
+		_cameras.push_back(camera);
+	}
+}
+
+const Area::Camera *Area::getCamera(uint32_t id) const {
+	for (auto &c : _cameras) {
+		if (c.id == id)
+			return &c;
+	}
+	return nullptr;
 }
 
 void Area::loadProperties(const Aurora::GFF3Struct &props) {
@@ -819,13 +868,48 @@ void Area::processCreaturesActions(float dt) {
 		if (c->isDead())
 			continue;
 
-		Action *action = const_cast<Action *>(c->getCurrentAction());
-		if (!action)
+		c->update(dt);
+
+		const Action *action = c->getCurrentAction();
+		if (!action) {
+			c->think();
+			action = c->getCurrentAction();
+		}
+
+		if (action) {
+			ctx.creature = c;
+			ActionExecutor::execute(*const_cast<Action *>(action), ctx);
+		}
+	}
+}
+
+Creature *Area::findNearestEnemy(Creature *origin) {
+	Creature *nearest = nullptr;
+	float minDistance = FLT_MAX;
+
+	float ox, oy, oz;
+	origin->getPosition(ox, oy, oz);
+	glm::vec3 pos(ox, oy, oz);
+
+	for (auto &c : _creatures) {
+		if (c == origin || c->isDead())
 			continue;
 
-		ctx.creature = c;
-		ActionExecutor::execute(*action, ctx);
+		// Simple hostile check: PC is enemy to NPC if faction differs (simplified for now)
+		if (c->isPC() == origin->isPC())
+			continue;
+
+		float cx, cy, cz;
+		c->getPosition(cx, cy, cz);
+		float dist = glm::distance(pos, glm::vec3(cx, cy, cz));
+
+		if (dist < minDistance) {
+			minDistance = dist;
+			nearest = c;
+		}
 	}
+
+	return nearest;
 }
 
 void Area::handleCreaturesDeath() {

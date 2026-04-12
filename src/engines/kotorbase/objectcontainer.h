@@ -48,6 +48,7 @@ class Door;
 class Creature;
 class Item;
 class SoundObject;
+class Store;
 class Location;
 class Talent;
 
@@ -94,6 +95,7 @@ public:
 	static Item        *toItem       (Aurora::NWScript::Object *object);
 	static Creature    *toPC         (Aurora::NWScript::Object *object);
 	static SoundObject *toSoundObject(Aurora::NWScript::Object *object);
+	static Store       *toStore      (Aurora::NWScript::Object *object);
 	static Creature    *toPartyMember(Aurora::NWScript::Object *object);
 
 	static Location *toLocation(Aurora::NWScript::EngineType *engineType);

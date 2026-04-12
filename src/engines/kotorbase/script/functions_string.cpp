@@ -256,6 +256,23 @@ void Functions::barkString(Aurora::NWScript::FunctionContext &ctx) {
 	warning("BarkString [%s]: %s", who.c_str(), text.c_str());
 }
 
+void Functions::setCustomToken(Aurora::NWScript::FunctionContext &ctx) {
+	const int token = ctx.getParams()[0].getInt();
+	const Common::UString &text = ctx.getParams()[1].getString();
+
+	_customTokens[token] = text;
+}
+
+const Common::UString &Functions::getCustomToken(int token) const {
+	static const Common::UString kEmpty;
+
+	auto it = _customTokens.find(token);
+	if (it == _customTokens.end())
+		return kEmpty;
+
+	return it->second;
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

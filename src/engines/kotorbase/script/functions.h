@@ -151,9 +151,11 @@ protected:
 	void objectToString(Aurora::NWScript::FunctionContext &ctx);
 
 	void intToHexString(Aurora::NWScript::FunctionContext &ctx);
+	void stringToFloat (Aurora::NWScript::FunctionContext &ctx);
+	void stringToInt   (Aurora::NWScript::FunctionContext &ctx);
 
-	void stringToInt  (Aurora::NWScript::FunctionContext &ctx);
-	void stringToFloat(Aurora::NWScript::FunctionContext &ctx);
+	void setCustomToken(Aurora::NWScript::FunctionContext &ctx);
+	const Common::UString &getCustomToken(int token) const;
 
 	void getStringLength(Aurora::NWScript::FunctionContext &ctx);
 
@@ -188,6 +190,18 @@ protected:
 	void getGameDifficulty(Aurora::NWScript::FunctionContext &ctx);
 	void getDifficultyModifier(Aurora::NWScript::FunctionContext &ctx);
 	void setCameraMode(Aurora::NWScript::FunctionContext &ctx);
+	void setCutsceneMode(Aurora::NWScript::FunctionContext &ctx);
+	void setPlayerInputEnabled(Aurora::NWScript::FunctionContext &ctx);
+	void setCameraTarget(Aurora::NWScript::FunctionContext &ctx);
+	void cameraTransitionToTarget(Aurora::NWScript::FunctionContext &ctx);
+	void cameraMoveAlongPath(Aurora::NWScript::FunctionContext &ctx);
+	void cameraHold(Aurora::NWScript::FunctionContext &ctx);
+	void cameraLookAtObject(Aurora::NWScript::FunctionContext &ctx);
+	void restoreGameplayCamera(Aurora::NWScript::FunctionContext &ctx);
+	void playMusicStinger(Aurora::NWScript::FunctionContext &ctx);
+	void setAIArchetype(Aurora::NWScript::FunctionContext &ctx);
+	void signalEncounter(Aurora::NWScript::FunctionContext &ctx);
+	void actionWorkbench(Aurora::NWScript::FunctionContext &ctx);
 	void setLockOrientationInDialog(Aurora::NWScript::FunctionContext &ctx);
 	void setLockHeadFollowInDialog(Aurora::NWScript::FunctionContext &ctx);
 	void setCameraFacing(Aurora::NWScript::FunctionContext &ctx);
@@ -397,6 +411,11 @@ protected:
 
 	void getGender(Aurora::NWScript::FunctionContext &ctx);
 	void getLevelByClass(Aurora::NWScript::FunctionContext &ctx);
+	void changeToJedi(Aurora::NWScript::FunctionContext &ctx);
+
+	void getGoodEvilValue(Aurora::NWScript::FunctionContext &ctx);
+	void getAlignmentGoodEvil(Aurora::NWScript::FunctionContext &ctx);
+	void adjustAlignment(Aurora::NWScript::FunctionContext &ctx);
 
 	void getLevelByPosition(Aurora::NWScript::FunctionContext &ctx);
 	void getClassByPosition(Aurora::NWScript::FunctionContext &ctx);
@@ -408,6 +427,8 @@ protected:
 	void getHasSkill(Aurora::NWScript::FunctionContext &ctx);
 	void getSkillRank(Aurora::NWScript::FunctionContext &ctx);
 	void getHasFeatEffect(Aurora::NWScript::FunctionContext &ctx);
+
+	void addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
 
 	void talentSpell(Aurora::NWScript::FunctionContext &ctx);
 	void talentFeat(Aurora::NWScript::FunctionContext &ctx);

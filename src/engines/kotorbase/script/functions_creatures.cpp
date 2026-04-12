@@ -109,6 +109,53 @@ void Functions::getLevelByClass(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = creature->getLevel(creatureClass);
 }
 
+void Functions::changeToJedi(Aurora::NWScript::FunctionContext &ctx) {
+	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();
+	int jediClass = ctx.getParams()[1].getInt();
+
+	Creature *creature = ObjectContainer::toCreature(object);
+
+	if (!creature) {
+		warning("Functions::changeToJedi(): invalid creature");
+		return;
+	}
+
+	// Add the Jedi class at level 1
+	creature->getCreatureInfo().incrementClassLevel(static_cast<Class>(jediClass));
+
+	debugC(Common::kDebugEngineLogic, 1, "Creature \"%s\" changed to Jedi class %d",
+	       creature->getTag().c_str(), jediClass);
+}
+
+void Functions::getGoodEvilValue(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = creature ? creature->getAlignment() : 50;
+}
+
+void Functions::getAlignmentGoodEvil(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature) {
+		ctx.getReturn() = 2; // Neutral
+		return;
+	}
+
+	int alignment = creature->getAlignment();
+	if (alignment >= 70)
+		ctx.getReturn() = 1; // Good
+	else if (alignment <= 30)
+		ctx.getReturn() = 3; // Evil
+	else
+		ctx.getReturn() = 2; // Neutral
+}
+
+void Functions::adjustAlignment(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	int shift = ctx.getParams()[1].getInt();
+	
+	if (creature)
+		creature->adjustAlignment(shift);
+}
+
 void Functions::getLevelByPosition(Aurora::NWScript::FunctionContext &ctx) {
 	int position = ctx.getParams()[0].getInt();
 	Aurora::NWScript::Object *object = ctx.getParams()[1].getObject();
@@ -439,122 +486,16 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 
 	int current = target->getCurrentHitPoints();
-	Creature *targetCreature = ObjectContainer::toCreature(target);
-
-	switch (effect->getType()) {
-		case kEffectHeal: {
-			int maxHP = target->getMaxHitPoints();
-			int healed = current + effect->getAmount();
-			if (healed > maxHP)
-				healed = maxHP;
-			target->setCurrentHitPoints(healed);
-			break;
+	if (targetCreature) {
+		targetCreature->applyEffect(*effect);
+	} else {
+		// Fallback for non-creature objects (e.g. placeable damage)
+		int current = target->getCurrentHitPoints();
+		if (effect->getType() == kEffectDamage) {
+			target->setCurrentHitPoints(MAX(0, current - effect->getAmount()));
+		} else if (effect->getType() == kEffectHeal) {
+			target->setCurrentHitPoints(MIN(target->getMaxHitPoints(), current + effect->getAmount()));
 		}
-		case kEffectDamage: {
-			int minHp = target->getMinOneHitPoints() ? 1 : 0;
-			int damaged = current - effect->getAmount();
-			if (damaged < minHp)
-				damaged = minHp;
-			target->setCurrentHitPoints(damaged);
-
-			// Keep death transitions consistent with direct attack resolution.
-			if (targetCreature && targetCreature->getCurrentHitPoints() <= 0) {
-				targetCreature->cancelCombat();
-				targetCreature->handleDeath();
-			}
-			break;
-		}
-		case kEffectTemporaryHitpoints: {
-			// Temporary HP: add to current HP, capped at max HP.
-			int maxHP = target->getMaxHitPoints();
-			int boosted = current + effect->getAmount();
-			if (boosted > maxHP)
-				boosted = maxHP;
-			target->setCurrentHitPoints(boosted);
-			break;
-		}
-		case kEffectACIncrease:
-			if (targetCreature)
-				targetCreature->adjustArmorClassModifier(effect->getAmount());
-			break;
-		case kEffectAttackIncrease:
-			if (targetCreature)
-				targetCreature->adjustAttackModifier(effect->getAmount());
-			break;
-		case kEffectSkillIncrease:
-			if (targetCreature) {
-				const int skillID = effect->getDamageType();
-				if (skillID >= kSkillComputerUse && skillID < kSkillMAX) {
-					targetCreature->adjustSkillModifier(static_cast<Skill>(skillID), effect->getAmount());
-				} else {
-					warning("Functions::applyEffectToObject(): invalid skill id %d for EffectSkillIncrease", skillID);
-				}
-			}
-			break;
-		case kEffectDeath: {
-			// Immediately kill the target (scripted death — Force Choke kill, etc.).
-			int minHp = target->getMinOneHitPoints() ? 1 : 0;
-			target->setCurrentHitPoints(minHp);
-			if (targetCreature && !targetCreature->isDead()) {
-				targetCreature->cancelCombat();
-				targetCreature->handleDeath();
-			}
-			break;
-		}
-		case kEffectKnockdown:
-			// Knock the target prone: lose Dex bonus to AC for one round.
-			// We model this as a temporary -4 AC penalty (standard d20 prone penalty).
-			if (targetCreature)
-				targetCreature->adjustArmorClassModifier(-4);
-			debugC(Common::kDebugEngineLogic, 1,
-			       "Object \"%s\" was knocked down", target->getTag().c_str());
-			break;
-		case kEffectParalyze:
-			// Force Stasis etc. — target cannot act.  Clear their action queue.
-			if (targetCreature) {
-				targetCreature->clearActions();
-				targetCreature->adjustArmorClassModifier(-4);
-			}
-			debugC(Common::kDebugEngineLogic, 1,
-			       "Object \"%s\" was paralysed", target->getTag().c_str());
-			break;
-		case kEffectStunned:
-			// Stunned: clear action queue, impose AC penalty.
-			if (targetCreature) {
-				targetCreature->clearActions();
-				targetCreature->adjustArmorClassModifier(-2);
-			}
-			debugC(Common::kDebugEngineLogic, 1,
-			       "Object \"%s\" was stunned", target->getTag().c_str());
-			break;
-		case kEffectHaste:
-			// Haste grants one extra attack per round (not yet modelled in round
-			// loop — log for now, future: add an extra swing in notifyCombatRoundEnded).
-			debugC(Common::kDebugEngineLogic, 1,
-			       "Object \"%s\" is hasted", target->getTag().c_str());
-			break;
-		case kEffectAbilityIncrease:
-			// Temporary ability score increase — log for now.
-			// Full implementation requires per-creature ability modifiers on a stack.
-			debugC(Common::kDebugEngineLogic, 1,
-			       "Object \"%s\" ability %d increased by %d",
-			       target->getTag().c_str(), effect->getDamageType(), effect->getAmount());
-			break;
-		case kEffectMovementSpeedIncrease:
-			// Movement speed boost — logged (full implementation needs creature move-rate stack).
-			debugC(Common::kDebugEngineLogic, 1,
-			       "Object \"%s\" movement speed increased by %d%%",
-			       target->getTag().c_str(), effect->getAmount());
-			break;
-		case kEffectResurrection:
-			// Resurrection requires clearing internal dead state — handled by
-			// Creature::revive() when called from scripts.  Here we only set HP.
-			if (!targetCreature || targetCreature->isDead())
-				target->setCurrentHitPoints(1);
-			break;
-		case kEffectVisual:
-		default:
-			break;
 	}
 }
 
@@ -904,6 +845,20 @@ void Functions::setItemStackSize(Aurora::NWScript::FunctionContext &ctx) {
 	int  size  = ctx.getParams()[1].getInt();
 	if (item && size >= 0)
 		item->setStackSize(size);
+}
+
+void Functions::setAIArchetype(Aurora::NWScript::FunctionContext &ctx) {
+	int archetypeValue = ctx.getParams()[0].getInt();
+	Aurora::NWScript::Object *object = getParamObject(ctx, 1);
+
+	Creature *creature = ObjectContainer::toCreature(object);
+
+	if (!creature) {
+		warning("Functions::setAIArchetype(): invalid creature");
+		return;
+	}
+
+	creature->setAIArchetype(static_cast<Creature::AIArchetype>(archetypeValue));
 }
 
 } // End of namespace KotORBase

@@ -63,6 +63,10 @@ public:
 	/** Return the module context. */
 	KotORBase::Module &getModule();
 
+	void saveGame(const Common::UString &slot, const Common::UString &name);
+
+	virtual Functions &getFunctions() = 0;
+
 	virtual void run() = 0;
 
 	virtual void showLevelUpGUI() = 0;

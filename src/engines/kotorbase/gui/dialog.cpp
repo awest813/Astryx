@@ -40,6 +40,8 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/game.h"
+#include "src/engines/kotorbase/script/functions.h"
 
 #include "src/engines/kotorbase/gui/dialog.h"
 
@@ -130,7 +132,31 @@ void DialogGUI::callbackKeyInput(const Events::Key &key,
 	}
 }
 
-void DialogGUI::preprocessEntry(Common::UString &UNUSED(text)) {
+void DialogGUI::preprocessEntry(Common::UString &text) {
+	// KotOR uses <CUSTOMxxx> for dynamic tokens
+	for (size_t pos = 0; (pos = text.find("<CUSTOM", pos)) != Common::UString::npos; ) {
+		size_t end = text.find(">", pos);
+		if (end == Common::UString::npos)
+			break;
+
+		Common::UString tag = text.substr(pos + 7, end - (pos + 7));
+		int tokenID = 0;
+		try {
+			// Convert tag (e.g. "101") to int
+			Common::UString cleanTag;
+			for (auto c : tag) {
+				if (isdigit(c)) cleanTag += c;
+			}
+			Common::parseString(cleanTag, tokenID);
+		} catch (...) {
+			pos = end + 1;
+			continue;
+		}
+
+		Common::UString replacement = _module.getGame().getFunctions().getCustomToken(tokenID);
+		text.replace(pos, end - pos + 1, replacement);
+		pos += replacement.size();
+	}
 }
 
 void DialogGUI::update(int width, int height) {
@@ -319,6 +345,34 @@ void DialogGUI::playTalkAnimations(const Common::UString &tag) {
 
 void DialogGUI::notifyResized(int UNUSED(oldWidth), int UNUSED(oldHeight), int newWidth, int newHeight) {
 	update(newWidth, newHeight);
+}
+
+void DialogGUI::makeLookAtPC(const Common::UString &tag) {
+	Object *speaker = _module.getCurrentArea()->getObjectByTag(tag);
+	if (!speaker)
+		return;
+
+	Creature *pc = _module.getPC();
+	if (pc)
+		speaker->makeLookAt(pc);
+}
+
+void DialogGUI::playTalkAnimations(const Common::UString &tag) {
+	Creature *speaker = ObjectContainer::toCreature(_module.getCurrentArea()->getObjectByTag(tag));
+	if (!speaker)
+		return;
+
+	// Pick a random talk animation
+	int animID = 1; // ANIMATION_LOOPING_TALK_NORMAL
+	
+	// Simulation of random choice
+	static int r = 0;
+	r = (r + 1) % 3;
+
+	if (r == 1) animID = 2; // PLEADING
+	if (r == 2) animID = 3; // FORCEFUL
+
+	speaker->playAnimation(_module.getGame().getFunctions().animIDToName(animID), true, 5.0f);
 }
 
 } // End of namespace KotORBase

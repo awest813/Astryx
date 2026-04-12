@@ -179,8 +179,16 @@ void SaveLoadMenu::tryLoadGame(const Common::UString &dir) {
 	}
 }
 
-void SaveLoadMenu::trySaveGame(const Common::UString &UNUSED(dir)) {
-
+void SaveLoadMenu::trySaveGame(const Common::UString &dir) {
+	try {
+		// Use the module's actual name or a generic "Saved Game"
+		Common::UString saveName = "Saved Game";
+		_module->saveGame(dir, saveName);
+		
+		_returnCode = 1; // Return to the previous menu
+	} catch (Common::Exception &e) {
+		warning("Failed to save game: %s (%s)", dir.c_str(), e.what());
+	}
 }
 
 Common::UString SaveLoadMenu::getNewSaveDirectory() const {
