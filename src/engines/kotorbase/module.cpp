@@ -622,6 +622,14 @@ void Module::playMovie(const Common::UString &resRef) {
 	debug("Playing Movie: %s", resRef.c_str());
 }
 
+void Module::cameraTransitionToTarget(const Common::UString &tag, float duration) {
+	Object *obj = _currentArea->findObjectByTag(tag);
+	if (!obj) return;
+	
+	_cameraController.setCameraTarget(obj);
+	// In a real implementation, we would blend the position here
+}
+
 void Module::leaveObject(Object *UNUSED(object)) {
 	_ingame->setHoveredObject(0);
 }

@@ -174,6 +174,9 @@ public:
 	/** Play a movie. */
 	void playMovie(const Common::UString &resRef);
 
+	/** Transition the camera to a target object by tag. */
+	void cameraTransitionToTarget(const Common::UString &tag, float duration);
+
 	// Party management
 
 	/** Get the party leader. */

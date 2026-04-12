@@ -15,6 +15,9 @@ void performEndarSpireOpening(KotORBase::Module &module);
 /** Orchestrate the Trask Ulgo tutorial encounter. */
 void performTraskEncounter(KotORBase::Module &module);
 
+/** Orchestrate the Sith boarding event in Sector 2. */
+void performSithBoarding(KotORBase::Module &module);
+
 } // End of namespace KotOR
 } // End of namespace Engines
 

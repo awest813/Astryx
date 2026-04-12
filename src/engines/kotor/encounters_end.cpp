@@ -36,6 +36,20 @@ void performTraskEncounter(KotORBase::Module &module) {
 	// Trask dialogue hook usually follows automatically via SignalEncounter handlers
 }
 
+void performSithBoarding(KotORBase::Module &module) {
+	debug("Orchestrating Sith Boarding Action...");
+
+	// 1. Zoom to the airlock door
+	module.cameraTransitionToTarget("wp_sector_2_airlock", 2.5f);
+
+	// 2. Timed tremors
+	module.shakeCamera(0.8f, 0.6f);
+	module.playMusicStinger("mus_vfx_impact");
+
+	// 3. Dialogue alert: "They're slicing through the door!"
+	module.playMusicStinger("mus_bat_sith");
+}
+
 } // End of namespace KotOR
 
 } // End of namespace Engines

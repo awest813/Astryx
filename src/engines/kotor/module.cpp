@@ -39,6 +39,7 @@
 #include "src/engines/kotor/gui/ingame/workbench.h"
 #include "src/engines/kotor/encounters_dan.h"
 #include "src/engines/kotor/encounters_end.h"
+#include "src/engines/kotor/encounters_tar.h"
 
 namespace Engines {
 
@@ -85,6 +86,12 @@ void Module::signalEncounter(const Common::UString &id) {
 		KotOR::performEndarSpireOpening(*this);
 	} else if (id == "end_trask") {
 		KotOR::performTraskEncounter(*this);
+	} else if (id == "end_sith_board") {
+		KotOR::performSithBoarding(*this);
+	} else if (id == "tar_ambush") {
+		KotOR::performTarisAmbush(*this);
+	} else if (id == "tar_duel_intro") {
+		KotOR::performDuelRingIntro(*this);
 	} else if (id == "dan14_mand") {
 		KotOR::performMandalorianAmbush(*this);
 	} else if (id == "dan14_kinrath") {
