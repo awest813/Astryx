@@ -50,8 +50,22 @@ enum EffectType {
 	kEffectForcePush             = 15, ///< Push the target back (and potentially knockdown).
 	kEffectForceDrain            = 16, ///< Drain life/Force from target.
 	kEffectForceShield           = 17, ///< Shield against damage.
-	kEffectForcePointsHeal       = 18, ///< Restore Force points.
-	kEffectForcePointsDamage     = 19  ///< Drain/damage Force points.
+	kEffectForcePointsHeal          = 18, ///< Restore Force points.
+	kEffectForcePointsDamage        = 19, ///< Drain/damage Force points.
+
+	// Debuff / decrease effects (Mirror images of the increase variants above)
+	kEffectSavingThrowIncrease      = 20, ///< Bonus to a saving throw.
+	kEffectDamageReduction          = 21, ///< Reduce incoming damage by a flat amount.
+	kEffectInvisibility             = 22, ///< Make the target invisible.
+	kEffectAbilityDecrease          = 23, ///< Temporarily lower an ability score.
+	kEffectAttackDecrease           = 24, ///< Penalty to attack rolls.
+	kEffectDamageDecrease           = 25, ///< Penalty to damage rolls.
+	kEffectDamageImmunityDecrease   = 26, ///< Reduce damage immunity by a percentage.
+	kEffectACDecrease               = 27, ///< Penalty to armour class.
+	kEffectMovementSpeedDecrease    = 28, ///< Reduce movement speed by a percentage.
+	kEffectSavingThrowDecrease      = 29, ///< Penalty to a saving throw.
+	kEffectSkillDecrease            = 30, ///< Penalty to a skill rank.
+	kEffectForceResistanceDecrease  = 31  ///< Reduce Force resistance.
 };
 
 class Effect : public Aurora::NWScript::EngineType {

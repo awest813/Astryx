@@ -263,6 +263,8 @@ public:
 	Object *getAttemptedAttackTarget() const;
 	Object *getLastHostileActor() const;
 	int getLastCombatFeatUsed() const;
+	int getLastForcePowerUsed() const;
+	void setLastForcePowerUsed(int spellID);
 	int getQueuedCombatFeat() const;
 
 	// Perception results (set by handleObjectSeen / handleObjectVanished).
@@ -370,7 +372,8 @@ private:
 	int _attackRound { 0 };
 	Object *_attemptedAttackTarget { nullptr };
 	Object *_lastHostileActor { nullptr };
-	int _lastCombatFeatUsed { -1 };
+	int _lastCombatFeatUsed  { -1 };
+	int _lastForcePowerUsed  { -1 }; ///< ID of the last force power used (set by spell actions).
 	int _queuedCombatFeat { -1 };
 	int _attackModifier { 0 };
 	int _armorClassModifier { 0 };

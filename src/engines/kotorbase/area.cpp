@@ -174,6 +174,14 @@ void Area::setMusicNightTrack(uint32_t track) {
 	_musicNight      = TwoDAReg.get2DA("ambientmusic").getRow(track).getString("Resource");
 }
 
+void Area::setAmbientSoundDayTrack(uint32_t track) {
+	_ambientDay = TwoDAReg.get2DA("ambientsound").getRow(track).getString("Resource");
+}
+
+void Area::setAmbientSoundNightTrack(uint32_t track) {
+	_ambientNight = TwoDAReg.get2DA("ambientsound").getRow(track).getString("Resource");
+}
+
 void Area::setMusicBattleTrack(uint32_t track) {
 	_musicBattleTrack = track;
 

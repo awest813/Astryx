@@ -1236,5 +1236,115 @@ void Functions::getEffectDurationType(Aurora::NWScript::FunctionContext &ctx) { 
 void Functions::getEffectSubType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
 void Functions::getEffectCreator(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 
+
+// ---------------------------------------------------------------------------
+// Faction iteration: GetFirstFactionMember / GetNextFactionMember
+// ---------------------------------------------------------------------------
+
+void Functions::getFirstFactionMember(Aurora::NWScript::FunctionContext &ctx) {
+	// GetFirstFactionMember(object oMemberOfFaction, int bPCOnly=TRUE)
+	// Resets the faction iterator; the next call to GetNextFactionMember
+	// will return the first member.  Returns void (KOTOR I signature).
+	_factionIterRef     = nullptr;
+	_factionIterObjects.clear();
+	_factionIterIndex   = 0;
+}
+
+void Functions::getNextFactionMember(Aurora::NWScript::FunctionContext &ctx) {
+	// GetNextFactionMember(object oMemberOfFaction, int bPCOnly=TRUE) -> object
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	Aurora::NWScript::Object *ref = getParamObject(ctx, 0);
+	int bPCOnly = ctx.getParams()[1].getInt();
+
+	// Rebuild the list when the reference object changes (or on first call).
+	if (ref != _factionIterRef) {
+		_factionIterRef = ref;
+		_factionIterObjects.clear();
+		_factionIterIndex = 0;
+
+		Object *refObj = ObjectContainer::toObject(ref);
+		if (!refObj)
+			return;
+
+		int faction = static_cast<int>(refObj->getFaction());
+
+		// Walk all creatures in the area and collect faction members.
+		std::unique_ptr<Aurora::NWScript::ObjectSearch> search(
+			_game->getModule().findObjectsByType(kObjectTypeCreature));
+
+		Aurora::NWScript::Object *raw = nullptr;
+		while ((raw = search->next())) {
+			Object *obj = ObjectContainer::toObject(raw);
+			if (!obj)
+				continue;
+			if (static_cast<int>(obj->getFaction()) != faction)
+				continue;
+			if (bPCOnly && !ObjectContainer::toPC(raw))
+				continue;
+			_factionIterObjects.push_back(obj);
+		}
+	}
+
+	if (_factionIterIndex >= _factionIterObjects.size())
+		return;
+
+	ctx.getReturn() = _factionIterObjects[_factionIterIndex++];
+}
+
+// ---------------------------------------------------------------------------
+// FaceObjectAwayFromObject (ID 553)
+// ---------------------------------------------------------------------------
+
+void Functions::faceObjectAwayFromObject(Aurora::NWScript::FunctionContext &ctx) {
+	// FaceObjectAwayFromObject(object oFacer, object oObjectToFaceAwayFrom)
+	Object *facer  = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!facer || !source)
+		return;
+
+	float fx, fy, fz, sx, sy, sz;
+	facer ->getPosition(fx, fy, fz);
+	source->getPosition(sx, sy, sz);
+
+	// Angle pointing AWAY from source (opposite of toward source).
+	float angle = atan2f(fy - sy, fx - sx) * (180.0f / M_PI);
+	facer->setOrientation(0.0f, 0.0f, 1.0f, angle);
+}
+
+// ---------------------------------------------------------------------------
+// Inventory disturb event queries (IDs 352, 353)
+// ---------------------------------------------------------------------------
+
+void Functions::getInventoryDisturbType(Aurora::NWScript::FunctionContext &ctx) {
+	// GetInventoryDisturbType() -> int
+	// Returns the disturb type (0=Added, 1=Removed, 2=Stolen) for the current
+	// OnDisturbed event.  We store this in session state.
+	ctx.getReturn() = _lastInventoryDisturbType;
+}
+
+void Functions::getInventoryDisturbItem(Aurora::NWScript::FunctionContext &ctx) {
+	// GetInventoryDisturbItem() -> object
+	// Returns the item that triggered the current OnDisturbed event.
+	ctx.getReturn() = _lastInventoryDisturbItem;
+}
+
+// ---------------------------------------------------------------------------
+// Item activation event queries (IDs 439, 440)
+// ---------------------------------------------------------------------------
+
+void Functions::getItemActivated(Aurora::NWScript::FunctionContext &ctx) {
+	// GetItemActivated() -> object
+	// Returns the item that was activated in the current OnActivateItem event.
+	ctx.getReturn() = _lastItemActivated;
+}
+
+void Functions::getItemActivator(Aurora::NWScript::FunctionContext &ctx) {
+	// GetItemActivator() -> object
+	// Returns the creature that activated the item in the current
+	// OnActivateItem event.
+	ctx.getReturn() = _lastItemActivator;
+}
+
 } // End of namespace KotORBase
 } // End of namespace Engines

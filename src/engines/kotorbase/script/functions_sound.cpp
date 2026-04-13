@@ -112,6 +112,35 @@ void Functions::playSound(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::soundObjectFadeAndStop(Aurora::NWScript::FunctionContext &ctx) {}
 
+
+void Functions::ambientSoundPlay(Aurora::NWScript::FunctionContext &ctx) {
+	// AmbientSoundPlay(object oArea)
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->playAmbientSound();
+}
+
+void Functions::ambientSoundStop(Aurora::NWScript::FunctionContext &ctx) {
+	// AmbientSoundStop(object oArea)
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->stopAmbientSound();
+}
+
+void Functions::ambientSoundChangeDay(Aurora::NWScript::FunctionContext &ctx) {
+	// AmbientSoundChangeDay(object oArea, int nTrack)
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->setAmbientSoundDayTrack(static_cast<uint32_t>(ctx.getParams()[1].getInt()));
+}
+
+void Functions::ambientSoundChangeNight(Aurora::NWScript::FunctionContext &ctx) {
+	// AmbientSoundChangeNight(object oArea, int nTrack)
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->setAmbientSoundNightTrack(static_cast<uint32_t>(ctx.getParams()[1].getInt()));
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

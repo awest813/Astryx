@@ -1105,5 +1105,99 @@ void Functions::effectConfused(Aurora::NWScript::FunctionContext &ctx) { ctx.get
 void Functions::effectFrightened(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kEffectDazed, 0); }
 void Functions::effectChoke(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kEffectStun, 0); }
 
+
+// ---------------------------------------------------------------------------
+// Effect constructors -- saving throw / damage reduction / invisibility
+// ---------------------------------------------------------------------------
+
+void Functions::effectSavingThrowIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectSavingThrowIncrease(int nSavingThrow, int nValue, int nSavingThrowType=0)
+	int savingThrow = ctx.getParams()[0].getInt();
+	int value       = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kEffectSavingThrowIncrease, value, savingThrow);
+}
+
+void Functions::effectDamageReduction(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectDamageReduction(int nEnhancement, int nDmgReductionType, int nAmount)
+	int amount = ctx.getParams()[2].getInt();
+	ctx.getReturn() = new Effect(kEffectDamageReduction, amount);
+}
+
+void Functions::effectInvisibility(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectInvisibility(int nInvisibilityType)
+	ctx.getReturn() = new Effect(kEffectInvisibility, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectSeeInvisible(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectSeeInvisible() -- grants ability to see invisible creatures.
+	ctx.getReturn() = new Effect(kEffectInvisibility, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Effect constructors -- attribute / combat decreasers
+// ---------------------------------------------------------------------------
+
+void Functions::effectAbilityDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectAbilityDecrease(int nAbility, int nModifyBy)
+	int ability  = ctx.getParams()[0].getInt();
+	int modifyBy = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kEffectAbilityDecrease, modifyBy, ability);
+}
+
+void Functions::effectAttackDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectAttackDecrease(int nPenalty, int nModifierType=0)
+	ctx.getReturn() = new Effect(kEffectAttackDecrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectDamageDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectDamageDecrease(int nPenalty, int nDamageType=8)
+	ctx.getReturn() = new Effect(kEffectDamageDecrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectDamageImmunityDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectDamageImmunityDecrease(int nDamageType, int nPercentImmunity)
+	ctx.getReturn() = new Effect(kEffectDamageImmunityDecrease, ctx.getParams()[1].getInt());
+}
+
+void Functions::effectACDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectACDecrease(int nValue, int nModifyType=0, int nDamageType=8199)
+	ctx.getReturn() = new Effect(kEffectACDecrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectMovementSpeedDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectMovementSpeedDecrease(int nPercentChange)
+	ctx.getReturn() = new Effect(kEffectMovementSpeedDecrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectSavingThrowDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectSavingThrowDecrease(int nSave, int nValue, int nSaveType=0)
+	int savingThrow = ctx.getParams()[0].getInt();
+	int value       = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kEffectSavingThrowDecrease, value, savingThrow);
+}
+
+void Functions::effectSkillDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectSkillDecrease(int nSkill, int nValue)
+	int skill  = ctx.getParams()[0].getInt();
+	int amount = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kEffectSkillDecrease, amount, skill);
+}
+
+void Functions::effectForceResistanceDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectForceResistanceDecrease(int nValue)
+	ctx.getReturn() = new Effect(kEffectForceResistanceDecrease, ctx.getParams()[0].getInt());
+}
+
+// ---------------------------------------------------------------------------
+// Force power tracking
+// ---------------------------------------------------------------------------
+
+void Functions::getLastForcePowerUsed(Aurora::NWScript::FunctionContext &ctx) {
+	// GetLastForcePowerUsed() -> int
+	// Returns the ID of the last force power used by the calling creature.
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = caller ? caller->getLastForcePowerUsed() : -1;
+}
+
 } // End of namespace KotORBase
 } // End of namespace Engines

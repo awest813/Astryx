@@ -792,7 +792,9 @@ namespace Engines {
 		void Creature::setAttemptedAttackTarget(Object *target) {
 			_attemptedAttackTarget = target;
 		}
-		void Creature::setLastCombatFeatUsed(
+		int Creature::getLastForcePowerUsed() const { return _lastForcePowerUsed; }
+void Creature::setLastForcePowerUsed(int spellID) { _lastForcePowerUsed = spellID; }
+void Creature::setLastCombatFeatUsed(
 		int featID) {
 			_lastCombatFeatUsed = featID;
 		}

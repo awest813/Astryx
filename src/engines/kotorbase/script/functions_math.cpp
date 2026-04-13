@@ -167,6 +167,22 @@ void Functions::yardsToMeters(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = ctx.getParams()[0].getFloat() * 0.9144f;
 }
 
+void Functions::angleToVector(Aurora::NWScript::FunctionContext &ctx) {
+	// AngleToVector(float fAngle) -> vector
+	// Converts an angle in degrees (measured counterclockwise from east / positive-X)
+	// to the corresponding unit direction vector on the XY plane.
+	float rad = Common::deg2rad(ctx.getParams()[0].getFloat());
+	ctx.getReturn().setVector(cosf(rad), sinf(rad), 0.0f);
+}
+
+void Functions::vectorToAngle(Aurora::NWScript::FunctionContext &ctx) {
+	// VectorToAngle(vector vVector) -> float
+	// Returns the angle in degrees of the given vector from the positive-X axis.
+	float x, y, z;
+	ctx.getParams()[0].getVector(x, y, z);
+	ctx.getReturn() = Common::rad2deg(atan2f(y, x));
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines
