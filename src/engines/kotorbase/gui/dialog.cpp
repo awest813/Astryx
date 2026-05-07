@@ -214,6 +214,8 @@ void DialogGUI::refresh() {
 	else
 		_curSpeaker = curEntry->speaker;
 
+	_module.setCinematicCamera(curEntry->cameraID, curEntry->cameraAngle, curEntry->cameraModel);
+
 	if (!_curSpeaker.empty()) {
 		Object *speakerObj = _module.getCurrentArea()->getObjectByTag(_curSpeaker);
 		if (speakerObj) {
@@ -224,7 +226,6 @@ void DialogGUI::refresh() {
 	} else {
 		_module.setCinematicFocus(nullptr);
 	}
-	_module.setCinematicCamera(curEntry->cameraID, curEntry->cameraAngle, curEntry->cameraModel);
 
 	lblMessage->setText(text);
 	_replyIds.clear();

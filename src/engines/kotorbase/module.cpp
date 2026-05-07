@@ -79,6 +79,16 @@ namespace Engines {
 
 namespace KotORBase {
 
+static std::map<int, Common::UString> sCustomDialogTokens;
+
+const std::map<int, Common::UString> &Module::getCustomDialogTokens() {
+	return sCustomDialogTokens;
+}
+
+void Module::setCustomDialogToken(int id, const Common::UString &value) {
+	sCustomDialogTokens[id] = value;
+}
+
 bool Module::Action::operator<(const Action &s) const {
 	return timestamp < s.timestamp;
 }
@@ -787,6 +797,8 @@ void Module::handleEvents() {
 			_dialog->hide();
 			_ingame->show();
 			_inDialog = false;
+			resetToOrbit();
+			updateFrameTimestamp();
 		}
 	} else {
 		_area->processEventQueue();

@@ -92,6 +92,10 @@ void VideoPlayer::load(const std::string &name) {
 void VideoPlayer::play() {
 	RequestMan.sync();
 
+	Events::Event event;
+	while (EventMan.pollEvent(event)) {
+	}
+
 	_video->start();
 
 	BOOST_SCOPE_EXIT(this) {
@@ -104,13 +108,17 @@ void VideoPlayer::play() {
 	debugC(Common::kDebugVideo, 1, "Starting video (%ux%u)", width, height);
 
 	bool brk = false;
+	const uint32_t inputGuardUntil = EventMan.getTimestamp() + 3000;
 
-	Events::Event event;
 	while (!EventMan.quitRequested()) {
 
 		while (EventMan.pollEvent(event)) {
-			if ((event.type == Events::kEventKeyDown && event.key.keysym.sym == SDLK_ESCAPE) ||
-			    (event.type == Events::kEventMouseUp))
+			const bool guardInput = EventMan.getTimestamp() < inputGuardUntil;
+			if (guardInput)
+				continue;
+
+			if ((event.type == Events::kEventKeyDown) &&
+			    (event.key.keysym.sym == SDLK_ESCAPE))
 				brk = true;
 		}
 
@@ -120,8 +128,10 @@ void VideoPlayer::play() {
 		EventMan.delay(10);
 	}
 
-	if (EventMan.quitRequested() || brk)
-		debugC(Common::kDebugVideo, 1, "Aborting video");
+	if (EventMan.quitRequested())
+		debugC(Common::kDebugVideo, 1, "Aborting video (quit requested)");
+	else if (brk)
+		debugC(Common::kDebugVideo, 1, "Aborting video (skip requested)");
 	else
 		debugC(Common::kDebugVideo, 1, "Ending video");
 }

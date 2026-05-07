@@ -31,6 +31,7 @@
 #include "src/common/strutil.h"
 #include "src/common/error.h"
 #include "src/common/readstream.h"
+#include "src/common/debug.h"
 
 #include "src/aurora/gff3file.h"
 #include "src/aurora/dlgfile.h"
@@ -42,6 +43,33 @@
 static const uint32_t kDLGID = MKTAG('D', 'L', 'G', ' ');
 
 namespace Aurora {
+
+static Common::UString getOptionalString(const GFF3Struct &gff, const Common::UString &field) {
+	try {
+		return gff.getString(field);
+	} catch (...) {
+		debugC(Common::kDebugEngineLogic, 2, "DLGFile: Ignoring non-string optional field \"%s\"", field.c_str());
+	}
+
+	return "";
+}
+
+static double getOptionalDouble(const GFF3Struct &gff, const Common::UString &field, double def = 0.0) {
+	try {
+		return gff.getDouble(field, def);
+	} catch (...) {
+		double value = def;
+		try {
+			Common::parseString(gff.getString(field), value);
+			return value;
+		} catch (...) {
+		}
+
+		debugC(Common::kDebugEngineLogic, 2, "DLGFile: Ignoring non-numeric optional field \"%s\"", field.c_str());
+	}
+
+	return def;
+}
 
 DLGFile::DLGFile(Common::SeekableReadStream *dlg, NWScript::Object *owner, bool repairNWNPremium) :
 	_owner(owner), _ended(true) {
@@ -180,15 +208,15 @@ void DLGFile::load(const GFF3Struct &dlg) {
 	_delayEntry = dlg.getUint("DelayEntry", 0);
 	_delayReply = dlg.getUint("DelayReply", 0);
 
-	_convAbort.name = dlg.getString("EndConverAbort");
+	_convAbort.name = getOptionalString(dlg, "EndConverAbort");
 	_convAbort.negate = false;
-	_convEnd.name   = dlg.getString("EndConversation");
+	_convEnd.name   = getOptionalString(dlg, "EndConversation");
 	_convEnd.negate = false;
 
 	_noZoomIn = !dlg.getBool("PreventZoomIn", true);
 
 	_skippable = dlg.getBool("Skippable", true);
-	_stuntList = dlg.getString("StuntList");
+	_stuntList = getOptionalString(dlg, "StuntList");
 
 	// NPC lines ("entries")
 
@@ -235,8 +263,8 @@ void DLGFile::readLinks(const GFF3List &list, std::vector<Link> &links) {
 }
 
 void DLGFile::readEntry(const GFF3Struct &gff, Entry &entry) {
-	entry.script1.name = gff.getString("Script");
-	entry.script2.name = gff.getString("Script2");
+	entry.script1.name = getOptionalString(gff, "Script");
+	entry.script2.name = getOptionalString(gff, "Script2");
 
 	entry.script1.parameters.resize(5);
 	entry.script2.parameters.resize(5);
@@ -245,25 +273,25 @@ void DLGFile::readEntry(const GFF3Struct &gff, Entry &entry) {
 		entry.script2.parameters[i] = gff.getSint("ActionParam" + Common::composeString(i + 1) + "b");
 	}
 
-	entry.script1.parameterString = gff.getString("ActionParamStrA");
-	entry.script2.parameterString = gff.getString("ActionParamStrB");
+	entry.script1.parameterString = getOptionalString(gff, "ActionParamStrA");
+	entry.script2.parameterString = getOptionalString(gff, "ActionParamStrB");
 
-	entry.line.speaker = gff.getString("Speaker");
+	entry.line.speaker = getOptionalString(gff, "Speaker");
 
 	gff.getLocString("Text", entry.line.text);
 
-	entry.line.sound = gff.getString("Sound");
+	entry.line.sound = getOptionalString(gff, "Sound");
 
-	entry.line.voice = gff.getString("VO_ResRef");
+	entry.line.voice = getOptionalString(gff, "VO_ResRef");
 
 	entry.line.animation = gff.getUint("Animation", 0);
 
-	entry.line.quest      = gff.getString("Quest");
+	entry.line.quest      = getOptionalString(gff, "Quest");
 	entry.line.questEntry = gff.getUint("QuestEntry", 0xFFFFFFFF);
 
-	entry.line.cameraModel = gff.getString("CameraModel");
+	entry.line.cameraModel = getOptionalString(gff, "CameraModel");
 	entry.line.cameraID    = gff.getUint("CameraID", 0);
-	entry.line.cameraAngle = static_cast<float>(gff.getDouble("CameraAngle", 0.0));
+	entry.line.cameraAngle = static_cast<float>(getOptionalDouble(gff, "CameraAngle"));
 	entry.line.camVidEffect= gff.getUint("CamVidEffect", 0);
 	entry.line.fadeType    = gff.getUint("FadeType", 0);
 
@@ -291,8 +319,8 @@ void DLGFile::readEntry(const GFF3Struct &gff, Entry &entry) {
 
 void DLGFile::readLink(const GFF3Struct &gff, Link &link) {
 	link.index  = gff.getUint("Index", 0xFFFFFFFF);
-	link.active1.name = gff.getString("Active");
-	link.active2.name = gff.getString("Active2");
+	link.active1.name = getOptionalString(gff, "Active");
+	link.active2.name = getOptionalString(gff, "Active2");
 
 	link.active1.parameters.resize(5);
 	link.active2.parameters.resize(5);
@@ -301,8 +329,8 @@ void DLGFile::readLink(const GFF3Struct &gff, Link &link) {
 		link.active2.parameters[i] = gff.getSint("Param" + Common::composeString(i + 1) + "b");
 	}
 
-	link.active1.parameterString = gff.getString("ParamStrA");
-	link.active2.parameterString = gff.getString("ParamStrB");
+	link.active1.parameterString = getOptionalString(gff, "ParamStrA");
+	link.active2.parameterString = getOptionalString(gff, "ParamStrB");
 
 	link.active1.negate = gff.getBool("Not", false);
 	link.active2.negate = gff.getBool("Not2", false);

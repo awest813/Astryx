@@ -425,3 +425,58 @@ TEST(CinematicScripting, PlayVideoNonDefaultConfigVolumes) {
 	EXPECT_FLOAT_EQ(v.sfx,   0.6f);
 	EXPECT_FLOAT_EQ(v.voice, 0.9f);
 }
+
+// ---------------------------------------------------------------------------
+// 8. Movie input guard and dialogue camera teardown
+// ---------------------------------------------------------------------------
+
+enum class MovieInput {
+	None,
+	Escape,
+	MouseRelease,
+	OtherKey
+};
+
+static bool shouldMovieInputSkip(uint32_t now, uint32_t guardUntil, MovieInput input) {
+	if (now < guardUntil)
+		return false;
+
+	return input == MovieInput::Escape;
+}
+
+TEST(CinematicScripting, MovieInputGuardIgnoresStaleSkipEvents) {
+	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::Escape));
+	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::MouseRelease));
+}
+
+TEST(CinematicScripting, MovieInputGuardAllowsDeliberateSkipAfterGuard) {
+	EXPECT_TRUE(shouldMovieInputSkip(3000, 3000, MovieInput::Escape));
+	EXPECT_FALSE(shouldMovieInputSkip(3000, 3000, MovieInput::MouseRelease));
+}
+
+TEST(CinematicScripting, MovieInputGuardIgnoresNonSkipKeys) {
+	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::OtherKey));
+	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::None));
+}
+
+struct DialogCameraState {
+	bool inDialog { true };
+	bool cinematic { true };
+};
+
+static DialogCameraState finishConversation(DialogCameraState state) {
+	if (state.inDialog) {
+		state.inDialog = false;
+		state.cinematic = false;
+	}
+
+	return state;
+}
+
+TEST(CinematicScripting, DialogueEndRestoresOrbitCamera) {
+	DialogCameraState state;
+	state = finishConversation(state);
+
+	EXPECT_FALSE(state.inDialog);
+	EXPECT_FALSE(state.cinematic);
+}

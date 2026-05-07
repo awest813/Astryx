@@ -222,11 +222,6 @@ void CameraController::processMovement(float frameTime) {
 				_target.z = z1 + (z2 - z1) * smooth_t;
 			}
 			_dirty = true;
-		} else if (_cinematicFocus) {
-			float fx, fy, fz;
-			_cinematicFocus->getPosition(fx, fy, fz);
-			_target = glm::vec3(fx, fy, fz + 1.2f);
-			_dirty = true;
 		}
 
 		CameraMan.setPosition(_target.x, _target.y, _target.z);
