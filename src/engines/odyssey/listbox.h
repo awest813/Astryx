@@ -66,6 +66,12 @@ public:
 	 */
 	void setHideScrollbar(bool hideScrollbar);
 
+	// Hover
+	bool isHovered() const;
+
+	void enter() override;
+	void leave() override;
+
 	// Items
 
 	/** Get index of the selected item. */
@@ -77,11 +83,15 @@ public:
 	const Common::UString &getItem(int index) const;
 	/** Remove all items from the list box. */
 	void removeAllItems();
+	/** Check if the list box is empty. */
+	bool isEmpty() const;
 
 	/** Select a list box item by the widget tag. */
 	void selectItemByWidgetTag(const Common::UString &tag);
 	/** Select a list box item by index. */
 	void selectItemByIndex(int index);
+	/** Select an item and refresh. */
+	void selectItem(int index);
 	/** Select the next list box item. */
 	void selectNextItem();
 	/** Select the previous list box item. */
@@ -135,6 +145,7 @@ private:
 	bool _itemSelectionEnabled;
 	bool _adjustHeight;
 	bool _hideScrollbar;
+	bool _hovered;
 	int _selectedIndex;
 	int _startIndex;
 	int _numVisibleItems;

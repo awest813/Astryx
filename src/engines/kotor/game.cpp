@@ -74,10 +74,6 @@ KotORBase::Functions &Game::getFunctions() {
 	return *_functions;
 }
 
-void Game::saveGame(const Common::UString &slot, const Common::UString &name) {
-	_module->saveGame(slot, name);
-}
-
 void Game::run() {
 	_module = std::make_unique<Module>(*this, *_console);
 
@@ -178,7 +174,13 @@ void Game::showLevelUpGUI() {
 }
 
 void Game::openStoreGUI(const Common::UString &tag) {
-	KotORBase::Object *obj = _module->findObject(tag, KotORBase::kObjectTypeStore);
+	KotORBase::Area *area = _module->getCurrentArea();
+	if (!area) {
+		warning("Game::openStoreGUI(%s): Current area is null", tag.c_str());
+		return;
+	}
+
+	KotORBase::Object *obj = area->getObjectByTag(tag);
 	KotORBase::Store *store = KotORBase::ObjectContainer::toStore(obj);
 
 	if (!store) {

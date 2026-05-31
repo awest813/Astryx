@@ -32,12 +32,15 @@ namespace Engines {
 
 namespace KotORBase {
 
+class Item;
+class Creature;
+
 class Store : public Object {
 public:
 	Store();
 	~Store();
 
-	ObjectType getType() const override { return kObjectTypeStore; }
+
 
 	Inventory &getInventory();
 	const Inventory &getInventory() const;

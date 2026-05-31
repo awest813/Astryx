@@ -1,381 +1,381 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\windowman.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\windowman.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\graphics.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\fpscounter.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\fpscounter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\icon.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\icon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\cursor.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\cursor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\queueman.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\queueman.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\queueable.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\queueable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\glcontainer.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\glcontainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\texture.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\font.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\font.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\camera.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\renderable.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\renderable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\yuv_to_rgb.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\yuv_to_rgb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\ttf.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\ttf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\indexbuffer.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\indexbuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\vertexbuffer.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\vertexbuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\imguiwrapper.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\imguiwrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\imguidemo.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\imguidemo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\texture.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\texturehandle.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\texturehandle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\textureman.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\textureman.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\pltfile.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\pltfile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\cursor.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\cursor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\cursorman.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\cursorman.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\texturefont.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\texturefont.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\abcfont.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\abcfont.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\ttffont.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\ttffont.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\nftrfont.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\nftrfont.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\fonthandle.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\fonthandle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\fontman.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\fontman.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\highlightable.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\highlightable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\text.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\text.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\highlightabletext.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\highlightabletext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\fps.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\fps.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\cube.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\cube.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\highlightableguiquad.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\highlightableguiquad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\guiquad.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\guiquad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\geometryobject.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\geometryobject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\modelnode.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\modelnode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\model.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\animnode.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\animnode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\animation.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\animation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\fadequad.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\fadequad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\borderquad.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\borderquad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\subscenequad.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\subscenequad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\model_nwn.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\model_nwn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\model_nwn2.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\model_nwn2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\model_kotor.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\model_kotor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\model_jade.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\model_jade.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\model_witcher.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\model_witcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\model_sonic.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\model_sonic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\model_dragonage.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\model_dragonage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\kotordialogframe.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\kotordialogframe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\animationthread.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\animationthread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\walkmesh.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\walkmesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\animationchannel.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\animationchannel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\line.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\line.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\graphics\aurora\skeletalanimation.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\graphics\aurora\skeletalanimation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\types.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\windowman.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\windowman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\graphics.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\fpscounter.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\fpscounter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\icon.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\icon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\cursor.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\cursor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\queueman.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\queueman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\queueable.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\queueable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\glcontainer.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\glcontainer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\texture.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\font.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\camera.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\renderable.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\renderable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\resolution.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\resolution.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\object.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\guielement.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\guielement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\yuv_to_rgb.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\yuv_to_rgb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\ttf.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\ttf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\indexbuffer.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\indexbuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\vertexbuffer.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\vertexbuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\imguiwrapper.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\imguiwrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\imguidemo.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\imguidemo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\types.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\texture.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\texturehandle.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\texturehandle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\textureman.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\textureman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\pltfile.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\pltfile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\cursor.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\cursor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\cursorman.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\cursorman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\texturefont.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\texturefont.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\abcfont.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\abcfont.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\ttffont.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\ttffont.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\nftrfont.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\nftrfont.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\fonthandle.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\fonthandle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\fontman.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\fontman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\highlightable.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\highlightable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\text.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\text.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\highlightabletext.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\highlightabletext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\fps.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\fps.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\cube.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\cube.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\guiquad.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\guiquad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\highlightableguiquad.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\highlightableguiquad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\geometryobject.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\geometryobject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\modelnode.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\modelnode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\model.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\animnode.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\animnode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\animation.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\animation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\fadequad.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\fadequad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\borderquad.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\borderquad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\subscenequad.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\subscenequad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\model_nwn.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\model_nwn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\model_nwn2.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\model_nwn2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\model_kotor.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\model_kotor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\model_jade.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\model_jade.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\model_witcher.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\model_witcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\model_sonic.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\model_sonic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\model_dragonage.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\model_dragonage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\kotordialogframe.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\kotordialogframe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\animationthread.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\animationthread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\walkmesh.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\walkmesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\animationchannel.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\animationchannel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\line.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\line.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\graphics\aurora\skeletalanimation.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\graphics\aurora\skeletalanimation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Games\Astryx\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\allen\Astryx\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{F21E34AB-2757-3B03-8953-08F3C23511D9}</UniqueIdentifier>
+      <UniqueIdentifier>{6409C7E2-6AC3-3B49-91EB-5636E827DAC1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{78D6A0A6-833A-3175-A49A-EFD0CDC7772D}</UniqueIdentifier>
+      <UniqueIdentifier>{5D0A56F4-6190-3F79-A81F-E813A7735C78}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -445,9 +445,9 @@ void HUD::update(float dt) {
 
 		// Smooth fade-out in the last 1 second
 		if (_journalNotificationTime < 1.0f)
-			_journalNotification->setAlpha(_journalNotificationTime);
+			_journalNotification->setTextColor(0.0f, 0.9f, 1.0f, _journalNotificationTime);
 		else
-			_journalNotification->setAlpha(1.0f);
+			_journalNotification->setTextColor(0.0f, 0.9f, 1.0f, 1.0f);
 
 		if (_journalNotificationTime <= 0.0f)
 			_journalNotification->hide();

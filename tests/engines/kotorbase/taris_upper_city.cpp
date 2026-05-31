@@ -172,44 +172,44 @@ GTEST_TEST(KotORBaseReputation, pairsAreIndependent) {
 // ---------------------------------------------------------------------------
 
 using Engines::KotORBase::Effect;
-using Engines::KotORBase::kEffectACIncrease;
-using Engines::KotORBase::kEffectAttackIncrease;
-using Engines::KotORBase::kEffectSkillIncrease;
-using Engines::KotORBase::kEffectTemporaryHitpoints;
+using Engines::KotORBase::kKotOREffectACIncrease;
+using Engines::KotORBase::kKotOREffectAttackIncrease;
+using Engines::KotORBase::kKotOREffectSkillIncrease;
+using Engines::KotORBase::kKotOREffectTemporaryHitpoints;
 
 GTEST_TEST(KotORBaseEffectM3, effectACIncreaseTypeAndAmount) {
-	Effect e(kEffectACIncrease, 4);
-	EXPECT_EQ(e.getType(), kEffectACIncrease);
+	Effect e(kKotOREffectACIncrease, 4);
+	EXPECT_EQ(e.getType(), kKotOREffectACIncrease);
 	EXPECT_EQ(e.getAmount(), 4);
 }
 
 GTEST_TEST(KotORBaseEffectM3, effectAttackIncreaseTypeAndAmount) {
-	Effect e(kEffectAttackIncrease, 2);
-	EXPECT_EQ(e.getType(), kEffectAttackIncrease);
+	Effect e(kKotOREffectAttackIncrease, 2);
+	EXPECT_EQ(e.getType(), kKotOREffectAttackIncrease);
 	EXPECT_EQ(e.getAmount(), 2);
 }
 
 GTEST_TEST(KotORBaseEffectM3, effectSkillIncreaseTypeAmountAndSkillId) {
 	// EffectSkillIncrease: amount=3, damageType used as skillId=5
-	Effect e(kEffectSkillIncrease, 3, 5);
-	EXPECT_EQ(e.getType(), kEffectSkillIncrease);
+	Effect e(kKotOREffectSkillIncrease, 3, 5);
+	EXPECT_EQ(e.getType(), kKotOREffectSkillIncrease);
 	EXPECT_EQ(e.getAmount(), 3);
 	EXPECT_EQ(e.getDamageType(), 5);
 }
 
 GTEST_TEST(KotORBaseEffectM3, effectTemporaryHitpointsTypeAndAmount) {
-	Effect e(kEffectTemporaryHitpoints, 20);
-	EXPECT_EQ(e.getType(), kEffectTemporaryHitpoints);
+	Effect e(kKotOREffectTemporaryHitpoints, 20);
+	EXPECT_EQ(e.getType(), kKotOREffectTemporaryHitpoints);
 	EXPECT_EQ(e.getAmount(), 20);
 }
 
 GTEST_TEST(KotORBaseEffectM3, cloneIsIndependentForNewTypes) {
-	Effect original(kEffectACIncrease, 6);
+	Effect original(kKotOREffectACIncrease, 6);
 	Aurora::NWScript::EngineType *copy = original.clone();
 	Effect *cloned = dynamic_cast<Effect *>(copy);
 
 	ASSERT_NE(cloned, nullptr);
-	EXPECT_EQ(cloned->getType(), kEffectACIncrease);
+	EXPECT_EQ(cloned->getType(), kKotOREffectACIncrease);
 	EXPECT_EQ(cloned->getAmount(), 6);
 	EXPECT_NE(cloned, &original);
 

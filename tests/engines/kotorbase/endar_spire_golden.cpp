@@ -46,8 +46,8 @@ using Engines::KotORBase::kAbilityConstitution;
 using Engines::KotORBase::kAbilityDexterity;
 using Engines::KotORBase::kAbilityStrength;
 using Engines::KotORBase::kActionPickUpItem;
-using Engines::KotORBase::kEffectDamage;
-using Engines::KotORBase::kEffectHeal;
+using Engines::KotORBase::kKotOREffectDamage;
+using Engines::KotORBase::kKotOREffectHeal;
 using Engines::KotORBase::kSkillSecurity;
 
 // ---------------------------------------------------------------------------
@@ -171,15 +171,15 @@ TEST(EndarSpireGoldenPath, CombatResolution) {
 	EXPECT_TRUE(rollHits(15, attackMod, sithAC));
 
 	// Apply damage via an Effect (mirrors ApplyEffectToObject path)
-	Effect dmgEffect(kEffectDamage, 5);
-	EXPECT_EQ(dmgEffect.getType(),   kEffectDamage);
+	Effect dmgEffect(kKotOREffectDamage, 5);
+	EXPECT_EQ(dmgEffect.getType(),   kKotOREffectDamage);
 	EXPECT_EQ(dmgEffect.getAmount(), 5);
 
 	sithHp -= dmgEffect.getAmount();
 	EXPECT_EQ(sithHp, 5); // Half health remaining
 
 	// Apply lethal damage — finish the trooper
-	Effect lethalEffect(kEffectDamage, 5);
+	Effect lethalEffect(kKotOREffectDamage, 5);
 	sithHp -= lethalEffect.getAmount();
 	EXPECT_EQ(sithHp, 0); // Dead
 
@@ -201,8 +201,8 @@ TEST(EndarSpireGoldenPath, ModuleExitScript) {
 	const int maxHp     = 7;
 	int       currentHp = 2;
 
-	Effect healEffect(kEffectHeal, maxHp); // Heal to full
-	EXPECT_EQ(healEffect.getType(),   kEffectHeal);
+	Effect healEffect(kKotOREffectHeal, maxHp); // Heal to full
+	EXPECT_EQ(healEffect.getType(),   kKotOREffectHeal);
 	EXPECT_EQ(healEffect.getAmount(), maxHp);
 
 	// Simulate: setCurrentHitPoints(MIN(currentHp + heal, maxHp))
@@ -253,20 +253,20 @@ TEST(EndarSpireGoldenPath, ApplyEffectDamageDeathDetection) {
 	int currentHp = 4;
 
 	// Apply exactly-lethal damage: 4 - 4 = 0  → dead (HP == 0 triggers death)
-	Effect lethalDmg(kEffectDamage, 4);
+	Effect lethalDmg(kKotOREffectDamage, 4);
 	int afterDmg = currentHp - lethalDmg.getAmount();
 	EXPECT_EQ(afterDmg, 0);
 	EXPECT_LE(afterDmg, 0); // triggers death path
 
 	// Apply 3 points of damage: 4 - 3 = 1  → alive
-	Effect nonLethalDmg(kEffectDamage, 3);
+	Effect nonLethalDmg(kKotOREffectDamage, 3);
 	int afterNonLethal = currentHp - nonLethalDmg.getAmount();
 	EXPECT_EQ(afterNonLethal, 1);
 	EXPECT_GT(afterNonLethal, 0); // does not trigger death path
 
 	// Overkill: damage equal to max HP applied to 4 remaining HP → HP goes
 	// negative, which also triggers the death path (hp <= 0).
-	Effect overkillDmg(kEffectDamage, maxHp);
+	Effect overkillDmg(kKotOREffectDamage, maxHp);
 	int afterOverkill = currentHp - overkillDmg.getAmount();
 	EXPECT_LT(afterOverkill, 0); // HP below zero still triggers death
 }

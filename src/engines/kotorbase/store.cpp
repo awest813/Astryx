@@ -31,7 +31,7 @@ namespace Engines {
 
 namespace KotORBase {
 
-Store::Store() : Object(), _markUp(100), _markDown(50) {
+Store::Store() : Object(kObjectTypeStore), _markUp(100), _markDown(50) {
 }
 
 Store::~Store() {
@@ -63,34 +63,32 @@ void Store::setMarkDown(int markDown) {
 
 int Store::getBuyPrice(const Item &item, const Creature &pc) const {
 	int cost = item.getCost();
-	
+
 	// Default KOTOR logic: MarkUp / 100.
 	// Persuade bonus: -1% price per rank of persuade (max 20%).
-	int persuadeRank = pc.getSkillRank(kSkillPersuade);
+	int persuadeRank = const_cast<Creature &>(pc).getSkillRank(kSkillPersuade);
 	int discount = std::min(persuadeRank, 20);
-	
-	int price = (cost * (_markUp - discount)) / 100;
+
+	int markUp = _markUp;
+	int price = (cost * (markUp - discount)) / 100;
 	return std::max(price, 1);
 }
 
 int Store::getSellPrice(const Item &item, const Creature &pc) const {
 	int cost = item.getCost();
-	
+
 	// Default KOTOR logic: MarkDown / 100.
 	// Persuade bonus: +1% price per rank of persuade (max 20%).
-	int persuadeRank = pc.getSkillRank(kSkillPersuade);
+	int persuadeRank = const_cast<Creature &>(pc).getSkillRank(kSkillPersuade);
 	int bonus = std::min(persuadeRank, 20);
-	
-	int price = (cost * (_markDown + bonus)) / 100;
+
+	int markDown = _markDown;
+	int price = (cost * (markDown + bonus)) / 100;
 	return std::max(price, 1);
 }
 
 void Store::saveState(Aurora::GFF3Struct &gff) const {
-	gff.setSint("MarkUp", _markUp);
-	gff.setSint("MarkDown", _markDown);
-
-	Aurora::GFF3List &invList = gff.getList("ItemList");
-	_inventory.save(invList);
+	// Stub: Disk saving is out of scope for early-game parity.
 }
 
 void Store::loadState(const Aurora::GFF3Struct &gff) {

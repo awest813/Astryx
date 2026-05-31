@@ -110,16 +110,7 @@ void Functions::executeScript(Aurora::NWScript::FunctionContext &ctx) {
 	target->runScript(script, target, ctx.getCaller());
 }
 
-void Functions::addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx) {
-	const Common::UString &plotId = ctx.getParams()[0].getString();
-	int32_t state = ctx.getParams()[1].getInt();
-	
-	int32_t current = _game->getModule().getGlobalNumber("JRNL_" + plotId);
-	if (state > current) {
-		_game->getModule().setGlobalNumber("JRNL_" + plotId, state);
-		info("QUEST UPDATED: %s [%d -> %d]", plotId.c_str(), current, state);
-	}
-}
+// addJournalQuestEntry is implemented in functions_module.cpp
 
 void Functions::removeJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &plotId = ctx.getParams()[0].getString();

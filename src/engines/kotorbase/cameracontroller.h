@@ -27,6 +27,7 @@
 
 #include "src/common/ustring.h"
 #include "src/events/types.h"
+#include "src/engines/kotorbase/types.h"
 
 namespace Engines {
 
@@ -69,6 +70,7 @@ public:
 	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
 	void setCinematicFocus(Object *target);
 	void setCameraTarget(Object *target);
+	void cameraTransitionToTarget(float blendTime);
 	void cameraMoveAlongPath(Object *start, Object *end, float duration);
 	void cameraHold(float duration);
 	void restoreGameplayCamera(float blendTime);

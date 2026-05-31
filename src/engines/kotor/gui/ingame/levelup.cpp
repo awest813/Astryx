@@ -27,6 +27,7 @@
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
 
+#include "src/engines/kotor/gui/ingame/levelup.h"
 #include "src/engines/kotor/gui/ingame/levelup_abilities.h"
 #include "src/engines/kotor/gui/ingame/levelup_skills.h"
 #include "src/engines/kotor/gui/ingame/levelup_feats.h"
@@ -125,7 +126,7 @@ void LevelUpGUI::finalizeLevelUp() {
 	_pc.setMaxForcePoints(_pc.computeMaxForcePoints());
 	_pc.setForcePoints(_pc.getMaxForcePoints());
 
-	debug("Level Up Finalized for %s. New HitDice: %d", _pc.getName().c_str(), _pc.getHitDice());
+	status("Level Up Finalized for %s. New HitDice: %d", _pc.getName().c_str(), _pc.getHitDice());
 }
 
 void LevelUpGUI::showAbilities() {

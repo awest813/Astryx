@@ -24,14 +24,14 @@ void WorkbenchMenu::show() {
 }
 
 void WorkbenchMenu::fillItemList() {
-	Odyssey::WidgetListbox *lb = getListBox("LB_ITEMS");
+	Odyssey::WidgetListBox *lb = getListBox("LB_ITEMS");
 	if (!lb) return;
 
-	lb->clear();
+	lb->removeAllItems();
 	// Populate with upgradable items from player inventory
 	// Placeholder:
-	lb->addItem("Lightsaber", "LBL_ITEM_1");
-	lb->addItem("Blaster Pistol", "LBL_ITEM_2");
+	lb->addItem("Lightsaber");
+	lb->addItem("Blaster Pistol");
 }
 
 void WorkbenchMenu::showItemUpgrades(const Common::UString &itemTag) {

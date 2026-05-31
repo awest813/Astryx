@@ -23,6 +23,7 @@
  */
 
 #include "src/engines/kotor/module.h"
+#include "src/engines/kotor/game.h"
 #include "src/engines/kotor/creature.h"
 
 #include "src/engines/kotor/gui/dialog.h"
@@ -48,7 +49,7 @@ namespace Engines {
 
 namespace KotOR {
 
-Module::Module(::Engines::Console &console) : KotORBase::Module(console) {
+Module::Module(Game &game, ::Engines::Console &console) : KotORBase::Module(game, console) {
 	_ingame = std::make_unique<IngameGUI>(*this);
 	_dialog = std::make_unique<DialogGUI>(*this);
 	_partySelection = std::make_unique<PartySelectionGUI>();
@@ -75,13 +76,13 @@ KotORBase::CharacterGenerationInfo *Module::createCharGenInfo(const KotORBase::C
 }
 
 void Module::showGalaxyMap() {
-	GalaxyMapMenu gui(*this, &_console);
-	sub(gui);
+	GalaxyMapMenu gui(*this, _console);
+	gui.run();
 }
 
 void Module::showWorkbench() {
-	WorkbenchMenu gui(*this, &_console);
-	sub(gui);
+	WorkbenchMenu gui(*this, _console);
+	gui.run();
 }
 
 void Module::signalEncounter(const Common::UString &id) {
@@ -116,16 +117,16 @@ void Module::signalEncounter(const Common::UString &id) {
 		std::vector<int> opponentDeck = {1, 2, 3, 4, 5, 6};
 		engine.startMatch(playerDeck, opponentDeck);
 
-		PazaakGUI gui(engine, &_console);
-		sub(gui);
+		PazaakGUI gui(engine, _console);
+		gui.run();
 		
 		setGlobalNumber("__pazaak_result", engine.getWinner() == 1 ? 1 : 0);
 	}
 }
 
 void Module::showJournal() {
-	MenuJournal gui(*this, &_console); // Assuming MenuJournal constructor matches
-	sub(gui);
+	MenuJournal gui(_console);
+	gui.run();
 }
 
 } // End of namespace KotOR

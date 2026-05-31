@@ -1,333 +1,411 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\kotor.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\kotor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\probes.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\probes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\console.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\modelloader.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\modelloader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\version.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\version.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\game.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\module.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\creature.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\creature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\savedgame.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\savedgame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\script\functions.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\encounters_dan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\saveload.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\encounters_end.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\dialog.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\encounters_tar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\main\main.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\encounters_ebon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\main\movies.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\script\functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\main\options.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\saveload.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\gameplay.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\dialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\mousesettings.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\main\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\keyboardconfig.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\main\movies.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\feedback.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\main\options.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\autopause.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\gameplay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\graphics.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\mousesettings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\graphicsadv.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\keyboardconfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\sound.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\feedback.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\soundadv.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\autopause.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\options\resolution.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\classselection.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\graphicsadv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\charactergeneration.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\sound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\quickorcustom.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\soundadv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\quickchar.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\resolution.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\customchar.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\classselection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenbase.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\charactergeneration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenportrait.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\quickorcustom.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenname.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\quickchar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargeninfo.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\customchar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenabilities.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenbase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenskills.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenportrait.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\ingame.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenname.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\hud.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargeninfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\container.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenabilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenskills.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_equ.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenfeats.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_inv.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\ingame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_char.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\hud.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_abi.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\container.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_msg.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_jou.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_equ.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_map.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_inv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_opt.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_char.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\minimap.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_abi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\partyselection.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_msg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\dialogs\confirm.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_jou.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\kotor\gui\loadscreen\loadscreen.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_map.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_opt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\minimap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\partyselection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup_abilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup_skills.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup_feats.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup_forcepowers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\store.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\galaxymap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\workbench.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\dialogs\confirm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\kotor\gui\loadscreen\loadscreen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\kotor.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\kotor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\probes.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\probes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\console.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\modelloader.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\modelloader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\version.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\game.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\module.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\creature.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\creature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\savedgame.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\savedgame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\script\functions.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\encounters_dan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\script\function_tables.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\encounters_end.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\saveload.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\encounters_tar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\dialog.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\encounters_ebon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\main\main.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\script\functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\main\movies.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\script\function_tables.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\main\options.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\saveload.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\gameplay.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\dialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\mousesettings.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\main\main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\keyboardconfig.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\main\movies.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\feedback.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\main\options.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\autopause.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\gameplay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\graphics.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\mousesettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\graphicsadv.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\keyboardconfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\sound.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\feedback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\soundadv.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\autopause.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\options\resolution.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\classselection.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\graphicsadv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\charactergeneration.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\quickorcustom.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\soundadv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\quickchar.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\options\resolution.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\customchar.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\classselection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenbase.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\charactergeneration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenportrait.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\quickorcustom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenname.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\quickchar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargeninfo.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\customchar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenabilities.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenbase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\chargen\chargenskills.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenportrait.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\ingame.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenname.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\hud.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargeninfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\container.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenabilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenskills.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_equ.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\chargen\chargenfeats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_inv.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\ingame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_char.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\hud.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_abi.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\container.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_msg.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_jou.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_equ.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_map.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_inv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\menu_opt.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_char.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\minimap.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_abi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\ingame\partyselection.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_msg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\dialogs\confirm.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_jou.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\kotor\gui\loadscreen\loadscreen.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_map.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\menu_opt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\minimap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\partyselection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup_abilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup_skills.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup_feats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\levelup_forcepowers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\galaxymap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\ingame\workbench.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\dialogs\confirm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\kotor\gui\loadscreen\loadscreen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Games\Astryx\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\allen\Astryx\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{F21E34AB-2757-3B03-8953-08F3C23511D9}</UniqueIdentifier>
+      <UniqueIdentifier>{6409C7E2-6AC3-3B49-91EB-5636E827DAC1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{78D6A0A6-833A-3175-A49A-EFD0CDC7772D}</UniqueIdentifier>
+      <UniqueIdentifier>{5D0A56F4-6190-3F79-A81F-E813A7735C78}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

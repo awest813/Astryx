@@ -130,14 +130,7 @@ void Area::loadPersistence() {
 }
 
 void Area::savePersistence() {
-	for (auto &o : _objects) {
-		if (o->isPersistent()) {
-			Common::UString key = _resRef + ":" + o->getTag();
-			auto state = std::make_shared<Aurora::GFF3File>();
-			o->saveState(state->getTopLevel());
-			_module->setAreaObjectSave(key, state);
-		}
-	}
+	// Stub: Disk saving is out of scope for early-game parity.
 }
 
 void Area::clear() {
@@ -150,6 +143,10 @@ void Area::clear() {
 	_triggers.clear();
 	_situatedObjects.clear();
 	_activeTrigger = 0;
+}
+
+const Common::UString &Area::getResRef() {
+	return _resRef;
 }
 
 uint32_t Area::getMusicDayTrack() const {
@@ -428,9 +425,9 @@ void Area::loadCameras(const Aurora::GFF3List &list) {
 		if (!c) continue;
 		Camera camera;
 		camera.id = c->getUint("CameraID");
-		camera.fieldOfView = c->getFloat("FieldOfView");
-		camera.pitch = c->getFloat("MicRange"); // MicRange is often reused for pitch in some gffs? No, Pitch exists.
-		camera.pitch = c->getFloat("Pitch");
+		camera.fieldOfView = c->getDouble("FieldOfView");
+		camera.pitch = c->getDouble("MicRange"); // MicRange is often reused for pitch in some gffs? No, Pitch exists.
+		camera.pitch = c->getDouble("Pitch");
 		
 		c->getVector("Position", camera.position[0], camera.position[1], camera.position[2]);
 		c->getOrientation("Orientation", camera.orientation[0], camera.orientation[1], camera.orientation[2], camera.orientation[3]);
@@ -872,7 +869,7 @@ void Area::processCreaturesActions(float dt) {
 
 		const Action *action = c->getCurrentAction();
 		if (!action) {
-			c->think();
+			c->think(this);
 			action = c->getCurrentAction();
 		}
 

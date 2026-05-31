@@ -1,5 +1,6 @@
 #include "src/common/util.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotor/encounters_end.h"
 
 namespace Engines {
@@ -7,7 +8,7 @@ namespace Engines {
 namespace KotOR {
 
 void performEndarSpireOpening(KotORBase::Module &module) {
-	debug("Orchestrating Endar Spire Opening...");
+	status("Orchestrating Endar Spire Opening...");
 
 	// 1. Initial Movies (The Star Wars hook)
 	module.playMovie("swlogo");
@@ -34,7 +35,7 @@ void performEndarSpireOpening(KotORBase::Module &module) {
 }
 
 void performTraskEncounter(KotORBase::Module &module) {
-	debug("Spawning Trask Ulgo Tutorial...");
+	status("Spawning Trask Ulgo Tutorial...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
@@ -52,7 +53,7 @@ void performTraskEncounter(KotORBase::Module &module) {
 }
 
 void performSithBoarding(KotORBase::Module &module) {
-	debug("Orchestrating Sith Boarding Action...");
+	status("Orchestrating Sith Boarding Action...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);

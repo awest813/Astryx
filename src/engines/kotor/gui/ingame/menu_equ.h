@@ -61,6 +61,7 @@ private:
 
 	bool _dirty;
 	int  _selectedItem;
+	KotORBase::Creature *_lastLeader;
 
 	std::vector<Common::UString> _visibleItems;
 

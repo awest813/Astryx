@@ -1,5 +1,7 @@
 #include "src/common/util.h"
+#include "src/common/strutil.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotor/encounters_tar.h"
 
 namespace Engines {
@@ -7,7 +9,7 @@ namespace Engines {
 namespace KotOR {
 
 void performTarisAmbush(KotORBase::Module &module) {
-	debug("Orchestrating Taris Apartment Ambush...");
+	status("Orchestrating Taris Apartment Ambush...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
@@ -45,7 +47,7 @@ void performTarisAmbush(KotORBase::Module &module) {
 }
 
 void performDuelRingIntro(KotORBase::Module &module) {
-	debug("Orchestrating Duel Ring Introduction...");
+	status("Orchestrating Duel Ring Introduction...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
@@ -65,7 +67,7 @@ void performDuelRingIntro(KotORBase::Module &module) {
 }
 
 void performBekEntrance(KotORBase::Module &module) {
-	debug("Orchestrating Hidden Bek Entrance...");
+	status("Orchestrating Hidden Bek Entrance...");
 	// Logic for Gadon Theeth's security protocol
 	module.setCutsceneMode(true);
 	module.cameraTransitionToTarget("wp_bek_gadon_reveal", 4.0f);
@@ -73,7 +75,7 @@ void performBekEntrance(KotORBase::Module &module) {
 }
 
 void performLowerCityIntro(KotORBase::Module &module) {
-	debug("Orchestrating Lower City Introduction...");
+	status("Orchestrating Lower City Introduction...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
@@ -105,7 +107,7 @@ void performLowerCityIntro(KotORBase::Module &module) {
 }
 
 void performRakghoulAmbush(KotORBase::Module &module) {
-	debug("Orchestrating Undercity Rakghoul Ambush...");
+	status("Orchestrating Undercity Rakghoul Ambush...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
@@ -135,7 +137,7 @@ void performRakghoulAmbush(KotORBase::Module &module) {
 }
 
 void performCaloNordReveal(KotORBase::Module &module) {
-	debug("Orchestrating Calo Nord Cantina Reveal...");
+	status("Orchestrating Calo Nord Cantina Reveal...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
@@ -155,7 +157,7 @@ void performCaloNordReveal(KotORBase::Module &module) {
 }
 
 void performEbonHawkEscape(KotORBase::Module &module) {
-	debug("Orchestrating Ebon Hawk Escape from Taris...");
+	status("Orchestrating Ebon Hawk Escape from Taris...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
@@ -176,7 +178,7 @@ void performEbonHawkEscape(KotORBase::Module &module) {
 }
 
 void performBrejikShowdown(KotORBase::Module &module) {
-	debug("Orchestrating Brejik Showdown on Swoop Platform...");
+	status("Orchestrating Brejik Showdown on Swoop Platform...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);

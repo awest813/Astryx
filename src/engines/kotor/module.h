@@ -31,9 +31,11 @@ namespace Engines {
 
 namespace KotOR {
 
+class Game;
+
 class Module : public KotORBase::Module {
 public:
-	Module(::Engines::Console &console);
+	Module(Game &game, ::Engines::Console &console);
 
 	// GUI creation
 

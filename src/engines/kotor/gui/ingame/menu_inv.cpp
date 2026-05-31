@@ -28,6 +28,9 @@
 
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/gui/inventoryitem.h"
+#include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/inventory.h"
 
 #include "src/engines/kotor/gui/ingame/menu_inv.h"
 
@@ -75,13 +78,16 @@ void MenuInventory::fillItems() {
 		try {
 			KotORBase::Item item(itemPair.second.tag);
 
+			bool isWeapon = item.isSlotEquipable(KotORBase::kInventorySlotRightWeapon) || item.isSlotEquipable(KotORBase::kInventorySlotLeftWeapon);
+			bool isArmor = item.isSlotEquipable(KotORBase::kInventorySlotBody);
+
 			// Filtering
 			bool show = false;
 			switch (_category) {
 			case kCategoryAll: show = true; break;
-			case kCategoryWeapons: show = item.isWeapon(); break;
-			case kCategoryArmor: show = item.isArmor(); break;
-			case kCategoryItems: show = !item.isWeapon() && !item.isArmor(); break;
+			case kCategoryWeapons: show = isWeapon; break;
+			case kCategoryArmor: show = isArmor; break;
+			case kCategoryItems: show = !isWeapon && !isArmor; break;
 			case kCategoryMisc: show = item.getBaseItem() == 0; break; // Placeholder misc
 			}
 
@@ -95,7 +101,7 @@ void MenuInventory::fillItems() {
 
 			_visibleItems.push_back(itemPair.second.tag);
 		} catch (Common::Exception &e) {
-			debug("MenuInventory::fillItems: Failed to load item %s: %s", itemPair.second.tag.c_str(), e.what());
+			warning("MenuInventory::fillItems: Failed to load item %s: %s", itemPair.second.tag.c_str(), e.what());
 		}
 	}
 

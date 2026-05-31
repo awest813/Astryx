@@ -33,31 +33,31 @@
 #include "src/engines/kotorbase/effect.h"
 
 using Engines::KotORBase::Effect;
-using Engines::KotORBase::kEffectHeal;
-using Engines::KotORBase::kEffectDamage;
-using Engines::KotORBase::kEffectVisual;
+using Engines::KotORBase::kKotOREffectHeal;
+using Engines::KotORBase::kKotOREffectDamage;
+using Engines::KotORBase::kKotOREffectVisual;
 
 // ---------------------------------------------------------------------------
 // EffectHeal construction and accessors
 // ---------------------------------------------------------------------------
 
 GTEST_TEST(KotOREffect, healTypeIsHeal) {
-	Effect e(kEffectHeal, 10);
-	EXPECT_EQ(e.getType(), kEffectHeal);
+	Effect e(kKotOREffectHeal, 10);
+	EXPECT_EQ(e.getType(), kKotOREffectHeal);
 }
 
 GTEST_TEST(KotOREffect, healAmountRoundTrips) {
-	Effect e(kEffectHeal, 25);
+	Effect e(kKotOREffectHeal, 25);
 	EXPECT_EQ(e.getAmount(), 25);
 }
 
 GTEST_TEST(KotOREffect, healZeroAmount) {
-	Effect e(kEffectHeal, 0);
+	Effect e(kKotOREffectHeal, 0);
 	EXPECT_EQ(e.getAmount(), 0);
 }
 
 GTEST_TEST(KotOREffect, healDamageTypeDefaultsToZero) {
-	Effect e(kEffectHeal, 8);
+	Effect e(kKotOREffectHeal, 8);
 	EXPECT_EQ(e.getDamageType(), 0);
 }
 
@@ -66,29 +66,29 @@ GTEST_TEST(KotOREffect, healDamageTypeDefaultsToZero) {
 // ---------------------------------------------------------------------------
 
 GTEST_TEST(KotOREffect, damageTypeIsDamage) {
-	Effect e(kEffectDamage, 6);
-	EXPECT_EQ(e.getType(), kEffectDamage);
+	Effect e(kKotOREffectDamage, 6);
+	EXPECT_EQ(e.getType(), kKotOREffectDamage);
 }
 
 GTEST_TEST(KotOREffect, damageAmountRoundTrips) {
-	Effect e(kEffectDamage, 8, 1);
+	Effect e(kKotOREffectDamage, 8, 1);
 	EXPECT_EQ(e.getAmount(), 8);
 }
 
 GTEST_TEST(KotOREffect, damageTypeFieldRoundTrips) {
 	// damageType 1 = physical, 2 = ion, etc. (as defined by the NWScript constants)
-	Effect e(kEffectDamage, 4, 2);
+	Effect e(kKotOREffectDamage, 4, 2);
 	EXPECT_EQ(e.getDamageType(), 2);
 }
 
 GTEST_TEST(KotOREffect, damageZeroAmount) {
-	Effect e(kEffectDamage, 0);
+	Effect e(kKotOREffectDamage, 0);
 	EXPECT_EQ(e.getAmount(), 0);
 }
 
 GTEST_TEST(KotOREffect, visualEffectTypeRoundTrips) {
-	Effect e(kEffectVisual, 6002, 1);
-	EXPECT_EQ(e.getType(), kEffectVisual);
+	Effect e(kKotOREffectVisual, 6002, 1);
+	EXPECT_EQ(e.getType(), kKotOREffectVisual);
 	EXPECT_EQ(e.getAmount(), 6002);
 	EXPECT_EQ(e.getDamageType(), 1);
 }
@@ -98,35 +98,35 @@ GTEST_TEST(KotOREffect, visualEffectTypeRoundTrips) {
 // ---------------------------------------------------------------------------
 
 GTEST_TEST(KotOREffect, cloneProducesEquivalentHeal) {
-	Effect orig(kEffectHeal, 15);
+	Effect orig(kKotOREffectHeal, 15);
 	Aurora::NWScript::EngineType *rawClone = orig.clone();
 	Effect *cloned = dynamic_cast<Effect *>(rawClone);
 
 	ASSERT_NE(cloned, nullptr);
-	EXPECT_EQ(cloned->getType(),   kEffectHeal);
+	EXPECT_EQ(cloned->getType(),   kKotOREffectHeal);
 	EXPECT_EQ(cloned->getAmount(), 15);
 	delete rawClone;
 }
 
 GTEST_TEST(KotOREffect, cloneProducesEquivalentDamage) {
-	Effect orig(kEffectDamage, 7, 1);
+	Effect orig(kKotOREffectDamage, 7, 1);
 	Aurora::NWScript::EngineType *rawClone = orig.clone();
 	Effect *cloned = dynamic_cast<Effect *>(rawClone);
 
 	ASSERT_NE(cloned, nullptr);
-	EXPECT_EQ(cloned->getType(),       kEffectDamage);
+	EXPECT_EQ(cloned->getType(),       kKotOREffectDamage);
 	EXPECT_EQ(cloned->getAmount(),     7);
 	EXPECT_EQ(cloned->getDamageType(), 1);
 	delete rawClone;
 }
 
 GTEST_TEST(KotOREffect, cloneProducesEquivalentVisualEffect) {
-	Effect orig(kEffectVisual, 6002, 0);
+	Effect orig(kKotOREffectVisual, 6002, 0);
 	Aurora::NWScript::EngineType *rawClone = orig.clone();
 	Effect *cloned = dynamic_cast<Effect *>(rawClone);
 
 	ASSERT_NE(cloned, nullptr);
-	EXPECT_EQ(cloned->getType(),       kEffectVisual);
+	EXPECT_EQ(cloned->getType(),       kKotOREffectVisual);
 	EXPECT_EQ(cloned->getAmount(),     6002);
 	EXPECT_EQ(cloned->getDamageType(), 0);
 	delete rawClone;
@@ -134,7 +134,7 @@ GTEST_TEST(KotOREffect, cloneProducesEquivalentVisualEffect) {
 
 GTEST_TEST(KotOREffect, cloneIsIndependent) {
 	// The clone must be a separate object
-	Effect orig(kEffectHeal, 5);
+	Effect orig(kKotOREffectHeal, 5);
 	Aurora::NWScript::EngineType *rawClone = orig.clone();
 
 	EXPECT_NE(rawClone, &orig);

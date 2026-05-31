@@ -52,6 +52,7 @@ WidgetListBox::WidgetListBox(GUI &gui, const Common::UString &tag) :
 		_itemSelectionEnabled(false),
 		_adjustHeight(false),
 		_hideScrollbar(true),
+		_hovered(false),
 		_selectedIndex(-1),
 		_startIndex(0),
 		_numVisibleItems(0),
@@ -128,6 +129,10 @@ const Common::UString &WidgetListBox::getItem(int index) const {
 void WidgetListBox::removeAllItems() {
 	_startIndex = 0;
 	_items.clear();
+}
+
+bool WidgetListBox::isEmpty() const {
+	return _items.empty();
 }
 
 void WidgetListBox::createItemWidgets(uint32_t count) {
@@ -402,6 +407,30 @@ void WidgetListBox::mouseWheel(uint8_t UNUSED(state), int UNUSED(x), int y) {
 		MAX(_startIndex - y, 0),
 		MAX<int>(_itemWidgets.size() - _numVisibleItems, 0)
 	);
+	refreshItemWidgets();
+}
+
+bool WidgetListBox::isHovered() const {
+	return _hovered;
+}
+
+void WidgetListBox::enter() {
+	Widget::enter();
+	_hovered = true;
+}
+
+void WidgetListBox::leave() {
+	Widget::leave();
+	_hovered = false;
+}
+
+void WidgetListBox::selectItem(int index) {
+	if (index == -1) {
+		_selectedIndex = -1;
+		refreshItemWidgets();
+		return;
+	}
+	selectItemByIndex(index);
 	refreshItemWidgets();
 }
 

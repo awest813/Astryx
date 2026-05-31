@@ -42,6 +42,7 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/gui/ingame/store.h \
     src/engines/kotor/gui/ingame/galaxymap.h \
     src/engines/kotor/gui/ingame/workbench.h \
+    src/engines/kotor/gui/ingame/pazaak.h \
     $(EMPTY)
 
 src_engines_kotor_libkotor_la_SOURCES += \
@@ -67,4 +68,5 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/gui/ingame/store.cpp \
     src/engines/kotor/gui/ingame/galaxymap.cpp \
     src/engines/kotor/gui/ingame/workbench.cpp \
+    src/engines/kotor/gui/ingame/pazaak.cpp \
     $(EMPTY)

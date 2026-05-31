@@ -1,3 +1,4 @@
+#include "src/common/string.h"
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
 #include "src/engines/kotor/gui/ingame/pazaak.h"
@@ -23,11 +24,11 @@ void PazaakGUI::updateUI() {
 		if (lbl) lbl->setText(text);
 	};
 
-	setLabel("LBL_PLAYER_SCORE", Common::composeString(_engine.getPlayer().score));
-	setLabel("LBL_OPPONENT_SCORE", Common::composeString(_engine.getOpponent().score));
+	setLabel("LBL_PLAYER_SCORE", Common::String::format("%d", _engine.getPlayer().score));
+	setLabel("LBL_OPPONENT_SCORE", Common::String::format("%d", _engine.getOpponent().score));
 	
-	setLabel("LBL_PLAYER_SETS", Common::composeString(_engine.getPlayer().setsWon));
-	setLabel("LBL_OPPONENT_SETS", Common::composeString(_engine.getOpponent().setsWon));
+	setLabel("LBL_PLAYER_SETS", Common::String::format("%d", _engine.getPlayer().setsWon));
+	setLabel("LBL_OPPONENT_SETS", Common::String::format("%d", _engine.getOpponent().setsWon));
 
 	// Update hand buttons
 	for (int i = 0; i < 4; ++i) {

@@ -45,10 +45,10 @@
 #include "src/engines/kotorbase/types.h"
 
 using Engines::KotORBase::Effect;
-using Engines::KotORBase::kEffectStunned;
-using Engines::KotORBase::kEffectParalyze;
-using Engines::KotORBase::kEffectDamage;
-using Engines::KotORBase::kEffectHeal;
+using Engines::KotORBase::kKotOREffectStunned;
+using Engines::KotORBase::kKotOREffectParalyze;
+using Engines::KotORBase::kKotOREffectDamage;
+using Engines::KotORBase::kKotOREffectHeal;
 
 // ---------------------------------------------------------------------------
 // 1. GetGameDifficulty — clamp logic
@@ -120,13 +120,13 @@ TEST(DantooinecinematicFunctions, ModifierAboveTwoSameAsHard) {
 // Our implementation returns Effect(kEffectStunned, 0).
 
 TEST(DantooinecinematicFunctions, CutSceneHorrifiedIsStunned) {
-	Effect e(kEffectStunned, 0);
-	EXPECT_EQ(e.getType(), kEffectStunned);
+	Effect e(kKotOREffectStunned, 0);
+	EXPECT_EQ(e.getType(), kKotOREffectStunned);
 	EXPECT_EQ(e.getAmount(), 0);
 }
 
 TEST(DantooinecinematicFunctions, CutSceneHorrifiedAmountIsZero) {
-	Effect e(kEffectStunned, 0);
+	Effect e(kKotOREffectStunned, 0);
 	EXPECT_EQ(e.getAmount(), 0);
 }
 
@@ -135,12 +135,12 @@ TEST(DantooinecinematicFunctions, CutSceneHorrifiedAmountIsZero) {
 // ---------------------------------------------------------------------------
 
 TEST(DantooinecinematicFunctions, CutSceneParalyzeIsParalyze) {
-	Effect e(kEffectParalyze, 0);
-	EXPECT_EQ(e.getType(), kEffectParalyze);
+	Effect e(kKotOREffectParalyze, 0);
+	EXPECT_EQ(e.getType(), kKotOREffectParalyze);
 }
 
 TEST(DantooinecinematicFunctions, CutSceneParalyzeAmountIsZero) {
-	Effect e(kEffectParalyze, 0);
+	Effect e(kKotOREffectParalyze, 0);
 	EXPECT_EQ(e.getAmount(), 0);
 }
 
@@ -149,14 +149,14 @@ TEST(DantooinecinematicFunctions, CutSceneParalyzeAmountIsZero) {
 // ---------------------------------------------------------------------------
 
 TEST(DantooinecinematicFunctions, CutSceneStunnedIsStunned) {
-	Effect e(kEffectStunned, 0);
-	EXPECT_EQ(e.getType(), kEffectStunned);
+	Effect e(kKotOREffectStunned, 0);
+	EXPECT_EQ(e.getType(), kKotOREffectStunned);
 }
 
 TEST(DantooinecinematicFunctions, CutSceneStunnedAndHorrifiedShareType) {
 	// Both cutscene horrified and stunned map to the same underlying type.
-	Effect horrified(kEffectStunned, 0);
-	Effect stunned(kEffectStunned, 0);
+	Effect horrified(kKotOREffectStunned, 0);
+	Effect stunned(kKotOREffectStunned, 0);
 	EXPECT_EQ(horrified.getType(), stunned.getType());
 }
 
@@ -252,28 +252,28 @@ TEST(DantooinecinematicFunctions, FactionEqualHostileVsFriendly) {
 // in Dantooine scripting.
 
 TEST(DantooinecinematicFunctions, GetEffectTypeHeal) {
-	Effect e(kEffectHeal, 5);
-	EXPECT_EQ(e.getType(), kEffectHeal);
+	Effect e(kKotOREffectHeal, 5);
+	EXPECT_EQ(e.getType(), kKotOREffectHeal);
 }
 
 TEST(DantooinecinematicFunctions, GetEffectTypeDamage) {
-	Effect e(kEffectDamage, 10);
-	EXPECT_EQ(e.getType(), kEffectDamage);
+	Effect e(kKotOREffectDamage, 10);
+	EXPECT_EQ(e.getType(), kKotOREffectDamage);
 }
 
 TEST(DantooinecinematicFunctions, GetEffectTypeParalyze) {
-	Effect e(kEffectParalyze, 0);
-	EXPECT_EQ(e.getType(), kEffectParalyze);
+	Effect e(kKotOREffectParalyze, 0);
+	EXPECT_EQ(e.getType(), kKotOREffectParalyze);
 }
 
 TEST(DantooinecinematicFunctions, GetEffectTypeStunned) {
-	Effect e(kEffectStunned, 0);
-	EXPECT_EQ(e.getType(), kEffectStunned);
+	Effect e(kKotOREffectStunned, 0);
+	EXPECT_EQ(e.getType(), kKotOREffectStunned);
 }
 
 TEST(DantooinecinematicFunctions, GetEffectTypeAmountPreserved) {
-	Effect e(kEffectDamage, 42);
-	EXPECT_EQ(e.getType(),   kEffectDamage);
+	Effect e(kKotOREffectDamage, 42);
+	EXPECT_EQ(e.getType(),   kKotOREffectDamage);
 	EXPECT_EQ(e.getAmount(), 42);
 }
 

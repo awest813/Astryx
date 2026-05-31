@@ -23,6 +23,7 @@
  */
 
 #include "src/common/configman.h"
+#include "src/common/strutil.h"
 
 #include "src/events/types.h"
 
@@ -134,17 +135,17 @@ void DialogGUI::callbackKeyInput(const Events::Key &key,
 
 void DialogGUI::preprocessEntry(Common::UString &text) {
 	// KotOR uses <CUSTOMxxx> for dynamic tokens
-	for (size_t pos = 0; (pos = text.find("<CUSTOM", pos)) != Common::UString::npos; ) {
-		size_t end = text.find(">", pos);
-		if (end == Common::UString::npos)
+	std::string stdText = text.toString();
+	for (size_t pos = 0; (pos = stdText.find("<CUSTOM", pos)) != std::string::npos; ) {
+		size_t end = stdText.find(">", pos);
+		if (end == std::string::npos)
 			break;
 
-		Common::UString tag = text.substr(pos + 7, end - (pos + 7));
+		std::string tag = stdText.substr(pos + 7, end - (pos + 7));
 		int tokenID = 0;
 		try {
-			// Convert tag (e.g. "101") to int
-			Common::UString cleanTag;
-			for (auto c : tag) {
+			std::string cleanTag;
+			for (char c : tag) {
 				if (isdigit(c)) cleanTag += c;
 			}
 			Common::parseString(cleanTag, tokenID);
@@ -154,9 +155,10 @@ void DialogGUI::preprocessEntry(Common::UString &text) {
 		}
 
 		Common::UString replacement = _module.getGame().getFunctions().getCustomToken(tokenID);
-		text.replace(pos, end - pos + 1, replacement);
-		pos += replacement.size();
+		stdText.replace(pos, end - pos + 1, replacement.toString());
+		pos += replacement.toString().size();
 	}
+	text = stdText;
 }
 
 void DialogGUI::update(int width, int height) {
@@ -348,33 +350,7 @@ void DialogGUI::notifyResized(int UNUSED(oldWidth), int UNUSED(oldHeight), int n
 	update(newWidth, newHeight);
 }
 
-void DialogGUI::makeLookAtPC(const Common::UString &tag) {
-	Object *speaker = _module.getCurrentArea()->getObjectByTag(tag);
-	if (!speaker)
-		return;
 
-	Creature *pc = _module.getPC();
-	if (pc)
-		speaker->makeLookAt(pc);
-}
-
-void DialogGUI::playTalkAnimations(const Common::UString &tag) {
-	Creature *speaker = ObjectContainer::toCreature(_module.getCurrentArea()->getObjectByTag(tag));
-	if (!speaker)
-		return;
-
-	// Pick a random talk animation
-	int animID = 1; // ANIMATION_LOOPING_TALK_NORMAL
-	
-	// Simulation of random choice
-	static int r = 0;
-	r = (r + 1) % 3;
-
-	if (r == 1) animID = 2; // PLEADING
-	if (r == 2) animID = 3; // FORCEFUL
-
-	speaker->playAnimation(_module.getGame().getFunctions().animIDToName(animID), true, 5.0f);
-}
 
 } // End of namespace KotORBase
 

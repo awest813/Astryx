@@ -1,41 +1,41 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Games\Astryx\src\cline.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\cline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\xoreos.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\xoreos.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D:\Games\Astryx\src\cline.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\cline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Games\Astryx\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\allen\Astryx\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="D:\Games\Astryx\build-new\vcpkg_installed\x64-windows\share\boost-1.90.0\assert\boost_assert.natvis" />
+    <Natvis Include="C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\share\boost-1.90.0\assert\boost_assert.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="D:\Games\Astryx\dists\win32\xoreos.rc">
+    <ResourceCompile Include="C:\Users\allen\Astryx\dists\win32\xoreos.rc">
       <Filter>Source Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{F21E34AB-2757-3B03-8953-08F3C23511D9}</UniqueIdentifier>
+      <UniqueIdentifier>{6409C7E2-6AC3-3B49-91EB-5636E827DAC1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{78D6A0A6-833A-3175-A49A-EFD0CDC7772D}</UniqueIdentifier>
+      <UniqueIdentifier>{5D0A56F4-6190-3F79-A81F-E813A7735C78}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

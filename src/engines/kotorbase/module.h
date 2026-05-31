@@ -123,6 +123,8 @@ public:
 
 	/** Show the ingame main menu. */
 	void showMenu();
+	void showGUIPanel(int panel);
+	void showDeathGUI();
 
 	/** Show the galaxy map menu. */
 	virtual void showGalaxyMap();
@@ -181,10 +183,10 @@ public:
 	void shakeCamera(float duration, float intensity);
 
 	/** Play a movie. */
-	void playMovie(const Common::UString &resRef);
+
 
 	/** Transition the camera to a target object by tag. */
-	void cameraTransitionToTarget(const Common::UString &tag, float duration);
+
 
 	// Party management
 
@@ -210,6 +212,7 @@ public:
 	void setPartyLeaderByIndex(int index);
 	/** Enable or disable solo mode. */
 	void setSoloMode(bool enabled);
+	void setPartyAIStyle(int style);
 
 	/** Show the party selection GUI. */
 	void showPartySelectionGUI(int forceNPC1, int forceNPC2);
@@ -257,7 +260,7 @@ public:
 	// Galaxy map
 
 	/** Show the galaxy map GUI. */
-	void showGalaxyMap();
+
 	/** Set whether a planet is selectable by the player. */
 	void setPlanetSelectable(int planet, bool selectable);
 	/** Is a planet selectable by the player? */
@@ -304,12 +307,16 @@ public:
 	void loadSavedGame(SavedGame *save);
 	/** Returns true if the current module was entered via a save-game load. */
 	bool isLoadedFromSaveGame() const;
+	void saveGame(const Common::UString &slot, const Common::UString &name);
 
 	// Conversation
 
 	bool isConversationActive() const;
 
 	void startConversation(const Common::UString &name, Aurora::NWScript::Object *owner = 0);
+
+	static const std::map<int, Common::UString> &getCustomDialogTokens();
+	static void setCustomDialogToken(int id, const Common::UString &value);
 
 	// Animation
 
@@ -331,6 +338,8 @@ public:
 	// Camera
 	float getCameraYaw() const;
 	void setCameraYaw(float yaw);
+	void setCameraDistance(float distance);
+	void setCameraPitch(float pitch);
 	
 	void setMapExplored(const Common::UString &resRef, const std::vector<bool> &data);
 	const std::vector<bool> *getMapExplored(const Common::UString &resRef) const;
@@ -368,6 +377,9 @@ public:
 	Object *getLastAcquiredItem() const;
 	/** Record the last item acquired (called from createItemOnObject etc.). */
 	void setLastAcquiredItem(Object *item);
+
+	bool getObjectLocation(const Common::UString &object, ObjectType location,
+	                       float &entryX, float &entryY, float &entryZ, float &entryAngle);
 
 protected:
 	std::unique_ptr<IngameGUI> _ingame; ///< The ingame GUI.
@@ -441,7 +453,10 @@ private:
 	std::vector<bool> _walkableSurfaces;
 
 
+protected:
+	Game &_game;
 	::Engines::Console *_console;
+private:
 
 	bool _hasModule; ///< Do we have a module?
 	bool _running;   ///< Are we currently running a module?
@@ -528,8 +543,6 @@ private:
 	void changeModule(const Common::UString &module, const Common::UString &entryLocation = "",
 	                  ObjectType entryLocationType = kObjectTypeAll);
 
-	void saveGame(const Common::UString &slot, const Common::UString &name);
-
 	void update(uint32_t frameTime);
 
 	/** Actually replace the currently running module. */
@@ -544,9 +557,6 @@ private:
 	void initMinimap();
 	void updateMinimap();
 
-
-	bool getObjectLocation(const Common::UString &object, ObjectType location,
-	                       float &entryX, float &entryY, float &entryZ, float &entryAngle);
 
 	bool getEntryObjectLocation(float &entryX, float &entryY, float &entryZ, float &entryAngle);
 	void getEntryIFOLocation(float &entryX, float &entryY, float &entryZ, float &entryAngle);

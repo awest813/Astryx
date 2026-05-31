@@ -1,105 +1,105 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\util.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\resources.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\resources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\tokenman.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\tokenman.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\modelloader.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\modelloader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\model.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\widget.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\widget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\gui.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\gui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\console.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\loadprogress.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\loadprogress.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\flycamera.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\flycamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\trigger.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\trigger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\pathfinding.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\pathfinding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\astar.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\astar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\aurora\localpathfinding.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\aurora\localpathfinding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\util.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\resources.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\tokenman.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\tokenman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\modelloader.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\modelloader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\model.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\widget.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\widget.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\gui.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\gui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\console.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\loadprogress.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\loadprogress.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\flycamera.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\flycamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\trigger.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\trigger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\pathfinding.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\pathfinding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\astar.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\astar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\localpathfinding.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\localpathfinding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\aurora\objectwalkmesh.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\aurora\objectwalkmesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Games\Astryx\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\allen\Astryx\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{F21E34AB-2757-3B03-8953-08F3C23511D9}</UniqueIdentifier>
+      <UniqueIdentifier>{6409C7E2-6AC3-3B49-91EB-5636E827DAC1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{78D6A0A6-833A-3175-A49A-EFD0CDC7772D}</UniqueIdentifier>
+      <UniqueIdentifier>{5D0A56F4-6190-3F79-A81F-E813A7735C78}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

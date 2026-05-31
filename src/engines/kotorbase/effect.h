@@ -31,41 +31,41 @@ namespace Engines {
 
 namespace KotORBase {
 
-enum EffectType {
-	kEffectHeal                  = 0,
-	kEffectDamage                = 1,
-	kEffectVisual                = 2,
-	kEffectACIncrease            = 3,
-	kEffectAttackIncrease        = 4,
-	kEffectSkillIncrease         = 5,
-	kEffectTemporaryHitpoints    = 6,
-	kEffectDeath                 = 7,  ///< Immediately kill the target.
-	kEffectKnockdown             = 8,  ///< Knock the target prone (stun for one round).
-	kEffectParalyze              = 9,  ///< Paralyse the target (Force Stasis etc.).
-	kEffectStunned               = 10, ///< Stun the target (interrupts actions).
-	kEffectHaste                 = 11, ///< Grant haste (extra attack per round).
-	kEffectAbilityIncrease       = 12, ///< Temporarily raise an ability score.
-	kEffectMovementSpeedIncrease = 13, ///< Increase movement speed by a percentage.
-	kEffectResurrection          = 14, ///< Revive a dead creature at 1 HP.
-	kEffectForcePush             = 15, ///< Push the target back (and potentially knockdown).
-	kEffectForceDrain            = 16, ///< Drain life/Force from target.
-	kEffectForceShield           = 17, ///< Shield against damage.
-	kEffectForcePointsHeal       = 18, ///< Restore Force points.
-	kEffectForcePointsDamage     = 19  ///< Drain/damage Force points.
+enum KotOREffectType {
+	kKotOREffectHeal                  = 0,
+	kKotOREffectDamage                = 1,
+	kKotOREffectVisual                = 2,
+	kKotOREffectACIncrease            = 3,
+	kKotOREffectAttackIncrease        = 4,
+	kKotOREffectSkillIncrease         = 5,
+	kKotOREffectTemporaryHitpoints    = 6,
+	kKotOREffectDeath                 = 7,  ///< Immediately kill the target.
+	kKotOREffectKnockdown             = 8,  ///< Knock the target prone (stun for one round).
+	kKotOREffectParalyze              = 9,  ///< Paralyse the target (Force Stasis etc.).
+	kKotOREffectStunned               = 10, ///< Stun the target (interrupts actions).
+	kKotOREffectHaste                 = 11, ///< Grant haste (extra attack per round).
+	kKotOREffectAbilityIncrease       = 12, ///< Temporarily raise an ability score.
+	kKotOREffectMovementSpeedIncrease = 13, ///< Increase movement speed by a percentage.
+	kKotOREffectResurrection          = 14, ///< Revive a dead creature at 1 HP.
+	kKotOREffectForcePush             = 15, ///< Push the target back (and potentially knockdown).
+	kKotOREffectForceDrain            = 16, ///< Drain life/Force from target.
+	kKotOREffectForceShield           = 17, ///< Shield against damage.
+	kKotOREffectForcePointsHeal       = 18, ///< Restore Force points.
+	kKotOREffectForcePointsDamage     = 19  ///< Drain/damage Force points.
 };
 
 class Effect : public Aurora::NWScript::EngineType {
 public:
-	Effect(EffectType type, int amount = 0, int damageType = 0);
+	Effect(KotOREffectType type, int amount = 0, int damageType = 0);
 
-	EffectType getType() const;
+	KotOREffectType getType() const;
 	int getAmount() const;
 	int getDamageType() const;
 
 	Aurora::NWScript::EngineType *clone() const;
 
 private:
-	EffectType _type;
+	KotOREffectType _type;
 	int _amount;
 	int _damageType;
 };

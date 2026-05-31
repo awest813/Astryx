@@ -17,7 +17,7 @@ void Functions::playPazaak(Aurora::NWScript::FunctionContext &ctx) {
 	int wagerSide = ctx.getParams()[1].getInt();
 	Object *opponent = ObjectContainer::toObject(ctx.getParams()[2].getObject());
 
-	debug("PlayPazaak: MaxWager %d, Side %d, Opponent %s", 
+	warning("PlayPazaak: MaxWager %d, Side %d, Opponent %s", 
 	      maxWager, wagerSide, opponent ? opponent->getTag().c_str() : "INVALID");
 
 	_game->getModule().setGlobalNumber("__pazaak_wager", maxWager);

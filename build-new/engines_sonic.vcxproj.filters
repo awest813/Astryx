@@ -1,102 +1,102 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\sonic.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\sonic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\probes.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\probes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\modelloader.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\modelloader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\console.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\util.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\game.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\areabackground.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\areabackground.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\areaminimap.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\areaminimap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\area.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\area.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\objectcontainer.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\objectcontainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\module.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\object.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\object.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\sonic\placeable.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\sonic\placeable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\sonic.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\sonic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\probes.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\probes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\types.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\files.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\files.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\modelloader.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\modelloader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\console.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\util.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\game.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\areabackground.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\areabackground.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\areaminimap.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\areaminimap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\area.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\area.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\objectcontainer.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\objectcontainer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\module.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\object.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\sonic\placeable.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\sonic\placeable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Games\Astryx\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\allen\Astryx\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{F21E34AB-2757-3B03-8953-08F3C23511D9}</UniqueIdentifier>
+      <UniqueIdentifier>{6409C7E2-6AC3-3B49-91EB-5636E827DAC1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{78D6A0A6-833A-3175-A49A-EFD0CDC7772D}</UniqueIdentifier>
+      <UniqueIdentifier>{5D0A56F4-6190-3F79-A81F-E813A7735C78}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

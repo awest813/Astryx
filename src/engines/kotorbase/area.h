@@ -166,8 +166,8 @@ public:
 
 	const Area::CameraStyle &getCameraStyle() const;
 
-	const std::vector<bool> &getMapExplored() const { return _mapExplored; }
-	void setMapExplored(const std::vector<bool> &explored) { _mapExplored = explored; }
+
+
 
 	// Spatial Querying
 

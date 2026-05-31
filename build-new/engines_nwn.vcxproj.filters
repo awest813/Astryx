@@ -1,624 +1,624 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\nwn.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\nwn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\probes.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\probes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\types.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\types.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\modelloader.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\modelloader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\version.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\version.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\creature.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\creature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\console.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\game.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\module.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\area.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\area.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\tileset.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\tileset.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\objectcontainer.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\objectcontainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\object.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\object.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\waypoint.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\waypoint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\situated.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\situated.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\placeable.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\placeable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\door.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\door.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\item.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\item.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\location.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\location.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\pathfinding.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\pathfinding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\walkmeshloader.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\walkmeshloader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\objectwalkmesh.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\objectwalkmesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\container.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\container.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions_math.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions_math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions_string.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions_string.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions_module.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions_module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions_object.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions_object.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions_situated.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions_situated.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions_creature.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions_creature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions_action.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions_action.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions_conversation.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions_conversation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\script\functions_sound.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions_sound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\gui.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\gui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\legal.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\legal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\tooltip.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\tooltip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\nwnwidget.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\nwnwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\nwnwidgetwithcaption.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\nwnwidgetwithcaption.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\modelwidget.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\modelwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\quadwidget.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\quadwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\button.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\checkbox.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\checkbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\close.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\close.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\editbox.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\editbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\frame.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\frame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\label.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\label.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\listbox.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\listbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\panel.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\panel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\scrollbar.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\scrollbar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\portrait.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\portrait.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\slider.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\slider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\buttonsgroup.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\buttonsgroup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\gridbox.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\gridbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\listitembutton.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\listitembutton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\dialogs\okcancel.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\dialogs\okcancel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\dialogs\yesnocancel.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\dialogs\yesnocancel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\charpremade.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\charpremade.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\chartype.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\chartype.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\main.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\moviesbase.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\moviesbase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\moviescamp.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\moviescamp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\new.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\new.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\newcamp.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newcamp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\newgamefog.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newgamefog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\newmodule.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newmodule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\newpremium.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newpremium.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\newxp1.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newxp1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\newxp2.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newxp2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\main\options.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\options.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\chargenbase.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\chargenbase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\chargenchoices.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\chargenchoices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\chargen.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\chargen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charsex.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charsex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charrace.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charrace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charportrait.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charportrait.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charclass.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charclass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charalignment.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charalignment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charattributes.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charattributes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charpackage.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charpackage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charskills.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charskills.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charfeats.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charfeats.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charhelp.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charhelp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charfeatspopup.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charfeatspopup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charschool.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charschool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\chardomain.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\chardomain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charspells.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charspells.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charappearance.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charappearance.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charinfovoice.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charinfovoice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\options\controls.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\controls.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\options\feedback.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\feedback.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\options\game.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\options\gorepass.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\gorepass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\options\resolution.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\resolution.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\options\sound.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\sound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\options\soundadv.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\soundadv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\options\video.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\video.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\options\videoadv.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\videoadv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\ingame.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\ingame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\main.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\quickbar.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\quickbar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\quickchat.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\quickchat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\compass.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\compass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\charinfo.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\charinfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\partyleader.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\partyleader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\dialog.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\dialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\nwn.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\nwn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\probes.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\probes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\types.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\modelloader.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\modelloader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\version.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\console.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\game.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\location.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\location.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\tileset.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\tileset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\objectcontainer.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\objectcontainer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\module.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\area.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\area.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\object.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\waypoint.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\waypoint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\situated.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\situated.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\placeable.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\placeable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\door.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\door.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\creature.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\creature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\item.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\item.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\pathfinding.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\pathfinding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\walkmeshloader.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\walkmeshloader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\objectwalkmesh.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\objectwalkmesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\script\container.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\script\container.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\script\functions.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\script\functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\script\function_tables.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\script\function_tables.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\gui.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\gui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\legal.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\legal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\tooltip.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\tooltip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\nwnwidget.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\nwnwidget.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\nwnwidgetwithcaption.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\nwnwidgetwithcaption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\modelwidget.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\modelwidget.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\quadwidget.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\quadwidget.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\button.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\button.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\checkbox.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\checkbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\close.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\close.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\editbox.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\editbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\frame.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\frame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\label.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\label.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\listbox.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\listbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\panel.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\panel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\scrollbar.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\scrollbar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\portrait.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\portrait.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\slider.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\slider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\buttonsgroup.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\buttonsgroup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\gridbox.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\gridbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\widgets\listitembutton.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\widgets\listitembutton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\dialogs\okcancel.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\dialogs\okcancel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\dialogs\yesnocancel.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\dialogs\yesnocancel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\charpremade.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\charpremade.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\chartype.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\chartype.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\main.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\moviesbase.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\moviesbase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\moviescamp.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\moviescamp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\new.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\new.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\newcamp.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newcamp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\newgamefog.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newgamefog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\newmodule.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newmodule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\newpremium.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newpremium.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\newxp1.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newxp1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\newxp2.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\newxp2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\main\options.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\main\options.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\chargenbase.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\chargenbase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\chargenchoices.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\chargenchoices.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\chargen.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\chargen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charsex.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charsex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charrace.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charrace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charportrait.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charportrait.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charclass.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charclass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charalignment.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charalignment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charattributes.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charattributes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charpackage.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charpackage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charskills.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charskills.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charfeats.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charfeats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charhelp.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charhelp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charfeatspopup.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charfeatspopup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charschool.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charschool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\chardomain.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\chardomain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charspells.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charspells.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charappearance.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charappearance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\chargen\charinfovoice.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\chargen\charinfovoice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\options\controls.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\controls.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\options\feedback.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\feedback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\options\game.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\options\gorepass.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\gorepass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\options\resolution.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\resolution.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\options\sound.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\options\soundadv.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\soundadv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\options\video.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\video.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\options\videoadv.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\options\videoadv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\ingame.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\ingame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\main.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\quickbar.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\quickbar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\quickchat.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\quickchat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\compass.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\compass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\charinfo.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\charinfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\partyleader.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\partyleader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\nwn\gui\ingame\dialog.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\nwn\gui\ingame\dialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Games\Astryx\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\allen\Astryx\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{F21E34AB-2757-3B03-8953-08F3C23511D9}</UniqueIdentifier>
+      <UniqueIdentifier>{6409C7E2-6AC3-3B49-91EB-5636E827DAC1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{78D6A0A6-833A-3175-A49A-EFD0CDC7772D}</UniqueIdentifier>
+      <UniqueIdentifier>{5D0A56F4-6190-3F79-A81F-E813A7735C78}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

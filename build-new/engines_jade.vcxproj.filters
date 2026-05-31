@@ -1,255 +1,255 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\jade.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\jade.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\probes.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\probes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\modelloader.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\modelloader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\console.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\game.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\module.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\area.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\area.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\arealayout.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\arealayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\room.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\room.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\object.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\object.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\objectcontainer.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\objectcontainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\creature.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\creature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\placeable.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\placeable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\trigger.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\trigger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\waypoint.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\waypoint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\location.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\location.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\event.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\event.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\container.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\container.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions_math.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions_math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions_string.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions_string.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions_object.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions_object.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions_event.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions_event.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions_module.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions_module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions_creature.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions_creature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions_action.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions_action.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions_2da.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions_2da.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\script\functions_game.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\script\functions_game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\gui.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\gui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\guibackground.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\guibackground.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\main\main.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\main\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\main\options.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\main\options.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\options\audio.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\audio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\options\video.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\video.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\options\diff.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\diff.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\options\feed.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\feed.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\options\control.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\control.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\chargen\charactergeneration.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\charactergeneration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\chargen\charactergenerationbase.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\charactergenerationbase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\chargen\characterinfo.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\characterinfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\chargen\charactername.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\charactername.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\chargen\characterselection.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\characterselection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Games\Astryx\src\engines\jade\gui\chargen\charactersummary.cpp">
+    <ClCompile Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\charactersummary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\jade.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\jade.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\probes.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\probes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\types.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\modelloader.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\modelloader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\console.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\game.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\module.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\area.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\area.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\arealayout.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\arealayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\room.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\room.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\object.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\objectcontainer.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\objectcontainer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\creature.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\creature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\placeable.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\placeable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\trigger.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\trigger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\waypoint.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\waypoint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\location.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\location.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\event.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\event.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\script\container.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\script\container.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\script\functions.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\script\functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\script\function_tables.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\script\function_tables.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\gui.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\gui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\guibackground.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\guibackground.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\main\main.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\main\main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\main\options.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\main\options.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\options\audio.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\options\video.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\video.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\options\diff.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\diff.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\options\feed.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\feed.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\options\control.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\options\control.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\chargen\charactergeneration.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\charactergeneration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\chargen\charactergenerationbase.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\charactergenerationbase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\chargen\characterinfo.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\characterinfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\chargen\charactername.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\charactername.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\chargen\characterselection.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\characterselection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Games\Astryx\src\engines\jade\gui\chargen\charactersummary.h">
+    <ClInclude Include="C:\Users\allen\Astryx\src\engines\jade\gui\chargen\charactersummary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Games\Astryx\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\allen\Astryx\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{F21E34AB-2757-3B03-8953-08F3C23511D9}</UniqueIdentifier>
+      <UniqueIdentifier>{6409C7E2-6AC3-3B49-91EB-5636E827DAC1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{78D6A0A6-833A-3175-A49A-EFD0CDC7772D}</UniqueIdentifier>
+      <UniqueIdentifier>{5D0A56F4-6190-3F79-A81F-E813A7735C78}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

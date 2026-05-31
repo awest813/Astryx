@@ -36,6 +36,7 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/encounters_end.h \
     src/engines/kotor/encounters_tar.h \
     src/engines/kotor/encounters_ebon.h \
+    src/engines/kotor/pazaak.h \
     $(EMPTY)
 
 src_engines_kotor_libkotor_la_SOURCES += \
@@ -52,6 +53,7 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/encounters_end.cpp \
     src/engines/kotor/encounters_tar.cpp \
     src/engines/kotor/encounters_ebon.cpp \
+    src/engines/kotor/pazaak.cpp \
     $(EMPTY)
 
 include src/engines/kotor/script/rules.mk

@@ -29,6 +29,8 @@
 
 #include "src/common/ustring.h"
 
+#include "src/aurora/types.h"
+
 namespace Engines {
 
 namespace KotORBase {

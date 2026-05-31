@@ -46,7 +46,7 @@ void GalaxyMapMenu::jumpToPlanet(const Common::UString &planetID) {
 
 	if (!targetResRef.empty()) {
 		_module.playMovie("Hyperspace");
-		_module.changeModule(targetResRef);
+		_module.load(targetResRef);
 		_returnCode = 2;
 	}
 }
@@ -59,8 +59,8 @@ void GalaxyMapMenu::callbackActive(Widget &widget) {
 		return;
 	}
 
-	if (tag.startsWith("BTN_")) {
-		jumpToPlanet(tag.substr(4));
+	if (tag.beginsWith("BTN_")) {
+		jumpToPlanet(tag.substr(tag.getPosition(4), tag.end()));
 	}
 }
 

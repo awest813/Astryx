@@ -25,6 +25,7 @@
 #include "src/engines/kotorbase/gui/loadscreen.h"
 
 #include "src/engines/kotor2/module.h"
+#include "src/engines/kotor2/game.h"
 #include "src/engines/kotor2/creature.h"
 
 #include "src/engines/kotor2/gui/dialog.h"
@@ -38,7 +39,7 @@ namespace Engines {
 
 namespace KotOR2 {
 
-Module::Module(::Engines::Console &console) : KotORBase::Module(console) {
+Module::Module(Game &game, ::Engines::Console &console) : KotORBase::Module(game, console) {
 	_ingame = std::make_unique<IngameGUI>(*this);
 	_dialog = std::make_unique<DialogGUI>(*this);
 	_partySelection = std::make_unique<PartySelectionGUI>();

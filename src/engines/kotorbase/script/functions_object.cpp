@@ -924,26 +924,12 @@ void Functions::getModuleItemAcquired(Aurora::NWScript::FunctionContext &ctx) {
 	    _game->getModule().getLastAcquiredItem());
 }
 
-void Functions::getModuleItemAcquiredFrom(Aurora::NWScript::FunctionContext &ctx) {
-	// Returns the object from which the item was acquired.
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
-}
 
-// ---------------------------------------------------------------------------
-// SetCustomToken — dialogue token replacement
-// ---------------------------------------------------------------------------
-
-void Functions::setCustomToken(Aurora::NWScript::FunctionContext &ctx) {
-	// SetCustomToken(int nCustomTokenNumber, string sTokenValue)
-	int tokenNum = ctx.getParams()[0].getInt();
-	const Common::UString &value = ctx.getParams()[1].getString();
-	_customTokens[tokenNum] = value;
-}
-
-// ---------------------------------------------------------------------------
-// Perception state queries — OnPerceive script support
-// ---------------------------------------------------------------------------
-
+void Functions::getModuleItemAcquiredFrom(Aurora::NWScript::FunctionContext &ctx) {
+	// Returns the object from which the item was acquired.
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+}
+
 void Functions::getLastPerceived(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
@@ -1136,66 +1122,6 @@ void Functions::beginConversation(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = 1;
 }
 
-void Functions::getItemInSlot(Aurora::NWScript::FunctionContext &ctx) {
-	int slot = ctx.getParams()[0].getInt();
-	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
-	if (!creature) {
-		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
-		return;
-	}
-
-	ctx.getReturn() = creature->getEquipedItem(static_cast<InventorySlot>(slot));
-}
-
-void Functions::getItemPossessedBy(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
-	const Common::UString &tag = ctx.getParams()[1].getString();
-	if (!creature) {
-		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
-		return;
-	}
-
-	ctx.getReturn() = creature->findInventoryItemByTag(tag);
-}
-
-void Functions::getIsEnemy(Aurora::NWScript::FunctionContext &ctx) {
-	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
-	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
-	if (!target || !source) {
-		ctx.getReturn() = 0;
-		return;
-	}
-	// Basic enemy check: Factions are different and one is hostile.
-	ctx.getReturn() = (target->getFaction() != source->getFaction()) ? 1 : 0;
-}
-
-void Functions::getIsFriend(Aurora::NWScript::FunctionContext &ctx) {
-	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
-	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
-	ctx.getReturn() = (target && source && target->getFaction() == source->getFaction()) ? 1 : 0;
-}
-
-void Functions::getIsNeutral(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = 0;
-}
-
-void Functions::getIsReactionTypeHostile(Aurora::NWScript::FunctionContext &ctx) {
-	getIsEnemy(ctx);
-}
-
-void Functions::getIsReactionTypeFriendly(Aurora::NWScript::FunctionContext &ctx) {
-	getIsFriend(ctx);
-}
-
-void Functions::getIsReactionTypeNeutral(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = 0;
-}
-
-void Functions::getLockUnlockDC(Aurora::NWScript::FunctionContext &ctx) {
-	const Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated ? situated->getLockDC() : 0;
-}
-
 void Functions::getLockKeyTag(Aurora::NWScript::FunctionContext &ctx) {
 	const Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
 	ctx.getReturn() = situated ? situated->getKeyTag() : Common::UString();
@@ -1211,7 +1137,7 @@ void Functions::clearAllEffects(Aurora::NWScript::FunctionContext &ctx) {
 	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
 	if (object) {
 		// Logic to clear effects
-		debugC(Common::kDebugEngineLogic, 1, "ClearAllEffects on %s", object->getTag().c_str());
+		warning("ClearAllEffects on %s", object->getTag().c_str());
 	}
 }
 
@@ -1228,8 +1154,8 @@ void Functions::getWasForcePowerSuccessful(Aurora::NWScript::FunctionContext &ct
 }
 
 
-void Functions::getFirstEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kEffectVFX, 0); }
-void Functions::getNextEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kEffectVFX, 0); }
+void Functions::getFirstEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
+void Functions::getNextEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
 void Functions::removeEffect(Aurora::NWScript::FunctionContext &ctx) {}
 void Functions::getIsEffectValid(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
 void Functions::getEffectDurationType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }

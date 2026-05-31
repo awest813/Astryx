@@ -1,4 +1,4 @@
-#include "src/common/debug.h"
+#include "src/common/util.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotor/encounters_ebon.h"
 
@@ -6,7 +6,7 @@ namespace Engines {
 namespace KotOR {
 
 void performHyperspaceJump(KotORBase::Module &module) {
-	debug("Orchestrating Ebon Hawk Hyperspace Jump...");
+	status("Orchestrating Ebon Hawk Hyperspace Jump...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
@@ -22,7 +22,7 @@ void performHyperspaceJump(KotORBase::Module &module) {
 }
 
 void performPlanetArrival(KotORBase::Module &module) {
-	debug("Orchestrating Ebon Hawk Planet Arrival...");
+	status("Orchestrating Ebon Hawk Planet Arrival...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
@@ -41,7 +41,7 @@ void performPlanetArrival(KotORBase::Module &module) {
 }
 
 void performTurretMinigame(KotORBase::Module &module) {
-	debug("Orchestrating Turret Minigame Transition...");
+	status("Orchestrating Turret Minigame Transition...");
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);

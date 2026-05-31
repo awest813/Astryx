@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <random>
 #include "src/common/random.h"
 #include "src/engines/kotor/pazaak.h"
 
@@ -12,10 +13,11 @@ void PazaakEngine::startMatch(const std::vector<int> &playerSideDeck, const std:
 	_opponent.sideDeck = opponentSideDeck;
 	
 	// Draw 4 random cards from side deck for the hand
-	std::random_shuffle(_player.sideDeck.begin(), _player.sideDeck.end());
+	std::mt19937 rng(std::random_device{}());
+	std::shuffle(_player.sideDeck.begin(), _player.sideDeck.end(), rng);
 	_player.hand.assign(_player.sideDeck.begin(), _player.sideDeck.begin() + 4);
 
-	std::random_shuffle(_opponent.sideDeck.begin(), _opponent.sideDeck.end());
+	std::shuffle(_opponent.sideDeck.begin(), _opponent.sideDeck.end(), rng);
 	_opponent.hand.assign(_opponent.sideDeck.begin(), _opponent.sideDeck.begin() + 4);
 
 	_player.setsWon = 0;

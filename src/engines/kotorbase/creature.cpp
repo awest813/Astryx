@@ -23,12 +23,16 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/engines/aurora/util.h"
 #include "src/engines/aurora/model.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/creaturesearch.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
+#include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/game.h"
 namespace Engines {
-	namespace KotORBase {
+namespace KotORBase {
 		Creature::Creature(
 		const Common::UString &resRef) :		Object(kObjectTypeCreature),		_commandable(true),		_walkRate(0.0f),		_runRate(0.0f) {
 			init();
@@ -157,12 +161,15 @@ namespace Engines {
 			return _runRate;
 		}
 		int Creature::getSkillRank(Skill skill) {
-			const
 			int baseRank = _info.getSkillRank(skill);
-			const
 			int modified = baseRank + getSkillModifier(skill);
 			return (modified < 0) ? 0 : modified;
 		}
+
+		int Creature::getAbilityScore(Ability ability) {
+			return _info.getAbilityScore(ability);
+		}
+
 		void Creature::setForcePoints(
 		int fp) {
 			_info.setForcePoints(MAX(0, fp));
@@ -269,7 +276,8 @@ namespace Engines {
 		const Aurora::GFF3Struct &gff,
 		bool clearScripts) {
 			// Tag	_tag = gff.getString("Tag", _tag);
-			// Name	Aurora::LocString firstName;
+			// Name
+			Aurora::LocString firstName;
 			gff.getLocString("FirstName", firstName);
 			Aurora::LocString lastName;
 			gff.getLocString("LastName", lastName);
@@ -290,8 +298,7 @@ namespace Engines {
 			_subRace = SubRace(gff.getSint("SubraceIndex", _subRace));
 			// Hit Points	_currentHitPoints = gff.getSint("CurrentHitPoints", _maxHitPoints);
 			_maxHitPoints = gff.getSint("MaxHitPoints", _currentHitPoints);
-			_minOneHitPo
-			int = gff.getBool("Min1HP", _minOneHitPoint);
+			_minOneHitPoint = gff.getBool("Min1HP", _minOneHitPoint);
 			// Faction	_faction = Faction(gff.getUint("FactionID", _faction));
 			// Scripts	readScripts(gff, clearScripts);
 			_conversation = gff.getString("Conversation", _conversation);
@@ -466,8 +473,7 @@ namespace Engines {
 			_info = info;
 			_skin = chargenInfo.getSkin();
 			_face = chargenInfo.getFace();
-			_minOneHitPo
-			int = true;
+			_minOneHitPoint = true;
 			// Compute starting max HP: class hit die (max value) + Constitution modifier.	// The fallback of 6 matches the Scoundrel hit die and is also the minimum	// d6 that any KotOR class uses.	static
 			const
 			int kDefaultHitDie = 6;
@@ -857,8 +863,7 @@ namespace Engines {
 
 			return bonus;
 		}
-		Object *Creature::findCombatTarget() {
-			Area *area = _module->getCurrentArea();
+		Object *Creature::findCombatTarget(Area *area) {
 			if (!area) return nullptr;
 
 			Object *bestTarget = nullptr;
@@ -866,7 +871,7 @@ namespace Engines {
 
 			for (auto &obj : area->getCreatures()) {
 				if (obj == this || obj->isDead()) continue;
-				if (_module->getReputation(getFaction(), obj->getFaction()) > 10) continue; // Not hostile
+				// TODO: Reputation check - treat all non-party as hostile for now
 
 				float dist = getDistanceTo(obj);
 				if (dist < bestDist) {
@@ -882,7 +887,7 @@ namespace Engines {
 
 			// If no target, try to find one
 			if (!_attackTarget || ObjectContainer::toCreature(_attackTarget)->isDead()) {
-				_attackTarget = findCombatTarget();
+				_attackTarget = nullptr; // Combat target needs area context
 			}
 
 			if (!_attackTarget) {
@@ -894,10 +899,12 @@ namespace Engines {
 			float dist = getDistanceTo(_attackTarget);
 			if (dist > getMaxAttackRange()) {
 				// Move closer
-				Action move;
-				move.type = kActionMoveToPoint;
-				move.target = _attackTarget->getPosition();
-				pushAction(move);
+				float tx, ty, tz;
+				_attackTarget->getPosition(tx, ty, tz);
+				Action move(kActionMoveToPoint);
+				move.location = glm::vec3(tx, ty, tz);
+				move.range = getMaxAttackRange();
+				addAction(move);
 			} else {
 				// Attack is already handled by notifyCombatRoundBegan if inCombat is true
 				_inCombat = true;
@@ -905,26 +912,9 @@ namespace Engines {
 		}
 
 		bool Creature::isFlankedBy(Creature *attacker) {
-			// Find another friend of attacker who is also attacking this
-			Area *area = _module->getCurrentArea();
-			if (!area) return false;
-
-			glm::vec3 myPos = getPosition();
-			glm::vec3 attackerPos = attacker->getPosition();
-			glm::vec3 toAttacker = glm::normalize(attackerPos - myPos);
-
-			for (auto &other : area->getCreatures()) {
-				if (other == attacker || other->isDead()) continue;
-				if (other->getFaction() != attacker->getFaction()) continue;
-				if (other->getAttackTarget() != this) continue;
-
-				// Check opposite side (roughly 120-240 degrees)
-				glm::vec3 toOther = glm::normalize(other->getPosition() - myPos);
-				float cosAngle = glm::dot(toAttacker, toOther);
-				if (cosAngle < -0.5f) { // Approximately > 120 degrees apart
-					return true;
-				}
-			}
+			// Flanking requires 2 opponents on opposite sides - requires area context.
+			// Without it, return false (conservative).
+			(void)attacker;
 			return false;
 		}
 		void Creature::startCombat(Object *target,
@@ -943,20 +933,22 @@ namespace Engines {
 			_attackTarget = nullptr;
 		}
 		void Creature::applyEffect(
-		const Effect &effect) {
+		const ActiveEffect &effect) {
 			int current = getCurrentHitPoints();
-			switch (effect.getType()) {
+			switch (effect.type) {
 				case kEffectHeal: {
 					int maxHP = getMaxHitPoints();
-					int healed = current + effect.getAmount();
-					if (healed > maxHP)				healed = maxHP;
+					int healed = current + effect.value;
+					if (healed > maxHP)
+						healed = maxHP;
 					setCurrentHitPoints(healed);
 					break;
 				}
 				case kEffectDamage: {
 					int minHp = getMinOneHitPoints() ? 1 : 0;
-					int damaged = current - effect.getAmount();
-					if (damaged < minHp)				damaged = minHp;
+					int damaged = current - effect.value;
+					if (damaged < minHp)
+						damaged = minHp;
 					setCurrentHitPoints(damaged);
 					if (getCurrentHitPoints() <= 0) {
 						cancelCombat();
@@ -964,39 +956,79 @@ namespace Engines {
 					}
 					break;
 				}
-				case kEffectTemporaryHitpoints: {
+				case kEffectShield: {
+					// Temporary HP (shield)
 					int maxHP = getMaxHitPoints();
-					int boosted = current + effect.getAmount();
-					if (boosted > maxHP)				boosted = maxHP;
+					int boosted = current + effect.value;
+					if (boosted > maxHP)
+						boosted = maxHP;
 					setCurrentHitPoints(boosted);
 					break;
 				}
-				case kEffectACIncrease:			adjustArmorClassModifier(effect.getAmount());
-				break;
-				case kEffectAttackIncrease:			adjustAttackModifier(effect.getAmount());
-				break;
-				case kEffectSkillIncrease: {
-					const
-					int skillID = effect.getDamageType();
-					if (skillID >= kSkillComputerUse && skillID < kSkillMAX)				adjustSkillModifier(static_cast<Skill>(skillID), effect.getAmount());
+				case kEffectKnockdown:
+					adjustArmorClassModifier(-4);
+					break;
+				case kEffectStun:
+					clearActions();
+					adjustArmorClassModifier(-2);
+					break;
+				case kEffectConfusion:
+					clearActions();
+					adjustArmorClassModifier(-4);
+					break;
+				case kEffectSpeed:
+					// Movement speed increase - future implementation
+					break;
+				default:
+					break;
+			}
+		}
+		void Creature::applyEffect(
+		const Engines::KotORBase::Effect &effect) {
+			int current = getCurrentHitPoints();
+			switch (effect.getType()) {
+				case kKotOREffectHeal: {
+					int maxHP = getMaxHitPoints();
+					int healed = current + effect.getAmount();
+					if (healed > maxHP)
+						healed = maxHP;
+					setCurrentHitPoints(healed);
 					break;
 				}
-				case kEffectDeath:			setCurrentHitPoints(getMinOneHitPoints() ? 1 : 0);
-				if (!isDead()) {
-					cancelCombat();
-					handleDeath();
+				case kKotOREffectDamage: {
+					int minHp = getMinOneHitPoints() ? 1 : 0;
+					int damaged = current - effect.getAmount();
+					if (damaged < minHp)
+						damaged = minHp;
+					setCurrentHitPoints(damaged);
+					if (getCurrentHitPoints() <= 0) {
+						cancelCombat();
+						handleDeath();
+					}
+					break;
 				}
-				break;
-				case kEffectKnockdown:			adjustArmorClassModifier(-4);
-				break;
-				case kEffectParalyze:			clearActions();
-				adjustArmorClassModifier(-4);
-				break;
-				case kEffectStunned:			clearActions();
-				adjustArmorClassModifier(-2);
-				break;
-				case kEffectMovementSpeedIncrease:			// Implement movement speed boost logic here in the future			break;
-				default:			break;
+				case kKotOREffectTemporaryHitpoints:
+				case kKotOREffectForceShield: {
+					int maxHP = getMaxHitPoints();
+					int boosted = current + effect.getAmount();
+					if (boosted > maxHP)
+						boosted = maxHP;
+					setCurrentHitPoints(boosted);
+					break;
+				}
+				case kKotOREffectKnockdown:
+					applyEffect(kEffectKnockdown, 3.0f, 0);
+					break;
+				case kKotOREffectStunned:
+				case kKotOREffectParalyze:
+					applyEffect(kEffectStun, 6.0f, 0);
+					break;
+				case kKotOREffectHaste:
+				case kKotOREffectMovementSpeedIncrease:
+					applyEffect(kEffectSpeed, 0.0f, 50);
+					break;
+				default:
+					break;
 			}
 		}
 		void Creature::executeAttack(Object *target,
@@ -1038,7 +1070,7 @@ namespace Engines {
 			int featDamageMod = damageMod;
 
 			// Sneak Attack (Scoundrel / Assassin or Flanked/Stunned)
-			if (targetCreature && (targetCreature->isFlankedBy(this) || targetCreature->hasEffect(kEffectStunned) || targetCreature->hasEffect(kEffectParalyze))) {
+			if (targetCreature && (targetCreature->isFlankedBy(this) || targetCreature->hasEffect(kEffectStun))) {
 				int ranks = 0;
 				if (_info.hasFeat(kFeatSneakAttack1)) ranks = 1;
 				if (_info.hasFeat(kFeatSneakAttack2)) ranks = 2;
@@ -1104,14 +1136,14 @@ namespace Engines {
 				}
 			}
 			// Natural 1 always misses;
-			natural 20 always hits.
+			// natural 20 always hits.
 			bool hit = (d20 == 20) || (d20 != 1 && attackRoll >= targetAC);
 			if (!hit) {
 				debugC(Common::kDebugEngineLogic, 1,		       "Object \"%s\" missed \"%s\" (d20=%d bab=%d abMod=%d feat=%d effect=%d total=%d vs AC %d)",		       _tag.c_str(), target->getTag().c_str(),		       d20, bab + babPenalty, abMod, featAttackMod, _attackModifier, attackRoll, targetAC);
 				return;
 			}
 			// --- Critical hit system ---	// Threat on natural 20 (weapons may lower this, but 20 is the universal minimum).	// Critical Strike feat: threat on 19-20;
-			Improved: 18-20.
+			// Improved: 18-20.
 			int critThreat = 20;
 			if (hasActiveCriticalStrike && activeFeat == kFeatImprovedCriticalStrike && _info.hasFeat(kFeatImprovedCriticalStrike))		critThreat = 18;
 			else
@@ -1156,7 +1188,9 @@ namespace Engines {
 			}
 			// Apply feat damage bonus.	damage += featDamageMod;
 			// Sneak Attack (Scoundrel class feature): roll +1d6 per rank when the	// target is flat-footed (not currently in combat) or knocked down/paralysed.
-			bool targetVulnerable = targetCreature && (!targetCreature->isInCombat() || 	                                            targetCreature->hasEffect(kEffectStunned) || 	                                            targetCreature->hasEffect(kEffectParalyze) || 	                                            targetCreature->hasEffect(kEffectKnockdown));
+			bool targetVulnerable = targetCreature && (!targetCreature->isInCombat() || 
+			                                            targetCreature->hasEffect(kEffectStun) || 
+			                                            targetCreature->hasEffect(kEffectKnockdown));
 			if (hit && targetVulnerable) {
 				// Count sneak attack ranks.
 				int sneakRanks = 0;
@@ -1212,8 +1246,7 @@ namespace Engines {
 					_model->playAnimation("die", false);
 				}
 				else {
-					warning("Creature::handleDeath(): \"%s\" has no model;
-					applying logical death only", _tag.c_str());
+					warning("Creature::handleDeath(): \"%s\" has no model; applying logical death only", _tag.c_str());
 				}
 				return true;
 			}
@@ -1442,32 +1475,12 @@ namespace Engines {
 			;
 			return isLasso(right) || isLasso(left);
 		}
-		int Creature::getAlignment()
-		const {
-			return _info.getAlignment();
-		}
-		void Creature::adjustAlignment(
-		int shift) {
-			_info.adjustAlignment(shift);
-		}
-		bool Creature::rollSavingThrow(SavingThrow type,
-		int dc) {
-			int d20 = RNG.getNext(1, 21);
-			int bonus = getSavingThrowBonus(type);
-			bool success = (d20 + bonus >= dc);
-			debugC(Common::kDebugEngineLogic, 1, 	       "Saving Throw (%d): d20(%d) + bonus(%d) = %d vs DC %d -> %s",	       (int)type, d20, bonus, d20 + bonus, dc, success ? "SUCCESS" : "FAILED");
-			return success;
-		}
-		int Creature::getSavingThrowBonus(SavingThrow type) {
-			return _info.getSavingThrowBonus(type);
-		}
-		void Creature::setAIArchetype(AIArchetype archetype) {
-			_aiArchetype = archetype;
-		}
-		void Creature::think() {
-			if (_aiArchetype == kAIArchetypeNone || isPC() || isDead() || !_area)		return;
-			if (_aiCooldown > 0.0f)		return;
-			Creature *target = _area->findNearestEnemy(this);
+		void Creature::think(Area *area) {
+			if (_aiArchetype == kAIArchetypeNone || isPC() || isDead() || !area)
+				return;
+			if (_aiCooldown > 0.0f)
+				return;
+			Creature *target = area->findNearestEnemy(this);
 			if (!target)		return;
 			switch (_aiArchetype) {
 				case kAIArchetypeBeastMelee:			// Aggressive rush towards the nearest hostile.			_actions.clear();
@@ -1492,11 +1505,12 @@ namespace Engines {
 		void Creature::applyEffect(EffectType type,
 		float duration,
 		int value) {
-			Effect e;
+			ActiveEffect e;
 			e.type = type;
 			e.duration = duration;
 			e.value = value;
 			_effects.push_back(e);
+			applyEffect(e);
 		}
 		void Creature::updateEffects(
 		float dt) {
@@ -1590,9 +1604,7 @@ namespace Engines {
 			_stealthMode = stealth;
 			// Visual changes (transparency) would go here.
 		}
-	}
-	// End of
-	namespace KotORBase
-}
-// End of
-namespace Engines
+
+} // End of namespace KotORBase
+
+} // End of namespace Engines

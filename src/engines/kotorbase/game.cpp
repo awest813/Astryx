@@ -78,6 +78,10 @@ Module &Game::getModule() {
 	return *_module;
 }
 
+void Game::saveGame(const Common::UString &slot, const Common::UString &name) {
+	_module->saveGame(slot, name);
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

@@ -152,8 +152,8 @@ void CameraController::processRotation(float frameTime) {
 
 			float tx, ty, tz;
 			lookAt->getPosition(tx, ty, tz);
-			float dx = tx - CameraMan.getX();
-			float dy = ty - CameraMan.getY();
+			float dx = tx - CameraMan.getPosition()[0];
+			float dy = ty - CameraMan.getPosition()[1];
 			float destYaw = atan2(dy, dx);
 			
 			// Simple lerp (normalized for wrap-around)
@@ -166,8 +166,8 @@ void CameraController::processRotation(float frameTime) {
 			// Instant Look-at
 			float tx, ty, tz;
 			lookAt->getPosition(tx, ty, tz);
-			float dx = tx - CameraMan.getX();
-			float dy = ty - CameraMan.getY();
+			float dx = tx - CameraMan.getPosition()[0];
+			float dy = ty - CameraMan.getPosition()[1];
 			_yaw = atan2(dy, dx);
 		}
 		
@@ -225,7 +225,6 @@ void CameraController::processMovement(float frameTime) {
 		}
 
 		CameraMan.setPosition(_target.x, _target.y, _target.z);
-		CameraMan.setDistance(_actualDistance);
 		return;
 	}
 

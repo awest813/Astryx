@@ -1,4 +1,4 @@
-#include "src/common/debug.h"
+#include "src/common/util.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/area.h"
@@ -8,7 +8,7 @@ namespace Engines {
 namespace KotOR {
 
 void performMandalorianAmbush(KotORBase::Module &module) {
-	debug("Orchestrating Mandalorian Ambush in danm14...");
+	status("Orchestrating Mandalorian Ambush in danm14...");
 
 	// 1. Lock player input for the reveal
 	module.setPlayerInputEnabled(false);
@@ -45,7 +45,7 @@ void performMandalorianAmbush(KotORBase::Module &module) {
 }
 
 void performKinrathSwarm(KotORBase::Module &module) {
-	debug("Orchestrating Kinrath Swarm...");
+	status("Orchestrating Kinrath Swarm...");
 
 	// Kinrath ambush usually involves sudden spawns and poison archetypes.
 	KotORBase::Creature *k1 = module.createCreatureByTemplate("dan14_kinrath1");
@@ -58,7 +58,7 @@ void performKinrathSwarm(KotORBase::Module &module) {
 }
 
 void performStarMapReveal(KotORBase::Module &module) {
-	debug("Orchestrating Star Map Reveal Climax...");
+	status("Orchestrating Star Map Reveal Climax...");
 
 	// 1. Cinematic lockdown
 	module.setPlayerInputEnabled(false);
@@ -66,7 +66,7 @@ void performStarMapReveal(KotORBase::Module &module) {
 	// 2. Open the inner Star Map doors
 	// We use SignalEncounter with a sub-ID that scripts can handle if needed
 	// or we can manipulate doors directly if we have tags.
-	KotORBase::Area *area = module.getArea();
+	KotORBase::Area *area = module.getCurrentArea();
 	if (area) {
 		KotORBase::Object *door = area->getObjectByTag("dan17_starmap_door");
 		if (door) {

@@ -29,6 +29,11 @@
 
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/actionexecutor.h"
+#include "src/common/random.h"
+#include "src/common/debug.h"
+#include "src/aurora/2dafile.h"
+#include "src/aurora/2dareg.h"
+
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/door.h"
@@ -40,6 +45,9 @@ static const float kWalkDistance = 2.0f;
 namespace Engines {
 
 namespace KotORBase {
+std::map<uint32_t, ActionExecutor::SpellInfo> ActionExecutor::_spells;
+bool ActionExecutor::_spellsLoaded = false;
+
 
 void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 	if (!action.initialized) {
@@ -126,7 +134,7 @@ void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx
 			if (door) door->open(ctx.creature);
 			info("Object unlocked with key: %s", keyTag.c_str());
 		} else {
-			ctx.creature->speakString(Common::UString("A specific key is required to open this."));
+			status("ActionSpeakString [%s]: A specific key is required to open this.", ctx.creature->getTag().c_str());
 		}
 		return;
 	}
@@ -143,7 +151,7 @@ void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx
 		if (door) door->open(ctx.creature);
 		info("Security Check SUCCESS: %d + %d = %d vs DC %d", d20Roll, securityRank, total, dc);
 	} else {
-		ctx.creature->speakString(Common::UString("Security check failed."));
+		status("ActionSpeakString [%s]: Security check failed.", ctx.creature->getTag().c_str());
 		info("Security Check FAILURE: %d + %d = %d vs DC %d", d20Roll, securityRank, total, dc);
 	}
 }
@@ -333,7 +341,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 			for (int i = 0; i < ctx.area->_module->getPartyMemberCount(); ++i) {
 				Creature *member = ctx.area->_module->getPartyMemberByIndex(i);
 				if (member && !member->isDead())
-					member->applyEffect(Effect(kEffectHeal, 15));
+					member->applyEffect(kEffectHeal, 0.0f, 15);
 			}
 			break;
 
@@ -345,7 +353,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					int level = caster->getHitDice();
 					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 					if (!target->rollSavingThrow(kSavingThrowWill, dc)) {
-						target->applyEffect(Effect(kEffectStun, 9.0f));
+						target->applyEffect(kEffectStun, 9.0f, 0);
 						debugC(Common::kDebugEngineLogic, 1, "Force Stun SUCCESS on %s", target->getTag().c_str());
 					}
 				}
@@ -360,12 +368,12 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					int level = caster->getHitDice();
 					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
-						target->applyEffect(Effect(kEffectKnockdown, 3.0f));
-						target->applyEffect(Effect(kEffectDamage, (float)level));
+						target->applyEffect(kEffectKnockdown, 3.0f, 0);
+						target->applyEffect(kEffectDamage, 0.0f, level);
 						debugC(Common::kDebugEngineLogic, 1, "Force Push SUCCESS on %s", target->getTag().c_str());
 					} else {
 						// Half damage on save
-						target->applyEffect(Effect(kEffectDamage, (float)level / 2.0f));
+						target->applyEffect(kEffectDamage, 0.0f, level / 2);
 					}
 				}
 			}
@@ -373,7 +381,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 
 		case 3: // Burst of Speed (Self)
 			caster->playAnimation("castself", false);
-			caster->applyEffect(Effect(kEffectMovementSpeedIncrease, 50));
+			caster->applyEffect(kEffectSpeed, 0.0f, 50);
 			break;
 
 		case 14: // Shock (Single target lightning)
@@ -389,7 +397,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					bool saved = target->rollSavingThrow(kSavingThrowWill, dc);
 					if (saved) damage /= 2;
 
-					target->applyEffect(Effect(kEffectDamage, damage));
+					target->applyEffect(kEffectDamage, 0.0f, damage);
 					// Visual effect hook would go here
 					debugC(Common::kDebugEngineLogic, 1, "Force Lightning hit %s for %d", target->getTag().c_str(), damage);
 				}
@@ -417,8 +425,8 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 					
 					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
-						target->applyEffect(Effect(kEffectStun, 6.0f));
-						target->applyEffect(Effect(kEffectDamage, level * 2));
+						target->applyEffect(kEffectStun, 6.0f, 0);
+						target->applyEffect(kEffectDamage, 0.0f, level * 2);
 					}
 				}
 			}
@@ -429,7 +437,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 				caster->playAnimation("castself", false);
 				Creature *target = ObjectContainer::toCreature(action.object);
 				if (target)
-					target->applyEffect(Effect(kEffectStun, 6.0f));
+					target->applyEffect(kEffectStun, 6.0f, 0);
 			}
 			break;
 
@@ -458,7 +466,7 @@ void ActionExecutor::loadSpells() {
 
 	try {
 		const Aurora::TwoDAFile &twoda = TwoDAReg.get2DA("spells");
-		for (size_t i = 0; i < twoda.getRows(); ++i) {
+		for (size_t i = 0; i < twoda.getRowCount(); ++i) {
 			const Aurora::TwoDARow &row = twoda.getRow(i);
 			
 			SpellInfo info;

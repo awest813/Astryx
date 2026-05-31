@@ -348,6 +348,8 @@ enum FeatID {
 	kFeatImprovedCriticalStrike =  9,
 	kFeatRapidShot             = 10,
 	kFeatImprovedRapidShot     = 11,
+	kFeatPowerBlast            = 12,
+	kFeatSniperShot            = 13,
 	kFeatSneakAttack1          = 14,
 	kFeatSneakAttack2          = 15,
 	kFeatSneakAttack3          = 16,
@@ -366,7 +368,9 @@ enum FeatID {
 	
 	kFeatJediDefense           = 149,
 	kFeatImprovedJediDefense   = 150,
-	kFeatMasterJediDefense     = 151
+	kFeatMasterJediDefense     = 151,
+	kFeatConditioning          = 152,
+	kFeatToughness             = 153
 };
 
 enum CameraMode {

@@ -40,6 +40,8 @@ class Console;
 
 namespace KotORBase {
 
+class Functions;
+
 class Game {
 public:
 	Game(Engines::Console &console);

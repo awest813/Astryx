@@ -29,6 +29,7 @@
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/store.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/gui/inventoryitem.h"
 
 #include "src/engines/kotor/gui/ingame/store.h"
@@ -78,7 +79,7 @@ void StoreGUI::updatePrice() {
 	int selectedPlayerIdx = lbPlayer->getSelectedIndex();
 
 	// Charisma-based price modifiers (1.0 +/- 0.05 per mod point)
-	float chaMod = pc->getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f;
+	float chaMod = pc->getCreatureInfo().getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f;
 	float buyMultiplier = 1.0f - chaMod;
 	float sellMultiplier = 1.0f + chaMod;
 
@@ -136,7 +137,7 @@ void StoreGUI::callbackActive(::Engines::Widget &widget) {
 		std::advance(it, selectedIdx);
 		KotORBase::Item item(it->second.tag);
 
-		float buyMultiplier = 1.0f - (pc->getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
+		float buyMultiplier = 1.0f - (pc->getCreatureInfo().getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
 		int price = static_cast<int>(_store.getBuyPrice(item, *pc) * buyMultiplier);
 
 		if (pc->getInventory().getGold() >= (uint32_t)price) {
@@ -164,7 +165,7 @@ void StoreGUI::callbackActive(::Engines::Widget &widget) {
 		std::advance(it, selectedIdx);
 		KotORBase::Item item(it->second.tag);
 
-		float sellMultiplier = 1.0f + (pc->getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
+		float sellMultiplier = 1.0f + (pc->getCreatureInfo().getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
 		int price = static_cast<int>(_store.getSellPrice(item, *pc) * sellMultiplier);
 
 		_store.getInventory().addGold(-price);

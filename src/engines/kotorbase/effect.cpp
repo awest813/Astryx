@@ -28,13 +28,13 @@ namespace Engines {
 
 namespace KotORBase {
 
-Effect::Effect(EffectType type, int amount, int damageType) :
+Effect::Effect(KotOREffectType type, int amount, int damageType) :
 		_type(type),
 		_amount(amount),
 		_damageType(damageType) {
 }
 
-EffectType Effect::getType() const {
+KotOREffectType Effect::getType() const {
 	return _type;
 }
 

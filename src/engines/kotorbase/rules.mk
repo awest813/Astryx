@@ -56,6 +56,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/round.h \
     src/engines/kotorbase/effect.h \
     src/engines/kotorbase/talent.h \
+    src/engines/kotorbase/store.h \
     $(EMPTY)
 
 src_engines_kotorbase_libkotorbase_la_SOURCES += \
@@ -90,6 +91,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/round.cpp \
     src/engines/kotorbase/effect.cpp \
     src/engines/kotorbase/talent.cpp \
+    src/engines/kotorbase/store.cpp \
     $(EMPTY)
 
 include src/engines/kotorbase/script/rules.mk

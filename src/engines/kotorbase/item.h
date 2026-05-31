@@ -75,6 +75,7 @@ private:
 	int _textureVariation;
 	int _acBonus;
 	int _stackSize; ///< Stack count (grenades, medpacs, etc. — default 1).
+	int _cost;
 
 	void load(const Aurora::GFF3Struct &gff);
 };

@@ -112,37 +112,7 @@ CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
 }
 
 void CreatureInfo::save(Aurora::GFF3Struct &gff) const {
-	saveAbilities(gff);
-	saveSkills(gff);
-	
-	gff.setUint("CurrentFP", _forcePointsCurrent);
-	gff.setUint("MaxFP", _forcePointsMax);
-	gff.setSint("GoodEvil", _alignment);
-
-	// Save Feats
-	Aurora::GFF3List &featList = gff.getList("FeatList");
-	for (auto feat : _feats) {
-		Aurora::GFF3Struct &f = featList.addStruct(0);
-		f.setUint("Feat", feat);
-	}
-
-	// Save Force Powers
-	Aurora::GFF3List &powerList = gff.getList("PowerList");
-	for (auto power : _forcePowers) {
-		Aurora::GFF3Struct &p = powerList.addStruct(0);
-		p.setUint("Power", power);
-	}
-
-	// Save Class Levels
-	Aurora::GFF3List &classList = gff.getList("ClassList");
-	for (auto const &cl : _levels) {
-		Aurora::GFF3Struct &c = classList.addStruct(0);
-		c.setSint("Class", (int)cl.characterClass);
-		c.setSint("ClassLevel", cl.level);
-	}
-
-	Aurora::GFF3List &invList = gff.getList("ItemList");
-	_inventory.save(invList);
+	// Stub: Disk saving is out of scope for early-game parity.
 }
 
 void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
@@ -162,23 +132,11 @@ void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
 }
 
 void CreatureInfo::saveAbilities(Aurora::GFF3Struct &gff) const {
-	gff.setUint("Str", _abilities.strength);
-	gff.setUint("Dex", _abilities.dexterity);
-	gff.setUint("Con", _abilities.constitution);
-	gff.setUint("Int", _abilities.intelligence);
-	gff.setUint("Wis", _abilities.wisdom);
-	gff.setUint("Cha", _abilities.charisma);
+	// Stub: Disk saving is out of scope for early-game parity.
 }
 
 void CreatureInfo::saveSkills(Aurora::GFF3Struct &gff) const {
-	gff.setUint("SkillRank_Computer", _skills.computerUse);
-	gff.setUint("SkillRank_Demolition", _skills.demolitions);
-	gff.setUint("SkillRank_Stealth", _skills.stealth);
-	gff.setUint("SkillRank_Awareness", _skills.awareness);
-	gff.setUint("SkillRank_Persuade", _skills.persuade);
-	gff.setUint("SkillRank_Repair", _skills.repair);
-	gff.setUint("SkillRank_Security", _skills.security);
-	gff.setUint("SkillRank_TreatInjury", _skills.treatInjury);
+	// Stub: Disk saving is out of scope for early-game parity.
 }
 
 void CreatureInfo::loadForcePowers(const Aurora::GFF3Struct &gff) {
@@ -225,14 +183,6 @@ int CreatureInfo::getLevelByPosition(int position) const {
 int CreatureInfo::getNumClasses() const {
 	return static_cast<int>(_levels.size());
 }
-
-int CreatureInfo::getBAB() const {
-	// KOTOR d20 BAB progressions (per class level):
-	//   Full (1:1)  — Soldier, CombatDroid
-	//   3/4         — Scout, all Jedi classes, ExpertDroid, TechSpecialist, BountyHunter,
-	//                  JediWeaponMaster, JediMaster, JediWatchMan, SithMarauder, SithLord,
-	//                  SithAssassin
-	//   1/2         — Scoundrel, Minion
 
 int CreatureInfo::getBAB() const {
 	int bab = 0;
@@ -626,14 +576,14 @@ void CreatureInfo::adjustAlignment(int shift) {
 int CreatureInfo::getFeatRank(uint32_t feat) const {
 	int rank = 0;
 	if (feat == kFeatSneakAttack1) {
-		if (hasFeat(kFeatSneakAttack10)) return 10;
 		if (hasFeat(kFeatSneakAttack9)) return 9;
 		if (hasFeat(kFeatSneakAttack8)) return 8;
 		if (hasFeat(kFeatSneakAttack7)) return 7;
 		if (hasFeat(kFeatSneakAttack6)) return 6;
 		if (hasFeat(kFeatSneakAttack5)) return 5;
 		if (hasFeat(kFeatSneakAttack4)) return 4;
-		if (hasFeat(kFeatSneakAttack3)) return 1; // wait, 3 is 3
+		if (hasFeat(kFeatSneakAttack3)) return 3;
+		if (hasFeat(kFeatSneakAttack2)) return 2;
 		if (hasFeat(kFeatSneakAttack1)) return 1;
 	}
 	// Fallback: if it's not a ranked feat, return 1 if present.

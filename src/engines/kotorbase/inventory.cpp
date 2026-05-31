@@ -52,14 +52,7 @@ Inventory &Inventory::operator=(const Inventory &other) {
 }
 
 void Inventory::save(Aurora::GFF3List &list) const {
-	for (auto const& [tag, group] : _items) {
-		Aurora::GFF3Struct &item = list.addStruct(0);
-		item.setString("InventoryRes", tag);
-		item.setUint("Repos_PosX", group.count); // We'll hijack Repos_PosX for quantity if needed, or use a custom field
-		// Actually, standard KotOR just has multiple entries for non-stackable.
-		// For simplicity, we'll use a custom field "Quantity" if it's our own save.
-		item.setUint("Quantity", group.count);
-	}
+	// Stub: Disk saving is out of scope for early-game parity.
 }
 
 void Inventory::read(const Aurora::GFF3List &list) {

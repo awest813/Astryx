@@ -50,11 +50,11 @@ void MenuJournal::fillJournal() {
 	if (!_module)
 		return;
 
-	Odyssey::WidgetListbox *list = getListbox("LIST_QUESTS");
+	Odyssey::WidgetListBox *list = getListBox("LIST_QUESTS");
 	if (!list)
 		return;
 
-	list->clear();
+	list->removeAllItems();
 
 	const std::map<Common::UString, uint32_t> &journal = _module->getJournal();
 	for (auto const& [quest, state] : journal) {
@@ -65,7 +65,7 @@ void MenuJournal::fillJournal() {
 		    (_category == kCategoryCompleted && !completed))
 			continue;
 
-		list->add(quest);
+		list->addItem(quest);
 	}
 
 	Odyssey::WidgetLabel *desc = getLabel("LBL_QUESTDESC");

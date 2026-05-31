@@ -22,32 +22,32 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{7963D483-D89A-369E-ACB1-561B173D89D6}</ProjectGuid>
+    <ProjectGuid>{97EF8660-D052-3D85-A0E3-12AE9CA05232}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <VcpkgEnabled>false</VcpkgEnabled>
     <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
     <Platform>x64</Platform>
-    <ProjectName>external_toluapp</ProjectName>
+    <ProjectName>tests_engines_kotorbase_test_dantooine_cinematic</ProjectName>
     <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
@@ -60,26 +60,35 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\allen\Astryx\build-new\lib\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">external_toluapp.dir\Debug\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">external_toluapp</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\allen\Astryx\build-new\lib\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">external_toluapp.dir\Release\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">external_toluapp</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\allen\Astryx\build-new\lib\MinSizeRel\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">external_toluapp.dir\MinSizeRel\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">external_toluapp</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\allen\Astryx\build-new\lib\RelWithDebInfo\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">external_toluapp.dir\RelWithDebInfo\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">external_toluapp</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\allen\Astryx\build-new\bin\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tests_engines_kotorbase_test_dantooine_cinematic.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tests_engines_kotorbase_test_dantooine_cinematic</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\allen\Astryx\build-new\bin\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">tests_engines_kotorbase_test_dantooine_cinematic.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">tests_engines_kotorbase_test_dantooine_cinematic</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\allen\Astryx\build-new\bin\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">tests_engines_kotorbase_test_dantooine_cinematic.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">tests_engines_kotorbase_test_dantooine_cinematic</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\allen\Astryx\build-new\bin\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">tests_engines_kotorbase_test_dantooine_cinematic.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">tests_engines_kotorbase_test_dantooine_cinematic</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/include" /external:I "C:/Users/allen/Astryx/tests/googletest/include" /external:I "C:/Users/allen/Astryx/tests/googletest"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -87,6 +96,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4250;4100;4127;4189;4245;4435;4510;4512;4610;4706;4710;4714;4305;4244;4267;4996</DisableSpecificWarnings>
       <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <FloatingPointModel></FloatingPointModel>
       <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
@@ -102,35 +112,63 @@
       <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
       <UseFullPaths>false</UseFullPaths>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING="xoreos 0.0.6";CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING="xoreos 0.0.6";BOOST_FILESYSTEM_NO_LIB;BOOST_FILESYSTEM_DYN_LINK=1;BOOST_DATE_TIME_NO_LIB;BOOST_DATE_TIME_DYN_LINK;BOOST_CONTAINER_NO_LIB;BOOST_CONTAINER_DYN_LINK;BOOST_LOCALE_NO_LIB;BOOST_LOCALE_DYN_LINK;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;FPM_64BIT;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING=\"xoreos 0.0.6\";CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;FPM_64BIT;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING=\"xoreos 0.0.6\";BOOST_FILESYSTEM_NO_LIB;BOOST_FILESYSTEM_DYN_LINK=1;BOOST_DATE_TIME_NO_LIB;BOOST_DATE_TIME_DYN_LINK;BOOST_CONTAINER_NO_LIB;BOOST_CONTAINER_DYN_LINK;BOOST_LOCALE_NO_LIB;BOOST_LOCALE_DYN_LINK;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\tests\googletest\include;C:\Users\allen\Astryx\tests\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\tests\googletest\include;C:\Users\allen\Astryx\tests\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
       <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
-    <Lib>
+    <PostBuildEvent>
+      <Message></Message>
+      <Command>setlocal
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary C:/Users/allen/Astryx/build-new/bin/Debug/tests_engines_kotorbase_test_dantooine_cinematic.exe -installedDir C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/debug/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>winmm.lib;imm32.lib;version.lib;mincore.lib;lib\Debug\tests_googletest_libgtest.la.lib;lib\Debug\tests_googletest_libgtest_main.la.lib;lib\Debug\tests_googletest_libgtest.la.lib;lib\Debug\engines_kotorbase.lib;lib\Debug\engines.lib;lib\Debug\engines_kotorbase.lib;lib\Debug\engines_odyssey.lib;lib\Debug\engines_eclipse.lib;lib\Debug\engines_aurora.lib;lib\Debug\events.lib;lib\Debug\common.lib;lib\Debug\external_mspack.lib;lib\Debug\video.lib;lib\Debug\video_codecs.lib;lib\Debug\sound.lib;lib\Debug\sound_decoders.lib;lib\Debug\graphics.lib;lib\Debug\graphics_images.lib;lib\Debug\graphics_shader.lib;lib\Debug\graphics_mesh.lib;lib\Debug\graphics_render.lib;lib\Debug\aurora.lib;lib\Debug\aurora_nwscript.lib;lib\Debug\aurora_lua_libluascript.la.lib;lib\Debug\aurora_actionscript.lib;lib\Debug\common.lib;lib\Debug\external_mspack.lib;lib\Debug\tests_version.lib;lib\Debug\external_imgui.lib;vcpkg_installed\x64-windows\debug\lib\iconv.lib;vcpkg_installed\x64-windows\debug\lib\charset.lib;vcpkg_installed\x64-windows\debug\lib\zlibd.lib;vcpkg_installed\x64-windows\debug\lib\boost_filesystem-vc145-mt-gd-x64-1_90.lib;vcpkg_installed\x64-windows\debug\lib\boost_locale-vc145-mt-gd-x64-1_90.lib;vcpkg_installed\x64-windows\lib\SDL2.lib;vcpkg_installed\x64-windows\debug\lib\OpenAL32.lib;vcpkg_installed\x64-windows\debug\lib\freetyped.lib;vcpkg_installed\x64-windows\debug\lib\mad.lib;vcpkg_installed\x64-windows\debug\lib\faad.lib;vcpkg_installed\x64-windows\debug\lib\ogg.lib;vcpkg_installed\x64-windows\debug\lib\vorbis.lib;vcpkg_installed\x64-windows\debug\lib\vorbisfile.lib;vcpkg_installed\x64-windows\debug\lib\vpx.lib;vcpkg_installed\x64-windows\debug\lib\lzma.lib;vcpkg_installed\x64-windows\debug\lib\libxml2.lib;lib\Debug\external_glew.lib;opengl32.lib;glu32.lib;lib\Debug\external_lua.lib;lib\Debug\external_toluapp.lib;lib\Debug\external_imgui.lib;vcpkg_installed\x64-windows\debug\lib\boost_date_time-vc145-mt-gd-x64-1_90.lib;vcpkg_installed\x64-windows\debug\lib\boost_container-vc145-mt-gd-x64-1_90.lib;winmm.lib;imm32.lib;version.lib;mincore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin;C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin/$(Configuration);C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/debug/bin;C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/debug/bin/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
-    </Lib>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/Users/allen/Astryx/build-new/lib/Debug/tests_engines_kotorbase_test_dantooine_cinematic.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/Users/allen/Astryx/build-new/bin/Debug/tests_engines_kotorbase_test_dantooine_cinematic.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/include" /external:I "C:/Users/allen/Astryx/tests/googletest/include" /external:I "C:/Users/allen/Astryx/tests/googletest"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
       <CallingConvention></CallingConvention>
       <DisableSpecificWarnings>4250;4100;4127;4189;4245;4435;4510;4512;4610;4706;4710;4714;4305;4244;4267;4996</DisableSpecificWarnings>
       <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <FloatingPointModel></FloatingPointModel>
       <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -146,37 +184,65 @@
       <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
       <UseFullPaths>false</UseFullPaths>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING="xoreos 0.0.6";CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING="xoreos 0.0.6";BOOST_FILESYSTEM_NO_LIB;BOOST_FILESYSTEM_DYN_LINK=1;BOOST_DATE_TIME_NO_LIB;BOOST_DATE_TIME_DYN_LINK;BOOST_CONTAINER_NO_LIB;BOOST_CONTAINER_DYN_LINK;BOOST_LOCALE_NO_LIB;BOOST_LOCALE_DYN_LINK;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING=\"xoreos 0.0.6\";CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING=\"xoreos 0.0.6\";BOOST_FILESYSTEM_NO_LIB;BOOST_FILESYSTEM_DYN_LINK=1;BOOST_DATE_TIME_NO_LIB;BOOST_DATE_TIME_DYN_LINK;BOOST_CONTAINER_NO_LIB;BOOST_CONTAINER_DYN_LINK;BOOST_LOCALE_NO_LIB;BOOST_LOCALE_DYN_LINK;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\tests\googletest\include;C:\Users\allen\Astryx\tests\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\tests\googletest\include;C:\Users\allen\Astryx\tests\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
       <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
-    <Lib>
+    <PostBuildEvent>
+      <Message></Message>
+      <Command>setlocal
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary C:/Users/allen/Astryx/build-new/bin/Release/tests_engines_kotorbase_test_dantooine_cinematic.exe -installedDir C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>winmm.lib;imm32.lib;version.lib;mincore.lib;lib\Release\tests_googletest_libgtest.la.lib;lib\Release\tests_googletest_libgtest_main.la.lib;lib\Release\tests_googletest_libgtest.la.lib;lib\Release\engines_kotorbase.lib;lib\Release\engines.lib;lib\Release\engines_kotorbase.lib;lib\Release\engines_odyssey.lib;lib\Release\engines_eclipse.lib;lib\Release\engines_aurora.lib;lib\Release\events.lib;lib\Release\common.lib;lib\Release\external_mspack.lib;lib\Release\video.lib;lib\Release\video_codecs.lib;lib\Release\sound.lib;lib\Release\sound_decoders.lib;lib\Release\graphics.lib;lib\Release\graphics_images.lib;lib\Release\graphics_shader.lib;lib\Release\graphics_mesh.lib;lib\Release\graphics_render.lib;lib\Release\aurora.lib;lib\Release\aurora_nwscript.lib;lib\Release\aurora_lua_libluascript.la.lib;lib\Release\aurora_actionscript.lib;lib\Release\common.lib;lib\Release\external_mspack.lib;lib\Release\tests_version.lib;lib\Release\external_imgui.lib;vcpkg_installed\x64-windows\debug\lib\iconv.lib;vcpkg_installed\x64-windows\debug\lib\charset.lib;vcpkg_installed\x64-windows\lib\zlib.lib;vcpkg_installed\x64-windows\lib\boost_filesystem-vc145-mt-x64-1_90.lib;vcpkg_installed\x64-windows\lib\boost_locale-vc145-mt-x64-1_90.lib;vcpkg_installed\x64-windows\lib\SDL2.lib;vcpkg_installed\x64-windows\debug\lib\OpenAL32.lib;vcpkg_installed\x64-windows\lib\freetype.lib;vcpkg_installed\x64-windows\debug\lib\mad.lib;vcpkg_installed\x64-windows\debug\lib\faad.lib;vcpkg_installed\x64-windows\debug\lib\ogg.lib;vcpkg_installed\x64-windows\debug\lib\vorbis.lib;vcpkg_installed\x64-windows\debug\lib\vorbisfile.lib;vcpkg_installed\x64-windows\debug\lib\vpx.lib;vcpkg_installed\x64-windows\lib\lzma.lib;vcpkg_installed\x64-windows\lib\libxml2.lib;lib\Release\external_glew.lib;opengl32.lib;glu32.lib;lib\Release\external_lua.lib;lib\Release\external_toluapp.lib;lib\Release\external_imgui.lib;vcpkg_installed\x64-windows\lib\boost_date_time-vc145-mt-x64-1_90.lib;vcpkg_installed\x64-windows\lib\boost_container-vc145-mt-x64-1_90.lib;winmm.lib;imm32.lib;version.lib;mincore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin;C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin/$(Configuration);C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/debug/bin;C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/debug/bin/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
-    </Lib>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/Users/allen/Astryx/build-new/lib/Release/tests_engines_kotorbase_test_dantooine_cinematic.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/Users/allen/Astryx/build-new/bin/Release/tests_engines_kotorbase_test_dantooine_cinematic.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/include" /external:I "C:/Users/allen/Astryx/tests/googletest/include" /external:I "C:/Users/allen/Astryx/tests/googletest"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
       <CallingConvention></CallingConvention>
       <DisableSpecificWarnings>4250;4100;4127;4189;4245;4435;4510;4512;4610;4706;4710;4714;4305;4244;4267;4996</DisableSpecificWarnings>
       <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <FloatingPointModel></FloatingPointModel>
       <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -192,31 +258,58 @@
       <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
       <UseFullPaths>false</UseFullPaths>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING="xoreos 0.0.6";CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING="xoreos 0.0.6";BOOST_FILESYSTEM_NO_LIB;BOOST_FILESYSTEM_DYN_LINK=1;BOOST_DATE_TIME_NO_LIB;BOOST_DATE_TIME_DYN_LINK;BOOST_CONTAINER_NO_LIB;BOOST_CONTAINER_DYN_LINK;BOOST_LOCALE_NO_LIB;BOOST_LOCALE_DYN_LINK;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING=\"xoreos 0.0.6\";CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING=\"xoreos 0.0.6\";BOOST_FILESYSTEM_NO_LIB;BOOST_FILESYSTEM_DYN_LINK=1;BOOST_DATE_TIME_NO_LIB;BOOST_DATE_TIME_DYN_LINK;BOOST_CONTAINER_NO_LIB;BOOST_CONTAINER_DYN_LINK;BOOST_LOCALE_NO_LIB;BOOST_LOCALE_DYN_LINK;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\tests\googletest\include;C:\Users\allen\Astryx\tests\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\tests\googletest\include;C:\Users\allen\Astryx\tests\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
       <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
-    <Lib>
+    <PostBuildEvent>
+      <Message></Message>
+      <Command>setlocal
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary C:/Users/allen/Astryx/build-new/bin/MinSizeRel/tests_engines_kotorbase_test_dantooine_cinematic.exe -installedDir C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>winmm.lib;imm32.lib;version.lib;mincore.lib;lib\MinSizeRel\tests_googletest_libgtest.la.lib;lib\MinSizeRel\tests_googletest_libgtest_main.la.lib;lib\MinSizeRel\tests_googletest_libgtest.la.lib;lib\MinSizeRel\engines_kotorbase.lib;lib\MinSizeRel\engines.lib;lib\MinSizeRel\engines_kotorbase.lib;lib\MinSizeRel\engines_odyssey.lib;lib\MinSizeRel\engines_eclipse.lib;lib\MinSizeRel\engines_aurora.lib;lib\MinSizeRel\events.lib;lib\MinSizeRel\common.lib;lib\MinSizeRel\external_mspack.lib;lib\MinSizeRel\video.lib;lib\MinSizeRel\video_codecs.lib;lib\MinSizeRel\sound.lib;lib\MinSizeRel\sound_decoders.lib;lib\MinSizeRel\graphics.lib;lib\MinSizeRel\graphics_images.lib;lib\MinSizeRel\graphics_shader.lib;lib\MinSizeRel\graphics_mesh.lib;lib\MinSizeRel\graphics_render.lib;lib\MinSizeRel\aurora.lib;lib\MinSizeRel\aurora_nwscript.lib;lib\MinSizeRel\aurora_lua_libluascript.la.lib;lib\MinSizeRel\aurora_actionscript.lib;lib\MinSizeRel\common.lib;lib\MinSizeRel\external_mspack.lib;lib\MinSizeRel\tests_version.lib;lib\MinSizeRel\external_imgui.lib;vcpkg_installed\x64-windows\debug\lib\iconv.lib;vcpkg_installed\x64-windows\debug\lib\charset.lib;vcpkg_installed\x64-windows\lib\zlib.lib;vcpkg_installed\x64-windows\lib\boost_filesystem-vc145-mt-x64-1_90.lib;vcpkg_installed\x64-windows\lib\boost_locale-vc145-mt-x64-1_90.lib;vcpkg_installed\x64-windows\lib\SDL2.lib;vcpkg_installed\x64-windows\debug\lib\OpenAL32.lib;vcpkg_installed\x64-windows\lib\freetype.lib;vcpkg_installed\x64-windows\debug\lib\mad.lib;vcpkg_installed\x64-windows\debug\lib\faad.lib;vcpkg_installed\x64-windows\debug\lib\ogg.lib;vcpkg_installed\x64-windows\debug\lib\vorbis.lib;vcpkg_installed\x64-windows\debug\lib\vorbisfile.lib;vcpkg_installed\x64-windows\debug\lib\vpx.lib;vcpkg_installed\x64-windows\lib\lzma.lib;vcpkg_installed\x64-windows\lib\libxml2.lib;lib\MinSizeRel\external_glew.lib;opengl32.lib;glu32.lib;lib\MinSizeRel\external_lua.lib;lib\MinSizeRel\external_toluapp.lib;lib\MinSizeRel\external_imgui.lib;vcpkg_installed\x64-windows\lib\boost_date_time-vc145-mt-x64-1_90.lib;vcpkg_installed\x64-windows\lib\boost_container-vc145-mt-x64-1_90.lib;winmm.lib;imm32.lib;version.lib;mincore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin;C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin/$(Configuration);C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/debug/bin;C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/debug/bin/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
-    </Lib>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/Users/allen/Astryx/build-new/lib/MinSizeRel/tests_engines_kotorbase_test_dantooine_cinematic.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/Users/allen/Astryx/build-new/bin/MinSizeRel/tests_engines_kotorbase_test_dantooine_cinematic.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/include" /external:I "C:/Users/allen/Astryx/tests/googletest/include" /external:I "C:/Users/allen/Astryx/tests/googletest"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck></BufferSecurityCheck>
@@ -224,6 +317,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4250;4100;4127;4189;4245;4435;4510;4512;4610;4706;4710;4714;4305;4244;4267;4996</DisableSpecificWarnings>
       <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <FloatingPointModel></FloatingPointModel>
       <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -239,25 +333,51 @@
       <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
       <UseFullPaths>false</UseFullPaths>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING="xoreos 0.0.6";CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING="xoreos 0.0.6";BOOST_FILESYSTEM_NO_LIB;BOOST_FILESYSTEM_DYN_LINK=1;BOOST_DATE_TIME_NO_LIB;BOOST_DATE_TIME_DYN_LINK;BOOST_CONTAINER_NO_LIB;BOOST_CONTAINER_DYN_LINK;BOOST_LOCALE_NO_LIB;BOOST_LOCALE_DYN_LINK;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING=\"xoreos 0.0.6\";CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FPM_64BIT;NDEBUG;BOOST_SCOPE_EXIT_CONFIG_USE_LAMBDAS;HAVE_STDINT_H=1;HAVE_INTTYPES_H=1;HAVE_SYS_TYPES_H=1;SIZEOF_CHAR=1;SIZEOF_SHORT=2;SIZEOF_INT=4;SIZEOF_LONG=4;SIZEOF_LONG_LONG=8;SIZEOF_VOID_P=8;HAVE_INTPTR_T=1;HAVE_UINTPTR_T=1;HAVE_STRTOF=1;HAVE_STRTOLL=1;HAVE_STRTOULL=1;XOREOS_LITTLE_ENDIAN=1;ENABLE_MAD;ENABLE_FAAD;ENABLE_VORBIS;ENABLE_VPX;ENABLE_LZMA;ENABLE_XML;ICONV_CONST=;GLM_FORCE_CTOR_INIT;GLEW_NO_GLU;GLEW_STATIC;XOREOS_INTERNAL_GLEW;IMGUI_IMPL_OPENGL_LOADER_GLEW;ENABLE_NWN;ENABLE_NWN2;ENABLE_KOTOR;ENABLE_KOTOR2;ENABLE_JADE;ENABLE_WITCHER;ENABLE_SONIC;ENABLE_DRAGONAGE;ENABLE_DRAGONAGE2;PACKAGE_STRING=\"xoreos 0.0.6\";BOOST_FILESYSTEM_NO_LIB;BOOST_FILESYSTEM_DYN_LINK=1;BOOST_DATE_TIME_NO_LIB;BOOST_DATE_TIME_DYN_LINK;BOOST_CONTAINER_NO_LIB;BOOST_CONTAINER_DYN_LINK;BOOST_LOCALE_NO_LIB;BOOST_LOCALE_DYN_LINK;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\tests\googletest\include;C:\Users\allen\Astryx\tests\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx\external\toluapp;C:\Users\allen\Astryx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\SDL2;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\AL;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include\libxml2;C:\Users\allen\Astryx;C:\Users\allen\Astryx\tests;C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\include;C:\Users\allen\Astryx\tests\googletest\include;C:\Users\allen\Astryx\tests\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
       <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
-    <Lib>
+    <PostBuildEvent>
+      <Message></Message>
+      <Command>setlocal
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file C:/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary C:/Users/allen/Astryx/build-new/bin/RelWithDebInfo/tests_engines_kotorbase_test_dantooine_cinematic.exe -installedDir C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>winmm.lib;imm32.lib;version.lib;mincore.lib;lib\RelWithDebInfo\tests_googletest_libgtest.la.lib;lib\RelWithDebInfo\tests_googletest_libgtest_main.la.lib;lib\RelWithDebInfo\tests_googletest_libgtest.la.lib;lib\RelWithDebInfo\engines_kotorbase.lib;lib\RelWithDebInfo\engines.lib;lib\RelWithDebInfo\engines_kotorbase.lib;lib\RelWithDebInfo\engines_odyssey.lib;lib\RelWithDebInfo\engines_eclipse.lib;lib\RelWithDebInfo\engines_aurora.lib;lib\RelWithDebInfo\events.lib;lib\RelWithDebInfo\common.lib;lib\RelWithDebInfo\external_mspack.lib;lib\RelWithDebInfo\video.lib;lib\RelWithDebInfo\video_codecs.lib;lib\RelWithDebInfo\sound.lib;lib\RelWithDebInfo\sound_decoders.lib;lib\RelWithDebInfo\graphics.lib;lib\RelWithDebInfo\graphics_images.lib;lib\RelWithDebInfo\graphics_shader.lib;lib\RelWithDebInfo\graphics_mesh.lib;lib\RelWithDebInfo\graphics_render.lib;lib\RelWithDebInfo\aurora.lib;lib\RelWithDebInfo\aurora_nwscript.lib;lib\RelWithDebInfo\aurora_lua_libluascript.la.lib;lib\RelWithDebInfo\aurora_actionscript.lib;lib\RelWithDebInfo\common.lib;lib\RelWithDebInfo\external_mspack.lib;lib\RelWithDebInfo\tests_version.lib;lib\RelWithDebInfo\external_imgui.lib;vcpkg_installed\x64-windows\debug\lib\iconv.lib;vcpkg_installed\x64-windows\debug\lib\charset.lib;vcpkg_installed\x64-windows\lib\zlib.lib;vcpkg_installed\x64-windows\lib\boost_filesystem-vc145-mt-x64-1_90.lib;vcpkg_installed\x64-windows\lib\boost_locale-vc145-mt-x64-1_90.lib;vcpkg_installed\x64-windows\lib\SDL2.lib;vcpkg_installed\x64-windows\debug\lib\OpenAL32.lib;vcpkg_installed\x64-windows\lib\freetype.lib;vcpkg_installed\x64-windows\debug\lib\mad.lib;vcpkg_installed\x64-windows\debug\lib\faad.lib;vcpkg_installed\x64-windows\debug\lib\ogg.lib;vcpkg_installed\x64-windows\debug\lib\vorbis.lib;vcpkg_installed\x64-windows\debug\lib\vorbisfile.lib;vcpkg_installed\x64-windows\debug\lib\vpx.lib;vcpkg_installed\x64-windows\lib\lzma.lib;vcpkg_installed\x64-windows\lib\libxml2.lib;lib\RelWithDebInfo\external_glew.lib;opengl32.lib;glu32.lib;lib\RelWithDebInfo\external_lua.lib;lib\RelWithDebInfo\external_toluapp.lib;lib\RelWithDebInfo\external_imgui.lib;vcpkg_installed\x64-windows\lib\boost_date_time-vc145-mt-x64-1_90.lib;vcpkg_installed\x64-windows\lib\boost_container-vc145-mt-x64-1_90.lib;winmm.lib;imm32.lib;version.lib;mincore.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin;C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/bin/$(Configuration);C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/debug/bin;C:/Users/allen/Astryx/build-new/vcpkg_installed/x64-windows/debug/bin/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
-    </Lib>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/Users/allen/Astryx/build-new/lib/RelWithDebInfo/tests_engines_kotorbase_test_dantooine_cinematic.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/Users/allen/Astryx/build-new/bin/RelWithDebInfo/tests_engines_kotorbase_test_dantooine_cinematic.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\allen\Astryx\CMakeLists.txt">
@@ -317,13 +437,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="C:\Users\allen\Astryx\external\toluapp\tolua++.h" />
-    <ClInclude Include="C:\Users\allen\Astryx\external\toluapp\tolua_event.h" />
-    <ClCompile Include="C:\Users\allen\Astryx\external\toluapp\tolua_event.cpp" />
-    <ClCompile Include="C:\Users\allen\Astryx\external\toluapp\tolua_is.cpp" />
-    <ClCompile Include="C:\Users\allen\Astryx\external\toluapp\tolua_map.cpp" />
-    <ClCompile Include="C:\Users\allen\Astryx\external\toluapp\tolua_push.cpp" />
-    <ClCompile Include="C:\Users\allen\Astryx\external\toluapp\tolua_to.cpp" />
+    <ClCompile Include="C:\Users\allen\Astryx\tests\engines\kotorbase\dantooine_cinematic.cpp">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions);SKIP_RETURN_CODE=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions);SKIP_RETURN_CODE=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">%(PreprocessorDefinitions);SKIP_RETURN_CODE=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">%(PreprocessorDefinitions);SKIP_RETURN_CODE=0</PreprocessorDefinitions>
+    </ClCompile>
+    <Natvis Include="C:\Users\allen\Astryx\build-new\vcpkg_installed\x64-windows\share\boost-1.90.0\assert\boost_assert.natvis">
+    </Natvis>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
@@ -332,6 +453,118 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\aurora.vcxproj">
+      <Project>{AFA10597-7B1B-3518-8112-FC1A1CEF7FFD}</Project>
+      <Name>aurora</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\aurora_actionscript.vcxproj">
+      <Project>{1925313A-8A7C-3A7E-96AC-6283617F56A4}</Project>
+      <Name>aurora_actionscript</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\aurora_lua_libluascript.la.vcxproj">
+      <Project>{89E5018A-0E61-309D-8F20-C7CEEF206296}</Project>
+      <Name>aurora_lua_libluascript.la</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\aurora_nwscript.vcxproj">
+      <Project>{A3D794FB-4303-304B-81B2-E7E6EC86F422}</Project>
+      <Name>aurora_nwscript</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\common.vcxproj">
+      <Project>{7E188252-BB16-3247-8553-E82F4008A2F7}</Project>
+      <Name>common</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\engines.vcxproj">
+      <Project>{135ADB34-6AFC-3070-B600-C085BE93F08C}</Project>
+      <Name>engines</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\engines_aurora.vcxproj">
+      <Project>{ED75B5AC-C780-3710-B531-1AAED24A3E29}</Project>
+      <Name>engines_aurora</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\engines_eclipse.vcxproj">
+      <Project>{D5A465D8-2562-37A1-8AD8-8DB2247520E2}</Project>
+      <Name>engines_eclipse</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\engines_kotorbase.vcxproj">
+      <Project>{23B6BBAB-C572-3C15-95CD-6ED2A64993B2}</Project>
+      <Name>engines_kotorbase</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\engines_odyssey.vcxproj">
+      <Project>{AEDD4E2F-26B0-38D6-96D8-365B10BFC8D6}</Project>
+      <Name>engines_odyssey</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\events.vcxproj">
+      <Project>{FB4A7C32-5123-39E8-8026-8EB8ECA1C9EF}</Project>
+      <Name>events</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\external_glew.vcxproj">
+      <Project>{0E345F3D-0DB9-3D58-A1E8-4DA6647605C3}</Project>
+      <Name>external_glew</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\external_imgui.vcxproj">
+      <Project>{684DBD71-7E8C-3904-A747-0EE2CDDDED2D}</Project>
+      <Name>external_imgui</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\external_lua.vcxproj">
+      <Project>{35E71F28-41BE-3E3E-84AB-0FAAB5764EF7}</Project>
+      <Name>external_lua</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\external_mspack.vcxproj">
+      <Project>{A6A72462-ECD4-3E9D-BCAB-8F669A24B10C}</Project>
+      <Name>external_mspack</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\external_toluapp.vcxproj">
+      <Project>{7963D483-D89A-369E-ACB1-561B173D89D6}</Project>
+      <Name>external_toluapp</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\graphics.vcxproj">
+      <Project>{B88FD3B2-97A7-3957-8C69-C56D4AB6AD67}</Project>
+      <Name>graphics</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\graphics_images.vcxproj">
+      <Project>{B0421E50-EAAC-3E74-9F31-F3C4CB733FBC}</Project>
+      <Name>graphics_images</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\graphics_mesh.vcxproj">
+      <Project>{5EEAD54B-B741-3612-ACE5-4D4010CC1849}</Project>
+      <Name>graphics_mesh</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\graphics_render.vcxproj">
+      <Project>{CF2002A8-6A96-342B-B2CF-7940FB5FF796}</Project>
+      <Name>graphics_render</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\graphics_shader.vcxproj">
+      <Project>{AF6CED71-6EE7-317C-8418-0E7B88B44914}</Project>
+      <Name>graphics_shader</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\sound.vcxproj">
+      <Project>{F0516CD7-636E-3D7B-AC69-FF5BADC6EFCD}</Project>
+      <Name>sound</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\sound_decoders.vcxproj">
+      <Project>{0E28B8F0-37D6-33C7-9B8C-35C30F889D9A}</Project>
+      <Name>sound_decoders</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\tests_googletest_libgtest.la.vcxproj">
+      <Project>{2A55A174-6177-3F17-BD54-B005D7FBC454}</Project>
+      <Name>tests_googletest_libgtest.la</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\tests_googletest_libgtest_main.la.vcxproj">
+      <Project>{368FFE43-6B69-3849-BDF8-B5639D2A2F15}</Project>
+      <Name>tests_googletest_libgtest_main.la</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\tests_version.vcxproj">
+      <Project>{9BC7F5EB-EAD5-3400-8A84-B75320E96EC8}</Project>
+      <Name>tests_version</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\video.vcxproj">
+      <Project>{262FBE3D-948D-3698-9F6F-D691C3E8B00F}</Project>
+      <Name>video</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\allen\Astryx\build-new\video_codecs.vcxproj">
+      <Project>{520DE726-1168-3C11-9FB1-10E2D688BAF3}</Project>
+      <Name>video_codecs</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

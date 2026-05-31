@@ -51,12 +51,12 @@ public:
 		bool hostile;
 	};
 
-	const SpellInfo *getSpellInfo(uint32_t id);
-	void loadSpells();
+	static const SpellInfo *getSpellInfo(uint32_t id);
+	static void loadSpells();
 
 private:
-	std::map<uint32_t, SpellInfo> _spells;
-	bool _spellsLoaded { false };
+	static std::map<uint32_t, SpellInfo> _spells;
+	static bool _spellsLoaded;
 	/** Get if the current creature has reached a specified location. */
 	static bool isLocationReached(const glm::vec2 &location, float range, const ExecutionContext &ctx);
 

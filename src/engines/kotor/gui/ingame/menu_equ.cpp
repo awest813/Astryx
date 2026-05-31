@@ -46,7 +46,8 @@ namespace KotOR {
 MenuEquipment::MenuEquipment(KotORBase::Module &module, Console *console) :
 		KotORBase::MenuBase(module, console),
 		_selectedSlot(KotORBase::kInventorySlotBody),
-		_slotFixated(false) {
+		_slotFixated(false),
+		_lastLeader(nullptr) {
 
 	load("equip");
 
@@ -79,9 +80,13 @@ MenuEquipment::MenuEquipment(KotORBase::Module &module, Console *console) :
 }
 
 void MenuEquipment::update() {
-	bool leaderChanged = updatePartyLeader("LBL_PORTRAIT");
-	if (leaderChanged)
+	KotORBase::Creature *leader = _module->getPartyLeader();
+	if (leader != _lastLeader) {
+		_lastLeader = leader;
 		_dirty = true;
+	}
+
+	updatePartyLeader("LBL_PORTRAIT");
 
 	if (_dirty) {
 		fillEquipedItems();
@@ -103,21 +108,21 @@ void MenuEquipment::updateDescription() {
 	Odyssey::WidgetListBox *lbDesc = getListBox("LB_DESC");
 	if (!lbDesc) return;
 
-	lbDesc->clear();
+	lbDesc->removeAllItems();
 
 	if (_selectedItem <= 0) {
-		lbDesc->add("Select an item to see its properties and description.");
+		lbDesc->addItem("Select an item to see its properties and description.");
 		return;
 	}
 
 	Common::UString itemTag = _visibleItems[_selectedItem - 1];
 	try {
 		KotORBase::Item item(itemTag);
-		lbDesc->add(item.getName());
-		lbDesc->add("");
-		lbDesc->add(item.getDescription());
+		lbDesc->addItem(item.getName());
+		lbDesc->addItem("");
+		lbDesc->addItem(item.getDescription());
 	} catch (...) {
-		lbDesc->add("Unable to reach item data.");
+		lbDesc->addItem("Unable to reach item data.");
 	}
 }
 
@@ -478,6 +483,15 @@ void MenuEquipment::fixateOnSlot(bool fixate) {
 	}
 
 	lbItems->refreshItemWidgets();
+}
+
+void MenuEquipment::show() {
+	_dirty = true;
+	KotORBase::MenuBase::show();
+}
+
+void MenuEquipment::hide() {
+	KotORBase::MenuBase::hide();
 }
 
 } // End of namespace KotOR

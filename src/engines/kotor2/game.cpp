@@ -65,8 +65,12 @@ Game::Game(KotOR2Engine &engine, Engines::Console &console, Aurora::Platform pla
 Game::~Game() {
 }
 
+KotORBase::Functions &Game::getFunctions() {
+	return *_functions;
+}
+
 void Game::run() {
-	_module = std::make_unique<Module>(*_console);
+	_module = std::make_unique<Module>(*this, *_console);
 
 	while (!EventMan.quitRequested()) {
 		mainMenu();

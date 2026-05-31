@@ -49,6 +49,8 @@ namespace KotORBase {
 
 class CharacterGenerationInfo;
 class Item;
+class Area;
+class Effect;
 struct CreatureSearchCriteria;
 
 class Creature : public Object {
@@ -134,6 +136,8 @@ public:
 	void setForcePoints(int fp);
 	void setMaxForcePoints(int fp);
 
+	/** Get the alignment of this creature. */
+	int getAlignment() const;
 	/** Adjust the alignment of this creature. */
 	void adjustAlignment(int shift);
 
@@ -152,7 +156,10 @@ public:
 	};
 
 	void setAIArchetype(AIArchetype archetype);
-	void think();
+	void think(Area *area);
+	void updateCombatAI();
+	Object *findCombatTarget(Area *area);
+	bool isFlankedBy(Creature *attacker);
 	virtual void update(float dt);
 
 	// Positioning
@@ -233,7 +240,7 @@ public:
 	/** Remove the current action from the action queue of this creature. */
 	void popAction();
 
-	struct Effect {
+	struct ActiveEffect {
 		EffectType type;
 		float duration;
 		int   value;
@@ -289,7 +296,10 @@ public:
 	void startCombat(Object *target, int round);
 	void cancelCombat();
 
-	/** Apply an engine effect to this creature. */
+	/** Apply an active effect tracking struct directly to this creature. */
+	void applyEffect(const ActiveEffect &effect);
+
+	/** Apply an engine/NWScript level Effect object to this creature. */
 	void applyEffect(const Effect &effect);
 
 	/**
@@ -412,7 +422,7 @@ private:
 	float _runRate;
 
 	bool _dead { false };
-	std::vector<Effect> _effects;
+	std::vector<ActiveEffect> _effects;
 	AIArchetype _aiArchetype { kAIArchetypeNone };
 	float       _aiCooldown  { 0.0f };
 	bool _xpAwarded { false }; ///< Has kill XP for this creature already been awarded?

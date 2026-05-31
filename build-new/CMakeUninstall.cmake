@@ -19,11 +19,11 @@
 
 # Code taken from https://gitlab.kitware.com/cmake/community/wikis/FAQ#can-i-do-make-uninstall-with-cmake.
 
-if(NOT EXISTS "D:/Games/Astryx/build-new/install_manifest.txt")
-    message(FATAL_ERROR "Cannot find install manifest: D:/Games/Astryx/build-new/install_manifest.txt")
-endif(NOT EXISTS "D:/Games/Astryx/build-new/install_manifest.txt")
+if(NOT EXISTS "C:/Users/allen/Astryx/build-new/install_manifest.txt")
+    message(FATAL_ERROR "Cannot find install manifest: C:/Users/allen/Astryx/build-new/install_manifest.txt")
+endif(NOT EXISTS "C:/Users/allen/Astryx/build-new/install_manifest.txt")
 
-file(READ "D:/Games/Astryx/build-new/install_manifest.txt" files)
+file(READ "C:/Users/allen/Astryx/build-new/install_manifest.txt" files)
 string(REGEX REPLACE "\n" ";" files "${files}")
 foreach(file ${files})
     message(STATUS "Uninstalling $ENV{DESTDIR}${file}")
