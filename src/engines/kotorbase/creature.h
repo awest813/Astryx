@@ -299,6 +299,9 @@ public:
 	/** Apply an active effect tracking struct directly to this creature. */
 	void applyEffect(const ActiveEffect &effect);
 
+	/** Reverse the persistent modifiers an active effect applied (called on expiry). */
+	void removeEffect(const ActiveEffect &effect);
+
 	/** Apply an engine/NWScript level Effect object to this creature. */
 	void applyEffect(const Effect &effect);
 

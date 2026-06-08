@@ -574,9 +574,9 @@ void Functions::fortitudeSave(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 	}
 
-	// Fortitude = 10 + Constitution modifier + class save bonus
-	int conMod = creature->getCreatureInfo().getAbilityModifier(kAbilityConstitution);
-	int roll   = std::rand() % 20 + 1;
+	// Fortitude save = d20 + class base save + Constitution modifier.
+	int bonus = creature->getCreatureInfo().getSavingThrowBonus(kSavingThrowFortitude);
+	int roll  = RNG.getNext(1, 21);
 
 	if (roll == 20) {
 		ctx.getReturn() = 2; // automatic success
@@ -586,7 +586,7 @@ void Functions::fortitudeSave(Aurora::NWScript::FunctionContext &ctx) {
 		ctx.getReturn() = 0; // automatic failure
 		return;
 	}
-	ctx.getReturn() = ((roll + conMod + 10) >= dc) ? 1 : 0;
+	ctx.getReturn() = ((roll + bonus) >= dc) ? 1 : 0;
 }
 
 void Functions::reflexSave(Aurora::NWScript::FunctionContext &ctx) {
@@ -599,8 +599,9 @@ void Functions::reflexSave(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 	}
 
-	int dexMod = creature->getCreatureInfo().getAbilityModifier(kAbilityDexterity);
-	int roll   = std::rand() % 20 + 1;
+	// Reflex save = d20 + class base save + Dexterity modifier.
+	int bonus = creature->getCreatureInfo().getSavingThrowBonus(kSavingThrowReflex);
+	int roll  = RNG.getNext(1, 21);
 
 	if (roll == 20) {
 		ctx.getReturn() = 2;
@@ -610,7 +611,7 @@ void Functions::reflexSave(Aurora::NWScript::FunctionContext &ctx) {
 		ctx.getReturn() = 0;
 		return;
 	}
-	ctx.getReturn() = ((roll + dexMod + 10) >= dc) ? 1 : 0;
+	ctx.getReturn() = ((roll + bonus) >= dc) ? 1 : 0;
 }
 
 void Functions::willSave(Aurora::NWScript::FunctionContext &ctx) {
@@ -623,8 +624,9 @@ void Functions::willSave(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 	}
 
-	int wisMod = creature->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
-	int roll   = std::rand() % 20 + 1;
+	// Will save = d20 + class base save + Wisdom modifier.
+	int bonus = creature->getCreatureInfo().getSavingThrowBonus(kSavingThrowWill);
+	int roll  = RNG.getNext(1, 21);
 
 	if (roll == 20) {
 		ctx.getReturn() = 2;
@@ -634,7 +636,7 @@ void Functions::willSave(Aurora::NWScript::FunctionContext &ctx) {
 		ctx.getReturn() = 0;
 		return;
 	}
-	ctx.getReturn() = ((roll + wisMod + 10) >= dc) ? 1 : 0;
+	ctx.getReturn() = ((roll + bonus) >= dc) ? 1 : 0;
 }
 
 void Functions::giveXPToCreature(Aurora::NWScript::FunctionContext &ctx) {

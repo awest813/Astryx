@@ -1068,23 +1068,8 @@ namespace KotORBase {
 			// Feat modifiers: attack/damage bonuses from active combat feats.
 			int featAttackMod = flankingMod;
 			int featDamageMod = damageMod;
-
-			// Sneak Attack (Scoundrel / Assassin or Flanked/Stunned)
-			if (targetCreature && (targetCreature->isFlankedBy(this) || targetCreature->hasEffect(kEffectStun))) {
-				int ranks = 0;
-				if (_info.hasFeat(kFeatSneakAttack1)) ranks = 1;
-				if (_info.hasFeat(kFeatSneakAttack2)) ranks = 2;
-				if (_info.hasFeat(kFeatSneakAttack3)) ranks = 3;
-				if (_info.hasFeat(kFeatSneakAttack4)) ranks = 4;
-				if (_info.hasFeat(kFeatSneakAttack5)) ranks = 5;
-				
-				if (ranks > 0) {
-					int sneak = 0;
-					for (int i=0; i<ranks; ++i) sneak += (rand() % 6) + 1;
-					featDamageMod += sneak;
-					debugC(Common::kDebugEngineLogic, 1, "Sneak attack triggered! +%d damage", sneak);
-				}
-			}
+			// (Sneak Attack damage is rolled once, after the hit is confirmed —
+			//  see the "Sneak Attack" block further down.)
 
 			// caller may pass per-attack bonuses
 			const
@@ -1187,9 +1172,12 @@ namespace KotORBase {
 				// Double the dice portion only.		damage = dieDamage * 2 + modDamage;
 			}
 			// Apply feat damage bonus.	damage += featDamageMod;
-			// Sneak Attack (Scoundrel class feature): roll +1d6 per rank when the	// target is flat-footed (not currently in combat) or knocked down/paralysed.
-			bool targetVulnerable = targetCreature && (!targetCreature->isInCombat() || 
-			                                            targetCreature->hasEffect(kEffectStun) || 
+			// Sneak Attack (Scoundrel class feature): roll +1d6 per rank when the
+			// target is flat-footed (not currently in combat), flanked, or
+			// knocked down/stunned.
+			bool targetVulnerable = targetCreature && (!targetCreature->isInCombat() ||
+			                                            targetCreature->isFlankedBy(this) ||
+			                                            targetCreature->hasEffect(kEffectStun) ||
 			                                            targetCreature->hasEffect(kEffectKnockdown));
 			if (hit && targetVulnerable) {
 				// Count sneak attack ranks.
@@ -1502,6 +1490,25 @@ namespace KotORBase {
 				default:			break;
 			}
 		}
+		void Creature::removeEffect(
+		const ActiveEffect &effect) {
+			// Undo the persistent AC penalties applied in applyEffect() so that
+			// knockdown/stun/confusion do not permanently (and cumulatively)
+			// weaken the creature once the effect wears off.
+			switch (effect.type) {
+				case kEffectKnockdown:
+					adjustArmorClassModifier(4);
+					break;
+				case kEffectStun:
+					adjustArmorClassModifier(2);
+					break;
+				case kEffectConfusion:
+					adjustArmorClassModifier(4);
+					break;
+				default:
+					break;
+			}
+		}
 		void Creature::applyEffect(EffectType type,
 		float duration,
 		int value) {
@@ -1528,6 +1535,7 @@ namespace KotORBase {
 					}
 				}
 				if (it->duration <= 0.0f) {
+					removeEffect(*it);
 					it = _effects.erase(it);
 				}
 				else {

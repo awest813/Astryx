@@ -225,8 +225,10 @@ void Functions::cameraHold(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::cameraLookAtObject(Aurora::NWScript::FunctionContext &ctx) {
 	// CameraLookAtObject(object oTarget, float fBlendTime)
 	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
-	// blendTime ignored in simple implementation
+	float blendTime = ctx.getParams()[1].getFloat();
 	_game->getModule().setCameraTarget(target);
+	// Honour the requested blend so the look-at eases in rather than snapping.
+	_game->getModule().cameraTransitionToTarget(blendTime);
 }
 
 void Functions::restoreGameplayCamera(Aurora::NWScript::FunctionContext &ctx) {
