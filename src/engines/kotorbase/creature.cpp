@@ -1490,6 +1490,25 @@ namespace KotORBase {
 				default:			break;
 			}
 		}
+		void Creature::removeEffect(
+		const ActiveEffect &effect) {
+			// Undo the persistent AC penalties applied in applyEffect() so that
+			// knockdown/stun/confusion do not permanently (and cumulatively)
+			// weaken the creature once the effect wears off.
+			switch (effect.type) {
+				case kEffectKnockdown:
+					adjustArmorClassModifier(4);
+					break;
+				case kEffectStun:
+					adjustArmorClassModifier(2);
+					break;
+				case kEffectConfusion:
+					adjustArmorClassModifier(4);
+					break;
+				default:
+					break;
+			}
+		}
 		void Creature::applyEffect(EffectType type,
 		float duration,
 		int value) {
@@ -1516,6 +1535,7 @@ namespace KotORBase {
 					}
 				}
 				if (it->duration <= 0.0f) {
+					removeEffect(*it);
 					it = _effects.erase(it);
 				}
 				else {
