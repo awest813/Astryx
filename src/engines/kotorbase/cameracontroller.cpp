@@ -27,6 +27,7 @@
 
 #include "src/common/maths.h"
 #include "src/common/util.h"
+#include "src/common/random.h"
 
 #include "src/graphics/camera.h"
 
@@ -200,7 +201,7 @@ void CameraController::processMovement(float frameTime) {
 			return;
 		}
 
-		if (_pathEnd) {
+		if (_pathEnd && _pathStart) {
 			_pathTime += frameTime;
 			float t = _pathTime / _pathDuration;
 			if (t >= 1.0f) {
@@ -261,10 +262,10 @@ void CameraController::processMovement(float frameTime) {
 
 	if (_shakeTime > 0.0f) {
 		_shakeTime -= frameTime;
-		// Pseudo-random jitter
-		actualPosition.x += ((rand() % 100) / 50.0f - 1.0f) * _shakeIntensity;
-		actualPosition.y += ((rand() % 100) / 50.0f - 1.0f) * _shakeIntensity;
-		actualPosition.z += ((rand() % 100) / 50.0f - 1.0f) * _shakeIntensity;
+		// Pseudo-random jitter in [-1, 1] * intensity, using the engine RNG.
+		actualPosition.x += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+		actualPosition.y += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+		actualPosition.z += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
 	}
 
 	CameraMan.setPosition(actualPosition.x, actualPosition.y, actualPosition.z);
@@ -364,6 +365,16 @@ void CameraController::cameraTransitionToTarget(float duration) {
 }
 
 void CameraController::cameraMoveAlongPath(Object *start, Object *end, float duration) {
+	// A script may pass tags that fail to resolve to objects; bail rather than
+	// dereference a null waypoint while interpolating the path.
+	if (!start || !end) {
+		warning("CameraController::cameraMoveAlongPath(): missing %s endpoint; ignoring",
+		        !start ? "start" : "end");
+		_pathStart = nullptr;
+		_pathEnd = nullptr;
+		return;
+	}
+
 	_pathStart = start;
 	_pathEnd = end;
 	_pathTime = 0.0f;
