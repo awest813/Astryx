@@ -84,17 +84,15 @@ void Functions::playMovie(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::isMoviePlaying(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = 0; // Simplified
+	ctx.getReturn() = _game->getModule().isMoviePlaying() ? 1 : 0;
 }
 
 void Functions::queueMovie(Aurora::NWScript::FunctionContext &ctx) {
-	Common::UString movie = ctx.getParams()[0].getString();
-	debugC(Common::kDebugEngineLogic, 1, "QueueMovie: %s", movie.c_str());
+	_game->getModule().queueMovie(ctx.getParams()[0].getString());
 }
 
 void Functions::playMovieQueue(Aurora::NWScript::FunctionContext &ctx) {
-	int canSkip = ctx.getParams()[0].getInt();
-	debugC(Common::kDebugEngineLogic, 1, "PlayMovieQueue (canSkip: %d)", canSkip);
+	_game->getModule().playMovieQueue(ctx.getParams()[0].getInt() != 0);
 }
 
 void Functions::enableVideoEffect(Aurora::NWScript::FunctionContext &ctx) {

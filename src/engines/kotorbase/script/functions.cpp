@@ -204,13 +204,11 @@ Aurora::NWScript::Object *Functions::getParamObject(const Aurora::NWScript::Func
 }
 
 void Functions::playVideo(const Common::UString &resRef) {
-	status("PLAYING VIDEO: %s", resRef.c_str());
 	_game->getModule().playMovie(resRef);
 }
 
 void Functions::playMusicStinger(const Common::UString &resRef) {
-	status("PLAYING MUSIC STINGER: %s", resRef.c_str());
-	// Stinger playback usually involves a fire-and-forget SFX or music segment
+	_game->getModule().playMusicStinger(resRef);
 }
 
 void Functions::jumpTo(KotORBase::Object *object, float x, float y, float z) {

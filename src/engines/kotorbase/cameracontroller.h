@@ -113,6 +113,18 @@ private:
 	bool   _holding { false };
 	float  _holdTime { 0.0f };
 
+	// Smooth return from cinematic to orbit camera
+	bool      _restoringGameplay { false };
+	float     _restoreTime { 0.0f };
+	float     _restoreDuration { 0.0f };
+	float     _restoreStartYaw { 0.0f };
+	float     _restoreStartPitch { 0.0f };
+	float     _restoreStartDistance { 0.0f };
+	glm::vec3 _restoreStartTarget { 0.0f };
+	float     _restoreDestYaw { 0.0f };
+	float     _restoreDestPitch { 0.0f };
+	float     _restoreDestDistance { 0.0f };
+	glm::vec3 _restoreDestTarget { 0.0f };
 
 	bool _clockwiseMovementWanted { false };
 	bool _counterClockwiseMovementWanted { false };

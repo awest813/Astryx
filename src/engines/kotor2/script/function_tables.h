@@ -924,9 +924,9 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 802, "AddBonusForcePoints"                 , &Functions::stubFunction                                                },
 	{ 803, "GetBonusForcePoints"                 , &Functions::stubFunction                                                },
 	{ 804, "SWMG_SetJumpSpeed"                   , &Functions::stubSWMGFunctionSWMG_SetJumpSpeed
-	{ 805, "IsMoviePlaying"                      , &Functions::stubFunction                                                },
-	{ 806, "QueueMovie"                          , &Functions::stubFunction                                                },
-	{ 807, "PlayMovieQueue"                      , &Functions::stubFunction                                                },
+	{ 805, "IsMoviePlaying"                      , &Functions::isMoviePlaying                                                },
+	{ 806, "QueueMovie"                          , &Functions::queueMovie                                                },
+	{ 807, "PlayMovieQueue"                      , &Functions::playMovieQueue                                                },
 	{ 808, "YavinHackDoorClose"                  , &Functions::stubFunction                                                },
 	{ 809, "EffectDroidConfused"                 , &Functions::stubFunction                                                },
 	{ 810, "IsStealthed"                         , &Functions::stubFunction                                                },

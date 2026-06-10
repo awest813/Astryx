@@ -303,10 +303,11 @@ void DialogGUI::makeLookAtPC(const Common::UString &tag) {
 
 	// Only creatures should orient themselves to the pc.
 	Creature *creature = KotORBase::ObjectContainer::toCreature(o);
-	if (creature)
+	if (creature && !creature->isLockOrientationInDialog())
 		creature->makeLookAt(pc);
 
-	pc->makeLookAt(o);
+	if (!pc->isLockOrientationInDialog())
+		pc->makeLookAt(o);
 
 	float x, y, z, a;
 	pc->getOrientation(x, y, z, a);
@@ -343,7 +344,8 @@ void DialogGUI::playTalkAnimations(const Common::UString &tag) {
 	else if (entry->animation == 3) anim = "tlkforce";
 
 	creature->playAnimation(anim, true, -1.0f);
-	creature->playHeadAnimation("talk", true, -1.0f, 0.25f);
+	if (!creature->isLockHeadFollowInDialog())
+		creature->playHeadAnimation("talk", true, -1.0f, 0.25f);
 }
 
 void DialogGUI::notifyResized(int UNUSED(oldWidth), int UNUSED(oldHeight), int newWidth, int newHeight) {

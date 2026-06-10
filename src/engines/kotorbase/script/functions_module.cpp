@@ -244,17 +244,19 @@ void Functions::playMusicStinger(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setLockOrientationInDialog(Aurora::NWScript::FunctionContext &ctx) {
-	// SetLockOrientationInDialog(object oCreature, int nValue)
-	// Prevents the creature from rotating to face the conversation partner.
-	// Stub: no orientation tracking per-creature yet.
-	(void)ctx;
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature)
+		return;
+
+	creature->setLockOrientationInDialog(ctx.getParams()[1].getInt() != 0);
 }
 
 void Functions::setLockHeadFollowInDialog(Aurora::NWScript::FunctionContext &ctx) {
-	// SetLockHeadFollowInDialog(object oCreature, int nValue)
-	// Prevents head-tracking look-at behaviour during a dialog.
-	// Stub: no head-tracking system yet.
-	(void)ctx;
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature)
+		return;
+
+	creature->setLockHeadFollowInDialog(ctx.getParams()[1].getInt() != 0);
 }
 
 void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {

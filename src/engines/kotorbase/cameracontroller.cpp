@@ -141,6 +141,31 @@ void CameraController::processRotation(float frameTime) {
 	if (_flycam)
 		return;
 
+	if (_restoringGameplay) {
+		_restoreTime += frameTime;
+		float t = _restoreTime / _restoreDuration;
+		if (t >= 1.0f) {
+			t = 1.0f;
+			_restoringGameplay = false;
+			resetToOrbit();
+			return;
+		}
+
+		const float smoothT = t * t * (3.0f - 2.0f * t);
+
+		float diff = _restoreDestYaw - _restoreStartYaw;
+		while (diff < -static_cast<float>(M_PI))
+			diff += 2.0f * static_cast<float>(M_PI);
+		while (diff > static_cast<float>(M_PI))
+			diff -= 2.0f * static_cast<float>(M_PI);
+
+		_yaw = _restoreStartYaw + diff * smoothT;
+		_pitch = _restoreStartPitch + (_restoreDestPitch - _restoreStartPitch) * smoothT;
+
+		CameraMan.setOrientation(_pitch, 0.0f, Common::rad2deg(_yaw));
+		return;
+	}
+
 	if (_cinematic) {
 		// Priority 1: Transition Blending
 		Object *lookAt = _cameraTarget ? _cameraTarget : _cinematicFocus;
@@ -190,6 +215,27 @@ void CameraController::processRotation(float frameTime) {
 
 void CameraController::processMovement(float frameTime) {
 	if (_flycam) {
+		CameraMan.update();
+		return;
+	}
+
+	if (_restoringGameplay) {
+		float t = _restoreTime / _restoreDuration;
+		if (t > 1.0f)
+			t = 1.0f;
+
+		const float smoothT = t * t * (3.0f - 2.0f * t);
+
+		_target.x = _restoreStartTarget.x + (_restoreDestTarget.x - _restoreStartTarget.x) * smoothT;
+		_target.y = _restoreStartTarget.y + (_restoreDestTarget.y - _restoreStartTarget.y) * smoothT;
+		_target.z = _restoreStartTarget.z + (_restoreDestTarget.z - _restoreStartTarget.z) * smoothT;
+
+		const float dist = _restoreStartDistance + (_restoreDestDistance - _restoreStartDistance) * smoothT;
+		_distance = dist;
+		_actualDistance = dist;
+
+		const glm::vec3 camPos = getCameraPosition(dist);
+		CameraMan.setPosition(camPos.x, camPos.y, camPos.z);
 		CameraMan.update();
 		return;
 	}
@@ -402,11 +448,46 @@ void CameraController::cameraHold(float duration) {
 }
 
 void CameraController::restoreGameplayCamera(float blendTime) {
-	// For now, snap back. Blending would require a transition state.
-	resetToOrbit();
+	if (blendTime <= 0.0f || !_cinematic) {
+		resetToOrbit();
+		return;
+	}
+
+	Creature *partyLeader = _module->getPartyLeader();
+	if (!partyLeader) {
+		resetToOrbit();
+		return;
+	}
+
+	_restoreStartYaw = _yaw;
+	_restoreStartPitch = _pitch;
+	_restoreStartDistance = _distance > 0.0f ? _distance : _actualDistance;
+	_restoreStartTarget = _target;
+
+	float x, y, z, angle;
+	partyLeader->getPosition(x, y, z);
+	_restoreDestTarget = glm::vec3(x, y, z + partyLeader->getCameraHeight());
+
+	if (Area *area = _module->getCurrentArea()) {
+		const Area::CameraStyle &style = area->getCameraStyle();
+		_restoreDestDistance = style.distance;
+		_restoreDestPitch = style.pitch;
+	} else {
+		_restoreDestDistance = _restoreStartDistance;
+		_restoreDestPitch = _restoreStartPitch;
+	}
+
+	partyLeader->getOrientation(x, y, z, angle);
+	_restoreDestYaw = Common::deg2rad(angle - 15.0f);
+
+	_restoreTime = 0.0f;
+	_restoreDuration = blendTime;
+	_restoringGameplay = true;
+	_dirty = true;
 }
 
 void CameraController::resetToOrbit() {
+	_restoringGameplay = false;
 	_cinematic = false;
 	_cinematicFocus = nullptr;
 	_cameraTarget = nullptr;

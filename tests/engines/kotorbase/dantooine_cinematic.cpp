@@ -363,3 +363,76 @@ TEST(DantooinecinematicFunctions, animationIdMapsAttack1) {
 	EXPECT_EQ(getAnimationNameById(38), Common::UString("attack1"));
 	EXPECT_TRUE(getAnimationNameById(999).empty());
 }
+
+// ---------------------------------------------------------------------------
+// 11. Movie queue / playback state
+// ---------------------------------------------------------------------------
+
+namespace {
+
+struct MovieQueue {
+	bool playing { false };
+	std::vector<std::string> queue;
+	std::vector<std::string> played;
+
+	void play(const std::string &name) {
+		playing = true;
+		played.push_back(name);
+		playing = false;
+	}
+
+	void queueMovie(const std::string &name) {
+		if (!name.empty())
+			queue.push_back(name);
+	}
+
+	void playMovieQueue() {
+		while (!queue.empty()) {
+			std::string movie = queue.front();
+			queue.erase(queue.begin());
+			play(movie);
+		}
+	}
+
+	bool isMoviePlaying() const { return playing; }
+};
+
+} // anonymous namespace
+
+TEST(DantooinecinematicFunctions, MovieQueuePlaysInOrder) {
+	MovieQueue mq;
+	mq.queueMovie("swlogo");
+	mq.queueMovie("openingcrawl");
+	mq.playMovieQueue();
+	ASSERT_EQ(mq.played.size(), 2u);
+	EXPECT_EQ(mq.played[0], "swlogo");
+	EXPECT_EQ(mq.played[1], "openingcrawl");
+	EXPECT_TRUE(mq.queue.empty());
+}
+
+TEST(DantooinecinematicFunctions, MovieQueueSkipsEmptyEntries) {
+	MovieQueue mq;
+	mq.queueMovie("");
+	mq.queueMovie("Hyperspace");
+	mq.playMovieQueue();
+	ASSERT_EQ(mq.played.size(), 1u);
+	EXPECT_EQ(mq.played[0], "Hyperspace");
+}
+
+// ---------------------------------------------------------------------------
+// 12. RestoreGameplayCamera smooth-step interpolation
+// ---------------------------------------------------------------------------
+
+static float smoothStep(float t) {
+	return t * t * (3.0f - 2.0f * t);
+}
+
+TEST(DantooinecinematicFunctions, SmoothStepEndpoints) {
+	EXPECT_NEAR(smoothStep(0.0f), 0.0f, 1e-5f);
+	EXPECT_NEAR(smoothStep(1.0f), 1.0f, 1e-5f);
+}
+
+TEST(DantooinecinematicFunctions, SmoothStepMidpoint) {
+	EXPECT_GT(smoothStep(0.5f), 0.0f);
+	EXPECT_LT(smoothStep(0.5f), 1.0f);
+}

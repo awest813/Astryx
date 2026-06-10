@@ -637,7 +637,33 @@ void Module::shakeCamera(float duration, float intensity) {
 }
 
 void Module::playMovie(const Common::UString &resRef) {
+	if (resRef.empty())
+		return;
+
 	debugC(Common::kDebugEngineLogic, 1, "Playing Movie: %s", resRef.c_str());
+	_moviePlaying = true;
+	::Engines::playVideo(resRef);
+	_moviePlaying = false;
+}
+
+bool Module::isMoviePlaying() const {
+	return _moviePlaying;
+}
+
+void Module::queueMovie(const Common::UString &resRef) {
+	if (!resRef.empty())
+		_movieQueue.push_back(resRef);
+}
+
+void Module::playMovieQueue(bool canSkip) {
+	debugC(Common::kDebugEngineLogic, 1, "PlayMovieQueue (canSkip: %d, count: %zu)",
+	       canSkip ? 1 : 0, _movieQueue.size());
+
+	while (!_movieQueue.empty()) {
+		Common::UString movie = _movieQueue.front();
+		_movieQueue.erase(_movieQueue.begin());
+		playMovie(movie);
+	}
 }
 
 void Module::cameraTransitionToTarget(const Common::UString &tag, float duration) {
@@ -1858,7 +1884,11 @@ const std::vector<bool> *Module::getMapExplored(const Common::UString &resRef) c
 }
 
 void Module::playMusicStinger(const Common::UString &stinger) {
-	info("Module::playMusicStinger(\"%s\")", stinger.c_str());
+	if (stinger.empty())
+		return;
+
+	debugC(Common::kDebugEngineLogic, 1, "Playing music stinger: %s", stinger.c_str());
+	::Engines::playSound(stinger, Sound::kSoundTypeMusic, false);
 }
 
 void Module::delayConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {

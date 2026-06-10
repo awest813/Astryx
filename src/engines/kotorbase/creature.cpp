@@ -103,6 +103,18 @@ namespace KotORBase {
 		bool commandable) {
 			_commandable = commandable;
 		}
+		void Creature::setLockOrientationInDialog(bool locked) {
+			_lockOrientationInDialog = locked;
+		}
+		bool Creature::isLockOrientationInDialog() const {
+			return _lockOrientationInDialog;
+		}
+		void Creature::setLockHeadFollowInDialog(bool locked) {
+			_lockHeadFollowInDialog = locked;
+		}
+		bool Creature::isLockHeadFollowInDialog() const {
+			return _lockHeadFollowInDialog;
+		}
 		Gender Creature::getGender()
 		const {
 			return _gender;

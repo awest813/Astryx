@@ -158,6 +158,13 @@ public:
 	/** Play an intro/cinematic movie. */
 	virtual void playMovie(const Common::UString &resRef);
 
+	/** Is a Bink/MOV movie currently playing? */
+	bool isMoviePlaying() const;
+	/** Queue a movie for sequential playback via playMovieQueue(). */
+	void queueMovie(const Common::UString &resRef);
+	/** Play all queued movies in order. */
+	void playMovieQueue(bool canSkip);
+
 	// Persistence
 	std::shared_ptr<Aurora::GFF3File> getAreaObjectSave(const Common::UString &key);
 	void setAreaObjectSave(const Common::UString &key, std::shared_ptr<Aurora::GFF3File> state);
@@ -505,6 +512,9 @@ private:
 	std::map<Common::UString, std::vector<bool>> _exploredMaps;
 	bool _inBattleMusic { false };  ///< Is the battle music track currently playing?
 	Object *_lastAcquiredItem { nullptr }; ///< Last item acquired via script events.
+
+	bool _moviePlaying { false }; ///< Is a full-screen movie currently playing?
+	std::vector<Common::UString> _movieQueue; ///< Movies queued for PlayMovieQueue.
 
 	// Unloading
 

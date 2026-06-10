@@ -122,6 +122,14 @@ public:
 	/** Set whether this creature's action queue can be modified. */
 	void setCommandable(bool commandable);
 
+	/** Lock body orientation during dialog (SetLockOrientationInDialog). */
+	void setLockOrientationInDialog(bool locked);
+	bool isLockOrientationInDialog() const;
+
+	/** Lock head look-at during dialog (SetLockHeadFollowInDialog). */
+	void setLockHeadFollowInDialog(bool locked);
+	bool isLockHeadFollowInDialog() const;
+
 	// Attributes
 
 	/** Get the current rank of the specified skill. */
@@ -419,6 +427,8 @@ private:
 	Graphics::Aurora::Model *_headModel; ///< The creature's head model.
 	bool _visible;
 	bool _commandable;
+	bool _lockOrientationInDialog { false };
+	bool _lockHeadFollowInDialog { false };
 
 	CreatureInfo _info;
 
