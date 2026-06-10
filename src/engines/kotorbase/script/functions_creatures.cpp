@@ -461,7 +461,7 @@ void Functions::getHasSpellEffect(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 	}
 
-	ctx.getReturn() = (creature->getLastForcePowerUsed() == spell && creature->hasAnyEffect()) ? 1 : 0;
+	ctx.getReturn() = creature->hasSpellEffect(spell) ? 1 : 0;
 }
 
 void Functions::getAbilityModifier(Aurora::NWScript::FunctionContext &ctx) {
@@ -1108,7 +1108,7 @@ void Functions::effectInvisibility(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::effectSeeInvisible(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectInvisibility, 0);
+	ctx.getReturn() = new Effect(kKotOREffectSeeInvisible, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectAbilityDecrease(Aurora::NWScript::FunctionContext &ctx) {

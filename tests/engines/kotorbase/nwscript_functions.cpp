@@ -30,11 +30,14 @@
 #include "gtest/gtest.h"
 
 #include <cmath>
+#include <vector>
 
 #include "src/common/maths.h"
+#include "src/common/strutil.h"
 #include "src/common/ustring.h"
 
 #include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/location.h"
 #include "src/engines/kotorbase/talent.h"
 #include "src/engines/kotorbase/types.h"
@@ -290,4 +293,40 @@ GTEST_TEST(KotORNWScriptFuncs, talentTracksTypeAndID) {
 	EXPECT_FALSE(invalid.isValid());
 	EXPECT_EQ(invalid.getType(), kTalentTypeInvalid);
 	EXPECT_EQ(invalid.getID(), -1);
+}
+
+// ---------------------------------------------------------------------------
+// Audit polish helpers (mirrors creature/effect implementations)
+// ---------------------------------------------------------------------------
+
+struct TestActiveEffect {
+	int spellId;
+};
+
+static bool calcHasSpellEffect(const std::vector<TestActiveEffect> &effects, int spell) {
+	if (spell < 0)
+		return false;
+
+	for (const auto &e : effects) {
+		if (e.spellId == spell)
+			return true;
+	}
+	return false;
+}
+
+GTEST_TEST(KotORNWScriptFuncs, hasSpellEffectMatchesActiveSpellIds) {
+	EXPECT_TRUE(calcHasSpellEffect({{5}, {5}}, 5));
+	EXPECT_FALSE(calcHasSpellEffect({{5}}, 3));
+	EXPECT_FALSE(calcHasSpellEffect({}, 1));
+	EXPECT_FALSE(calcHasSpellEffect({{1}}, -1));
+}
+
+GTEST_TEST(KotORNWScriptFuncs, seeInvisibleEffectTypeDistinctFromInvisibility) {
+	EXPECT_NE(static_cast<int>(kKotOREffectSeeInvisible), static_cast<int>(kKotOREffectInvisibility));
+	EXPECT_EQ(static_cast<int>(kKotOREffectSeeInvisible), 32);
+}
+
+GTEST_TEST(KotORNWScriptFuncs, saveSlotDirectoryFormat) {
+	const Common::UString slot = Common::composeString("%06d - Game%d", 3, 3);
+	EXPECT_EQ(slot, "000003 - Game3");
 }

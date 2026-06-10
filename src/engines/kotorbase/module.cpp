@@ -717,7 +717,7 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 	Aurora::GFF3WriterStructPtr nfoRoot = nfoWriter.getTopLevel();
 	nfoRoot->addExoString("SAVEGAMENAME", name);
 	nfoRoot->addExoString("LASTMODULE", _module);
-	nfoRoot->addUint32("TIMEPLAYED", 0);
+	nfoRoot->addUint32("TIMEPLAYED", static_cast<uint32_t>(_playTime));
 	nfoRoot->addExoString("AREANAME", _area ? _area->getResRef() : Common::UString(""));
 
 	Creature *pc = getPC();

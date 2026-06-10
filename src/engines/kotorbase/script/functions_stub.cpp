@@ -88,13 +88,11 @@ static void stubEngineTypeReturn(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = new Effect(kKotOREffectVisual, 0);
 }
 
-void Functions::stubFunction(Aurora::NWScript::FunctionContext &ctx) {
-	debugC(Common::kDebugEngineLogic, 3, "NWScript stub: %s", ctx.getName().c_str());
-
+static void applyStubReturn(Aurora::NWScript::FunctionContext &ctx, bool useSmartIntDefaults) {
 	switch (ctx.getReturn().getType()) {
 		case Aurora::NWScript::kTypeInt:
 			ctx.getReturn().setType(Aurora::NWScript::kTypeInt);
-			ctx.getReturn() = stubIntDefault(ctx.getName());
+			ctx.getReturn() = useSmartIntDefaults ? stubIntDefault(ctx.getName()) : 0;
 			break;
 		case Aurora::NWScript::kTypeFloat:
 			ctx.getReturn().setType(Aurora::NWScript::kTypeFloat);
@@ -112,39 +110,22 @@ void Functions::stubFunction(Aurora::NWScript::FunctionContext &ctx) {
 			ctx.getReturn().setVector(0.0f, 0.0f, 0.0f);
 			break;
 		case Aurora::NWScript::kTypeEngineType:
-			stubEngineTypeReturn(ctx);
+			if (useSmartIntDefaults)
+				stubEngineTypeReturn(ctx);
 			break;
 		default:
 			break;
 	}
 }
 
+void Functions::stubFunction(Aurora::NWScript::FunctionContext &ctx) {
+	debugC(Common::kDebugEngineLogic, 3, "NWScript stub: %s", ctx.getName().c_str());
+	applyStubReturn(ctx, true);
+}
+
 void Functions::stubSWMGFunction(Aurora::NWScript::FunctionContext &ctx) {
 	debugC(Common::kDebugEngineLogic, 3, "NWScript SWMG stub: %s", ctx.getName().c_str());
-
-	switch (ctx.getReturn().getType()) {
-		case Aurora::NWScript::kTypeInt:
-			ctx.getReturn().setType(Aurora::NWScript::kTypeInt);
-			ctx.getReturn() = 0;
-			break;
-		case Aurora::NWScript::kTypeFloat:
-			ctx.getReturn().setType(Aurora::NWScript::kTypeFloat);
-			ctx.getReturn() = 0.0f;
-			break;
-		case Aurora::NWScript::kTypeString:
-			ctx.getReturn().setType(Aurora::NWScript::kTypeString);
-			ctx.getReturn() = Common::UString("");
-			break;
-		case Aurora::NWScript::kTypeObject:
-			ctx.getReturn().setType(Aurora::NWScript::kTypeObject);
-			break;
-		case Aurora::NWScript::kTypeVector:
-			ctx.getReturn().setType(Aurora::NWScript::kTypeVector);
-			ctx.getReturn().setVector(0.0f, 0.0f, 0.0f);
-			break;
-		default:
-			break;
-	}
+	applyStubReturn(ctx, false);
 }
 
 } // End of namespace KotORBase

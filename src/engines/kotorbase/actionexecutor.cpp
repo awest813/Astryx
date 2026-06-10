@@ -333,6 +333,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 	}
 
 	caster->setForcePoints(caster->getForcePoints() - cost);
+	caster->setLastForcePowerUsed(action.actionID);
 
 	// Apply power effects
 	switch (action.actionID) {
@@ -341,7 +342,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 			for (int i = 0; i < ctx.area->_module->getPartyMemberCount(); ++i) {
 				Creature *member = ctx.area->_module->getPartyMemberByIndex(i);
 				if (member && !member->isDead())
-					member->applyEffect(kEffectHeal, 0.0f, 15);
+					member->applyEffect(kEffectHeal, 0.0f, 15, action.actionID);
 			}
 			break;
 
@@ -353,7 +354,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					int level = caster->getHitDice();
 					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 					if (!target->rollSavingThrow(kSavingThrowWill, dc)) {
-						target->applyEffect(kEffectStun, 9.0f, 0);
+						target->applyEffect(kEffectStun, 9.0f, 0, action.actionID);
 						debugC(Common::kDebugEngineLogic, 1, "Force Stun SUCCESS on %s", target->getTag().c_str());
 					}
 				}
@@ -368,12 +369,12 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					int level = caster->getHitDice();
 					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
-						target->applyEffect(kEffectKnockdown, 3.0f, 0);
-						target->applyEffect(kEffectDamage, 0.0f, level);
+						target->applyEffect(kEffectKnockdown, 3.0f, 0, action.actionID);
+						target->applyEffect(kEffectDamage, 0.0f, level, action.actionID);
 						debugC(Common::kDebugEngineLogic, 1, "Force Push SUCCESS on %s", target->getTag().c_str());
 					} else {
 						// Half damage on save
-						target->applyEffect(kEffectDamage, 0.0f, level / 2);
+						target->applyEffect(kEffectDamage, 0.0f, level / 2, action.actionID);
 					}
 				}
 			}
@@ -381,7 +382,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 
 		case 3: // Burst of Speed (Self)
 			caster->playAnimation("castself", false);
-			caster->applyEffect(kEffectSpeed, 0.0f, 50);
+			caster->applyEffect(kEffectSpeed, 0.0f, 50, action.actionID);
 			break;
 
 		case 14: // Shock (Single target lightning)
@@ -397,7 +398,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					bool saved = target->rollSavingThrow(kSavingThrowWill, dc);
 					if (saved) damage /= 2;
 
-					target->applyEffect(kEffectDamage, 0.0f, damage);
+					target->applyEffect(kEffectDamage, 0.0f, damage, action.actionID);
 					// Visual effect hook would go here
 					debugC(Common::kDebugEngineLogic, 1, "Force Lightning hit %s for %d", target->getTag().c_str(), damage);
 				}
@@ -410,7 +411,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 				if (target) {
 					caster->playAnimation("castout", false);
 					// Plague is special: DC 100 (Unstoppable)
-					target->applyEffect(kEffectPoison, 12.0f, 5); // 5 dmg per sec for 12s
+					target->applyEffect(kEffectPoison, 12.0f, 5, action.actionID); // 5 dmg per sec for 12s
 				}
 			}
 			break;
@@ -425,8 +426,8 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 					
 					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
-						target->applyEffect(kEffectStun, 6.0f, 0);
-						target->applyEffect(kEffectDamage, 0.0f, level * 2);
+						target->applyEffect(kEffectStun, 6.0f, 0, action.actionID);
+						target->applyEffect(kEffectDamage, 0.0f, level * 2, action.actionID);
 					}
 				}
 			}
@@ -437,7 +438,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 				caster->playAnimation("castself", false);
 				Creature *target = ObjectContainer::toCreature(action.object);
 				if (target)
-					target->applyEffect(kEffectStun, 6.0f, 0);
+					target->applyEffect(kEffectStun, 6.0f, 0, action.actionID);
 			}
 			break;
 

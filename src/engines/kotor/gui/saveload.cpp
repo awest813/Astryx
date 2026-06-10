@@ -194,6 +194,7 @@ void SaveLoadMenu::trySaveGame(const Common::UString &dir) {
 
 Common::UString SaveLoadMenu::getNewSaveDirectory() const {
 	Common::UString savesDir = Common::FilePath::normalize(ConfigMan.getString("path") + "/saves");
+	Common::FilePath::createDirectories(savesDir);
 	Common::FileList dirs;
 	dirs.addSubDirectories(savesDir);
 

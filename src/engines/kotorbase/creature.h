@@ -244,14 +244,15 @@ public:
 		EffectType type;
 		float duration;
 		int   value;
+		int   spellId { -1 };
 		float nextTick { 1.0f };
 		bool  expired { false };
 	};
 
-	void applyEffect(EffectType type, float duration, int value = 0);
+	void applyEffect(EffectType type, float duration, int value = 0, int spellId = -1);
 	void updateEffects(float dt);
 	bool hasEffect(EffectType type) const;
-	bool hasAnyEffect() const;
+	bool hasSpellEffect(int spellId) const;
 
 	void performCutsceneAttack(Object *target, int flags);
 

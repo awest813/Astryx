@@ -28,6 +28,8 @@
 #include <cmath>
 #include <memory>
 
+#include "src/common/maths.h"
+
 #include "src/common/util.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
@@ -1217,7 +1219,7 @@ void Functions::faceObjectAwayFromObject(Aurora::NWScript::FunctionContext &ctx)
 	facer ->getPosition(fx, fy, fz);
 	source->getPosition(sx, sy, sz);
 
-	float angle = atan2f(fy - sy, fx - sx) * (180.0f / M_PI);
+	float angle = Common::rad2deg(atan2f(fy - sy, fx - sx));
 	facer->setOrientation(0.0f, 0.0f, 1.0f, angle);
 }
 

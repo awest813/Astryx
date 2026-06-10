@@ -1519,11 +1519,13 @@ namespace KotORBase {
 		}
 		void Creature::applyEffect(EffectType type,
 		float duration,
-		int value) {
+		int value,
+		int spellId) {
 			ActiveEffect e;
 			e.type = type;
 			e.duration = duration;
 			e.value = value;
+			e.spellId = spellId;
 			_effects.push_back(e);
 			applyEffect(e);
 		}
@@ -1561,8 +1563,15 @@ namespace KotORBase {
 			return false;
 		}
 
-		bool Creature::hasAnyEffect() const {
-			return !_effects.empty();
+		bool Creature::hasSpellEffect(int spellId) const {
+			if (spellId < 0)
+				return false;
+
+			for (const auto &e : _effects) {
+				if (e.spellId == spellId)
+					return true;
+			}
+			return false;
 		}
 		void Creature::update(
 		float dt) {

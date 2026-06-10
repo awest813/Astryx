@@ -64,7 +64,8 @@ enum KotOREffectType {
 	kKotOREffectMovementSpeedDecrease    = 28, ///< Reduce movement speed by a percentage.
 	kKotOREffectSavingThrowDecrease      = 29, ///< Penalty to a saving throw.
 	kKotOREffectSkillDecrease            = 30, ///< Penalty to a skill rank.
-	kKotOREffectForceResistanceDecrease  = 31  ///< Reduce Force resistance.
+	kKotOREffectForceResistanceDecrease  = 31, ///< Reduce Force resistance.
+	kKotOREffectSeeInvisible             = 32  ///< Allow the target to see invisible creatures.
 };
 
 class Effect : public Aurora::NWScript::EngineType {
