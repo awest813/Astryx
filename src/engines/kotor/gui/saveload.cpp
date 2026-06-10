@@ -28,6 +28,7 @@
 #include "src/common/filelist.h"
 #include "src/common/filepath.h"
 #include "src/common/strutil.h"
+#include "src/common/util.h"
 
 #include "src/graphics/graphics.h"
 
@@ -192,7 +193,25 @@ void SaveLoadMenu::trySaveGame(const Common::UString &dir) {
 }
 
 Common::UString SaveLoadMenu::getNewSaveDirectory() const {
-	return "";
+	Common::UString savesDir = Common::FilePath::normalize(ConfigMan.getString("path") + "/saves");
+	Common::FileList dirs;
+	dirs.addSubDirectories(savesDir);
+
+	int nextSlot = 1;
+	for (Common::FileList::const_iterator it = dirs.begin(); it != dirs.end(); ++it) {
+		Common::UString relativeDir(Common::FilePath::getFile(*it));
+		if (!relativeDir.contains("Game"))
+			continue;
+
+		int slotNumber = 0;
+		if (!Common::parseString(relativeDir.substr(0, relativeDir.findFirst(' ')), slotNumber))
+			continue;
+
+		nextSlot = MAX(nextSlot, slotNumber + 1);
+	}
+
+	return Common::FilePath::normalize(savesDir + "/" +
+		Common::composeString("%06d - Game%d", nextSlot, nextSlot));
 }
 
 Common::UString SaveLoadMenu::getBaseNameFromDirectory(const Common::UString &dir) const {

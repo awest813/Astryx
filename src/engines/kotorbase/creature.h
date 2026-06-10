@@ -251,6 +251,7 @@ public:
 	void applyEffect(EffectType type, float duration, int value = 0);
 	void updateEffects(float dt);
 	bool hasEffect(EffectType type) const;
+	bool hasAnyEffect() const;
 
 	void performCutsceneAttack(Object *target, int flags);
 

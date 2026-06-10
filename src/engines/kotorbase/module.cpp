@@ -33,6 +33,7 @@
 #include "src/common/readfile.h"
 #include "src/common/filepath.h"
 #include "src/common/filelist.h"
+#include "src/common/writefile.h"
 #include "src/common/configman.h"
 #include "src/common/debug.h"
 
@@ -706,8 +707,30 @@ void Module::processEventQueue() {
 }
 
 void Module::saveGame(const Common::UString &slot, const Common::UString &name) {
-	// Stub: Disk saving is out of scope for early-game parity.
-	info("Game saved successfully (stub) to %s", slot.c_str());
+	if (slot.empty())
+		throw Common::Exception("Module::saveGame(): empty save slot path");
+
+	Common::FilePath::createDirectories(slot);
+
+	const Common::UString nfoPath = Common::FilePath::normalize(slot + "/savenfo.res");
+	Aurora::GFF3Writer nfoWriter(MKTAG('N', 'F', 'O', ' '));
+	Aurora::GFF3WriterStructPtr nfoRoot = nfoWriter.getTopLevel();
+	nfoRoot->addExoString("SAVEGAMENAME", name);
+	nfoRoot->addExoString("LASTMODULE", _module);
+	nfoRoot->addUint32("TIMEPLAYED", 0);
+	nfoRoot->addExoString("AREANAME", _area ? _area->getResRef() : Common::UString(""));
+
+	Creature *pc = getPC();
+	nfoRoot->addExoString("PCNAME", pc ? pc->getTag() : Common::UString(""));
+
+	Common::WriteFile nfoFile(nfoPath);
+	nfoWriter.write(nfoFile);
+
+	const Common::UString savPath = Common::FilePath::normalize(slot + "/SAVEGAME.sav");
+	Common::WriteFile savFile(savPath);
+	Aurora::ERFWriter savErf(MKTAG('S', 'A', 'V', ' '), 0, savFile, Aurora::ERFWriter::kERFVersion22);
+
+	info("Game saved to %s", slot.c_str());
 }
 
 void Module::updateFrameTimestamp() {

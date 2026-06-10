@@ -1560,6 +1560,10 @@ namespace KotORBase {
 			}
 			return false;
 		}
+
+		bool Creature::hasAnyEffect() const {
+			return !_effects.empty();
+		}
 		void Creature::update(
 		float dt) {
 			if (isDead())		return;

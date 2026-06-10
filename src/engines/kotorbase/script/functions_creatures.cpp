@@ -452,6 +452,18 @@ void Functions::getHasSpell(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = (creature && creature->hasForcePower(spell)) ? 1 : 0;
 }
 
+void Functions::getHasSpellEffect(Aurora::NWScript::FunctionContext &ctx) {
+	int spell = ctx.getParams()[0].getInt();
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
+
+	if (!creature) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	ctx.getReturn() = (creature->getLastForcePowerUsed() == spell && creature->hasAnyEffect()) ? 1 : 0;
+}
+
 void Functions::getAbilityModifier(Aurora::NWScript::FunctionContext &ctx) {
 	int nAbilityType = ctx.getParams()[0].getInt();
 	Aurora::NWScript::Object *object = ctx.getParams()[1].getObject();

@@ -608,6 +608,13 @@ protected:
 
 	void signalEncounter(Aurora::NWScript::FunctionContext &ctx);
 
+	void showUpgradeScreen(Aurora::NWScript::FunctionContext &ctx);
+	void getEncounterActive(Aurora::NWScript::FunctionContext &ctx);
+	void setEncounterActive(Aurora::NWScript::FunctionContext &ctx);
+	void getEncounterSpawnsMax(Aurora::NWScript::FunctionContext &ctx);
+	void setEncounterSpawnsMax(Aurora::NWScript::FunctionContext &ctx);
+	void getEncounterSpawnsCurrent(Aurora::NWScript::FunctionContext &ctx);
+	void setEncounterSpawnsCurrent(Aurora::NWScript::FunctionContext &ctx);
 
 	void actionWorkbench(Aurora::NWScript::FunctionContext &ctx);
 
@@ -1083,6 +1090,7 @@ protected:
 
 
 	void getHasSpell(Aurora::NWScript::FunctionContext &ctx);
+	void getHasSpellEffect(Aurora::NWScript::FunctionContext &ctx);
 
 	void getFirstFactionMember(Aurora::NWScript::FunctionContext &ctx);
 	void getNextFactionMember(Aurora::NWScript::FunctionContext &ctx);
