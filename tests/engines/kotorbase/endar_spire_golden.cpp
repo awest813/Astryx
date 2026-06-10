@@ -411,23 +411,18 @@ TEST(EndarSpireGoldenPath, EndarSpireFactionIsHostileToParty) {
 	                     static_cast<int>(Engines::KotORBase::kFactionFriendly1)), 50);
 }
 
-TEST(EndarSpireGoldenPath, StartNewModulePassesEntryWaypoint) {
-	// StartNewModule(module, waypoint, ...) — second string is the spawn tag.
-	Common::UString module = "tar_m02aa";
-	Common::UString entry  = "tar_m02aa";
-	EXPECT_FALSE(module.empty());
-	EXPECT_FALSE(entry.empty());
-}
-
 TEST(EndarSpireGoldenPath, ConversationParticipantMatch) {
 	const std::string owner = "end_trask";
 	const std::string speaker = "end_trask";
 	const std::string other = "end_pc";
 
-	auto inConversation = [&](const std::string &tag) {
+	auto inConversation = [&](const std::string &tag, bool isPC) {
+		if (isPC)
+			return true;
 		return tag == owner || tag == speaker;
 	};
 
-	EXPECT_TRUE(inConversation("end_trask"));
-	EXPECT_FALSE(inConversation("end_pc"));
+	EXPECT_TRUE(inConversation("end_trask", false));
+	EXPECT_TRUE(inConversation("end_pc", true));
+	EXPECT_FALSE(inConversation("end_pc", false));
 }

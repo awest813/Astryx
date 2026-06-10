@@ -53,6 +53,74 @@ namespace Engines {
 
 namespace KotORBase {
 
+namespace {
+
+float distanceSquared(float x1, float y1, float z1, float x2, float y2, float z2) {
+	const float dx = x1 - x2;
+	const float dy = y1 - y2;
+	const float dz = z1 - z2;
+	return dx * dx + dy * dy + dz * dz;
+}
+
+using ObjectDistance = std::pair<float, Object *>;
+
+void collectObjectsByType(uint32_t typeFilter, float tx, float ty, float tz,
+                          Object *exclude, Module &module,
+                          std::vector<ObjectDistance> &matches) {
+	for (int bit = 1; bit < static_cast<int>(kObjectTypeMAX); bit <<= 1) {
+		if (!(typeFilter & bit))
+			continue;
+
+		std::unique_ptr<Aurora::NWScript::ObjectSearch> search(
+			module.findObjectsByType(static_cast<ObjectType>(bit)));
+
+		Aurora::NWScript::Object *raw = nullptr;
+		while ((raw = search->next())) {
+			Object *obj = ObjectContainer::toObject(raw);
+			if (!obj || obj == exclude)
+				continue;
+
+			float x, y, z;
+			obj->getPosition(x, y, z);
+			matches.emplace_back(distanceSquared(tx, ty, tz, x, y, z), obj);
+		}
+	}
+}
+
+void collectObjectsByTag(const Common::UString &tag, float tx, float ty, float tz,
+                         Object *exclude, Module &module,
+                         std::vector<ObjectDistance> &matches) {
+	if (tag.empty())
+		return;
+
+	std::unique_ptr<Aurora::NWScript::ObjectSearch> search(module.findObjectsByTag(tag));
+
+	Aurora::NWScript::Object *raw = nullptr;
+	while ((raw = search->next())) {
+		Object *obj = ObjectContainer::toObject(raw);
+		if (!obj || obj == exclude)
+			continue;
+
+		float x, y, z;
+		obj->getPosition(x, y, z);
+		matches.emplace_back(distanceSquared(tx, ty, tz, x, y, z), obj);
+	}
+}
+
+Object *nthNearest(std::vector<ObjectDistance> &matches, size_t nth) {
+	if (matches.empty() || nth >= matches.size())
+		return nullptr;
+
+	std::sort(matches.begin(), matches.end(),
+	          [](const ObjectDistance &a, const ObjectDistance &b) {
+		          return a.first < b.first;
+	          });
+
+	return matches[nth].second;
+}
+
+} // anonymous namespace
+
 void Functions::getClickingObject(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = ctx.getTriggerer();
 }
@@ -313,7 +381,11 @@ void Functions::getNearestCreature(Aurora::NWScript::FunctionContext &ctx) {
 	criteria.thirdCriteriaType = static_cast<CreatureType>(ctx.getParams()[6].getInt());
 	criteria.thirdCriteriaValue = ctx.getParams()[7].getInt();
 
-	ctx.getReturn() = _game->getModule().getCurrentArea()->getNearestCreature(target, nth, criteria);
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area || !target)
+		return;
+
+	ctx.getReturn() = area->getNearestCreature(target, nth, criteria);
 }
 
 void Functions::getNearestObject(Aurora::NWScript::FunctionContext &ctx) {
@@ -329,40 +401,9 @@ void Functions::getNearestObject(Aurora::NWScript::FunctionContext &ctx) {
 	float tx, ty, tz;
 	target->getPosition(tx, ty, tz);
 
-	std::vector<std::pair<float, Object *>> matches;
-
-	for (int bit = 1; bit < static_cast<int>(kObjectTypeMAX); bit <<= 1) {
-		if (!(typeFilter & bit))
-			continue;
-
-		std::unique_ptr<Aurora::NWScript::ObjectSearch> search(
-			_game->getModule().findObjectsByType(static_cast<ObjectType>(bit)));
-
-		Aurora::NWScript::Object *raw = nullptr;
-		while ((raw = search->next())) {
-			Object *obj = ObjectContainer::toObject(raw);
-			if (!obj || obj == target)
-				continue;
-
-			float x, y, z;
-			obj->getPosition(x, y, z);
-			const float dx = x - tx;
-			const float dy = y - ty;
-			const float dz = z - tz;
-			const float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-			matches.emplace_back(dist, obj);
-		}
-	}
-
-	if (matches.empty() || nth >= matches.size())
-		return;
-
-	std::sort(matches.begin(), matches.end(),
-	          [](const std::pair<float, Object *> &a, const std::pair<float, Object *> &b) {
-		          return a.first < b.first;
-	          });
-
-	ctx.getReturn() = matches[nth].second;
+	std::vector<ObjectDistance> matches;
+	collectObjectsByType(typeFilter, tx, ty, tz, target, _game->getModule(), matches);
+	ctx.getReturn() = nthNearest(matches, nth);
 }
 
 void Functions::getNearestObjectToLocation(Aurora::NWScript::FunctionContext &ctx) {
@@ -377,47 +418,27 @@ void Functions::getNearestObjectToLocation(Aurora::NWScript::FunctionContext &ct
 	else
 		ctx.getParams()[1].getVector(tx, ty, tz);
 
-	std::vector<std::pair<float, Object *>> matches;
-
-	for (int bit = 1; bit < static_cast<int>(kObjectTypeMAX); bit <<= 1) {
-		if (!(typeFilter & bit))
-			continue;
-
-		std::unique_ptr<Aurora::NWScript::ObjectSearch> search(
-			_game->getModule().findObjectsByType(static_cast<ObjectType>(bit)));
-
-		Aurora::NWScript::Object *raw = nullptr;
-		while ((raw = search->next())) {
-			Object *obj = ObjectContainer::toObject(raw);
-			if (!obj)
-				continue;
-
-			float x, y, z;
-			obj->getPosition(x, y, z);
-			const float dx = x - tx;
-			const float dy = y - ty;
-			const float dz = z - tz;
-			const float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-			matches.emplace_back(dist, obj);
-		}
-	}
-
-	if (matches.empty() || nth >= matches.size())
-		return;
-
-	std::sort(matches.begin(), matches.end(),
-	          [](const std::pair<float, Object *> &a, const std::pair<float, Object *> &b) {
-		          return a.first < b.first;
-	          });
-
-	ctx.getReturn() = matches[nth].second;
+	std::vector<ObjectDistance> matches;
+	collectObjectsByType(typeFilter, tx, ty, tz, nullptr, _game->getModule(), matches);
+	ctx.getReturn() = nthNearest(matches, nth);
 }
 
 void Functions::getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx) {
-	// Often equivalent to GetObjectByTag for a single module unless distance actually matters heavily.
-	// Simple stub for progression:
+	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+
 	const Common::UString &tag = ctx.getParams()[0].getString();
-	ctx.getReturn() = _game->getModule().getCurrentArea()->getObjectByTag(tag);
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!target || tag.empty())
+		return;
+
+	const size_t nth = static_cast<size_t>(MAX<int32_t>(ctx.getParams()[2].getInt() - 1, 0));
+
+	float tx, ty, tz;
+	target->getPosition(tx, ty, tz);
+
+	std::vector<ObjectDistance> matches;
+	collectObjectsByTag(tag, tx, ty, tz, target, _game->getModule(), matches);
+	ctx.getReturn() = nthNearest(matches, nth);
 }
 
 void Functions::getSpellTargetObject(Aurora::NWScript::FunctionContext &ctx) {

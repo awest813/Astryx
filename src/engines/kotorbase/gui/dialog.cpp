@@ -75,6 +75,11 @@ bool DialogGUI::isObjectInConversation(Aurora::NWScript::Object *object) const {
 	if (!_isActive || !object)
 		return false;
 
+	if (Creature *creature = ObjectContainer::toCreature(object)) {
+		if (creature->isPC())
+			return true;
+	}
+
 	const Common::UString &tag = object->getTag();
 	if (!tag.empty() && tag == _owner)
 		return true;

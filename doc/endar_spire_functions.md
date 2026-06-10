@@ -56,12 +56,16 @@ Functions are sorted by their numeric ID, which matches the order in
 | 166 | `GetHitDice` | ✅ | Used in combat difficulty scaling |
 | 196 | `ActionJumpToObject` | ✅ | Teleports caller to target object's position; used in escape-pod trigger |
 | 197 | `GetWaypointByTag` | ✅ | Finds a waypoint by tag in the current module |
+| 198 | `GetTransitionTarget` | ✅ | Returns door linked waypoint/door object |
 | 202 | `ActionWait` | ✅ | Queues a wait action; completes on first executor tick |
 | 213 | `GetLocation` | ✅ | Returns the current location of an object |
 | 214 | `ActionJumpToLocation` | ✅ | Teleports caller to a Location engine type |
 | 215 | `Location` | ✅ | Constructs a Location engine type from a position vector and facing |
 | 217 | `GetIsPC` | ✅ | |
 | 220 | `ApplyEffectToObject` | ⚠️ | Applies heal/damage HP changes; limited effect semantics |
+| 227 | `GetNearestObject` | ✅ | Distance-sorted spatial search by type bitmask |
+| 228 | `GetNearestObjectToLocation` | ✅ | Nearest object to a location by type bitmask |
+| 229 | `GetNearestObjectByTag` | ✅ | Nearest tagged object relative to a target |
 | 235 | `GetIsEnemy` | ✅ | Hostile-faction vs friendly-faction check; wired in kotor + kotor2 |
 | 236 | `GetIsFriend` | ✅ | Same-or-friendly-faction check; wired in kotor + kotor2 |
 | 237 | `GetIsNeutral` | ✅ | Neither enemy nor friend; wired in kotor + kotor2 |
@@ -72,7 +76,8 @@ Functions are sorted by their numeric ID, which matches the order in
 | 385 | `JumpToObject` | ✅ | Instant-teleport variant of ActionJumpToObject |
 | 403 | `ExploreAreaForPlayer` | ⚠️ | Script hook implemented as no-op for now |
 | 443 | `GetIsOpen` | ✅ | |
-| 445 | `GetIsInConversation` | ✅ | Returns conversation-active state from the module |
+| 445 | `GetIsInConversation` | ✅ | Per-object check (PC, owner, speaker); module-wide when object omitted |
+| 509 | `StartNewModule` | ✅ | Loads module; 2nd param is entry waypoint tag |
 | 556 | `GetLastHostileActor` | ✅ | Used in OnPhysicalAttacked handler |
 | 578 | `GetGlobalBoolean` | ✅ | |
 | 579 | `SetGlobalBoolean` | ✅ | |
