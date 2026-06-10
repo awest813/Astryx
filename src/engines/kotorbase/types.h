@@ -252,6 +252,14 @@ enum InventorySlot {
 	kInventorySlotInvalid      = 255
 };
 
+enum DoorAction {
+	kDoorActionOpen   = 0,
+	kDoorActionUnlock = 1,
+	kDoorActionBash   = 2,
+	kDoorActionIgnore = 3,
+	kDoorActionKnock  = 4
+};
+
 enum ActionType {
 	kActionMoveToPoint   = 0,
 	kActionPickUpItem    = 1,

@@ -996,6 +996,13 @@ void Functions::setStealthMode(Aurora::NWScript::FunctionContext &ctx) {
 		creature->setStealthMode(mode);
 }
 
+void Functions::setLightsaberPowered(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	bool powered = ctx.getParams()[1].getInt() != 0;
+	if (creature)
+		creature->setLightsaberPowered(powered);
+}
+
 void Functions::getAppearanceType(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
 	ctx.getReturn() = creature ? static_cast<int>(creature->getAppearanceType()) : -1;
@@ -1105,6 +1112,13 @@ void Functions::effectDamageReduction(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::effectInvisibility(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = new Effect(kKotOREffectInvisibility, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectPoison(Aurora::NWScript::FunctionContext &ctx) {
+	int damage = ctx.getParams()[0].getInt();
+	int duration = ctx.getParams()[1].getInt();
+	(void)ctx.getParams()[2].getInt(); // save DC — applied when the effect is resolved
+	ctx.getReturn() = new Effect(kKotOREffectPoison, damage, duration);
 }
 
 void Functions::effectSeeInvisible(Aurora::NWScript::FunctionContext &ctx) {

@@ -65,7 +65,8 @@ enum KotOREffectType {
 	kKotOREffectSavingThrowDecrease      = 29, ///< Penalty to a saving throw.
 	kKotOREffectSkillDecrease            = 30, ///< Penalty to a skill rank.
 	kKotOREffectForceResistanceDecrease  = 31, ///< Reduce Force resistance.
-	kKotOREffectSeeInvisible             = 32  ///< Allow the target to see invisible creatures.
+	kKotOREffectSeeInvisible             = 32, ///< Allow the target to see invisible creatures.
+	kKotOREffectPoison                   = 33  ///< Damage over time poison effect.
 };
 
 class Effect : public Aurora::NWScript::EngineType {

@@ -1028,6 +1028,17 @@ protected:
 
 	void getLastUsedBy  (Aurora::NWScript::FunctionContext &ctx);
 
+	void getIsDoorActionPossible(Aurora::NWScript::FunctionContext &ctx);
+	void doDoorAction(Aurora::NWScript::FunctionContext &ctx);
+	void getBlockingDoor(Aurora::NWScript::FunctionContext &ctx);
+
+	// Items, functions_item.cpp
+
+	void getIdentified(Aurora::NWScript::FunctionContext &ctx);
+	void setIdentified(Aurora::NWScript::FunctionContext &ctx);
+	void getGoldPieceValue(Aurora::NWScript::FunctionContext &ctx);
+	void getItemHasItemProperty(Aurora::NWScript::FunctionContext &ctx);
+
 
 
 
@@ -1113,6 +1124,7 @@ protected:
 
 
 	void setStealthMode(Aurora::NWScript::FunctionContext &ctx);
+	void setLightsaberPowered(Aurora::NWScript::FunctionContext &ctx);
 
 
 	void getAppearanceType(Aurora::NWScript::FunctionContext &ctx);
@@ -1493,6 +1505,7 @@ protected:
 	void effectSavingThrowIncrease(Aurora::NWScript::FunctionContext &ctx);
 	void effectDamageReduction(Aurora::NWScript::FunctionContext &ctx);
 	void effectInvisibility(Aurora::NWScript::FunctionContext &ctx);
+	void effectPoison(Aurora::NWScript::FunctionContext &ctx);
 	void effectSeeInvisible(Aurora::NWScript::FunctionContext &ctx);
 	void effectAbilityDecrease(Aurora::NWScript::FunctionContext &ctx);
 	void effectAttackDecrease(Aurora::NWScript::FunctionContext &ctx);

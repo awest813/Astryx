@@ -61,8 +61,6 @@ static int stubIntDefault(const Common::UString &name) {
 		return 0;
 	if (name == "GetSpellSaveDC")
 		return 12;
-	if (name == "GetIdentified")
-		return 1;
 	return 0;
 }
 

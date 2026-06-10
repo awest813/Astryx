@@ -38,6 +38,7 @@
 
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/effect.h"
+#include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/location.h"
 #include "src/engines/kotorbase/talent.h"
 #include "src/engines/kotorbase/types.h"
@@ -329,4 +330,16 @@ GTEST_TEST(KotORNWScriptFuncs, seeInvisibleEffectTypeDistinctFromInvisibility) {
 GTEST_TEST(KotORNWScriptFuncs, saveSlotDirectoryFormat) {
 	const Common::UString slot = Common::composeString("%06d - Game%d", 3, 3);
 	EXPECT_EQ(slot, "000003 - Game3");
+}
+
+GTEST_TEST(KotORNWScriptFuncs, doorActionConstantsMatchNwscript) {
+	EXPECT_EQ(kDoorActionOpen, 0);
+	EXPECT_EQ(kDoorActionUnlock, 1);
+	EXPECT_EQ(kDoorActionBash, 2);
+	EXPECT_EQ(kDoorActionIgnore, 3);
+	EXPECT_EQ(kDoorActionKnock, 4);
+}
+
+GTEST_TEST(KotORNWScriptFuncs, poisonEffectUsesDedicatedType) {
+	EXPECT_EQ(static_cast<int>(kKotOREffectPoison), 33);
 }

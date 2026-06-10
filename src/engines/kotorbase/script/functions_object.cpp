@@ -1159,7 +1159,10 @@ void Functions::getWasForcePowerSuccessful(Aurora::NWScript::FunctionContext &ct
 void Functions::getFirstEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
 void Functions::getNextEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
 void Functions::removeEffect(Aurora::NWScript::FunctionContext &ctx) {}
-void Functions::getIsEffectValid(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
+void Functions::getIsEffectValid(Aurora::NWScript::FunctionContext &ctx) {
+	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
+	ctx.getReturn() = effect ? 1 : 0;
+}
 void Functions::getEffectDurationType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
 void Functions::getEffectSubType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
 void Functions::getEffectCreator(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }

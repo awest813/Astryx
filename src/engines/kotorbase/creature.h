@@ -322,6 +322,11 @@ public:
 	
 	/** Returns true if the creature has a lightsaber equipped in either hand. */
 	bool hasLightsaberEquipped() const;
+	void setLightsaberPowered(bool powered);
+	bool isLightsaberPowered() const;
+
+	void setBlockingDoor(Object *door);
+	Object *getBlockingDoor() const;
 
 	/** Return true if the creature has the specified Force power. */
 	bool hasForcePower(uint32_t power) const;
@@ -430,6 +435,8 @@ private:
 	float _runRate;
 
 	bool _dead { false };
+	bool _lightsaberPowered { true };
+	Object *_blockingDoor { nullptr };
 	std::vector<ActiveEffect> _effects;
 	AIArchetype _aiArchetype { kAIArchetypeNone };
 	float       _aiCooldown  { 0.0f };

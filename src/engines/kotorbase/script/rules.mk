@@ -34,6 +34,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/script/functions_encounter.cpp \
     src/engines/kotorbase/script/functions_events.cpp \
     src/engines/kotorbase/script/functions_global.cpp \
+    src/engines/kotorbase/script/functions_item.cpp \
     src/engines/kotorbase/script/functions_local.cpp \
     src/engines/kotorbase/script/functions_math.cpp \
     src/engines/kotorbase/script/functions_module.cpp \

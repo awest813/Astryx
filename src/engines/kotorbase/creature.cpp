@@ -1035,6 +1035,10 @@ namespace KotORBase {
 				case kKotOREffectMovementSpeedIncrease:
 					applyEffect(kEffectSpeed, 0.0f, 50);
 					break;
+				case kKotOREffectPoison:
+					applyEffect(kEffectPoison, effect.getDamageType() > 0 ? static_cast<float>(effect.getDamageType()) : 6.0f,
+					            effect.getAmount());
+					break;
 				default:
 					break;
 			}
@@ -1469,7 +1473,19 @@ namespace KotORBase {
 				return base == kBaseItemLightsaber || 		       base == kBaseItemDoubleLightsaber || 		       base == kBaseItemShortLightsaber;
 			}
 			;
-			return isLasso(right) || isLasso(left);
+			return _lightsaberPowered && (isLasso(right) || isLasso(left));
+		}
+		void Creature::setLightsaberPowered(bool powered) {
+			_lightsaberPowered = powered;
+		}
+		bool Creature::isLightsaberPowered() const {
+			return _lightsaberPowered;
+		}
+		void Creature::setBlockingDoor(Object *door) {
+			_blockingDoor = door;
+		}
+		Object *Creature::getBlockingDoor() const {
+			return _blockingDoor;
 		}
 		void Creature::think(Area *area) {
 			if (_aiArchetype == kAIArchetypeNone || isPC() || isDead() || !area)

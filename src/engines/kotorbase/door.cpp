@@ -38,8 +38,10 @@
 
 #include "src/engines/aurora/util.h"
 
+#include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/objectcontainer.h"
 
 namespace Engines {
 
@@ -171,10 +173,15 @@ bool Door::open(Object *opener) {
 		return true;
 
 	if (isLocked()) {
+		if (Creature *creature = ObjectContainer::toCreature(opener))
+			creature->setBlockingDoor(this);
 		playSound(_soundLocked);
 		runScript(kScriptFailToOpen, this, opener);
 		return false;
 	}
+
+	if (Creature *creature = ObjectContainer::toCreature(opener))
+		creature->setBlockingDoor(nullptr);
 
 	_lastOpenedBy = opener;
 

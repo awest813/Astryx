@@ -44,6 +44,14 @@ int Item::getCost() const {
 	return _cost;
 }
 
+bool Item::hasItemProperty(int propertyType) const {
+	for (int type : _propertyTypes) {
+		if (type == propertyType)
+			return true;
+	}
+	return false;
+}
+
 void Item::load(const Aurora::GFF3Struct &gff) {
 	// Tag, name and description
 	_tag = gff.getString("Tag");
@@ -68,6 +76,12 @@ void Item::load(const Aurora::GFF3Struct &gff) {
 	_textureVariation = gff.getSint("TextureVar");
 	_stackSize = gff.getSint("StackSize", 1);
 	_cost = gff.getSint("Cost");
+
+	const Aurora::GFF3List &properties = gff.getList("PropertiesList");
+	for (Aurora::GFF3List::const_iterator it = properties.begin(); it != properties.end(); ++it) {
+		if (*it)
+			_propertyTypes.push_back((*it)->getUint("PropertyName"));
+	}
 }
 
 const Common::UString &Item::getName() const {

@@ -25,6 +25,8 @@
 #ifndef ENGINES_KOTORBASE_ITEM_H
 #define ENGINES_KOTORBASE_ITEM_H
 
+#include <vector>
+
 #include "src/engines/kotorbase/object.h"
 
 namespace Engines {
@@ -49,6 +51,8 @@ public:
 	int getACBonus() const;
 	int getBaseItem() const;
 	int getCost() const;
+
+	bool hasItemProperty(int propertyType) const;
 
 	int  getStackSize() const;
 	void setStackSize(int size);
@@ -76,6 +80,8 @@ private:
 	int _acBonus;
 	int _stackSize; ///< Stack count (grenades, medpacs, etc. — default 1).
 	int _cost;
+
+	std::vector<int> _propertyTypes;
 
 	void load(const Aurora::GFF3Struct &gff);
 };
