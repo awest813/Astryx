@@ -600,6 +600,9 @@ void Module::leaveArea() {
 }
 
 void Module::clickObject(Object *object) {
+	if (getGlobalNumber("__player_restrict_mode") != 0)
+		return;
+
 	Object *currentTarget = _ingame->getTargetObject();
 	if (currentTarget != object) {
 		_ingame->setTargetObject(object);
@@ -1952,7 +1955,9 @@ void Module::setPlayerInputEnabled(bool enabled) {
 
 void Module::setCutsceneMode(bool enabled) {
 	_cutsceneMode = enabled;
-	// Logic to hide/show ingame GUI during cutscenes
+	if (enabled)
+		setPlayerInputEnabled(false);
+
 	if (_ingame) {
 		if (enabled)
 			_ingame->hide();

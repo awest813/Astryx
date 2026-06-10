@@ -88,8 +88,21 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 		case kActionPlayAnimation:
 			executePlayAnimation(action, ctx);
 			break;
+		case kActionOpenDoor:
+			if (action.object) {
+				Door *door = ObjectContainer::toDoor(action.object);
+				if (door)
+					door->open(ctx.creature);
+			}
+			ctx.creature->popAction();
+			break;
+		case kActionGiveItem:
+		case kActionTakeItem:
+			ctx.creature->popAction();
+			break;
 		default:
-			warning("TODO: Handle action %u", (uint)action.type);
+			ctx.creature->popAction();
+			debugC(Common::kDebugEngineLogic, 1, "ActionExecutor: unhandled action type %u", (uint)action.type);
 			break;
 	}
 }

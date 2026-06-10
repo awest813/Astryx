@@ -1375,12 +1375,16 @@ namespace KotORBase {
 		}
 		void Creature::performCutsceneAttack(Object *target,
 		int flags) {
-			if (!target)		return;
-			// 1. Ensure we face each other	makeLookAt(target);
+			if (!target)
+				return;
+
+			makeLookAt(target);
 			Creature *targetCreature = ObjectContainer::toCreature(target);
-			if (targetCreature)		targetCreature->makeLookAt(this);
-			// 2. Play attack animation	// Standard attack for cutscenes	playAnimation("attack1", false, 1.2f);
-			// 3. Handle reactions
+			if (targetCreature)
+				targetCreature->makeLookAt(this);
+
+			playAnimation("attack1", false, 1.2f);
+
 			if (flags & kCutsceneAttackForceHit) {
 				if (targetCreature && (flags & kCutsceneAttackPlayReaction)) {
 					int roll = RNG.getNext(0, 3);

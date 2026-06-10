@@ -970,6 +970,9 @@ void Area::handleCreaturesDeath() {
 		if (c->handleDeath())
 			_module->signalUserDefinedEvent(c, 1007);
 	}
+
+	if (_module->getPC() && _module->getPC()->isDead())
+		_module->showDeathGUI();
 }
 
 void Area::addCreature(Creature *creature) {

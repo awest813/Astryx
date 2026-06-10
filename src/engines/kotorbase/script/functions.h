@@ -1478,12 +1478,14 @@ protected:
 
 	void getAttemptedAttackTarget(Aurora::NWScript::FunctionContext &ctx);
 
+	void getGoingToBeAttackedBy(Aurora::NWScript::FunctionContext &ctx);
 
 	void getAttemptedSpellTarget(Aurora::NWScript::FunctionContext &ctx);
 
 
 	void getIsInCombat(Aurora::NWScript::FunctionContext &ctx);
 
+	void getLastAttackMode(Aurora::NWScript::FunctionContext &ctx);
 
 	void getLastHostileActor(Aurora::NWScript::FunctionContext &ctx);
 

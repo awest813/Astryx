@@ -55,7 +55,13 @@ public:
 	void showWorkbench() override;
 	void showJournal() override;
 
+	void showMenu() override;
+	void showDeathGUI() override;
+
 	void signalEncounter(const Common::UString &id) override;
+
+private:
+	void showIngameOptionsMenu();
 };
 
 } // End of namespace KotOR

@@ -126,9 +126,9 @@ public:
 	// Interact with the current module
 
 	/** Show the ingame main menu. */
-	void showMenu();
-	void showGUIPanel(int panel);
-	void showDeathGUI();
+	virtual void showMenu();
+	virtual void showGUIPanel(int panel);
+	virtual void showDeathGUI();
 
 	/** Show the galaxy map menu. */
 	virtual void showGalaxyMap();

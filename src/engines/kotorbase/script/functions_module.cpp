@@ -140,6 +140,8 @@ void Functions::getMaxForcePoints(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::pauseGame(Aurora::NWScript::FunctionContext &ctx) {
 	const bool paused = ctx.getParams()[0].getInt() != 0;
 	_game->getModule().setGlobalBoolean("__game_paused", paused);
+	if (paused)
+		_game->getModule().showMenu();
 }
 
 void Functions::setPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx) {

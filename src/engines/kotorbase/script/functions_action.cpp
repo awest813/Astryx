@@ -86,6 +86,7 @@
 #include "src/engines/kotorbase/action.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/area.h"
 
 #include "src/engines/kotorbase/talent.h"
 
@@ -465,7 +466,35 @@ void Functions::getAttemptedAttackTarget(Aurora::NWScript::FunctionContext &ctx)
 
 }
 
+void Functions::getGoingToBeAttackedBy(Aurora::NWScript::FunctionContext &ctx) {
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
 
+	Area *area = _game->getModule().getCurrentArea();
+	if (!target || !area)
+		return;
+
+	for (Creature *creature : area->getCreatures()) {
+		if (!creature || creature->isDead() || !creature->isInCombat())
+			continue;
+
+		if (creature->getAttemptedAttackTarget() == target) {
+			ctx.getReturn() = creature;
+			return;
+		}
+	}
+}
+
+void Functions::getLastAttackMode(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature || !creature->isInCombat()) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	const int feat = creature->getLastCombatFeatUsed();
+	ctx.getReturn() = feat >= 0 ? feat : 0;
+}
 
 void Functions::getAttemptedSpellTarget(Aurora::NWScript::FunctionContext &ctx) {
 

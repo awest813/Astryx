@@ -51,6 +51,9 @@ void PartyLeaderController::stopMovement() {
 }
 
 bool PartyLeaderController::handleEvent(const Events::Event &e) {
+	if (_module->getGlobalNumber("__player_restrict_mode") != 0)
+		return false;
+
 	switch (e.type) {
 		case Events::kEventKeyDown:
 		case Events::kEventKeyUp:

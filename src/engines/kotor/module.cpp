@@ -44,6 +44,9 @@
 #include "src/engines/kotor/encounters_ebon.h"
 #include "src/engines/kotor/pazaak.h"
 #include "src/engines/kotor/gui/ingame/pazaak.h"
+#include "src/engines/kotor/gui/ingame/menu.h"
+
+#include "src/graphics/graphics.h"
 
 namespace Engines {
 
@@ -73,6 +76,37 @@ KotORBase::Creature *Module::createCreature(const Common::UString &resRef) const
 
 KotORBase::CharacterGenerationInfo *Module::createCharGenInfo(const KotORBase::CharacterGenerationInfo &info) const {
 	return new CharacterGenerationInfo(info);
+}
+
+void Module::showMenu() {
+	showIngameOptionsMenu();
+}
+
+void Module::showDeathGUI() {
+	showIngameOptionsMenu();
+}
+
+void Module::showIngameOptionsMenu() {
+	if (_inDialog || !_ingame || !_running)
+		return;
+
+	_cameraController.stopMovement();
+	_partyLeaderController.clearUserInput();
+	_partyLeaderController.stopMovement();
+	_ingame->hideSelection();
+
+	Menu menu(*this, _console);
+	menu.show();
+	menu.showMenu("BTN_OPT");
+
+	updateFrameTimestamp();
+	const uint32_t ret = menu.run();
+	if (ret == 1)
+		_exit = true;
+	else if (ret == 2)
+		GfxMan.unlockFrame();
+
+	updateFrameTimestamp();
 }
 
 void Module::showGalaxyMap() {
