@@ -78,7 +78,7 @@ void Functions::registerFunctions() {
 			defaults.push_back(Aurora::NWScript::Variable(*fDef.defaults[j]));
 		}
 
-		const funcPtr f = fPtr.func ? fPtr.func : &Functions::unimplementedFunction;
+		const funcPtr f = fPtr.func ? fPtr.func : &Functions::stubFunction;
 
 		FunctionMan.registerFunction(fPtr.name, id, std::bind(f, this, std::placeholders::_1), signature, defaults);
 	}

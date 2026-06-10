@@ -29,8 +29,8 @@
  *
  * kFunctionPointers provides the ID and name of the engine function, and a
  * pointer to Functions method doing the actual work. If the function pointer
- * is 0, a default unimplementedFunction method is used that just prints
- * the name of the function when it's called.
+ * is 0, a default stubFunction method is used that returns safe defaults
+ * without logging runtime warnings.
  *
  * kFunctionSignatures defines the signature of the function, i.e. the types
  * of the return value and its parameters.
