@@ -61,6 +61,7 @@ public:
 
 	void startConversation(const Common::UString &name, Aurora::NWScript::Object *owner = 0);
 
+	bool isObjectInConversation(Aurora::NWScript::Object *object) const;
 
 	void callbackActive(Widget &widget);
 	void callbackKeyInput(const Events::Key &key, const Events::EventType &type);

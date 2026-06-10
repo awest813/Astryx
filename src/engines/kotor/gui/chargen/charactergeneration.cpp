@@ -283,11 +283,8 @@ void CharacterGenerationMenu::start() {
 	hide();
 
 	try {
+		// Prepare the PC; the opening encounter loads end_m01aa after the crawl.
 		_module->usePC(*_pc);
-		Common::UString firstModule = ConfigMan.getString("KOTOR_startModule", "end_m01aa");
-		if (firstModule.empty())
-			firstModule = "end_m01aa";
-		_module->load(firstModule);
 	} catch (...) {
 		Common::exceptionDispatcherWarning();
 		return;

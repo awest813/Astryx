@@ -319,6 +319,7 @@ public:
 	// Conversation
 
 	bool isConversationActive() const;
+	bool isObjectInConversation(Aurora::NWScript::Object *object) const;
 
 	void startConversation(const Common::UString &name, Aurora::NWScript::Object *owner = 0);
 

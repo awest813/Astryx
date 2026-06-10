@@ -38,6 +38,7 @@
 
 #include "src/engines/aurora/util.h"
 
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/module.h"
@@ -133,6 +134,17 @@ void Door::highlight(bool enabled) {
 
 bool Door::isOpen() const {
 	return (_state == kStateOpened1) || (_state == kStateOpened2);
+}
+
+Object *Door::getTransitionTarget() const {
+	if (_linkedTo.empty() || !_module)
+		return nullptr;
+
+	Area *area = _module->getCurrentArea();
+	if (!area)
+		return nullptr;
+
+	return area->getObjectByTag(_linkedTo);
 }
 
 bool Door::click(Object *triggerer) {

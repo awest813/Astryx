@@ -71,6 +71,19 @@ bool DialogGUI::isConversationActive() const {
 	return _isActive;
 }
 
+bool DialogGUI::isObjectInConversation(Aurora::NWScript::Object *object) const {
+	if (!_isActive || !object)
+		return false;
+
+	const Common::UString &tag = object->getTag();
+	if (!tag.empty() && tag == _owner)
+		return true;
+	if (!tag.empty() && tag == _curSpeaker)
+		return true;
+
+	return false;
+}
+
 void DialogGUI::show() {
 	CursorMan.setGroup("default");
 	GUI::show();

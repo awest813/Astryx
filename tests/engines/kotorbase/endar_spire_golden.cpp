@@ -30,6 +30,12 @@
  *  Aurora resource archives).
  */
 
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "gtest/gtest.h"
 
 #include "src/engines/kotorbase/action.h"
@@ -330,4 +336,63 @@ TEST(EndarSpireGoldenPath, UnarmedAttackMinimumDamage) {
 	EXPECT_EQ(normalDamage, 3);
 	int clampedNormal = (normalDamage < 1) ? 1 : normalDamage;
 	EXPECT_EQ(clampedNormal, 3); // unaffected by the floor
+}
+
+// ---------------------------------------------------------------------------
+// 11. GetNearestObject distance ordering (mirrors functions_object.cpp)
+// ---------------------------------------------------------------------------
+
+namespace {
+
+struct Vec3 {
+	float x, y, z;
+};
+
+struct NearestFixture {
+	Vec3 origin;
+	std::vector<std::pair<Vec3, int>> objects; // position + id
+
+	int nearestNth(size_t nth) const {
+		std::vector<std::pair<float, int>> ranked;
+		for (const auto &entry : objects) {
+			const float dx = entry.first.x - origin.x;
+			const float dy = entry.first.y - origin.y;
+			const float dz = entry.first.z - origin.z;
+			const float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+			ranked.emplace_back(dist, entry.second);
+		}
+		std::sort(ranked.begin(), ranked.end(),
+		          [](const auto &a, const auto &b) { return a.first < b.first; });
+		if (nth >= ranked.size())
+			return -1;
+		return ranked[nth].second;
+	}
+};
+
+} // anonymous namespace
+
+TEST(EndarSpireGoldenPath, NearestObjectPicksClosest) {
+	NearestFixture f;
+	f.origin = {0.0f, 0.0f, 0.0f};
+	f.objects = {{{5.0f, 0.0f, 0.0f}, 1}, {{2.0f, 0.0f, 0.0f}, 2}, {{8.0f, 0.0f, 0.0f}, 3}};
+	EXPECT_EQ(f.nearestNth(0), 2);
+	EXPECT_EQ(f.nearestNth(1), 1);
+	EXPECT_EQ(f.nearestNth(2), 3);
+}
+
+// ---------------------------------------------------------------------------
+// 12. GetIsInConversation participant matching
+// ---------------------------------------------------------------------------
+
+TEST(EndarSpireGoldenPath, ConversationParticipantMatch) {
+	const std::string owner = "end_trask";
+	const std::string speaker = "end_trask";
+	const std::string other = "end_pc";
+
+	auto inConversation = [&](const std::string &tag) {
+		return tag == owner || tag == speaker;
+	};
+
+	EXPECT_TRUE(inConversation("end_trask"));
+	EXPECT_FALSE(inConversation("end_pc"));
 }

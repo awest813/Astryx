@@ -64,6 +64,9 @@ public:
 	bool open(Object *opener);
 	/** The closer object closes this door. */
 	bool close(Object *closer);
+
+	/** Return the linked waypoint/door used for area transitions. */
+	Object *getTransitionTarget() const;
 	/** The unlocker object unlocks this door. */
 	bool unlock(Object *unlocker);
 

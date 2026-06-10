@@ -34,6 +34,7 @@
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/aurora/talkman.h"
@@ -396,9 +397,13 @@ void Functions::setReturnStrref(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getTransitionTarget(Aurora::NWScript::FunctionContext &ctx) {
-	// Simple stub that allows transition checks to fail cleanly rather than crash.
-	// We'd look up the transition destination tag here if implemented fully.
-	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+	Door *door = ObjectContainer::toDoor(getParamObject(ctx, 0));
+	if (!door) {
+		ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+		return;
+	}
+
+	ctx.getReturn() = door->getTransitionTarget();
 }
 
 void Functions::getModuleName(Aurora::NWScript::FunctionContext &ctx) {

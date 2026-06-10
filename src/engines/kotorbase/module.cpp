@@ -1750,6 +1750,10 @@ bool Module::isConversationActive() const {
 	return _inDialog;
 }
 
+bool Module::isObjectInConversation(Aurora::NWScript::Object *object) const {
+	return _dialog && _dialog->isObjectInConversation(object);
+}
+
 void Module::startConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
 	if (_inDialog)
 		return;

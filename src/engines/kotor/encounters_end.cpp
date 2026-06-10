@@ -1,11 +1,34 @@
 #include "src/common/util.h"
-#include "src/engines/kotorbase/module.h"
+
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/objectcontainer.h"
+#include "src/engines/kotorbase/types.h"
+
 #include "src/engines/kotor/encounters_end.h"
 
 namespace Engines {
 
 namespace KotOR {
+
+static KotORBase::Creature *findTraskUlgo(KotORBase::Module &module) {
+	KotORBase::Area *area = module.getCurrentArea();
+	if (!area)
+		return nullptr;
+
+	if (Object *o = area->getObjectByTag("end_trask"))
+		return KotORBase::ObjectContainer::toCreature(o);
+	if (Object *o = area->getObjectByTag("trask"))
+		return KotORBase::ObjectContainer::toCreature(o);
+
+	for (KotORBase::Creature *c : area->getCreatures()) {
+		if (c->getTemplateResRef() == "end_trask")
+			return c;
+	}
+
+	return nullptr;
+}
 
 void performEndarSpireOpening(KotORBase::Module &module) {
 	status("Orchestrating Endar Spire Opening...");
@@ -18,16 +41,16 @@ void performEndarSpireOpening(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 3. Transition to Endar Spire Interior
-	module.replaceModule("end_m01aa");
+	// 3. Load the Endar Spire (runModule::enter() starts gameplay)
+	if (!module.isLoaded())
+		module.load("end_m01aa");
 
 	// 4. Stinger & Impact
-	// We call this after a slight delay in a real runner, but for now we chain it
 	module.playMusicStinger("mus_bat_ship");
-	module.shakeCamera(4.0f, 0.8f); // Long initial tremor
+	module.shakeCamera(4.0f, 0.8f);
 
 	// 5. Initial Journal Entry
-	module.addJournalQuestEntry("k_main_quest", 5); // Escape the Endar Spire
+	module.addJournalQuestEntry("k_main_quest", 5);
 
 	// 6. Restore control for the wake-up sequence
 	module.setCutsceneMode(false);
@@ -40,16 +63,25 @@ void performTraskEncounter(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// This is typically called when the player clicks the door in the starting room.
-	// Trask runs up and initiates dialogue.
-	module.shakeCamera(1.5f, 0.4f); // Secondary explosion
+	module.shakeCamera(1.5f, 0.4f);
 	module.playMusicStinger("mus_vfx_explosion");
 
-	// Focus camera on the door/Trask reveal
 	module.cameraTransitionToTarget("wp_trask_reveal", 2.0f);
-	
-	// Trask dialogue hook usually follows automatically via SignalEncounter handlers
-	// but we set the cutscene mode to ensure smooth transition to dialogue components.
+
+	if (KotORBase::Creature *trask = findTraskUlgo(module)) {
+		module.setCinematicFocus(trask);
+
+		const Common::UString &conversation = trask->getConversation();
+		if (!conversation.empty()) {
+			module.setCutsceneMode(false);
+			module.setPlayerInputEnabled(true);
+			module.startConversation(conversation, trask);
+			return;
+		}
+	}
+
+	module.setCutsceneMode(false);
+	module.setPlayerInputEnabled(true);
 }
 
 void performSithBoarding(KotORBase::Module &module) {
@@ -58,30 +90,46 @@ void performSithBoarding(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 1. Zoom to the airlock door
 	module.cameraTransitionToTarget("wp_sector_2_airlock", 2.5f);
 
-	// 2. Timed tremors
 	module.shakeCamera(1.0f, 0.7f);
 	module.playMusicStinger("mus_vfx_impact");
 
-	// 3. Spawn Sith Soldiers
+	KotORBase::Area *area = module.getCurrentArea();
 	KotORBase::Creature *sith1 = module.createCreatureByTemplate("n_sithsoldier001");
 	KotORBase::Creature *sith2 = module.createCreatureByTemplate("n_sithsoldier001");
 
 	float x, y, z, angle;
 	if (module.getObjectLocation("wp_sector_2_airlock", KotORBase::kObjectTypeWaypoint, x, y, z, angle)) {
-		if (sith1) sith1->setPosition(x + 1.0f, y, z);
-		if (sith2) sith2->setPosition(x - 1.0f, y, z);
+		if (sith1) {
+			sith1->setPosition(x + 1.0f, y, z);
+			sith1->setOrientation(0.0f, 0.0f, 1.0f, angle);
+		}
+		if (sith2) {
+			sith2->setPosition(x - 1.0f, y, z);
+			sith2->setOrientation(0.0f, 0.0f, 1.0f, angle);
+		}
 	}
 
-	if (sith1) sith1->setAIArchetype(KotORBase::Creature::kAIArchetypeTacticalHumanoid);
-	if (sith2) sith2->setAIArchetype(KotORBase::Creature::kAIArchetypeTacticalHumanoid);
+	auto setupSith = [](KotORBase::Creature *sith) {
+		if (!sith)
+			return;
+		sith->setFaction(KotORBase::kFactionEndarSpire);
+		sith->setAIArchetype(KotORBase::Creature::kAIArchetypeTacticalHumanoid);
+	};
 
-	// 4. Dialogue alert: "They're slicing through the door!"
+	setupSith(sith1);
+	setupSith(sith2);
+
+	if (area) {
+		if (sith1)
+			area->addCreature(sith1);
+		if (sith2)
+			area->addCreature(sith2);
+	}
+
 	module.playMusicStinger("mus_bat_sith");
 
-	// Restore control for the battle
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
 }
