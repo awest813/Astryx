@@ -122,6 +122,8 @@ TEST(EndarSpireGoldenPath, OpeningCutsceneStateMachine) {
 	bool openingPending = false;
 	bool moduleLoaded = false;
 	bool moduleRunning = false;
+	bool deferIngameHUD = false;
+	bool ingameVisible = false;
 
 	// Main menu: movies then load (module not running yet).
 	openingPlayed = true;
@@ -130,11 +132,20 @@ TEST(EndarSpireGoldenPath, OpeningCutsceneStateMachine) {
 	EXPECT_TRUE(openingPending);
 	EXPECT_FALSE(moduleRunning);
 
-	// First enter(): run the in-module beat, then hand control to the player.
+	// First enter(): defer HUD, run the in-module beat, then show HUD.
+	deferIngameHUD = openingPending;
 	openingPending = false;
 	moduleRunning = true;
-	EXPECT_FALSE(openingPending);
+	EXPECT_TRUE(deferIngameHUD);
+	EXPECT_FALSE(ingameVisible);
+
+	ingameVisible = !deferIngameHUD;
+	EXPECT_FALSE(ingameVisible);
+
+	ingameVisible = true;
+	deferIngameHUD = false;
 	EXPECT_TRUE(moduleRunning);
+	EXPECT_TRUE(ingameVisible);
 }
 
 // ---------------------------------------------------------------------------

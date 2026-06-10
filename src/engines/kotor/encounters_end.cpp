@@ -70,6 +70,7 @@ void performEndarSpireOpeningBeat(KotORBase::Module &module) {
 
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
+	module.resetToOrbit();
 
 	module.playMusicStinger("mus_bat_ship");
 	module.shakeCamera(4.0f, 0.8f);
@@ -81,6 +82,9 @@ void performEndarSpireOpeningBeat(KotORBase::Module &module) {
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
+
+	if (KotORBase::Area *area = module.getCurrentArea())
+		area->playAmbientMusic();
 }
 
 void performTraskEncounter(KotORBase::Module &module) {

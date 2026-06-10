@@ -78,12 +78,20 @@ KotORBase::CharacterGenerationInfo *Module::createCharGenInfo(const KotORBase::C
 	return new CharacterGenerationInfo(info);
 }
 
+bool Module::deferIngameHUDOnEnter() const {
+	return _playOpeningBeat;
+}
+
 void Module::enter() {
+	_playOpeningBeat = getGlobalBoolean("__endar_opening_pending");
+	if (_playOpeningBeat)
+		setGlobalBoolean("__endar_opening_pending", false);
+
 	KotORBase::Module::enter();
 
-	if (getGlobalBoolean("__endar_opening_pending")) {
-		setGlobalBoolean("__endar_opening_pending", false);
+	if (_playOpeningBeat) {
 		KotOR::performEndarSpireOpeningBeat(*this);
+		_playOpeningBeat = false;
 	}
 }
 

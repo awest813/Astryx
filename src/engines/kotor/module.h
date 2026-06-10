@@ -62,8 +62,13 @@ public:
 
 	void signalEncounter(const Common::UString &id) override;
 
+protected:
+	bool deferIngameHUDOnEnter() const override;
+
 private:
 	void showIngameOptionsMenu();
+
+	bool _playOpeningBeat { false };
 };
 
 } // End of namespace KotOR

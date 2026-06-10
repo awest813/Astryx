@@ -302,6 +302,10 @@ public:
 
 	/** Enter the loaded module, starting it. */
 	virtual void enter();
+
+protected:
+	/** When true, enter() loads the area but keeps the ingame HUD hidden (cinematic handoff). */
+	virtual bool deferIngameHUDOnEnter() const { return false; }
 	/** Leave the running module, quitting it. */
 	void leave();
 	/** Click an object with the mouse. */

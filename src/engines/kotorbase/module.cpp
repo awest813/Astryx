@@ -523,7 +523,8 @@ void Module::enter() {
 	_running = true;
 	_exit    = false;
 
-	_ingame->show();
+	if (!deferIngameHUDOnEnter())
+		_ingame->show();
 }
 
 bool Module::getObjectLocation(const Common::UString &object, ObjectType location,
