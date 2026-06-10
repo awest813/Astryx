@@ -1608,6 +1608,10 @@ void Functions::actionCastFakeSpellAtObject(Aurora::NWScript::FunctionContext &c
 	int spellId = ctx.getParams()[0].getInt();
 	Aurora::NWScript::Object *target = getParamObject(ctx, 1);
 
+	Creature *caster = ObjectContainer::toCreature(ctx.getCaller());
+	if (caster)
+		caster->setLastForcePowerUsed(spellId);
+
 	if (target) {
 		debugC(Common::kDebugEngineLogic, 1, "ActionCastFakeSpellAtObject: spell %d on %s", spellId, target->getTag().c_str());
 	}

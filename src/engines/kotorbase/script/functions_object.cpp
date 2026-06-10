@@ -1162,5 +1162,80 @@ void Functions::getEffectDurationType(Aurora::NWScript::FunctionContext &ctx) { 
 void Functions::getEffectSubType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
 void Functions::getEffectCreator(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 
-} // End of namespace KotORBase
-} // End of namespace Engines
+void Functions::getFirstFactionMember(Aurora::NWScript::FunctionContext &ctx) {
+	_factionIterRef = nullptr;
+	_factionIterObjects.clear();
+	_factionIterIndex = 0;
+}
+
+void Functions::getNextFactionMember(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	Aurora::NWScript::Object *ref = getParamObject(ctx, 0);
+	int bPCOnly = ctx.getParams()[1].getInt();
+
+	if (ref != _factionIterRef) {
+		_factionIterRef = ref;
+		_factionIterObjects.clear();
+		_factionIterIndex = 0;
+
+		Object *refObj = ObjectContainer::toObject(ref);
+		if (!refObj)
+			return;
+
+		int faction = static_cast<int>(refObj->getFaction());
+
+		std::unique_ptr<Aurora::NWScript::ObjectSearch> search(
+			_game->getModule().findObjectsByType(kObjectTypeCreature));
+
+		Aurora::NWScript::Object *raw = nullptr;
+		while ((raw = search->next())) {
+			Object *obj = ObjectContainer::toObject(raw);
+			if (!obj)
+				continue;
+			if (static_cast<int>(obj->getFaction()) != faction)
+				continue;
+			if (bPCOnly && !ObjectContainer::toPC(raw))
+				continue;
+			_factionIterObjects.push_back(obj);
+		}
+	}
+
+	if (_factionIterIndex >= _factionIterObjects.size())
+		return;
+
+	ctx.getReturn() = _factionIterObjects[_factionIterIndex++];
+}
+
+void Functions::faceObjectAwayFromObject(Aurora::NWScript::FunctionContext &ctx) {
+	Object *facer  = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!facer || !source)
+		return;
+
+	float fx, fy, fz, sx, sy, sz;
+	facer ->getPosition(fx, fy, fz);
+	source->getPosition(sx, sy, sz);
+
+	float angle = atan2f(fy - sy, fx - sx) * (180.0f / M_PI);
+	facer->setOrientation(0.0f, 0.0f, 1.0f, angle);
+}
+
+void Functions::getInventoryDisturbType(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _lastInventoryDisturbType;
+}
+
+void Functions::getInventoryDisturbItem(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _lastInventoryDisturbItem;
+}
+
+void Functions::getItemActivated(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _lastItemActivated;
+}
+
+void Functions::getItemActivator(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _lastItemActivator;
+}
+
+} // End of namespace KotORBase
+} // End of namespace Engines

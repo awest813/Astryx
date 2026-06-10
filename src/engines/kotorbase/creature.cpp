@@ -791,6 +791,14 @@ namespace KotORBase {
 		const {
 			return _lastCombatFeatUsed;
 		}
+
+		int Creature::getLastForcePowerUsed() const {
+			return _lastForcePowerUsed;
+		}
+
+		void Creature::setLastForcePowerUsed(int spellID) {
+			_lastForcePowerUsed = spellID;
+		}
 		int Creature::getQueuedCombatFeat()
 		const {
 			return _queuedCombatFeat;

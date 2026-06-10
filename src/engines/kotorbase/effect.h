@@ -50,8 +50,21 @@ enum KotOREffectType {
 	kKotOREffectForcePush             = 15, ///< Push the target back (and potentially knockdown).
 	kKotOREffectForceDrain            = 16, ///< Drain life/Force from target.
 	kKotOREffectForceShield           = 17, ///< Shield against damage.
-	kKotOREffectForcePointsHeal       = 18, ///< Restore Force points.
-	kKotOREffectForcePointsDamage     = 19  ///< Drain/damage Force points.
+	kKotOREffectForcePointsHeal          = 18, ///< Restore Force points.
+	kKotOREffectForcePointsDamage        = 19, ///< Drain/damage Force points.
+
+	kKotOREffectSavingThrowIncrease      = 20, ///< Bonus to a saving throw.
+	kKotOREffectDamageReduction          = 21, ///< Reduce incoming damage by a flat amount.
+	kKotOREffectInvisibility             = 22, ///< Make the target invisible.
+	kKotOREffectAbilityDecrease          = 23, ///< Temporarily lower an ability score.
+	kKotOREffectAttackDecrease           = 24, ///< Penalty to attack rolls.
+	kKotOREffectDamageDecrease           = 25, ///< Penalty to damage rolls.
+	kKotOREffectDamageImmunityDecrease   = 26, ///< Reduce damage immunity by a percentage.
+	kKotOREffectACDecrease               = 27, ///< Penalty to armour class.
+	kKotOREffectMovementSpeedDecrease    = 28, ///< Reduce movement speed by a percentage.
+	kKotOREffectSavingThrowDecrease      = 29, ///< Penalty to a saving throw.
+	kKotOREffectSkillDecrease            = 30, ///< Penalty to a skill rank.
+	kKotOREffectForceResistanceDecrease  = 31  ///< Reduce Force resistance.
 };
 
 class Effect : public Aurora::NWScript::EngineType {

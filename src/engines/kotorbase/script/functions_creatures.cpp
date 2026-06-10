@@ -1080,5 +1080,71 @@ void Functions::effectConfused(Aurora::NWScript::FunctionContext &ctx) { ctx.get
 void Functions::effectFrightened(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectStunned, 0); }
 void Functions::effectChoke(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectStunned, 0); }
 
+void Functions::effectSavingThrowIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	int savingThrow = ctx.getParams()[0].getInt();
+	int value       = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectSavingThrowIncrease, value, savingThrow);
+}
+
+void Functions::effectDamageReduction(Aurora::NWScript::FunctionContext &ctx) {
+	int amount = ctx.getParams()[2].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectDamageReduction, amount);
+}
+
+void Functions::effectInvisibility(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectInvisibility, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectSeeInvisible(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectInvisibility, 0);
+}
+
+void Functions::effectAbilityDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	int ability  = ctx.getParams()[0].getInt();
+	int modifyBy = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectAbilityDecrease, modifyBy, ability);
+}
+
+void Functions::effectAttackDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectAttackDecrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectDamageDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectDamageDecrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectDamageImmunityDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectDamageImmunityDecrease, ctx.getParams()[1].getInt());
+}
+
+void Functions::effectACDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectACDecrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectMovementSpeedDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectMovementSpeedDecrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectSavingThrowDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	int savingThrow = ctx.getParams()[0].getInt();
+	int value       = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectSavingThrowDecrease, value, savingThrow);
+}
+
+void Functions::effectSkillDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	int skill  = ctx.getParams()[0].getInt();
+	int amount = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectSkillDecrease, amount, skill);
+}
+
+void Functions::effectForceResistanceDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectForceResistanceDecrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::getLastForcePowerUsed(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = caller ? caller->getLastForcePowerUsed() : -1;
+}
+
 } // End of namespace KotORBase
 } // End of namespace Engines

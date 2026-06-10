@@ -1082,6 +1082,13 @@ protected:
 
 	void getHasSpell(Aurora::NWScript::FunctionContext &ctx);
 
+	void getFirstFactionMember(Aurora::NWScript::FunctionContext &ctx);
+	void getNextFactionMember(Aurora::NWScript::FunctionContext &ctx);
+	void faceObjectAwayFromObject(Aurora::NWScript::FunctionContext &ctx);
+	void getInventoryDisturbType(Aurora::NWScript::FunctionContext &ctx);
+	void getInventoryDisturbItem(Aurora::NWScript::FunctionContext &ctx);
+	void getItemActivated(Aurora::NWScript::FunctionContext &ctx);
+	void getItemActivator(Aurora::NWScript::FunctionContext &ctx);
 
 	void getSpellId(Aurora::NWScript::FunctionContext &ctx);
 
@@ -1221,6 +1228,8 @@ protected:
 
 
 	void setFacingPoint(Aurora::NWScript::FunctionContext &ctx);
+	void angleToVector(Aurora::NWScript::FunctionContext &ctx);
+	void vectorToAngle(Aurora::NWScript::FunctionContext &ctx);
 
 	void actionLockObject(Aurora::NWScript::FunctionContext &ctx);
 
@@ -1471,7 +1480,20 @@ protected:
 
 
 	void effectACIncrease(Aurora::NWScript::FunctionContext &ctx);
-
+	void effectSavingThrowIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectDamageReduction(Aurora::NWScript::FunctionContext &ctx);
+	void effectInvisibility(Aurora::NWScript::FunctionContext &ctx);
+	void effectSeeInvisible(Aurora::NWScript::FunctionContext &ctx);
+	void effectAbilityDecrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectAttackDecrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectDamageDecrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectDamageImmunityDecrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectACDecrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectMovementSpeedDecrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectSavingThrowDecrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectSkillDecrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectForceResistanceDecrease(Aurora::NWScript::FunctionContext &ctx);
+	void getLastForcePowerUsed(Aurora::NWScript::FunctionContext &ctx);
 
 	void effectAttackIncrease(Aurora::NWScript::FunctionContext &ctx);
 
@@ -1838,6 +1860,10 @@ protected:
 
 
 	void playSound(Aurora::NWScript::FunctionContext &ctx);
+	void ambientSoundPlay(Aurora::NWScript::FunctionContext &ctx);
+	void ambientSoundStop(Aurora::NWScript::FunctionContext &ctx);
+	void ambientSoundChangeDay(Aurora::NWScript::FunctionContext &ctx);
+	void ambientSoundChangeNight(Aurora::NWScript::FunctionContext &ctx);
 
 
 	void barkString(Aurora::NWScript::FunctionContext &ctx);
@@ -2177,7 +2203,16 @@ private:
 
 	size_t _shapeIterIndex { 0 };
 
+	// State for GetFirstFactionMember / GetNextFactionMember
+	Aurora::NWScript::Object *_factionIterRef { nullptr };
+	std::vector<Object *> _factionIterObjects;
+	size_t _factionIterIndex { 0 };
 
+	// Context state for inventory-disturb and item-activation events
+	int _lastInventoryDisturbType { 0 };
+	Aurora::NWScript::Object *_lastInventoryDisturbItem { nullptr };
+	Aurora::NWScript::Object *_lastItemActivated { nullptr };
+	Aurora::NWScript::Object *_lastItemActivator { nullptr };
 
 public:
 	void grantFeat(Aurora::NWScript::FunctionContext &ctx);

@@ -102,16 +102,39 @@ void Functions::stopRumblePattern(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = 0;
 }
 
-void Functions::playSound(Aurora::NWScript::FunctionContext &ctx) {
-	const Common::UString &sound = ctx.getParams()[0].getString();
-	// Graceful stub: avoid script halts on PlaySound until full positional
-	// playback routing is implemented.
-	warning("Functions::playSound: \"%s\" not yet implemented", sound.c_str());
-}
-
+void Functions::playSound(Aurora::NWScript::FunctionContext &ctx) {
+	const Common::UString &sound = ctx.getParams()[0].getString();
+	// Graceful stub: avoid script halts on PlaySound until full positional
+	// playback routing is implemented.
+	warning("Functions::playSound: "%s" not yet implemented", sound.c_str());
+}
+
+void Functions::ambientSoundPlay(Aurora::NWScript::FunctionContext &ctx) {
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->playAmbientSound();
+}
+
+void Functions::ambientSoundStop(Aurora::NWScript::FunctionContext &ctx) {
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->stopAmbientSound();
+}
+
+void Functions::ambientSoundChangeDay(Aurora::NWScript::FunctionContext &ctx) {
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->setAmbientSoundDayTrack(static_cast<uint32_t>(ctx.getParams()[1].getInt()));
+}
+
+void Functions::ambientSoundChangeNight(Aurora::NWScript::FunctionContext &ctx) {
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->setAmbientSoundNightTrack(static_cast<uint32_t>(ctx.getParams()[1].getInt()));
+}
 
 void Functions::soundObjectFadeAndStop(Aurora::NWScript::FunctionContext &ctx) {}
 
-} // End of namespace KotORBase
-
-} // End of namespace Engines
+} // End of namespace KotORBase
+
+} // End of namespace Engines

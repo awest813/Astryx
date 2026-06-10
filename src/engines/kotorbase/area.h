@@ -105,6 +105,9 @@ public:
 	void setMusicNightTrack (uint32_t track); ///< Set the music track ID playing by night.
 	void setMusicBattleTrack(uint32_t track); ///< Set the music track ID playing in battle.
 
+	void setAmbientSoundDayTrack  (uint32_t track); ///< Set the ambient sound track playing by day.
+	void setAmbientSoundNightTrack(uint32_t track); ///< Set the ambient sound track playing by night.
+
 	void stopSound();        ///< Stop all sounds.
 	void stopAmbientMusic(); ///< Stop the ambient music.
 	void stopAmbientSound(); ///< Stop the ambient sound.

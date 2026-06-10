@@ -31,6 +31,8 @@
 
 #include <cmath>
 
+#include "src/common/maths.h"
+
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/location.h"
 #include "src/engines/kotorbase/talent.h"
@@ -206,6 +208,17 @@ GTEST_TEST(KotORNWScriptFuncs, locationStoresPositionAndFacing) {
 	EXPECT_FLOAT_EQ(y, -2.0f);
 	EXPECT_FLOAT_EQ(z, 3.25f);
 	EXPECT_FLOAT_EQ(location.getFacing(), 1.75f);
+}
+
+GTEST_TEST(KotORNWScriptFuncs, angleVectorRoundTrip) {
+	const float angleDeg = 90.0f;
+	const float rad = Common::deg2rad(angleDeg);
+	const float x = cosf(rad);
+	const float y = sinf(rad);
+
+	EXPECT_NEAR(x, 0.0f, 1e-5f);
+	EXPECT_NEAR(y, 1.0f, 1e-5f);
+	EXPECT_NEAR(Common::rad2deg(atan2f(y, x)), angleDeg, 1e-4f);
 }
 
 GTEST_TEST(KotORNWScriptFuncs, distanceAndUnitConversionsMatchExpectedValues) {
