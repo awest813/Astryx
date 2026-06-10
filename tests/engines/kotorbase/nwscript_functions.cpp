@@ -32,6 +32,7 @@
 #include <cmath>
 
 #include "src/common/maths.h"
+#include "src/common/ustring.h"
 
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/location.h"
@@ -208,6 +209,29 @@ GTEST_TEST(KotORNWScriptFuncs, locationStoresPositionAndFacing) {
 	EXPECT_FLOAT_EQ(y, -2.0f);
 	EXPECT_FLOAT_EQ(z, 3.25f);
 	EXPECT_FLOAT_EQ(location.getFacing(), 1.75f);
+}
+
+static bool isEffectPassThroughStubName(const Common::UString &name) {
+	return name == "MagicalEffect" ||
+	       name == "SupernaturalEffect" ||
+	       name == "ExtraordinaryEffect" ||
+	       name == "VersusAlignmentEffect" ||
+	       name == "VersusRacialTypeEffect" ||
+	       name == "VersusTrapEffect";
+}
+
+static bool isLocationStubName(const Common::UString &name) {
+	return name.contains("Location") || name == "GetStartingLocation";
+}
+
+GTEST_TEST(KotORNWScriptFuncs, stubNameCategorization) {
+	EXPECT_TRUE(isEffectPassThroughStubName("MagicalEffect"));
+	EXPECT_TRUE(isEffectPassThroughStubName("VersusTrapEffect"));
+	EXPECT_FALSE(isEffectPassThroughStubName("EffectAssuredHit"));
+
+	EXPECT_TRUE(isLocationStubName("GetStartingLocation"));
+	EXPECT_TRUE(isLocationStubName("GetItemActivatedTargetLocation"));
+	EXPECT_FALSE(isLocationStubName("EffectAssuredHit"));
 }
 
 GTEST_TEST(KotORNWScriptFuncs, angleVectorRoundTrip) {

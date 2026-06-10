@@ -274,6 +274,7 @@ protected:
 
 	void unimplementedFunction(Aurora::NWScript::FunctionContext &ctx);
 
+	void stubFunction(Aurora::NWScript::FunctionContext &ctx);
 
 	void executeScript(Aurora::NWScript::FunctionContext &ctx);
 
