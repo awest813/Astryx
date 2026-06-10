@@ -31,6 +31,7 @@
 #include "src/common/maths.h"
 
 #include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
 #include "src/aurora/2dafile.h"
 #include "src/aurora/2dareg.h"
 
@@ -195,6 +196,9 @@ bool Door::open(Object *opener) {
 	if (Creature *creature = ObjectContainer::toCreature(opener))
 		creature->setBlockingDoor(nullptr);
 
+	if (getTrapActive())
+		triggerTrap(opener);
+
 	_lastOpenedBy = opener;
 
 	if (_model)
@@ -225,6 +229,16 @@ bool Door::close(Object *closer) {
 	_state = kStateClosed;
 
 	return true;
+}
+
+void Door::saveState(Aurora::GFF3WriterStruct &gff) const {
+	Situated::saveState(gff);
+	gff.addUint32("AnimationState", static_cast<uint32_t>(_state));
+}
+
+void Door::loadState(const Aurora::GFF3Struct &gff) {
+	Situated::loadState(gff);
+	_state = static_cast<State>(gff.getUint("AnimationState", static_cast<uint32_t>(_state)));
 }
 
 bool Door::unlock(Object *unlocker) {

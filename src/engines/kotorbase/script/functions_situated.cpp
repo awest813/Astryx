@@ -87,16 +87,73 @@ void Functions::getLastUsedBy(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 
-void Functions::getTrapDisarmable(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 1; }
-void Functions::getTrapDetectable(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 1; }
-void Functions::getTrapDetectedBy(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
-void Functions::getTrapFlagged(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
-void Functions::getTrapBaseType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
-void Functions::getTrapOneShot(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 1; }
-void Functions::getTrapCreator(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
-void Functions::getTrapKeyTag(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = Common::UString(""); }
-void Functions::getTrapDisarmDC(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 15; }
-void Functions::getTrapDetectDC(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 15; }
+void Functions::getTrapDisarmable(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated && situated->getTrapDisarmable() ? 1 : 0;
+}
+
+void Functions::getTrapDetectable(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated && situated->getTrapDetectable() ? 1 : 0;
+}
+
+void Functions::getTrapDetectedBy(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated ? situated->getTrapDetectedBy() : static_cast<Aurora::NWScript::Object *>(nullptr);
+}
+
+void Functions::getTrapFlagged(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated && situated->getTrapFlagged() ? 1 : 0;
+}
+
+void Functions::getTrapBaseType(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated ? situated->getTrapBaseType() : 0;
+}
+
+void Functions::getTrapOneShot(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated && situated->getTrapOneShot() ? 1 : 0;
+}
+
+void Functions::getTrapCreator(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated ? situated->getTrapCreator() : static_cast<Aurora::NWScript::Object *>(nullptr);
+}
+
+void Functions::getTrapKeyTag(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated ? situated->getTrapKeyTag() : Common::UString("");
+}
+
+void Functions::getTrapDisarmDC(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated ? situated->getTrapDisarmDC() : 0;
+}
+
+void Functions::getTrapDetectDC(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated ? situated->getTrapDetectDC() : 0;
+}
+
+void Functions::setTrapDetectedBy(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	Object *detector = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (situated)
+		situated->setTrapDetectedBy(detector);
+}
+
+void Functions::getIsTrapped(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	ctx.getReturn() = situated && situated->getIsTrapped() ? 1 : 0;
+}
+
+void Functions::setTrapDisabled(Aurora::NWScript::FunctionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	if (situated)
+		situated->setTrapDisabled();
+}
 void Functions::getLockKeyRequired(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
 void Functions::getLockLockable(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 1; }
 void Functions::getLockLockDC(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 20; }

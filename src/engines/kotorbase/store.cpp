@@ -23,6 +23,7 @@
  */
 
 #include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
 #include "src/engines/kotorbase/store.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/creature.h"
@@ -87,8 +88,13 @@ int Store::getSellPrice(const Item &item, const Creature &pc) const {
 	return std::max(price, 1);
 }
 
-void Store::saveState(Aurora::GFF3Struct &gff) const {
-	// Stub: Disk saving is out of scope for early-game parity.
+void Store::saveState(Aurora::GFF3WriterStruct &gff) const {
+	Object::saveState(gff);
+	gff.addSint32("MarkUp", _markUp);
+	gff.addSint32("MarkDown", _markDown);
+
+	Aurora::GFF3WriterListPtr itemList = gff.addList("ItemList");
+	_inventory.save(*itemList);
 }
 
 void Store::loadState(const Aurora::GFF3Struct &gff) {

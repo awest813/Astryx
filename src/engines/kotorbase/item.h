@@ -49,6 +49,10 @@ public:
 	bool isRangedWeapon() const;
 
 	int getACBonus() const;
+	int getBaseACBonus() const;
+	int getEnhancementBonus() const;
+	int getDamageBonus() const;
+	int getAttackBonus() const;
 	int getBaseItem() const;
 	int getCost() const;
 
@@ -65,6 +69,13 @@ public:
 	const Common::UString getModelName() const;
 
 private:
+	struct ItemPropertyData {
+		int type { 0 };
+		int subtype { 0 };
+		int param1 { 0 };
+		int param1Value { 0 };
+	};
+
 	int _baseItem;
 	Common::UString _itemClass;
 	int32_t _equipableSlotsMask;
@@ -81,7 +92,9 @@ private:
 	int _stackSize; ///< Stack count (grenades, medpacs, etc. — default 1).
 	int _cost;
 
-	std::vector<int> _propertyTypes;
+	std::vector<ItemPropertyData> _properties;
+
+	int getPropertyBonusSum(int propertyType) const;
 
 	void load(const Aurora::GFF3Struct &gff);
 };

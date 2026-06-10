@@ -35,6 +35,10 @@
 #include <memory>
 
 #include "src/aurora/types.h"
+
+namespace Aurora {
+class GFF3WriterStruct;
+}
 #include "src/aurora/lytfile.h"
 #include "src/aurora/visfile.h"
 
@@ -154,6 +158,7 @@ public:
 	// Persistence
 	void loadPersistence();
 	void savePersistence();
+	void writePersistence(Aurora::GFF3WriterStruct &gff) const;
 
 	const std::vector<bool> &getMapExplored() const { return _mapExplored; }
 	void setMapExplored(const std::vector<bool> &data) { _mapExplored = data; }

@@ -1039,6 +1039,7 @@ protected:
 	void setIdentified(Aurora::NWScript::FunctionContext &ctx);
 	void getGoldPieceValue(Aurora::NWScript::FunctionContext &ctx);
 	void getItemHasItemProperty(Aurora::NWScript::FunctionContext &ctx);
+	void getItemACValue(Aurora::NWScript::FunctionContext &ctx);
 
 
 
@@ -2126,6 +2127,10 @@ protected:
 	void getTrapDisarmDC(Aurora::NWScript::FunctionContext &ctx);
 
 	void getTrapDetectDC(Aurora::NWScript::FunctionContext &ctx);
+
+	void setTrapDetectedBy(Aurora::NWScript::FunctionContext &ctx);
+	void getIsTrapped(Aurora::NWScript::FunctionContext &ctx);
+	void setTrapDisabled(Aurora::NWScript::FunctionContext &ctx);
 
 	void getLockKeyRequired(Aurora::NWScript::FunctionContext &ctx);
 

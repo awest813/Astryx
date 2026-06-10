@@ -31,6 +31,10 @@
 
 #include "src/aurora/types.h"
 
+namespace Aurora {
+class GFF3WriterList;
+}
+
 namespace Engines {
 
 namespace KotORBase {
@@ -39,7 +43,7 @@ class Inventory {
 public:
 	Inventory &operator=(const Inventory &other);
 
-	void save(Aurora::GFF3List &list) const;
+	void save(Aurora::GFF3WriterList &list) const;
 	void read(const Aurora::GFF3List &list);
 
 	struct ItemGroup {

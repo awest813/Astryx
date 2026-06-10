@@ -37,6 +37,10 @@
 
 #include "src/aurora/ifofile.h"
 
+namespace Aurora {
+class GFF3WriterStruct;
+}
+
 #include "src/aurora/nwscript/objectref.h"
 
 #include "src/graphics/aurora/fadequad.h"
@@ -168,6 +172,7 @@ public:
 	// Persistence
 	std::shared_ptr<Aurora::GFF3File> getAreaObjectSave(const Common::UString &key);
 	void setAreaObjectSave(const Common::UString &key, std::shared_ptr<Aurora::GFF3File> state);
+	void loadAreaObjectSaves(const Aurora::GFF3Struct &gff);
 
 	// Journal
 
@@ -535,8 +540,8 @@ private:
 	// Loading
 
 	void load();
-	void loadState(const Aurora::GFF3File &gff);
-	void saveState(Aurora::GFF3File &gff) const;
+	void loadState(const Aurora::GFF3Struct &gff);
+	void saveState(Aurora::GFF3WriterStruct &gff) const;
 
 	void loadResources();
 	void loadIFO();

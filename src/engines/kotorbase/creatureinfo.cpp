@@ -26,10 +26,9 @@
 
 #include "src/common/debug.h"
 #include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
 #include "src/common/util.h"
 #include "src/common/error.h"
-
-#include "src/aurora/gff3file.h"
 
 #include "src/engines/kotorbase/creatureinfo.h"
 
@@ -111,8 +110,43 @@ CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
 	return *this;
 }
 
-void CreatureInfo::save(Aurora::GFF3Struct &gff) const {
-	// Stub: Disk saving is out of scope for early-game parity.
+void CreatureInfo::save(Aurora::GFF3WriterStruct &gff) const {
+	saveAbilities(gff);
+	saveSkills(gff);
+
+	Aurora::GFF3WriterListPtr classList = gff.addList("ClassList");
+	for (const ClassLevel &classLevel : _levels) {
+		Aurora::GFF3WriterStructPtr entry = classList->addStruct();
+		entry->addSint32("Class", static_cast<int32_t>(classLevel.characterClass));
+		entry->addSint32("ClassLevel", classLevel.level);
+	}
+
+	Aurora::GFF3WriterListPtr featList = gff.addList("FeatList");
+	for (uint32_t feat : _feats) {
+		Aurora::GFF3WriterStructPtr entry = featList->addStruct();
+		entry->addUint32("Feat", feat);
+	}
+
+	Aurora::GFF3WriterListPtr powerList = gff.addList("PowerList");
+	for (uint32_t power : _forcePowers) {
+		Aurora::GFF3WriterStructPtr entry = powerList->addStruct();
+		entry->addUint32("Power", power);
+	}
+
+	gff.addSint32("GoodEvil", _alignment);
+	gff.addUint32("CurrentFP", _forcePointsCurrent);
+	gff.addUint32("MaxFP", _forcePointsMax);
+
+	Aurora::GFF3WriterListPtr itemList = gff.addList("ItemList");
+	_inventory.save(*itemList);
+
+	if (!_equipment.empty()) {
+		Aurora::GFF3WriterListPtr equipList = gff.addList("Equip_ItemList");
+		for (const auto &equipped : _equipment) {
+			Aurora::GFF3WriterStructPtr entry = equipList->addStruct("", 1U << equipped.first, true);
+			entry->addResRef("EquippedRes", equipped.second);
+		}
+	}
 }
 
 void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
@@ -131,12 +165,21 @@ void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
 	}
 }
 
-void CreatureInfo::saveAbilities(Aurora::GFF3Struct &gff) const {
-	// Stub: Disk saving is out of scope for early-game parity.
+void CreatureInfo::saveAbilities(Aurora::GFF3WriterStruct &gff) const {
+	gff.addUint32("Str", _abilities.strength);
+	gff.addUint32("Dex", _abilities.dexterity);
+	gff.addUint32("Con", _abilities.constitution);
+	gff.addUint32("Int", _abilities.intelligence);
+	gff.addUint32("Wis", _abilities.wisdom);
+	gff.addUint32("Cha", _abilities.charisma);
 }
 
-void CreatureInfo::saveSkills(Aurora::GFF3Struct &gff) const {
-	// Stub: Disk saving is out of scope for early-game parity.
+void CreatureInfo::saveSkills(Aurora::GFF3WriterStruct &gff) const {
+	Aurora::GFF3WriterListPtr skillList = gff.addList("SkillList");
+	for (int skill = 0; skill < static_cast<int>(kSkillMAX); ++skill) {
+		Aurora::GFF3WriterStructPtr entry = skillList->addStruct();
+		entry->addUint32("Rank", getSkillRank(Skill(skill)));
+	}
 }
 
 void CreatureInfo::loadForcePowers(const Aurora::GFF3Struct &gff) {

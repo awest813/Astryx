@@ -33,7 +33,8 @@
 #include "src/engines/kotorbase/inventory.h"
 
 namespace Aurora {
-	class GFF3Struct;
+class GFF3Struct;
+class GFF3WriterStruct;
 }
 
 namespace Engines {
@@ -50,7 +51,7 @@ public:
 
 	CreatureInfo &operator=(const CreatureInfo &other);
 
-	void save(Aurora::GFF3Struct &gff) const;
+	void save(Aurora::GFF3WriterStruct &gff) const;
 	void read(const Aurora::GFF3Struct &gff);
 
 	// Class levels
@@ -175,10 +176,10 @@ private:
 	uint32_t _forcePointsMax     { 0 };
 	int      _alignment          { 50 }; // Neutral by default
 
-	void saveAbilities(Aurora::GFF3Struct &gff) const;
+	void saveAbilities(Aurora::GFF3WriterStruct &gff) const;
 	void loadAbilities(const Aurora::GFF3Struct &gff);
 
-	void saveSkills(Aurora::GFF3Struct &gff) const;
+	void saveSkills(Aurora::GFF3WriterStruct &gff) const;
 	void loadSkills(const Aurora::GFF3Struct &gff);
 
 	void loadClassLevels(const Aurora::GFF3Struct &gff);

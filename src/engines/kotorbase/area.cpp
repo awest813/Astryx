@@ -32,6 +32,9 @@
 
 #include "src/aurora/resman.h"
 #include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
+#include "src/common/memreadstream.h"
+#include "src/common/memwritestream.h"
 #include "src/aurora/2dafile.h"
 #include "src/aurora/2dareg.h"
 
@@ -130,7 +133,34 @@ void Area::loadPersistence() {
 }
 
 void Area::savePersistence() {
-	// Stub: Disk saving is out of scope for early-game parity.
+	for (auto &object : _objects) {
+		if (!object->isPersistent())
+			continue;
+
+		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+		object->saveState(*writer.getTopLevel());
+
+		Common::MemoryWriteStreamDynamic memStream(true);
+		writer.write(memStream);
+
+		auto gff = std::make_shared<Aurora::GFF3File>(
+			new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
+
+		Common::UString key = _resRef + ":" + object->getTag();
+		_module->setAreaObjectSave(key, gff);
+	}
+}
+
+void Area::writePersistence(Aurora::GFF3WriterStruct &gff) const {
+	Aurora::GFF3WriterListPtr list = gff.addList("AreaObjectList");
+	for (const auto &object : _objects) {
+		if (!object->isPersistent())
+			continue;
+
+		Aurora::GFF3WriterStructPtr entry = list->addStruct();
+		entry->addExoString("Key", _resRef + ":" + object->getTag());
+		object->saveState(*entry);
+	}
 }
 
 void Area::clear() {

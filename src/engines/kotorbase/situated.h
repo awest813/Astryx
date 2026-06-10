@@ -84,6 +84,25 @@ public:
 	int getLockDC() const;
 	int getLockRequiredSkill() const;
 
+	// Trap state
+
+	bool getIsTrapped() const;
+	bool getTrapActive() const;
+	bool getTrapDetectable() const;
+	bool getTrapDisarmable() const;
+	bool getTrapFlagged() const;
+	bool getTrapOneShot() const;
+	uint8_t getTrapBaseType() const;
+	uint8_t getTrapDetectDC() const;
+	uint8_t getTrapDisarmDC() const;
+	const Common::UString &getTrapKeyTag() const;
+	Object *getTrapDetectedBy() const;
+	Object *getTrapCreator() const;
+
+	void setTrapDetectedBy(Object *detector);
+	void setTrapDisabled();
+	void triggerTrap(Object *triggerer);
+
 	/** Lock/Unlock the situated object. */
 	virtual void setLocked(bool locked);
 
@@ -104,6 +123,9 @@ public:
 	// Tooltip
 
 	void getTooltipAnchor(float &x, float &y, float &z) const;
+
+	void saveState(Aurora::GFF3WriterStruct &gff) const override;
+	void loadState(const Aurora::GFF3Struct &gff) override;
 
 protected:
 	Common::UString _modelName; ///< The model's resource name.
@@ -129,6 +151,20 @@ protected:
 	Object *_lastClosedBy; ///< The object that last closed this situated object.
 	Object *_lastUsedBy;   ///< The object that last used this situated object.
 
+	bool _trapFlag { false };
+	bool _trapDetectable { true };
+	bool _trapDisarmable { true };
+	bool _trapRecoverable { false };
+	bool _trapOneShot { true };
+	bool _trapActive { false };
+	bool _trapFlagged { false };
+	uint8_t _trapType { 0 };
+	uint8_t _trapDetectDC { 15 };
+	uint8_t _trapDisarmDC { 15 };
+	Common::UString _trapKeyTag;
+	Object *_trapDetectedBy { nullptr };
+	uint32_t _trapCreatedBy { 0 };
+
 	std::unique_ptr<Graphics::Aurora::Model> _model; ///< The situated object's model.
 
 	Situated(ObjectType type);
@@ -145,6 +181,8 @@ private:
 	void loadProperties(const Aurora::GFF3Struct &gff);
 	void loadPortrait(const Aurora::GFF3Struct &gff);
 	void loadSounds();
+	void loadTrapState(const Aurora::GFF3Struct &gff);
+	void saveTrapState(Aurora::GFF3WriterStruct &gff) const;
 };
 
 } // End of namespace KotORBase

@@ -58,6 +58,11 @@ void Functions::getItemHasItemProperty(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = (item && item->hasItemProperty(property)) ? 1 : 0;
 }
 
+void Functions::getItemACValue(Aurora::NWScript::FunctionContext &ctx) {
+	Item *item = ObjectContainer::toItem(getParamObject(ctx, 0));
+	ctx.getReturn() = item ? item->getACBonus() : 0;
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

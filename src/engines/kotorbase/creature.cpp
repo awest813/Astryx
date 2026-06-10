@@ -1123,8 +1123,14 @@ namespace KotORBase {
 				}
 			}
 			// Full attack bonus = BAB - iterative penalty + ability mod + feats.
+			int weaponAttackBonus = 0;
+			if (rightWeapon)
+				weaponAttackBonus += rightWeapon->getAttackBonus();
+			if (leftWeapon && !ranged)
+				weaponAttackBonus += leftWeapon->getAttackBonus();
+
 			int bab = getBAB();
-			int attackBonus = (bab + babPenalty) + abMod + featAttackMod + _attackModifier;
+			int attackBonus = (bab + babPenalty) + abMod + featAttackMod + _attackModifier + weaponAttackBonus;
 			// Roll d20 (1..20 inclusive) vs target AC.
 			int d20 = RNG.getNext(1, 21);
 			int attackRoll = d20 + attackBonus;
@@ -1470,6 +1476,8 @@ namespace KotORBase {
 				result += RNG.getNext(1, weapon->getDieToRoll() + 1);
 			}
 			result += mod;
+			result += weapon->getEnhancementBonus();
+			result += weapon->getDamageBonus();
 			return (result < 1) ? 1 : result;
 		}
 		bool Creature::hasLightsaberEquipped()

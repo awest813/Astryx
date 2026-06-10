@@ -35,6 +35,7 @@ namespace Engines {
 
 namespace KotORBase {
 
+class Module;
 class CharacterGenerationInfo;
 
 class SavedGame {
@@ -54,6 +55,9 @@ public:
 
 	virtual CharacterGenerationInfo *createCharGenInfo() = 0;
 
+	/** Restore globals, journal, and area object state into a module before load(). */
+	void applyPersistedState(Module &module) const;
+
 protected:
 	Common::UString _name;
 	Common::UString _moduleName;
@@ -61,6 +65,9 @@ protected:
 	uint8_t _pcGender;
 	float _pcPosition[3];
 	bool _pcLoaded;
+
+	std::unique_ptr<Aurora::GFF3File> _globals;
+	std::unique_ptr<Aurora::GFF3File> _areaState;
 
 private:
 	void load(const Common::UString &dir, bool loadSav);

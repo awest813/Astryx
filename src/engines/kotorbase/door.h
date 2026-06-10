@@ -70,6 +70,9 @@ public:
 	/** The unlocker object unlocks this door. */
 	bool unlock(Object *unlocker);
 
+	void saveState(Aurora::GFF3WriterStruct &gff) const override;
+	void loadState(const Aurora::GFF3Struct &gff) override;
+
 	// Object/cursor interactions
 
 	const Common::UString &getCursor() const;

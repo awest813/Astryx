@@ -1,0 +1,117 @@
+/* xoreos - A reimplementation of BioWare's Aurora engine
+ *
+ * xoreos is the legal property of its developers, whose names
+ * can be found in the AUTHORS file distributed with this source
+ * distribution.
+ *
+ * xoreos is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 3
+ * of the License, or (at your option) any later version.
+ *
+ * xoreos is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with xoreos. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/** @file
+ *  Round-trip tests for KotOR save serialization writers.
+ */
+
+#include "gtest/gtest.h"
+
+#include "src/common/memreadstream.h"
+#include "src/common/memwritestream.h"
+
+#include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
+
+#include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/inventory.h"
+#include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/types.h"
+
+using Engines::KotORBase::CreatureInfo;
+using Engines::KotORBase::Inventory;
+using Engines::KotORBase::Object;
+using Engines::KotORBase::kAbilityDexterity;
+using Engines::KotORBase::kAbilityStrength;
+using Engines::KotORBase::kClassSoldier;
+using Engines::KotORBase::kInventorySlotBody;
+using Engines::KotORBase::kSkillSecurity;
+
+static Aurora::GFF3File roundTrip(Aurora::GFF3Writer &writer) {
+	Common::MemoryWriteStreamDynamic out(true);
+	writer.write(out);
+	return Aurora::GFF3File(new Common::MemoryReadStream(out.getData(), out.size(), true));
+}
+
+GTEST_TEST(KotORSaveSerialization, inventoryRoundTrip) {
+	Inventory inv;
+	inv.addItem("g_i_medpac01", 2);
+	inv.addItem("g_i_boots01");
+
+	Aurora::GFF3Writer writer(MKTAG('U', 'T', 'C', ' '));
+	Aurora::GFF3WriterListPtr list = writer.getTopLevel()->addList("ItemList");
+	inv.save(*list);
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	Inventory loaded;
+	loaded.read(gff.getTopLevel().getList("ItemList"));
+
+	EXPECT_TRUE(loaded.hasItem("g_i_medpac01"));
+	EXPECT_EQ(loaded.getItems().at("g_i_medpac01").count, 2);
+	EXPECT_TRUE(loaded.hasItem("g_i_boots01"));
+	EXPECT_EQ(loaded.getItems().at("g_i_boots01").count, 1);
+}
+
+GTEST_TEST(KotORSaveSerialization, creatureInfoRoundTrip) {
+	CreatureInfo info;
+	info.setAbilityScore(kAbilityStrength, 14);
+	info.setAbilityScore(kAbilityDexterity, 12);
+	info.setSkillRank(kSkillSecurity, 4);
+	info.incrementClassLevel(kClassSoldier);
+	info.addInventoryItem("g_i_medpac01", 2);
+	info.equipItem("g_i_boots01", kInventorySlotBody);
+	info.setAlignment(55);
+	info.setForcePoints(3);
+	info.setMaxForcePoints(5);
+
+	Aurora::GFF3Writer writer(MKTAG('U', 'T', 'C', ' '));
+	info.save(*writer.getTopLevel());
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	CreatureInfo loaded;
+	loaded.read(gff.getTopLevel());
+
+	EXPECT_EQ(loaded.getAbilityScore(kAbilityStrength), 14);
+	EXPECT_EQ(loaded.getAbilityScore(kAbilityDexterity), 12);
+	EXPECT_EQ(loaded.getSkillRank(kSkillSecurity), 4);
+	EXPECT_EQ(loaded.getClassLevel(kClassSoldier), 1);
+	EXPECT_TRUE(loaded.getInventory().hasItem("g_i_medpac01"));
+	EXPECT_TRUE(loaded.isInventorySlotEquipped(kInventorySlotBody));
+	EXPECT_EQ(loaded.getEquippedItem(kInventorySlotBody), Common::UString("g_i_boots01"));
+	EXPECT_EQ(loaded.getAlignment(), 55);
+	EXPECT_EQ(loaded.getForcePoints(), 3U);
+	EXPECT_EQ(loaded.getMaxForcePoints(), 5U);
+}
+
+GTEST_TEST(KotORSaveSerialization, objectStateRoundTrip) {
+	Object object(Engines::KotORBase::kObjectTypePlaceable);
+	object.setCurrentHitPoints(7);
+	object.setUsable(false);
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	object.saveState(*writer.getTopLevel());
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	Object loaded(Engines::KotORBase::kObjectTypePlaceable);
+	loaded.loadState(gff.getTopLevel());
+
+	EXPECT_EQ(loaded.getCurrentHitPoints(), 7);
+	EXPECT_FALSE(loaded.isUsable());
+}

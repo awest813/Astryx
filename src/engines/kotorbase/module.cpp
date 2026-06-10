@@ -34,6 +34,8 @@
 #include "src/common/filepath.h"
 #include "src/common/filelist.h"
 #include "src/common/writefile.h"
+#include "src/common/memreadstream.h"
+#include "src/common/memwritestream.h"
 #include "src/common/configman.h"
 #include "src/common/debug.h"
 
@@ -737,6 +739,9 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 	if (slot.empty())
 		throw Common::Exception("Module::saveGame(): empty save slot path");
 
+	if (_area)
+		_area->savePersistence();
+
 	Common::FilePath::createDirectories(slot);
 
 	const Common::UString nfoPath = Common::FilePath::normalize(slot + "/savenfo.res");
@@ -753,9 +758,77 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 	Common::WriteFile nfoFile(nfoPath);
 	nfoWriter.write(nfoFile);
 
+	Common::MemoryWriteStreamDynamic globalsMem(true);
+	{
+		Aurora::GFF3Writer globalsWriter(MKTAG('G', 'V', 'A', 'R'));
+		saveState(*globalsWriter.getTopLevel());
+		globalsWriter.write(globalsMem);
+	}
+
+	Common::MemoryWriteStreamDynamic partyMem(true);
+	{
+		Aurora::GFF3Writer partyWriter(MKTAG('P', 'T', 'A', 'B'));
+		Aurora::GFF3WriterStructPtr partyRoot = partyWriter.getTopLevel();
+		if (pc)
+			partyRoot->addExoString("PT_PCNAME", pc->getTag());
+		partyWriter.write(partyMem);
+	}
+
+	Common::MemoryWriteStreamDynamic moduleSavMem(true);
+	{
+		const uint32_t innerCount = _area ? 2U : 1U;
+		Aurora::ERFWriter moduleErf(MKTAG('M', 'O', 'D', ' '), innerCount, moduleSavMem,
+		                            Aurora::ERFWriter::kERFVersion22);
+
+		Common::MemoryWriteStreamDynamic ifoMem(true);
+		{
+			Aurora::GFF3Writer ifoWriter(MKTAG('I', 'F', 'O', ' '));
+			Aurora::GFF3WriterStructPtr ifoRoot = ifoWriter.getTopLevel();
+			ifoRoot->addResRef("Mod_Tag", _tag);
+			ifoRoot->addLocString("Mod_Name", _ifo.getName());
+			ifoRoot->addResRef("Mod_Entry_Area", _ifo.getEntryArea());
+
+			if (pc) {
+				Aurora::GFF3WriterListPtr playerList = ifoRoot->addList("Mod_PlayerList");
+				Aurora::GFF3WriterStructPtr player = playerList->addStruct();
+				player->addUint32("Gender", static_cast<uint32_t>(pc->getGender()));
+				float x = 0.0f, y = 0.0f, z = 0.0f;
+				pc->getPosition(x, y, z);
+				player->addDouble("XPosition", x);
+				player->addDouble("YPosition", y);
+				player->addDouble("ZPosition", z);
+				player->addResRef("ObjectId", pc->getTag());
+			}
+
+			ifoWriter.write(ifoMem);
+		}
+
+		Common::MemoryReadStream ifoStream(ifoMem.getData(), ifoMem.size(), true);
+		moduleErf.add("Module", Aurora::kFileTypeIFO, ifoStream);
+
+		if (_area) {
+			Common::MemoryWriteStreamDynamic areaMem(true);
+			Aurora::GFF3Writer areaWriter(MKTAG('G', 'F', 'F', ' '));
+			_area->writePersistence(*areaWriter.getTopLevel());
+			areaWriter.write(areaMem);
+
+			Common::MemoryReadStream areaStream(areaMem.getData(), areaMem.size(), true);
+			moduleErf.add("areastate", Aurora::kFileTypeRES, areaStream);
+		}
+	}
+
 	const Common::UString savPath = Common::FilePath::normalize(slot + "/SAVEGAME.sav");
 	Common::WriteFile savFile(savPath);
-	Aurora::ERFWriter savErf(MKTAG('S', 'A', 'V', ' '), 0, savFile, Aurora::ERFWriter::kERFVersion22);
+	Aurora::ERFWriter savErf(MKTAG('S', 'A', 'V', ' '), 3, savFile, Aurora::ERFWriter::kERFVersion22);
+
+	Common::MemoryReadStream globalsStream(globalsMem.getData(), globalsMem.size(), true);
+	savErf.add("GLOBALVARS", Aurora::kFileTypeRES, globalsStream);
+
+	Common::MemoryReadStream partyStream(partyMem.getData(), partyMem.size(), true);
+	savErf.add("partytable", Aurora::kFileTypeRES, partyStream);
+
+	Common::MemoryReadStream moduleSavStream(moduleSavMem.getData(), moduleSavMem.size(), true);
+	savErf.add(_module, Aurora::kFileTypeSAV, moduleSavStream);
 
 	info("Game saved to %s", slot.c_str());
 }
@@ -1743,6 +1816,7 @@ void Module::loadSavedGame(SavedGame *save) {
 	try {
 		std::unique_ptr<CharacterGenerationInfo> info(save->createCharGenInfo());
 		usePC(*info.get());
+		save->applyPersistedState(*this);
 		_loadedFromSaveGame = true;
 		load(save->getModuleName());
 	} catch (...) {
@@ -1971,12 +2045,158 @@ void Module::setLastAcquiredItem(Object *item) {
 	_lastAcquiredItem = item;
 }
 
-void Module::saveState(Aurora::GFF3File &gff) const {
-	// Stub: Disk saving is out of scope for early-game parity.
+static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst) {
+	auto copyUint = [&](const char *field) {
+		if (src.hasField(field))
+			dst.addUint32(field, src.getUint(field));
+	};
+	auto copyByte = [&](const char *field) {
+		if (src.hasField(field))
+			dst.addByte(field, src.getUint(field) ? 1 : 0);
+	};
+	auto copyString = [&](const char *field) {
+		if (src.hasField(field))
+			dst.addExoString(field, src.getString(field));
+	};
+
+	copyUint("CurrentHP");
+	copyByte("Usable");
+	copyByte("Locked");
+	copyByte("TrapFlag");
+	copyByte("TrapDetectable");
+	copyByte("TrapDisarmable");
+	copyByte("TrapRecoverable");
+	copyByte("TrapOneShot");
+	copyByte("TrapActive");
+	copyByte("TrapFlagged");
+	copyUint("TrapType");
+	copyUint("TrapDetectDC");
+	copyUint("DisarmDC");
+	copyString("KeyName");
+	copyUint("AnimationState");
 }
 
-void Module::loadState(const Aurora::GFF3File &gff) {
-	// Stub: Disk loading is out of scope for early-game parity.
+void Module::loadAreaObjectSaves(const Aurora::GFF3Struct &gff) {
+	if (!gff.hasField("AreaObjectList"))
+		return;
+
+	const Aurora::GFF3List &entries = gff.getList("AreaObjectList");
+	for (const auto &entry : entries) {
+		if (!entry)
+			continue;
+
+		Common::UString key = entry->getString("Key");
+		if (key.empty())
+			continue;
+
+		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+		copyObjectSaveFields(*entry, *writer.getTopLevel());
+
+		Common::MemoryWriteStreamDynamic memStream(true);
+		writer.write(memStream);
+
+		auto state = std::make_shared<Aurora::GFF3File>(
+			new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
+		setAreaObjectSave(key, state);
+	}
+}
+
+void Module::saveState(Aurora::GFF3WriterStruct &gff) const {
+	Aurora::GFF3WriterListPtr boolList = gff.addList("ValBoolean");
+	for (const auto &entry : _globalBooleans) {
+		Aurora::GFF3WriterStructPtr item = boolList->addStruct();
+		item->addExoString("Name", entry.first);
+		item->addByte("Value", entry.second ? 1 : 0);
+	}
+
+	Aurora::GFF3WriterListPtr numberList = gff.addList("ValNumber");
+	for (const auto &entry : _globalNumbers) {
+		Aurora::GFF3WriterStructPtr item = numberList->addStruct();
+		item->addExoString("Name", entry.first);
+		item->addSint32("Value", entry.second);
+	}
+
+	Aurora::GFF3WriterListPtr stringList = gff.addList("ValString");
+	for (const auto &entry : _globalStrings) {
+		Aurora::GFF3WriterStructPtr item = stringList->addStruct();
+		item->addExoString("Name", entry.first);
+		item->addExoString("Value", entry.second);
+	}
+
+	Aurora::GFF3WriterListPtr journalList = gff.addList("JournalEntries");
+	for (const auto &entry : _journal) {
+		Aurora::GFF3WriterStructPtr item = journalList->addStruct();
+		item->addExoString("Quest", entry.first);
+		item->addUint32("State", entry.second);
+	}
+
+	Aurora::GFF3WriterListPtr mapList = gff.addList("ExploredMaps");
+	for (const auto &entry : _exploredMaps) {
+		Aurora::GFF3WriterStructPtr area = mapList->addStruct();
+		area->addResRef("Area", entry.first);
+		Aurora::GFF3WriterListPtr tiles = area->addList("Tiles");
+		for (bool explored : entry.second) {
+			Aurora::GFF3WriterStructPtr tile = tiles->addStruct();
+			tile->addByte("Explored", explored ? 1 : 0);
+		}
+	}
+}
+
+void Module::loadState(const Aurora::GFF3Struct &gff) {
+	_globalBooleans.clear();
+	if (gff.hasField("ValBoolean")) {
+		for (const auto &entry : gff.getList("ValBoolean")) {
+			if (!entry)
+				continue;
+			_globalBooleans[entry->getString("Name")] = entry->getUint("Value") != 0;
+		}
+	}
+
+	_globalNumbers.clear();
+	if (gff.hasField("ValNumber")) {
+		for (const auto &entry : gff.getList("ValNumber")) {
+			if (!entry)
+				continue;
+			_globalNumbers[entry->getString("Name")] = entry->getSint("Value");
+		}
+	}
+
+	_globalStrings.clear();
+	if (gff.hasField("ValString")) {
+		for (const auto &entry : gff.getList("ValString")) {
+			if (!entry)
+				continue;
+			_globalStrings[entry->getString("Name")] = entry->getString("Value");
+		}
+	}
+
+	_journal.clear();
+	if (gff.hasField("JournalEntries")) {
+		for (const auto &entry : gff.getList("JournalEntries")) {
+			if (!entry)
+				continue;
+			_journal[entry->getString("Quest")] = entry->getUint("State");
+		}
+	}
+
+	_exploredMaps.clear();
+	if (gff.hasField("ExploredMaps")) {
+		for (const auto &entry : gff.getList("ExploredMaps")) {
+			if (!entry)
+				continue;
+
+			Common::UString area = entry->getString("Area");
+			std::vector<bool> tiles;
+			if (entry->hasField("Tiles")) {
+				for (const auto &tile : entry->getList("Tiles")) {
+					if (!tile)
+						continue;
+					tiles.push_back(tile->getUint("Explored") != 0);
+				}
+			}
+			_exploredMaps[area] = tiles;
+		}
+	}
 }
 
 } // End of namespace KotORBase

@@ -27,8 +27,10 @@
 #include "src/common/util.h"
 
 #include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
 #include "src/aurora/2dafile.h"
 #include "src/aurora/2dareg.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/graphics/aurora/model.h"
 
@@ -117,6 +119,90 @@ int Situated::getLockRequiredSkill() const {
 
 void Situated::setLocked(bool locked) {
 	_locked = locked;
+}
+
+bool Situated::getIsTrapped() const {
+	return _trapFlag;
+}
+
+bool Situated::getTrapActive() const {
+	return _trapFlag && _trapActive;
+}
+
+bool Situated::getTrapDetectable() const {
+	return _trapDetectable;
+}
+
+bool Situated::getTrapDisarmable() const {
+	return _trapDisarmable;
+}
+
+bool Situated::getTrapFlagged() const {
+	return _trapFlag && _trapFlagged;
+}
+
+bool Situated::getTrapOneShot() const {
+	return _trapOneShot;
+}
+
+uint8_t Situated::getTrapBaseType() const {
+	return _trapType;
+}
+
+uint8_t Situated::getTrapDetectDC() const {
+	return _trapDetectDC;
+}
+
+uint8_t Situated::getTrapDisarmDC() const {
+	return _trapDisarmDC;
+}
+
+const Common::UString &Situated::getTrapKeyTag() const {
+	return _trapKeyTag;
+}
+
+Object *Situated::getTrapDetectedBy() const {
+	return _trapDetectedBy;
+}
+
+Object *Situated::getTrapCreator() const {
+	if (_trapCreatedBy == 0)
+		return nullptr;
+
+	return Aurora::NWScript::ObjectMan.findObject(_trapCreatedBy);
+}
+
+void Situated::setTrapDetectedBy(Object *detector) {
+	_trapDetectedBy = detector;
+}
+
+void Situated::setTrapDisabled() {
+	_trapFlag = false;
+	_trapActive = false;
+	_trapFlagged = false;
+	_trapDetectedBy = nullptr;
+}
+
+void Situated::triggerTrap(Object *triggerer) {
+	if (!getTrapActive())
+		return;
+
+	runScript(kScriptTrapTriggered, this, triggerer);
+
+	if (_trapOneShot)
+		_trapActive = false;
+}
+
+void Situated::saveState(Aurora::GFF3WriterStruct &gff) const {
+	Object::saveState(gff);
+	gff.addByte("Locked", _locked ? 1 : 0);
+	saveTrapState(gff);
+}
+
+void Situated::loadState(const Aurora::GFF3Struct &gff) {
+	Object::loadState(gff);
+	_locked = gff.getBool("Locked", _locked);
+	loadTrapState(gff);
 }
 
 Object *Situated::getLastOpenedBy() const {
@@ -246,6 +332,8 @@ void Situated::loadProperties(const Aurora::GFF3Struct &gff) {
 	// Lock Skill
 	_lockSkill = gff.getUint("LockSkill", _lockSkill);
 
+	loadTrapState(gff);
+
 	// Conversation
 	_conversation = gff.getString("Conversation", _conversation);
 
@@ -267,6 +355,34 @@ void Situated::loadPortrait(const Aurora::GFF3Struct &gff) {
 	}
 
 	_portrait = gff.getString("Portrait", _portrait);
+}
+
+void Situated::loadTrapState(const Aurora::GFF3Struct &gff) {
+	_trapType = static_cast<uint8_t>(gff.getUint("TrapType", _trapType));
+	_trapFlag = gff.getBool("TrapFlag", _trapFlag);
+	_trapDetectable = gff.getBool("TrapDetectable", _trapDetectable);
+	_trapDisarmable = gff.getBool("TrapDisarmable", _trapDisarmable);
+	_trapRecoverable = gff.getBool("TrapRecoverable", _trapRecoverable);
+	_trapOneShot = gff.getBool("TrapOneShot", _trapOneShot);
+	_trapActive = gff.getBool("TrapActive", _trapFlag);
+	_trapFlagged = gff.getBool("TrapFlagged", _trapFlagged);
+	_trapDetectDC = static_cast<uint8_t>(gff.getUint("TrapDetectDC", _trapDetectDC));
+	_trapDisarmDC = static_cast<uint8_t>(gff.getUint("DisarmDC", _trapDisarmDC));
+	_trapKeyTag = gff.getString("KeyName", _trapKeyTag);
+}
+
+void Situated::saveTrapState(Aurora::GFF3WriterStruct &gff) const {
+	gff.addByte("TrapFlag", _trapFlag ? 1 : 0);
+	gff.addByte("TrapDetectable", _trapDetectable ? 1 : 0);
+	gff.addByte("TrapDisarmable", _trapDisarmable ? 1 : 0);
+	gff.addByte("TrapRecoverable", _trapRecoverable ? 1 : 0);
+	gff.addByte("TrapOneShot", _trapOneShot ? 1 : 0);
+	gff.addByte("TrapActive", _trapActive ? 1 : 0);
+	gff.addByte("TrapFlagged", _trapFlagged ? 1 : 0);
+	gff.addUint32("TrapType", _trapType);
+	gff.addUint32("TrapDetectDC", _trapDetectDC);
+	gff.addUint32("DisarmDC", _trapDisarmDC);
+	gff.addExoString("KeyName", _trapKeyTag);
 }
 
 void Situated::loadSounds() {

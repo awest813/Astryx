@@ -36,6 +36,11 @@
 
 #include "src/engines/kotorbase/script/container.h"
 
+namespace Aurora {
+class GFF3Struct;
+class GFF3WriterStruct;
+}
+
 namespace Engines {
 
 namespace KotORBase {
@@ -148,7 +153,7 @@ public:
 	/** Set whether this object should be persisted. */
 	void setPersistent(bool persistent);
 
-	virtual void saveState(Aurora::GFF3Struct &gff) const;
+	virtual void saveState(Aurora::GFF3WriterStruct &gff) const;
 	virtual void loadState(const Aurora::GFF3Struct &gff);
 
 	// Faction

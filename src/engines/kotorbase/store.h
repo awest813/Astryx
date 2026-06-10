@@ -28,6 +28,10 @@
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/inventory.h"
 
+namespace Aurora {
+class GFF3WriterStruct;
+}
+
 namespace Engines {
 
 namespace KotORBase {
@@ -56,7 +60,7 @@ public:
 	/** Calculate the price at which the store buys an item from the PC. */
 	int getSellPrice(const Item &item, const Creature &pc) const;
 
-	void saveState(Aurora::GFF3Struct &gff) const;
+	void saveState(Aurora::GFF3WriterStruct &gff) const;
 	void loadState(const Aurora::GFF3Struct &gff);
 
 private:

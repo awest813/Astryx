@@ -48,6 +48,16 @@ tests_engines_kotorbase_test_inventory_SOURCES        = tests/engines/kotorbase/
 tests_engines_kotorbase_test_inventory_LDADD          = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_inventory_CXXFLAGS       = $(test_CXXFLAGS)
 
+check_PROGRAMS                                       += tests/engines/kotorbase/test_save_serialization
+tests_engines_kotorbase_test_save_serialization_SOURCES = tests/engines/kotorbase/save_serialization.cpp
+tests_engines_kotorbase_test_save_serialization_LDADD   = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_save_serialization_CXXFLAGS = $(test_CXXFLAGS)
+
+check_PROGRAMS                                       += tests/engines/kotorbase/test_item_property
+tests_engines_kotorbase_test_item_property_SOURCES    = tests/engines/kotorbase/item_property.cpp
+tests_engines_kotorbase_test_item_property_LDADD        = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_item_property_CXXFLAGS   = $(test_CXXFLAGS)
+
 check_PROGRAMS                                       += tests/engines/kotorbase/test_effect
 tests_engines_kotorbase_test_effect_SOURCES           = tests/engines/kotorbase/effect.cpp
 tests_engines_kotorbase_test_effect_LDADD             = $(kotorbase_LIBS)

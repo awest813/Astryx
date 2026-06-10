@@ -45,11 +45,36 @@ int Item::getCost() const {
 }
 
 bool Item::hasItemProperty(int propertyType) const {
-	for (int type : _propertyTypes) {
-		if (type == propertyType)
+	for (const ItemPropertyData &prop : _properties) {
+		if (prop.type == propertyType)
 			return true;
 	}
 	return false;
+}
+
+int Item::getPropertyBonusSum(int propertyType) const {
+	int sum = 0;
+	for (const ItemPropertyData &prop : _properties) {
+		if (prop.type == propertyType)
+			sum += prop.param1Value;
+	}
+	return sum;
+}
+
+int Item::getBaseACBonus() const {
+	return _acBonus;
+}
+
+int Item::getEnhancementBonus() const {
+	return getPropertyBonusSum(kItemPropertyEnhancementBonus);
+}
+
+int Item::getDamageBonus() const {
+	return getPropertyBonusSum(kItemPropertyDamageBonus);
+}
+
+int Item::getAttackBonus() const {
+	return getPropertyBonusSum(kItemPropertyAttackBonus) + getEnhancementBonus();
 }
 
 void Item::load(const Aurora::GFF3Struct &gff) {
@@ -79,8 +104,15 @@ void Item::load(const Aurora::GFF3Struct &gff) {
 
 	const Aurora::GFF3List &properties = gff.getList("PropertiesList");
 	for (Aurora::GFF3List::const_iterator it = properties.begin(); it != properties.end(); ++it) {
-		if (*it)
-			_propertyTypes.push_back((*it)->getUint("PropertyName"));
+		if (!*it)
+			continue;
+
+		ItemPropertyData prop;
+		prop.type = (*it)->getUint("PropertyName");
+		prop.subtype = (*it)->getUint("Subtype");
+		prop.param1 = (*it)->getUint("Param1");
+		prop.param1Value = (*it)->getUint("Param1Value");
+		_properties.push_back(prop);
 	}
 }
 
@@ -116,7 +148,7 @@ bool Item::isRangedWeapon() const {
 }
 
 int Item::getACBonus() const {
-	return _acBonus;
+	return _acBonus + getPropertyBonusSum(kItemPropertyACBonus);
 }
 
 int Item::getBaseItem() const {

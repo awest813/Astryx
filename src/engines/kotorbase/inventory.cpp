@@ -25,6 +25,8 @@
 #include <cassert>
 
 #include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
+
 #include "src/engines/kotorbase/inventory.h"
 
 namespace Engines {
@@ -51,8 +53,16 @@ Inventory &Inventory::operator=(const Inventory &other) {
 	return *this;
 }
 
-void Inventory::save(Aurora::GFF3List &list) const {
-	// Stub: Disk saving is out of scope for early-game parity.
+void Inventory::save(Aurora::GFF3WriterList &list) const {
+	for (const auto &entry : _items) {
+		const ItemGroup &group = entry.second;
+		if (group.count <= 0)
+			continue;
+
+		Aurora::GFF3WriterStructPtr item = list.addStruct();
+		item->addResRef("InventoryRes", group.tag);
+		item->addUint32("Quantity", static_cast<uint32_t>(group.count));
+	}
 }
 
 void Inventory::read(const Aurora::GFF3List &list) {

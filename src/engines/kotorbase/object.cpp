@@ -38,6 +38,7 @@
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/location.h"
 #include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
 
 namespace Engines {
 
@@ -321,8 +322,9 @@ void Object::setPersistent(bool persistent) {
 	_persistent = persistent;
 }
 
-void Object::saveState(Aurora::GFF3Struct &gff) const {
-	// Stub: Disk saving is out of scope for early-game parity.
+void Object::saveState(Aurora::GFF3WriterStruct &gff) const {
+	gff.addUint32("CurrentHP", static_cast<uint32_t>(_currentHitPoints));
+	gff.addByte("Usable", _usable ? 1 : 0);
 }
 
 void Object::loadState(const Aurora::GFF3Struct &gff) {

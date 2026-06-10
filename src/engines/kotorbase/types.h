@@ -413,6 +413,15 @@ enum EffectType {
 	kEffectDazed = 9
 };
 
+/** Item property types (rows in itempropdef.2da — matches Aurora engine IDs). */
+enum ItemPropertyType {
+	kItemPropertyAbilityBonus     =  0,
+	kItemPropertyACBonus          =  1,
+	kItemPropertyEnhancementBonus =  7,
+	kItemPropertyDamageBonus      = 15,
+	kItemPropertyAttackBonus      = 58
+};
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

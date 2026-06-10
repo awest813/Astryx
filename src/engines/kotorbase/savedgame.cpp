@@ -28,6 +28,7 @@
 #include "src/common/readfile.h"
 
 #include "src/engines/kotorbase/savedgame.h"
+#include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 
 namespace Engines {
@@ -74,9 +75,14 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 	for (Aurora::Archive::ResourceList::const_iterator it = resources.begin();
 			it != resources.end(); ++it) {
 		const Aurora::Archive::Resource &res = *it;
+
+		if (res.name.equalsIgnoreCase("GLOBALVARS") && res.type == Aurora::kFileTypeRES) {
+			_globals = std::make_unique<Aurora::GFF3File>(erf.getResource(res.index));
+			continue;
+		}
+
 		if (res.type == Aurora::kFileTypeSAV && res.name.equalsIgnoreCase(moduleName)) {
 			moduleSavIndex = res.index;
-			break;
 		}
 	}
 
@@ -97,7 +103,11 @@ void SavedGame::fillFromModuleSAV(const Aurora::ERFFile &erf) {
 		const Aurora::Archive::Resource &res = *it;
 		if ((res.name == "Module") && (res.type == Aurora::kFileTypeIFO)) {
 			ifoIndex = res.index;
-			break;
+			continue;
+		}
+
+		if (res.name.equalsIgnoreCase("areastate") && res.type == Aurora::kFileTypeRES) {
+			_areaState = std::make_unique<Aurora::GFF3File>(erf.getResource(res.index));
 		}
 	}
 
@@ -137,6 +147,14 @@ uint32_t SavedGame::getTimePlayed() const {
 
 bool SavedGame::isPCLoaded() const {
 	return _pcLoaded;
+}
+
+void SavedGame::applyPersistedState(Module &module) const {
+	if (_globals)
+		module.loadState(_globals->getTopLevel());
+
+	if (_areaState)
+		module.loadAreaObjectSaves(_areaState->getTopLevel());
 }
 
 } // End of namespace KotORBase
