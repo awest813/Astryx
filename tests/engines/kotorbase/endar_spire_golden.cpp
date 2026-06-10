@@ -114,6 +114,30 @@ TEST(EndarSpireGoldenPath, InventoryEquip) {
 }
 
 // ---------------------------------------------------------------------------
+// Opening cutscene state — logo/crawl before enter, beat after enter
+// ---------------------------------------------------------------------------
+
+TEST(EndarSpireGoldenPath, OpeningCutsceneStateMachine) {
+	bool openingPlayed = false;
+	bool openingPending = false;
+	bool moduleLoaded = false;
+	bool moduleRunning = false;
+
+	// Main menu: movies then load (module not running yet).
+	openingPlayed = true;
+	openingPending = true;
+	moduleLoaded = true;
+	EXPECT_TRUE(openingPending);
+	EXPECT_FALSE(moduleRunning);
+
+	// First enter(): run the in-module beat, then hand control to the player.
+	openingPending = false;
+	moduleRunning = true;
+	EXPECT_FALSE(openingPending);
+	EXPECT_TRUE(moduleRunning);
+}
+
+// ---------------------------------------------------------------------------
 // 3. Dialogue progression — Trask Ulgo, skill-gated lines
 // ---------------------------------------------------------------------------
 

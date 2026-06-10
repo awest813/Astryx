@@ -194,6 +194,9 @@ public:
 	/** Shake the camera. */
 	void shakeCamera(float duration, float intensity);
 
+	/** Advance the module for a fixed duration (camera FX, animations) without player input. */
+	void runCinematicBeat(float duration);
+
 	/** Play a movie. */
 
 
@@ -298,7 +301,7 @@ public:
 	// Module main loop (called by the Game class)
 
 	/** Enter the loaded module, starting it. */
-	void enter();
+	virtual void enter();
 	/** Leave the running module, quitting it. */
 	void leave();
 	/** Click an object with the mouse. */

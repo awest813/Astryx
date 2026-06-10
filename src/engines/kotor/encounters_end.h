@@ -9,8 +9,11 @@ namespace KotORBase {
 
 namespace KotOR {
 
-/** Orchestrate the Endar Spire opening attack. */
+/** Play logo/crawl movies and load the first module (from the main menu). */
 void performEndarSpireOpening(KotORBase::Module &module);
+
+/** In-module beat after enter(): ship attack shake, journal, music. */
+void performEndarSpireOpeningBeat(KotORBase::Module &module);
 
 /** Orchestrate the Trask Ulgo tutorial encounter. */
 void performTraskEncounter(KotORBase::Module &module);

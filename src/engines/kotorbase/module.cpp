@@ -508,7 +508,7 @@ void Module::enter() {
 	_console->printf("Entering module \"%s\"", _name.c_str());
 
 	Common::UString startMovie = _ifo.getStartMovie();
-	if (!startMovie.empty())
+	if (!startMovie.empty() && !getGlobalBoolean("__endar_opening_played"))
 		playVideo(startMovie);
 
 	float entryX, entryY, entryZ, _;
@@ -639,6 +639,38 @@ void Module::signalEncounter(const Common::UString &UNUSED(id)) {
 
 void Module::shakeCamera(float duration, float intensity) {
 	_cameraController.shake(duration, intensity);
+}
+
+void Module::runCinematicBeat(float duration) {
+	if (duration <= 0.0f)
+		return;
+
+	updateFrameTimestamp();
+	float elapsed = 0.0f;
+
+	while (elapsed < duration && isRunning() && !EventMan.quitRequested()) {
+		const uint32_t now = SDL_GetTicks();
+		_frameTime = (now - _prevTimestamp) / 1000.f;
+		_prevTimestamp = now;
+		elapsed += _frameTime;
+
+		GfxMan.lockFrame();
+
+		if (_area)
+			_area->processCreaturesActions(_frameTime);
+
+		_cameraController.processRotation(_frameTime);
+		_cameraController.processMovement(_frameTime);
+		updateSoundListener();
+
+		if (_ingame && !_inDialog)
+			_ingame->getHUD().update(_frameTime);
+
+		GfxMan.unlockFrame();
+		EventMan.delay(10);
+	}
+
+	updateFrameTimestamp();
 }
 
 void Module::playMovie(const Common::UString &resRef) {

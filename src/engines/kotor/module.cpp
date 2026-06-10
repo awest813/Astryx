@@ -78,6 +78,15 @@ KotORBase::CharacterGenerationInfo *Module::createCharGenInfo(const KotORBase::C
 	return new CharacterGenerationInfo(info);
 }
 
+void Module::enter() {
+	KotORBase::Module::enter();
+
+	if (getGlobalBoolean("__endar_opening_pending")) {
+		setGlobalBoolean("__endar_opening_pending", false);
+		KotOR::performEndarSpireOpeningBeat(*this);
+	}
+}
+
 void Module::showMenu() {
 	showIngameOptionsMenu();
 }

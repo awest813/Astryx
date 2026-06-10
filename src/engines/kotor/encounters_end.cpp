@@ -54,9 +54,8 @@ void performEndarSpireOpening(KotORBase::Module &module) {
 
 	module.playMovie("swlogo");
 	module.playMovie("openingcrawl");
-
-	module.setCutsceneMode(true);
-	module.setPlayerInputEnabled(false);
+	module.setGlobalBoolean("__endar_opening_played", true);
+	module.setGlobalBoolean("__endar_opening_pending", true);
 
 	if (!module.isLoaded()) {
 		Common::UString firstModule = ConfigMan.getString("KOTOR_startModule", "end_m01aa");
@@ -64,10 +63,21 @@ void performEndarSpireOpening(KotORBase::Module &module) {
 			firstModule = "end_m01aa";
 		module.load(firstModule);
 	}
+}
+
+void performEndarSpireOpeningBeat(KotORBase::Module &module) {
+	status("Endar Spire: attack on the Republic cruiser...");
+
+	module.setCutsceneMode(true);
+	module.setPlayerInputEnabled(false);
 
 	module.playMusicStinger("mus_bat_ship");
 	module.shakeCamera(4.0f, 0.8f);
 	module.addJournalQuestEntry("k_main_quest", 5);
+	module.runCinematicBeat(4.5f);
+
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
@@ -85,6 +95,11 @@ void performTraskEncounter(KotORBase::Module &module) {
 
 	if (KotORBase::Creature *trask = findTraskUlgo(module))
 		module.setCinematicFocus(trask);
+
+	module.runCinematicBeat(2.5f);
+
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
@@ -109,6 +124,10 @@ void performSithBoarding(KotORBase::Module &module) {
 	}
 
 	module.playMusicStinger("mus_bat_sith");
+	module.runCinematicBeat(3.0f);
+
+	module.restoreGameplayCamera(1.5f);
+	module.runCinematicBeat(1.5f);
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);

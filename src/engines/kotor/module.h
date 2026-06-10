@@ -58,6 +58,8 @@ public:
 	void showMenu() override;
 	void showDeathGUI() override;
 
+	void enter() override;
+
 	void signalEncounter(const Common::UString &id) override;
 
 private:
