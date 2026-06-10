@@ -641,7 +641,7 @@ The complete Star Wars: Knights of the Old Republic I campaign.
 
 ### NWScript & Engine
 - [x] **Function Implementation Batch 1 & 2**: Completed ~50 critical functions for Taris/Dantooine. ✅
-- [ ] **Systematic Stubbing**: Register the remaining ~300 unimplemented functions as safe stubs to ensure script stability.
+- [x] **Systematic Stubbing**: Register the remaining ~300 unimplemented functions as safe stubs to ensure script stability. ✅
 - [x] **SWMG Minigame Hooks**: Implementation of speed, acceleration, and bullet tracking for space combat sequences. ✅
 
 ### Level-up & Character

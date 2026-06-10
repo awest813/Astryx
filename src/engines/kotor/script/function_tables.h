@@ -701,89 +701,89 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 581, "SetGlobalNumber"                     , &Functions::setGlobalNumber                      },
 	{ 582, "AurPostString"                       , &Functions::aurPostString                                                },
 	{ 583, "SWMG_GetLastEvent"                   , &Functions::swmgGetLastEvent                      },
-	{ 584, "SWMG_GetLastEventModelName"          , &Functions::stubFunction                                                },
-	{ 585, "SWMG_GetObjectByName"                , &Functions::stubFunction                                                },
-	{ 586, "SWMG_PlayAnimation"                  , &Functions::stubFunction                                                },
-	{ 587, "SWMG_GetLastBulletHitDamage"         , &Functions::stubFunction                                                },
-	{ 588, "SWMG_GetLastBulletHitTarget"         , &Functions::stubFunction                                                },
-	{ 589, "SWMG_GetLastBulletHitShooter"        , &Functions::stubFunction                                                },
-	{ 590, "SWMG_AdjustFollowerHitPoints"        , &Functions::stubFunction                                                },
-	{ 591, "SWMG_OnBulletHit"                    , &Functions::stubFunction                                                },
+	{ 584, "SWMG_GetLastEventModelName"          , &Functions::stubSWMGFunctionSWMG_GetLastEventModelName
+	{ 585, "SWMG_GetObjectByName"                , &Functions::stubSWMGFunctionSWMG_GetObjectByName
+	{ 586, "SWMG_PlayAnimation"                  , &Functions::stubSWMGFunctionSWMG_PlayAnimation
+	{ 587, "SWMG_GetLastBulletHitDamage"         , &Functions::stubSWMGFunctionSWMG_GetLastBulletHitDamage
+	{ 588, "SWMG_GetLastBulletHitTarget"         , &Functions::stubSWMGFunctionSWMG_GetLastBulletHitTarget
+	{ 589, "SWMG_GetLastBulletHitShooter"        , &Functions::stubSWMGFunctionSWMG_GetLastBulletHitShooter
+	{ 590, "SWMG_AdjustFollowerHitPoints"        , &Functions::stubSWMGFunctionSWMG_AdjustFollowerHitPoints
+	{ 591, "SWMG_OnBulletHit"                    , &Functions::stubSWMGFunctionSWMG_OnBulletHit
 	{ 592, "SWMG_OnObstacleHit"                  , &Functions::swmgOnObstacleHit                     },
-	{ 593, "SWMG_GetLastFollowerHit"             , &Functions::stubFunction                                                },
-	{ 594, "SWMG_GetLastObstacleHit"             , &Functions::stubFunction                                                },
-	{ 595, "SWMG_GetLastBulletFiredDamage"       , &Functions::stubFunction                                                },
-	{ 596, "SWMG_GetLastBulletFiredTarget"       , &Functions::stubFunction                                                },
-	{ 597, "SWMG_GetObjectName"                  , &Functions::stubFunction                                                },
-	{ 598, "SWMG_OnDeath"                        , &Functions::stubFunction                                                },
-	{ 599, "SWMG_IsFollower"                     , &Functions::stubFunction                                                },
-	{ 600, "SWMG_IsPlayer"                       , &Functions::stubFunction                                                },
-	{ 601, "SWMG_IsEnemy"                        , &Functions::stubFunction                                                },
-	{ 602, "SWMG_IsTrigger"                      , &Functions::stubFunction                                                },
-	{ 603, "SWMG_IsObstacle"                     , &Functions::stubFunction                                                },
-	{ 604, "SWMG_SetFollowerHitPoints"           , &Functions::stubFunction                                                },
-	{ 605, "SWMG_OnDamage"                       , &Functions::stubFunction                                                },
-	{ 606, "SWMG_GetLastHPChange"                , &Functions::stubFunction                                                },
-	{ 607, "SWMG_RemoveAnimation"                , &Functions::stubFunction                                                },
-	{ 608, "SWMG_GetCameraNearClip"              , &Functions::stubFunction                                                },
-	{ 609, "SWMG_GetCameraFarClip"               , &Functions::stubFunction                                                },
-	{ 610, "SWMG_SetCameraClip"                  , &Functions::stubFunction                                                },
-	{ 611, "SWMG_GetPlayer"                      , &Functions::stubFunction                                                },
+	{ 593, "SWMG_GetLastFollowerHit"             , &Functions::stubSWMGFunctionSWMG_GetLastFollowerHit
+	{ 594, "SWMG_GetLastObstacleHit"             , &Functions::stubSWMGFunctionSWMG_GetLastObstacleHit
+	{ 595, "SWMG_GetLastBulletFiredDamage"       , &Functions::stubSWMGFunctionSWMG_GetLastBulletFiredDamage
+	{ 596, "SWMG_GetLastBulletFiredTarget"       , &Functions::stubSWMGFunctionSWMG_GetLastBulletFiredTarget
+	{ 597, "SWMG_GetObjectName"                  , &Functions::stubSWMGFunctionSWMG_GetObjectName
+	{ 598, "SWMG_OnDeath"                        , &Functions::stubSWMGFunctionSWMG_OnDeath
+	{ 599, "SWMG_IsFollower"                     , &Functions::stubSWMGFunctionSWMG_IsFollower
+	{ 600, "SWMG_IsPlayer"                       , &Functions::stubSWMGFunctionSWMG_IsPlayer
+	{ 601, "SWMG_IsEnemy"                        , &Functions::stubSWMGFunctionSWMG_IsEnemy
+	{ 602, "SWMG_IsTrigger"                      , &Functions::stubSWMGFunctionSWMG_IsTrigger
+	{ 603, "SWMG_IsObstacle"                     , &Functions::stubSWMGFunctionSWMG_IsObstacle
+	{ 604, "SWMG_SetFollowerHitPoints"           , &Functions::stubSWMGFunctionSWMG_SetFollowerHitPoints
+	{ 605, "SWMG_OnDamage"                       , &Functions::stubSWMGFunctionSWMG_OnDamage
+	{ 606, "SWMG_GetLastHPChange"                , &Functions::stubSWMGFunctionSWMG_GetLastHPChange
+	{ 607, "SWMG_RemoveAnimation"                , &Functions::stubSWMGFunctionSWMG_RemoveAnimation
+	{ 608, "SWMG_GetCameraNearClip"              , &Functions::stubSWMGFunctionSWMG_GetCameraNearClip
+	{ 609, "SWMG_GetCameraFarClip"               , &Functions::stubSWMGFunctionSWMG_GetCameraFarClip
+	{ 610, "SWMG_SetCameraClip"                  , &Functions::stubSWMGFunctionSWMG_SetCameraClip
+	{ 611, "SWMG_GetPlayer"                      , &Functions::stubSWMGFunctionSWMG_GetPlayer
 	{ 612, "SWMG_GetEnemyCount"                  , &Functions::swmgGetEnemyCount                                                },
 	{ 613, "SWMG_GetEnemy"                       , &Functions::swmgGetEnemy                                                },
-	{ 614, "SWMG_GetObstacleCount"               , &Functions::stubFunction                                                },
-	{ 615, "SWMG_GetObstacle"                    , &Functions::stubFunction                                                },
-	{ 616, "SWMG_GetHitPoints"                   , &Functions::stubFunction                                                },
-	{ 617, "SWMG_GetMaxHitPoints"                , &Functions::stubFunction                                                },
-	{ 618, "SWMG_SetMaxHitPoints"                , &Functions::stubFunction                                                },
-	{ 619, "SWMG_GetSphereRadius"                , &Functions::stubFunction                                                },
-	{ 620, "SWMG_SetSphereRadius"                , &Functions::stubFunction                                                },
-	{ 621, "SWMG_GetNumLoops"                    , &Functions::stubFunction                                                },
-	{ 622, "SWMG_SetNumLoops"                    , &Functions::stubFunction                                                },
-	{ 623, "SWMG_GetPosition"                    , &Functions::stubFunction                                                },
-	{ 624, "SWMG_GetGunBankCount"                , &Functions::stubFunction                                                },
-	{ 625, "SWMG_GetGunBankBulletModel"          , &Functions::stubFunction                                                },
-	{ 626, "SWMG_GetGunBankGunModel"             , &Functions::stubFunction                                                },
-	{ 627, "SWMG_GetGunBankDamage"               , &Functions::stubFunction                                                },
-	{ 628, "SWMG_GetGunBankTimeBetweenShots"     , &Functions::stubFunction                                                },
-	{ 629, "SWMG_GetGunBankLifespan"             , &Functions::stubFunction                                                },
-	{ 630, "SWMG_GetGunBankSpeed"                , &Functions::stubFunction                                                },
-	{ 631, "SWMG_GetGunBankTarget"               , &Functions::stubFunction                                                },
-	{ 632, "SWMG_SetGunBankBulletModel"          , &Functions::stubFunction                                                },
-	{ 633, "SWMG_SetGunBankGunModel"             , &Functions::stubFunction                                                },
-	{ 634, "SWMG_SetGunBankDamage"               , &Functions::stubFunction                                                },
-	{ 635, "SWMG_SetGunBankTimeBetweenShots"     , &Functions::stubFunction                                                },
-	{ 636, "SWMG_SetGunBankLifespan"             , &Functions::stubFunction                                                },
-	{ 637, "SWMG_SetGunBankSpeed"                , &Functions::stubFunction                                                },
-	{ 638, "SWMG_SetGunBankTarget"               , &Functions::stubFunction                                                },
+	{ 614, "SWMG_GetObstacleCount"               , &Functions::stubSWMGFunctionSWMG_GetObstacleCount
+	{ 615, "SWMG_GetObstacle"                    , &Functions::stubSWMGFunctionSWMG_GetObstacle
+	{ 616, "SWMG_GetHitPoints"                   , &Functions::stubSWMGFunctionSWMG_GetHitPoints
+	{ 617, "SWMG_GetMaxHitPoints"                , &Functions::stubSWMGFunctionSWMG_GetMaxHitPoints
+	{ 618, "SWMG_SetMaxHitPoints"                , &Functions::stubSWMGFunctionSWMG_SetMaxHitPoints
+	{ 619, "SWMG_GetSphereRadius"                , &Functions::stubSWMGFunctionSWMG_GetSphereRadius
+	{ 620, "SWMG_SetSphereRadius"                , &Functions::stubSWMGFunctionSWMG_SetSphereRadius
+	{ 621, "SWMG_GetNumLoops"                    , &Functions::stubSWMGFunctionSWMG_GetNumLoops
+	{ 622, "SWMG_SetNumLoops"                    , &Functions::stubSWMGFunctionSWMG_SetNumLoops
+	{ 623, "SWMG_GetPosition"                    , &Functions::stubSWMGFunctionSWMG_GetPosition
+	{ 624, "SWMG_GetGunBankCount"                , &Functions::stubSWMGFunctionSWMG_GetGunBankCount
+	{ 625, "SWMG_GetGunBankBulletModel"          , &Functions::stubSWMGFunctionSWMG_GetGunBankBulletModel
+	{ 626, "SWMG_GetGunBankGunModel"             , &Functions::stubSWMGFunctionSWMG_GetGunBankGunModel
+	{ 627, "SWMG_GetGunBankDamage"               , &Functions::stubSWMGFunctionSWMG_GetGunBankDamage
+	{ 628, "SWMG_GetGunBankTimeBetweenShots"     , &Functions::stubSWMGFunctionSWMG_GetGunBankTimeBetweenShots
+	{ 629, "SWMG_GetGunBankLifespan"             , &Functions::stubSWMGFunctionSWMG_GetGunBankLifespan
+	{ 630, "SWMG_GetGunBankSpeed"                , &Functions::stubSWMGFunctionSWMG_GetGunBankSpeed
+	{ 631, "SWMG_GetGunBankTarget"               , &Functions::stubSWMGFunctionSWMG_GetGunBankTarget
+	{ 632, "SWMG_SetGunBankBulletModel"          , &Functions::stubSWMGFunctionSWMG_SetGunBankBulletModel
+	{ 633, "SWMG_SetGunBankGunModel"             , &Functions::stubSWMGFunctionSWMG_SetGunBankGunModel
+	{ 634, "SWMG_SetGunBankDamage"               , &Functions::stubSWMGFunctionSWMG_SetGunBankDamage
+	{ 635, "SWMG_SetGunBankTimeBetweenShots"     , &Functions::stubSWMGFunctionSWMG_SetGunBankTimeBetweenShots
+	{ 636, "SWMG_SetGunBankLifespan"             , &Functions::stubSWMGFunctionSWMG_SetGunBankLifespan
+	{ 637, "SWMG_SetGunBankSpeed"                , &Functions::stubSWMGFunctionSWMG_SetGunBankSpeed
+	{ 638, "SWMG_SetGunBankTarget"               , &Functions::stubSWMGFunctionSWMG_SetGunBankTarget
 	{ 639, "SWMG_GetLastBulletHitPart"           , &Functions::swmgGetLastBulletHitPart                                                },
 	{ 640, "SWMG_IsGunBankTargetting"            , &Functions::swmgIsGunBankTargetting                                                },
 	{ 641, "SWMG_GetPlayerOffset"                , &Functions::swmgGetPlayerOffset                                                },
-	{ 642, "SWMG_GetPlayerInvincibility"         , &Functions::stubFunction                                                },
+	{ 642, "SWMG_GetPlayerInvincibility"         , &Functions::stubSWMGFunctionSWMG_GetPlayerInvincibility
 	{ 643, "SWMG_GetPlayerSpeed"                 , &Functions::swmgGetPlayerSpeed                    },
-	{ 644, "SWMG_GetPlayerMinSpeed"              , &Functions::stubFunction                                                },
-	{ 645, "SWMG_GetPlayerAccelerationPerSecond" , &Functions::stubFunction                                                },
-	{ 646, "SWMG_GetPlayerTunnelPos"             , &Functions::stubFunction                                                },
+	{ 644, "SWMG_GetPlayerMinSpeed"              , &Functions::stubSWMGFunctionSWMG_GetPlayerMinSpeed
+	{ 645, "SWMG_GetPlayerAccelerationPerSecond" , &Functions::stubSWMGFunctionSWMG_GetPlayerAccelerationPerSecond
+	{ 646, "SWMG_GetPlayerTunnelPos"             , &Functions::stubSWMGFunctionSWMG_GetPlayerTunnelPos
 	{ 647, "SWMG_SetPlayerOffset"                , &Functions::swmgSetPlayerOffset                                                },
-	{ 648, "SWMG_SetPlayerInvincibility"         , &Functions::stubFunction                                                },
+	{ 648, "SWMG_SetPlayerInvincibility"         , &Functions::stubSWMGFunctionSWMG_SetPlayerInvincibility
 	{ 649, "SWMG_SetPlayerSpeed"                 , &Functions::swmgSetPlayerSpeed                    },
-	{ 650, "SWMG_SetPlayerMinSpeed"              , &Functions::stubFunction                                                },
-	{ 651, "SWMG_SetPlayerAccelerationPerSecond" , &Functions::stubFunction                                                },
-	{ 652, "SWMG_SetPlayerTunnelPos"             , &Functions::stubFunction                                                },
-	{ 653, "SWMG_GetPlayerTunnelNeg"             , &Functions::stubFunction                                                },
-	{ 654, "SWMG_SetPlayerTunnelNeg"             , &Functions::stubFunction                                                },
-	{ 655, "SWMG_GetPlayerOrigin"                , &Functions::stubFunction                                                },
-	{ 656, "SWMG_SetPlayerOrigin"                , &Functions::stubFunction                                                },
-	{ 657, "SWMG_GetGunBankHorizontalSpread"     , &Functions::stubFunction                                                },
-	{ 658, "SWMG_GetGunBankVerticalSpread"       , &Functions::stubFunction                                                },
-	{ 659, "SWMG_GetGunBankSensingRadius"        , &Functions::stubFunction                                                },
-	{ 660, "SWMG_GetGunBankInaccuracy"           , &Functions::stubFunction                                                },
-	{ 661, "SWMG_SetGunBankHorizontalSpread"     , &Functions::stubFunction                                                },
-	{ 662, "SWMG_SetGunBankVerticalSpread"       , &Functions::stubFunction                                                },
-	{ 663, "SWMG_SetGunBankSensingRadius"        , &Functions::stubFunction                                                },
-	{ 664, "SWMG_SetGunBankInaccuracy"           , &Functions::stubFunction                                                },
-	{ 665, "SWMG_GetIsInvulnerable"              , &Functions::stubFunction                                                },
-	{ 666, "SWMG_StartInvulnerability"           , &Functions::stubFunction                                                },
+	{ 650, "SWMG_SetPlayerMinSpeed"              , &Functions::stubSWMGFunctionSWMG_SetPlayerMinSpeed
+	{ 651, "SWMG_SetPlayerAccelerationPerSecond" , &Functions::stubSWMGFunctionSWMG_SetPlayerAccelerationPerSecond
+	{ 652, "SWMG_SetPlayerTunnelPos"             , &Functions::stubSWMGFunctionSWMG_SetPlayerTunnelPos
+	{ 653, "SWMG_GetPlayerTunnelNeg"             , &Functions::stubSWMGFunctionSWMG_GetPlayerTunnelNeg
+	{ 654, "SWMG_SetPlayerTunnelNeg"             , &Functions::stubSWMGFunctionSWMG_SetPlayerTunnelNeg
+	{ 655, "SWMG_GetPlayerOrigin"                , &Functions::stubSWMGFunctionSWMG_GetPlayerOrigin
+	{ 656, "SWMG_SetPlayerOrigin"                , &Functions::stubSWMGFunctionSWMG_SetPlayerOrigin
+	{ 657, "SWMG_GetGunBankHorizontalSpread"     , &Functions::stubSWMGFunctionSWMG_GetGunBankHorizontalSpread
+	{ 658, "SWMG_GetGunBankVerticalSpread"       , &Functions::stubSWMGFunctionSWMG_GetGunBankVerticalSpread
+	{ 659, "SWMG_GetGunBankSensingRadius"        , &Functions::stubSWMGFunctionSWMG_GetGunBankSensingRadius
+	{ 660, "SWMG_GetGunBankInaccuracy"           , &Functions::stubSWMGFunctionSWMG_GetGunBankInaccuracy
+	{ 661, "SWMG_SetGunBankHorizontalSpread"     , &Functions::stubSWMGFunctionSWMG_SetGunBankHorizontalSpread
+	{ 662, "SWMG_SetGunBankVerticalSpread"       , &Functions::stubSWMGFunctionSWMG_SetGunBankVerticalSpread
+	{ 663, "SWMG_SetGunBankSensingRadius"        , &Functions::stubSWMGFunctionSWMG_SetGunBankSensingRadius
+	{ 664, "SWMG_SetGunBankInaccuracy"           , &Functions::stubSWMGFunctionSWMG_SetGunBankInaccuracy
+	{ 665, "SWMG_GetIsInvulnerable"              , &Functions::stubSWMGFunctionSWMG_GetIsInvulnerable
+	{ 666, "SWMG_StartInvulnerability"           , &Functions::stubSWMGFunctionSWMG_StartInvulnerability
 	{ 667, "SWMG_GetPlayerMaxSpeed"              , &Functions::swmgGetPlayerMaxSpeed                 },
 	{ 668, "SWMG_SetPlayerMaxSpeed"              , &Functions::swmgSetPlayerMaxSpeed                 },
 	{ 669, "AddJournalWorldEntry"                , &Functions::addJournalWorldEntry              },
@@ -800,12 +800,12 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 680, "SetLocalBoolean"                     , &Functions::setLocalBoolean                      },
 	{ 681, "GetLocalNumber"                      , &Functions::getLocalNumber                       },
 	{ 682, "SetLocalNumber"                      , &Functions::setLocalNumber                       },
-	{ 683, "SWMG_GetSoundFrequency"              , &Functions::stubFunction                                                },
-	{ 684, "SWMG_SetSoundFrequency"              , &Functions::stubFunction                                                },
-	{ 685, "SWMG_GetSoundFrequencyIsRandom"      , &Functions::stubFunction                                                },
-	{ 686, "SWMG_SetSoundFrequencyIsRandom"      , &Functions::stubFunction                                                },
-	{ 687, "SWMG_GetSoundVolume"                 , &Functions::stubFunction                                                },
-	{ 688, "SWMG_SetSoundVolume"                 , &Functions::stubFunction                                                },
+	{ 683, "SWMG_GetSoundFrequency"              , &Functions::stubSWMGFunctionSWMG_GetSoundFrequency
+	{ 684, "SWMG_SetSoundFrequency"              , &Functions::stubSWMGFunctionSWMG_SetSoundFrequency
+	{ 685, "SWMG_GetSoundFrequencyIsRandom"      , &Functions::stubSWMGFunctionSWMG_GetSoundFrequencyIsRandom
+	{ 686, "SWMG_SetSoundFrequencyIsRandom"      , &Functions::stubSWMGFunctionSWMG_SetSoundFrequencyIsRandom
+	{ 687, "SWMG_GetSoundVolume"                 , &Functions::stubSWMGFunctionSWMG_GetSoundVolume
+	{ 688, "SWMG_SetSoundVolume"                 , &Functions::stubSWMGFunctionSWMG_SetSoundVolume
 	{ 689, "SoundObjectGetPitchVariance"         , &Functions::stubFunction                                                },
 	{ 690, "SoundObjectSetPitchVariance"         , &Functions::stubFunction                                                },
 	{ 691, "SoundObjectGetVolume"                , &Functions::stubFunction                                                },
@@ -834,8 +834,8 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 714, "GivePlotXP"                          , &Functions::givePlotXP                           },
 	{ 715, "GetMinOneHP"                         , &Functions::getMinOneHP                          },
 	{ 716, "SetMinOneHP"                         , &Functions::setMinOneHP                          },
-	{ 717, "SWMG_GetPlayerTunnelInfinite"        , &Functions::stubFunction                                                },
-	{ 718, "SWMG_SetPlayerTunnelInfinite"        , &Functions::stubFunction                                                },
+	{ 717, "SWMG_GetPlayerTunnelInfinite"        , &Functions::stubSWMGFunctionSWMG_GetPlayerTunnelInfinite
+	{ 718, "SWMG_SetPlayerTunnelInfinite"        , &Functions::stubSWMGFunctionSWMG_SetPlayerTunnelInfinite
 	{ 719, "SetGlobalFadeIn"                     , &Functions::setGlobalFadeIn                      },
 	{ 720, "SetGlobalFadeOut"                    , &Functions::setGlobalFadeOut                     },
 	{ 721, "GetLastHostileTarget"                , &Functions::getLastHostileTarget                                                },

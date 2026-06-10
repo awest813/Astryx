@@ -224,6 +224,26 @@ static bool isLocationStubName(const Common::UString &name) {
 	return name.contains("Location") || name == "GetStartingLocation";
 }
 
+static int stubIntDefaultName(const Common::UString &name) {
+	if (name == "GetIsDay" || name == "GetIsDawn")
+		return 1;
+	if (name == "GetIsNight" || name == "GetIsDusk")
+		return 0;
+	if (name == "GetSpellSaveDC")
+		return 12;
+	if (name == "GetIdentified")
+		return 1;
+	return 0;
+}
+
+GTEST_TEST(KotORNWScriptFuncs, stubIntDefaults) {
+	EXPECT_EQ(stubIntDefaultName("GetIsDay"), 1);
+	EXPECT_EQ(stubIntDefaultName("GetIsNight"), 0);
+	EXPECT_EQ(stubIntDefaultName("GetSpellSaveDC"), 12);
+	EXPECT_EQ(stubIntDefaultName("GetIdentified"), 1);
+	EXPECT_EQ(stubIntDefaultName("GetGold"), 0);
+}
+
 GTEST_TEST(KotORNWScriptFuncs, stubNameCategorization) {
 	EXPECT_TRUE(isEffectPassThroughStubName("MagicalEffect"));
 	EXPECT_TRUE(isEffectPassThroughStubName("VersusTrapEffect"));

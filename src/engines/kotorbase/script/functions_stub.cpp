@@ -54,6 +54,18 @@ static bool isEventStub(const Common::UString &name) {
 	return name.beginsWith("Event");
 }
 
+static int stubIntDefault(const Common::UString &name) {
+	if (name == "GetIsDay" || name == "GetIsDawn")
+		return 1;
+	if (name == "GetIsNight" || name == "GetIsDusk")
+		return 0;
+	if (name == "GetSpellSaveDC")
+		return 12;
+	if (name == "GetIdentified")
+		return 1;
+	return 0;
+}
+
 static void stubEngineTypeReturn(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &name = ctx.getName();
 
@@ -82,7 +94,7 @@ void Functions::stubFunction(Aurora::NWScript::FunctionContext &ctx) {
 	switch (ctx.getReturn().getType()) {
 		case Aurora::NWScript::kTypeInt:
 			ctx.getReturn().setType(Aurora::NWScript::kTypeInt);
-			ctx.getReturn() = 0;
+			ctx.getReturn() = stubIntDefault(ctx.getName());
 			break;
 		case Aurora::NWScript::kTypeFloat:
 			ctx.getReturn().setType(Aurora::NWScript::kTypeFloat);
@@ -101,6 +113,34 @@ void Functions::stubFunction(Aurora::NWScript::FunctionContext &ctx) {
 			break;
 		case Aurora::NWScript::kTypeEngineType:
 			stubEngineTypeReturn(ctx);
+			break;
+		default:
+			break;
+	}
+}
+
+void Functions::stubSWMGFunction(Aurora::NWScript::FunctionContext &ctx) {
+	debugC(Common::kDebugEngineLogic, 3, "NWScript SWMG stub: %s", ctx.getName().c_str());
+
+	switch (ctx.getReturn().getType()) {
+		case Aurora::NWScript::kTypeInt:
+			ctx.getReturn().setType(Aurora::NWScript::kTypeInt);
+			ctx.getReturn() = 0;
+			break;
+		case Aurora::NWScript::kTypeFloat:
+			ctx.getReturn().setType(Aurora::NWScript::kTypeFloat);
+			ctx.getReturn() = 0.0f;
+			break;
+		case Aurora::NWScript::kTypeString:
+			ctx.getReturn().setType(Aurora::NWScript::kTypeString);
+			ctx.getReturn() = Common::UString("");
+			break;
+		case Aurora::NWScript::kTypeObject:
+			ctx.getReturn().setType(Aurora::NWScript::kTypeObject);
+			break;
+		case Aurora::NWScript::kTypeVector:
+			ctx.getReturn().setType(Aurora::NWScript::kTypeVector);
+			ctx.getReturn().setVector(0.0f, 0.0f, 0.0f);
 			break;
 		default:
 			break;
