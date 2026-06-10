@@ -59,6 +59,9 @@
 
 
 
+#include "src/engines/kotorbase/game.h"
+#include "src/engines/kotorbase/module.h"
+
 #include "src/engines/kotorbase/script/functions.h"
 
 
@@ -92,6 +95,19 @@ void Functions::queueMovie(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::playMovieQueue(Aurora::NWScript::FunctionContext &ctx) {
 	int canSkip = ctx.getParams()[0].getInt();
 	debugC(Common::kDebugEngineLogic, 1, "PlayMovieQueue (canSkip: %d)", canSkip);
+}
+
+void Functions::enableVideoEffect(Aurora::NWScript::FunctionContext &ctx) {
+	_game->getModule().setGlobalNumber("__video_effect", ctx.getParams()[0].getInt());
+}
+
+void Functions::disableVideoEffect(Aurora::NWScript::FunctionContext &ctx) {
+	_game->getModule().setGlobalNumber("__video_effect", 0);
+}
+
+void Functions::setDialogPlaceableCamera(Aurora::NWScript::FunctionContext &ctx) {
+	int cameraId = ctx.getParams()[0].getInt();
+	_game->getModule().setCinematicCamera(static_cast<uint32_t>(cameraId), 0.0f, Common::UString());
 }
 
 } // End of namespace KotORBase

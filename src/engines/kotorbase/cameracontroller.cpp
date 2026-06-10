@@ -36,6 +36,7 @@
 #include "src/engines/kotorbase/cameracontroller.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/area.h"
 
 namespace Engines {
@@ -201,12 +202,20 @@ void CameraController::processMovement(float frameTime) {
 			return;
 		}
 
+		Object *focus = _cameraTarget ? _cameraTarget : _cinematicFocus;
+		if (focus) {
+			float fx, fy, fz;
+			focus->getPosition(fx, fy, fz);
+			_target = glm::vec3(fx, fy, fz);
+			if (Creature *creature = ObjectContainer::toCreature(focus))
+				_target.z += creature->getCameraHeight();
+		}
+
 		if (_pathEnd && _pathStart) {
 			_pathTime += frameTime;
 			float t = _pathTime / _pathDuration;
 			if (t >= 1.0f) {
 				t = 1.0f;
-				// Arrival logic: stay at end point
 				float ex, ey, ez;
 				_pathEnd->getPosition(ex, ey, ez);
 				_target = glm::vec3(ex, ey, ez);
@@ -217,15 +226,21 @@ void CameraController::processMovement(float frameTime) {
 				_pathEnd->getPosition(x2, y2, z2);
 
 				float smooth_t = t * t * (3.0f - 2.0f * t);
-				
+
 				_target.x = x1 + (x2 - x1) * smooth_t;
 				_target.y = y1 + (y2 - y1) * smooth_t;
 				_target.z = z1 + (z2 - z1) * smooth_t;
 			}
 			_dirty = true;
+			CameraMan.setPosition(_target.x, _target.y, _target.z);
+		} else if (_distance > 0.0f && focus) {
+			glm::vec3 camPos = getCameraPosition(_distance);
+			CameraMan.setPosition(camPos.x, camPos.y, camPos.z);
+		} else {
+			CameraMan.setPosition(_target.x, _target.y, _target.z);
 		}
 
-		CameraMan.setPosition(_target.x, _target.y, _target.z);
+		CameraMan.update();
 		return;
 	}
 

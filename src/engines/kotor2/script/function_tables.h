@@ -159,7 +159,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{  37, "ActionAttack"                        , &Functions::stubFunction                                                },
 	{  38, "GetNearestCreature"                  , &Functions::getNearestCreature                   },
 	{  39, "ActionSpeakString"                   , &Functions::actionSpeakString                    },
-	{  40, "ActionPlayAnimation"                 , &Functions::stubFunction                                                },
+	{  40, "ActionPlayAnimation"                 , &Functions::actionPlayAnimation                  },
 	{  41, "GetDistanceToObject"                 , &Functions::stubFunction                                                },
 	{  42, "GetIsObjectValid"                    , &Functions::getIsObjectValid                     },
 	{  43, "ActionOpenDoor"                      , &Functions::actionOpenDoor                       },
@@ -419,7 +419,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 297, "GetEncounterDifficulty"              , &Functions::stubFunction                                                },
 	{ 298, "GetDistanceBetweenLocations"         , &Functions::getDistanceBetweenLocations          },
 	{ 299, "GetReflexAdjustedDamage"             , &Functions::stubFunction                                                },
-	{ 300, "PlayAnimation"                       , &Functions::stubFunction                                                },
+	{ 300, "PlayAnimation"                       , &Functions::playAnimation                        },
 	{ 301, "TalentSpell"                         , &Functions::talentSpell                          },
 	{ 302, "TalentFeat"                          , &Functions::talentFeat                           },
 	{ 303, "TalentSkill"                         , &Functions::talentSkill                          },
@@ -580,7 +580,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 458, "EffectConcealment"                   , &Functions::stubFunction                                                },
 	{ 459, "EffectForceShield"                   , &Functions::stubFunction                                                },
 	{ 460, "EffectDispelMagicAll"                , &Functions::stubFunction                                                },
-	{ 461, "SetDialogPlaceableCamera"            , &Functions::stubFunction                                                },
+	{ 461, "SetDialogPlaceableCamera"            , &Functions::setDialogPlaceableCamera           },
 	{ 462, "GetSoloMode"                         , &Functions::getSoloMode                          },
 	{ 463, "EffectDisguise"                      , &Functions::stubFunction                                                },
 	{ 464, "GetMaxStealthXP"                     , &Functions::stubFunction                                                },
@@ -627,9 +627,9 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 505, "SetLockOrientationInDialog"          , &Functions::setLockOrientationInDialog           },
 	{ 506, "SetLockHeadFollowInDialog"           , &Functions::setLockHeadFollowInDialog            },
 	{ 507, "CutsceneMove"                        , &Functions::cutsceneMove                         },
-	{ 508, "EnableVideoEffect"                   , &Functions::stubFunction                                                },
+	{ 508, "EnableVideoEffect"                   , &Functions::enableVideoEffect                  },
 	{ 509, "StartNewModule"                      , &Functions::startNewModule                       },
-	{ 510, "DisableVideoEffect"                  , &Functions::stubFunction                                                },
+	{ 510, "DisableVideoEffect"                  , &Functions::disableVideoEffect                 },
 	{ 511, "GetWeaponRanged"                     , &Functions::stubFunction                                                },
 	{ 512, "DoSinglePlayerAutoSave"              , &Functions::stubFunction                                                },
 	{ 513, "GetGameDifficulty"                   , &Functions::getGameDifficulty                    },
@@ -995,7 +995,16 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 873, "SaveNPCByObject"                     , &Functions::stubFunction                                                },
 	{ 874, "SavePUPByObject"                     , &Functions::stubFunction                                                },
 	{ 875, "GetIsPlayerMadeCharacter"            , &Functions::stubFunction                                                },
-	{ 876, "RebuildPartyTable"                   , &Functions::stubFunction                                                }
+	{ 876, "RebuildPartyTable"                   , &Functions::stubFunction                                                },
+	{ 877, "SetCutsceneMode"                     , &Functions::setCutsceneMode                      },
+	{ 878, "SetPlayerInputEnabled"               , &Functions::setPlayerInputEnabled                },
+	{ 879, "SetCameraTarget"                     , &Functions::setCameraTarget                      },
+	{ 880, "CameraTransitionToTarget"            , &Functions::cameraTransitionToTarget             },
+	{ 881, "CameraMoveAlongPath"                 , &Functions::cameraMoveAlongPath                  },
+	{ 882, "CameraHold"                          , &Functions::cameraHold                           },
+	{ 883, "CameraLookAtObject"                  , &Functions::cameraLookAtObject                   },
+	{ 884, "RestoreGameplayCamera"               , &Functions::restoreGameplayCamera                },
+	{ 885, "PlayMusicStinger"                    , &Functions::playMusicStinger                     }
 };
 
 /** The table defining the signature (return type and type of parameters) of each engine function. */
@@ -1876,7 +1885,16 @@ const Functions::FunctionSignature Functions::kFunctionSignatures[] = {
 	{ 873, kTypeVoid      , { kTypeInt, kTypeObject } },
 	{ 874, kTypeVoid      , { kTypeInt, kTypeObject } },
 	{ 875, kTypeInt       , { kTypeObject } },
-	{ 876, kTypeVoid      , { } }
+	{ 876, kTypeVoid      , { } },
+	{ 877, kTypeVoid      , { kTypeInt } },
+	{ 878, kTypeVoid      , { kTypeInt } },
+	{ 879, kTypeVoid      , { kTypeObject } },
+	{ 880, kTypeVoid      , { kTypeFloat } },
+	{ 881, kTypeVoid      , { kTypeObject, kTypeObject, kTypeFloat } },
+	{ 882, kTypeVoid      , { kTypeFloat } },
+	{ 883, kTypeVoid      , { kTypeObject, kTypeFloat } },
+	{ 884, kTypeVoid      , { kTypeFloat } },
+	{ 885, kTypeVoid      , { kTypeString } }
 };
 
 /** The table defining the default values for the parameters of each engine function. */
@@ -2757,7 +2775,16 @@ const Functions::FunctionDefaults Functions::kFunctionDefaults[] = {
 	{ 873, { } },
 	{ 874, { } },
 	{ 875, { } },
-	{ 876, { } }
+	{ 876, { } },
+	{ 877, { } },
+	{ 878, { } },
+	{ 879, { } },
+	{ 880, { } },
+	{ 881, { } },
+	{ 882, { } },
+	{ 883, { } },
+	{ 884, { } },
+	{ 885, { } }
 };
 
 } // End of namespace KotOR2

@@ -290,6 +290,7 @@ enum ActionType {
 	kActionFollowLeader  = 38,
 	kActionMoveToObject  = 39,
 	kActionDoCommand     = 40,
+	kActionPlayAnimation  = 41,
 	kActionCutsceneAttack = 42,
 	kActionGiveItem      = 43,
 	kActionTakeItem      = 44,

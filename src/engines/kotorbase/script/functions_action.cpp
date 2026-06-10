@@ -91,6 +91,8 @@
 
 
 
+#include "src/engines/kotorbase/animationnames.h"
+
 #include "src/engines/kotorbase/script/functions.h"
 
 
@@ -655,21 +657,21 @@ void Functions::cutsceneAttack(Aurora::NWScript::FunctionContext &ctx) {
 
 
 
+	int point = ctx.getParams()[1].getInt();
 	int flags = 0;
 
 	if (miss)
-
 		flags |= kCutsceneAttackForceMiss;
-
 	else
-
 		flags |= kCutsceneAttackForceHit;
 
+	if (modifier == 1)
+		flags |= kCutsceneAttackKnockback | kCutsceneAttackFinishingBlow;
+	else if (modifier == 2)
+		flags |= kCutsceneAttackNoDamage;
 
-
-	if (modifier == 1) // Finishing blow usually
-
-		flags |= kCutsceneAttackKnockback;
+	if (point != 0)
+		flags |= kCutsceneAttackPlayReaction;
 
 
 
@@ -699,12 +701,12 @@ void Functions::cutsceneMove(Aurora::NWScript::FunctionContext &ctx) {
 
 
 
+	int movementRate = ctx.getParams()[2].getInt();
+
 	Action action(kActionMoveToPoint);
-
 	action.range = 0.1f;
-
 	action.location = glm::vec3(x, y, z);
-
+	action.choreographyFlags = movementRate > 0 ? 1 : 0;
 	who->addAction(action);
 
 }
@@ -775,108 +777,25 @@ void Functions::actionSpeakStringByStrRef(Aurora::NWScript::FunctionContext &ctx
 
 
 
-static Common::UString animIDToName(int animID) {
-
-	switch (animID) {
-
-		case  0: return "pause1";      // ANIMATION_LOOPING_PAUSE
-
-		case  1: return "pause2";      // ANIMATION_LOOPING_PAUSE2
-
-		case  2: return "listen";      // ANIMATION_LOOPING_LISTEN
-
-		case  3: return "meditate";    // ANIMATION_LOOPING_MEDITATE
-
-		case  4: return "worship";     // ANIMATION_LOOPING_WORSHIP
-
-		case  5: return "drunk";       // ANIMATION_LOOPING_DRUNK
-
-		case  6: return "talk_injured"; // ANIMATION_LOOPING_TALK_INJURED
-
-		case  7: return "listen_injured"; // ANIMATION_LOOPING_LISTEN_INJURED
-
-		case  8: return "treatinjury"; // ANIMATION_LOOPING_TREAT_INJURY
-
-		case  9: return "getlow";      // ANIMATION_LOOPING_GET_LOW
-
-		case 10: return "talk";        // ANIMATION_LOOPING_TALK_NORMAL
-
-		case 11: return "talklooking"; // ANIMATION_LOOPING_TALK_PLEADING
-
-		case 12: return "deadf";       // ANIMATION_LOOPING_DEAD_FRONT
-
-		case 13: return "deadb";       // ANIMATION_LOOPING_DEAD_BACK
-
-		case 14: return "conjure1";    // ANIMATION_LOOPING_CONJURE1
-
-		case 15: return "conjure2";    // ANIMATION_LOOPING_CONJURE2
-
-		case 16: return "victory1";    // ANIMATION_LOOPING_VICTORY1
-
-		case 17: return "victory2";    // ANIMATION_LOOPING_VICTORY2
-
-		case 18: return "victory3";    // ANIMATION_LOOPING_VICTORY3
-
-		case 19: return "getmid";      // ANIMATION_LOOPING_GET_MID
-
-		case 38: return "attack1";     // ANIMATION_FIREFORGET_ATTACK1
-
-		case 39: return "attack2";     // ANIMATION_FIREFORGET_ATTACK2
-
-		case 40: return "dodge";       // ANIMATION_FIREFORGET_DODGE
-
-		case 41: return "attack3";     // ANIMATION_FIREFORGET_ATTACK3
-
-		case 44: return "die";         // ANIMATION_FIREFORGET_SPASM
-
-		case 45: return "dead";        // ANIMATION_FIREFORGET_DEAD (fall)
-
-		case 48: return "g8a1";        // ANIMATION_FIREFORGET_DODGE_DUCK
-
-		case 49: return "g8a2";        // ANIMATION_FIREFORGET_DODGE_SIDE
-
-		case 56: return "castout";     // ANIMATION_FIREFORGET_CAST_OUT_HAND
-
-		case 57: return "castin";      // ANIMATION_FIREFORGET_CAST_IN_HAND
-
-		case 58: return "castarea";    // ANIMATION_FIREFORGET_CAST_AREA
-
-		default: return "";            // Unknown; caller ignores empty string
-
-	}
-
-}
-
-
-
 void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
-
-	// ActionPlayAnimation queues after pending actions (action form).
-
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
-
 	if (!caller)
-
 		return;
-
-
 
 	const int animID = ctx.getParams()[0].getInt();
-
-	const Common::UString animName = animIDToName(animID);
-
-	if (animName.empty())
-
+	if (getAnimationNameById(animID).empty())
 		return;
 
-
-
 	float speed  = ctx.getParams()[1].getFloat();
-
 	float length = ctx.getParams()[2].getFloat();
+	if (length <= 0.0f)
+		length = 1.0f;
 
-	caller->playAnimation(animName, true, length, speed > 0.0f ? speed : 1.0f);
-
+	Action action(kActionPlayAnimation);
+	action.actionID = animID;
+	action.range = speed > 0.0f ? speed : 1.0f;
+	action.startTime = -length;
+	caller->addAction(action);
 }
 
 
@@ -897,7 +816,7 @@ void Functions::playAnimation(Aurora::NWScript::FunctionContext &ctx) {
 
 	const int animID = ctx.getParams()[0].getInt();
 
-	const Common::UString animName = animIDToName(animID);
+	const Common::UString animName = getAnimationNameById(animID);
 
 	if (animName.empty())
 

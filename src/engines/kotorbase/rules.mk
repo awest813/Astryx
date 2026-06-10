@@ -63,6 +63,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/room.cpp \
     src/engines/kotorbase/object.cpp \
     src/engines/kotorbase/action.cpp \
+    src/engines/kotorbase/animationnames.cpp \
     src/engines/kotorbase/item.cpp \
     src/engines/kotorbase/inventory.cpp \
     src/engines/kotorbase/creature.cpp \

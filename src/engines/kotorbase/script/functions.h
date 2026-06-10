@@ -1335,6 +1335,9 @@ protected:
 	void queueMovie(Aurora::NWScript::FunctionContext &ctx);
 
 	void playMovieQueue(Aurora::NWScript::FunctionContext &ctx);
+	void enableVideoEffect(Aurora::NWScript::FunctionContext &ctx);
+	void disableVideoEffect(Aurora::NWScript::FunctionContext &ctx);
+	void setDialogPlaceableCamera(Aurora::NWScript::FunctionContext &ctx);
 
 
 

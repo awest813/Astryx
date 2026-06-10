@@ -1,6 +1,6 @@
 // ancient_ruins_reveal.nss
 // Script for the Ancient Ruins reveal sequence on Dantooine.
-// Uses custom cinematic natives implemented in Phase 6.3.
+// Uses xoreos cinematic extension natives (KotOR I IDs 777-785, KotOR II IDs 877-885).
 
 void main() {
     object oPC       = GetFirstPC();

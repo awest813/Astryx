@@ -578,7 +578,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 458, "EffectConcealment"                   , &Functions::stubFunction                                                },
 	{ 459, "EffectForceShield"                   , &Functions::effectForceShield                    },
 	{ 460, "EffectDispelMagicAll"                , &Functions::stubFunction                                                },
-	{ 461, "SetDialogPlaceableCamera"            , &Functions::stubFunction                                                },
+	{ 461, "SetDialogPlaceableCamera"            , &Functions::setDialogPlaceableCamera           },
 	{ 462, "GetSoloMode"                         , &Functions::getSoloMode                          },
 	{ 463, "EffectDisguise"                      , &Functions::stubFunction                                                },
 	{ 464, "GetMaxStealthXP"                     , &Functions::stubFunction                                                },
@@ -625,9 +625,9 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 505, "SetLockOrientationInDialog"          , &Functions::setLockOrientationInDialog           },
 	{ 506, "SetLockHeadFollowInDialog"           , &Functions::setLockHeadFollowInDialog            },
 	{ 507, "CutsceneMove"                        , &Functions::cutsceneMove                         },
-	{ 508, "EnableVideoEffect"                   , &Functions::stubFunction                                                },
+	{ 508, "EnableVideoEffect"                   , &Functions::enableVideoEffect                  },
 	{ 509, "StartNewModule"                      , &Functions::startNewModule                       },
-	{ 510, "DisableVideoEffect"                  , &Functions::stubFunction                                                },
+	{ 510, "DisableVideoEffect"                  , &Functions::disableVideoEffect                 },
 	{ 511, "GetWeaponRanged"                     , &Functions::getWeaponRanged                      },
 	{ 512, "DoSinglePlayerAutoSave"              , &Functions::doSinglePlayerAutoSave                                                },
 	{ 513, "GetGameDifficulty"                   , &Functions::getGameDifficulty                    },
@@ -893,7 +893,16 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 773, "GetIsAbilitySuccessful"              , &Functions::getIsAbilitySuccessful               },
 	{ 774, "GrantFeat"                           , &Functions::grantFeat                            },
 	{ 775, "GrantSpell"                          , &Functions::grantSpell                           },
-	{ 776, "ChangeToJedi"                        , &Functions::changeToJedi                         }
+	{ 776, "ChangeToJedi"                        , &Functions::changeToJedi                         },
+	{ 777, "SetCutsceneMode"                      , &Functions::setCutsceneMode },
+	{ 778, "SetPlayerInputEnabled"                , &Functions::setPlayerInputEnabled },
+	{ 779, "SetCameraTarget"                      , &Functions::setCameraTarget },
+	{ 780, "CameraTransitionToTarget"             , &Functions::cameraTransitionToTarget },
+	{ 781, "CameraMoveAlongPath"                  , &Functions::cameraMoveAlongPath },
+	{ 782, "CameraHold"                           , &Functions::cameraHold },
+	{ 783, "CameraLookAtObject"                   , &Functions::cameraLookAtObject },
+	{ 784, "RestoreGameplayCamera"                , &Functions::restoreGameplayCamera },
+	{ 785, "PlayMusicStinger"                     , &Functions::playMusicStinger }
 };
 
 /** The table defining the signature (return type and type of parameters) of each engine function. */
@@ -1566,7 +1575,16 @@ const Functions::FunctionSignature Functions::kFunctionSignatures[] = {
 	{ 773, kTypeInt       , { kTypeObject, kTypeInt, kTypeInt } },
 	{ 774, kTypeVoid      , { kTypeInt, kTypeObject } },
 	{ 775, kTypeVoid      , { kTypeInt, kTypeObject } },
-	{ 776, kTypeVoid      , { kTypeObject, kTypeInt } }
+	{ 776, kTypeVoid      , { kTypeObject, kTypeInt } },
+	{ 777, kTypeVoid      , { kTypeInt } },
+	{ 778, kTypeVoid      , { kTypeInt } },
+	{ 779, kTypeVoid      , { kTypeObject } },
+	{ 780, kTypeVoid      , { kTypeFloat } },
+	{ 781, kTypeVoid      , { kTypeObject, kTypeObject, kTypeFloat } },
+	{ 782, kTypeVoid      , { kTypeFloat } },
+	{ 783, kTypeVoid      , { kTypeObject, kTypeFloat } },
+	{ 784, kTypeVoid      , { kTypeFloat } },
+	{ 785, kTypeVoid      , { kTypeString } }
 };
 
 /** The table defining the default values for the parameters of each engine function. */
@@ -2347,7 +2365,16 @@ const Functions::FunctionDefaults Functions::kFunctionDefaults[] = {
 	{ 773, { } },
 	{ 774, { &kDefaultObjectSelf } },
 	{ 775, { &kDefaultObjectSelf } },
-	{ 776, { } }
+	{ 776, { } },
+	{ 777, { } },
+	{ 778, { } },
+	{ 779, { } },
+	{ 780, { } },
+	{ 781, { } },
+	{ 782, { } },
+	{ 783, { } },
+	{ 784, { } },
+	{ 785, { } }
 };
 
 } // End of namespace KotOR

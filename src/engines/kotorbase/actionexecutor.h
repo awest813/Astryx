@@ -69,12 +69,13 @@ private:
 	static void executeWait(Action &action, const ExecutionContext &ctx);
 	static void executeCastSpell(Action &action, const ExecutionContext &ctx);
 	static void executeCutsceneAttack(Action &action, const ExecutionContext &ctx);
+	static void executePlayAnimation(Action &action, const ExecutionContext &ctx);
 
 	/**
 	 * Move the current creature towards a specified location. Returns
 	 * true if location is within a specified range.
 	 */
-	static bool moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx);
+	static bool moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx, bool forceRun = false);
 };
 
 } // End of namespace KotORBase

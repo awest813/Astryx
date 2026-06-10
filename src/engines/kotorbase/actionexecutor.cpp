@@ -39,6 +39,7 @@
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/inventory.h"
+#include "src/engines/kotorbase/animationnames.h"
 
 static const float kWalkDistance = 2.0f;
 
@@ -51,7 +52,8 @@ bool ActionExecutor::_spellsLoaded = false;
 
 void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 	if (!action.initialized) {
-		action.startTime = 0.0f;
+		if (action.type != kActionPlayAnimation)
+			action.startTime = 0.0f;
 		action.initialized = true;
 	}
 
@@ -83,6 +85,9 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 		case kActionCutsceneAttack:
 			executeCutsceneAttack(action, ctx);
 			break;
+		case kActionPlayAnimation:
+			executePlayAnimation(action, ctx);
+			break;
 		default:
 			warning("TODO: Handle action %u", (uint)action.type);
 			break;
@@ -90,7 +95,7 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 }
 
 void ActionExecutor::executeMoveToPoint(Action &action, const ExecutionContext &ctx) {
-	if (moveTo(action.location, action.range, ctx))
+	if (moveTo(action.location, action.range, ctx, action.choreographyFlags != 0))
 		ctx.creature->popAction();
 }
 
@@ -243,7 +248,7 @@ bool ActionExecutor::isLocationReached(const glm::vec2 &location, float range, c
 	return glm::distance(glm::vec2(x, y), location) <= range;
 }
 
-bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx) {
+bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx, bool forceRun) {
 	if (isLocationReached(location, range, ctx))
 		return true;
 
@@ -257,7 +262,7 @@ bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const Execut
 	glm::vec2 dir = glm::normalize(diff);
 
 	float dist = glm::length(diff);
-	bool run = dist > kWalkDistance;
+	bool run = forceRun || dist > kWalkDistance;
 	float moveRate = run ? ctx.creature->getRunRate() : ctx.creature->getWalkRate();
 
 	float x = origin.x + moveRate * dir.x * ctx.frameTime;
@@ -448,6 +453,27 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 	}
 
 	caster->popAction();
+}
+
+void ActionExecutor::executePlayAnimation(Action &action, const ExecutionContext &ctx) {
+	const Common::UString animName = getAnimationNameById(action.actionID);
+	if (animName.empty()) {
+		ctx.creature->popAction();
+		return;
+	}
+
+	if (action.startTime < 0.0f) {
+		float speed = action.range > 0.0f ? action.range : 1.0f;
+		float length = -action.startTime;
+		ctx.creature->playAnimation(animName, true, length, speed);
+		action.startTime = length;
+	}
+
+	action.startTime -= ctx.frameTime;
+	if (action.startTime <= 0.0f) {
+		ctx.creature->playDefaultAnimation();
+		ctx.creature->popAction();
+	}
 }
 
 void ActionExecutor::executeCutsceneAttack(Action &action, const ExecutionContext &ctx) {

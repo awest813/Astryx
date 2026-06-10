@@ -642,10 +642,11 @@ void Module::playMovie(const Common::UString &resRef) {
 
 void Module::cameraTransitionToTarget(const Common::UString &tag, float duration) {
 	Object *obj = _area ? _area->getObjectByTag(tag) : nullptr;
-	if (!obj) return;
-	
+	if (!obj)
+		return;
+
 	_cameraController.setCameraTarget(obj);
-	// In a real implementation, we would blend the position here
+	_cameraController.cameraTransitionToTarget(duration);
 }
 
 void Module::leaveObject(Object *UNUSED(object)) {

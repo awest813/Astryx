@@ -41,6 +41,9 @@
 
 #include "gtest/gtest.h"
 
+#include "src/common/ustring.h"
+
+#include "src/engines/kotorbase/animationnames.h"
 #include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/types.h"
 
@@ -348,4 +351,15 @@ TEST(DantooinecinematicFunctions, SetLockOrientationToggle) {
 	s.setLockOrientation(true);
 	s.setLockOrientation(false);
 	EXPECT_FALSE(s.lockOrientation);
+}
+
+TEST(DantooinecinematicFunctions, cutsceneAttackFlagsAreDistinct) {
+	EXPECT_NE(kCutsceneAttackForceHit, kCutsceneAttackForceMiss);
+	EXPECT_NE(kCutsceneAttackKnockback, kCutsceneAttackNoDamage);
+	EXPECT_EQ(kActionPlayAnimation, 41);
+}
+
+TEST(DantooinecinematicFunctions, animationIdMapsAttack1) {
+	EXPECT_EQ(getAnimationNameById(38), Common::UString("attack1"));
+	EXPECT_TRUE(getAnimationNameById(999).empty());
 }
