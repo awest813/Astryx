@@ -306,13 +306,15 @@ void Functions::shipBuild(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::startNewModule(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString mod = ctx.getParams()[0].getString();
+	const Common::UString entry = ctx.getParams()[1].getString();
 
 	if (!_game->hasModule(mod)) {
 		warning("Can't start module \"%s\": No such module", mod.c_str());
 		return;
 	}
 
-	_game->getModule().load(mod);
+	const ObjectType entryType = entry.empty() ? kObjectTypeAll : kObjectTypeWaypoint;
+	_game->getModule().load(mod, entry, entryType);
 }
 
 void Functions::setGlobalFadeOut(Aurora::NWScript::FunctionContext &ctx) {

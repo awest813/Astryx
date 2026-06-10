@@ -705,6 +705,7 @@ protected:
 
 	void getNearestObject(Aurora::NWScript::FunctionContext &ctx);
 
+	void getNearestObjectToLocation(Aurora::NWScript::FunctionContext &ctx);
 
 	void getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx);
 

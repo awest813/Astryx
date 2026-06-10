@@ -347,7 +347,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 225, "GetFacingFromLocation"               , &Functions::getFacingFromLocation                },
 	{ 226, "GetNearestCreatureToLocation"        , &Functions::stubFunction                                                },
 	{ 227, "GetNearestObject"                    , &Functions::stubFunction                                                },
-	{ 228, "GetNearestObjectToLocation"          , &Functions::stubFunction                                                },
+	{ 228, "GetNearestObjectToLocation"          , &Functions::getNearestObjectToLocation                                  },
 	{ 229, "GetNearestObjectByTag"               , &Functions::stubFunction                                                },
 	{ 230, "IntToFloat"                          , &Functions::intToFloat                           },
 	{ 231, "FloatToInt"                          , &Functions::floatToInt                           },

@@ -1540,22 +1540,30 @@ Common::UString Module::getGlobalString(const Common::UString &id) const {
 // Reputation helpers
 // ---------------------------------------------------------------------------
 
-static int defaultReputationBetweenFactions(int sourceFaction, int targetFaction) {
-	// Hostile factions: 1 (Hostile1), 3 (Hostile2)
-	// Friendly factions: 2 (Friendly1), 4 (Friendly2)
-	// All others treated as neutral.
-	const bool sourceHostile  = (sourceFaction == 1 || sourceFaction == 3);
-	const bool sourceFriendly = (sourceFaction == 2 || sourceFaction == 4);
-	const bool targetHostile  = (targetFaction == 1 || targetFaction == 3);
-	const bool targetFriendly = (targetFaction == 2 || targetFaction == 4);
+static bool isHostileFactionId(int faction) {
+	return faction == static_cast<int>(kFactionHostile1) ||
+	       faction == static_cast<int>(kFactionHostile2) ||
+	       faction == static_cast<int>(kFactionEndarSpire);
+}
 
+static bool isFriendlyFactionId(int faction) {
+	return faction == static_cast<int>(kFactionFriendly1) ||
+	       faction == static_cast<int>(kFactionFriendly2);
+}
+
+static int defaultReputationBetweenFactions(int sourceFaction, int targetFaction) {
 	if (sourceFaction == targetFaction)
-		return 100; // same faction — fully allied
+		return 100;
+
+	const bool sourceHostile  = isHostileFactionId(sourceFaction);
+	const bool sourceFriendly = isFriendlyFactionId(sourceFaction);
+	const bool targetHostile  = isHostileFactionId(targetFaction);
+	const bool targetFriendly = isFriendlyFactionId(targetFaction);
 
 	if ((sourceHostile && targetFriendly) || (sourceFriendly && targetHostile))
-		return 0; // opposing sides — fully hostile
+		return 0;
 
-	return 50; // neutral default
+	return 50;
 }
 
 int Module::getReputation(int sourceFaction, int targetFaction) const {

@@ -365,6 +365,54 @@ void Functions::getNearestObject(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = matches[nth].second;
 }
 
+void Functions::getNearestObjectToLocation(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+
+	const uint32_t typeFilter = ctx.getParams()[0].getInt();
+	const size_t nth = static_cast<size_t>(MAX<int32_t>(ctx.getParams()[2].getInt() - 1, 0));
+
+	float tx, ty, tz;
+	if (Location *loc = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType()))
+		loc->getPosition(tx, ty, tz);
+	else
+		ctx.getParams()[1].getVector(tx, ty, tz);
+
+	std::vector<std::pair<float, Object *>> matches;
+
+	for (int bit = 1; bit < static_cast<int>(kObjectTypeMAX); bit <<= 1) {
+		if (!(typeFilter & bit))
+			continue;
+
+		std::unique_ptr<Aurora::NWScript::ObjectSearch> search(
+			_game->getModule().findObjectsByType(static_cast<ObjectType>(bit)));
+
+		Aurora::NWScript::Object *raw = nullptr;
+		while ((raw = search->next())) {
+			Object *obj = ObjectContainer::toObject(raw);
+			if (!obj)
+				continue;
+
+			float x, y, z;
+			obj->getPosition(x, y, z);
+			const float dx = x - tx;
+			const float dy = y - ty;
+			const float dz = z - tz;
+			const float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+			matches.emplace_back(dist, obj);
+		}
+	}
+
+	if (matches.empty() || nth >= matches.size())
+		return;
+
+	std::sort(matches.begin(), matches.end(),
+	          [](const std::pair<float, Object *> &a, const std::pair<float, Object *> &b) {
+		          return a.first < b.first;
+	          });
+
+	ctx.getReturn() = matches[nth].second;
+}
+
 void Functions::getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx) {
 	// Often equivalent to GetObjectByTag for a single module unless distance actually matters heavily.
 	// Simple stub for progression:

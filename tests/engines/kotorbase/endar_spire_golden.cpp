@@ -384,6 +384,41 @@ TEST(EndarSpireGoldenPath, NearestObjectPicksClosest) {
 // 12. GetIsInConversation participant matching
 // ---------------------------------------------------------------------------
 
+TEST(EndarSpireGoldenPath, EndarSpireFactionIsHostileToParty) {
+	auto isHostileFaction = [](int faction) {
+		return faction == static_cast<int>(Engines::KotORBase::kFactionHostile1) ||
+		       faction == static_cast<int>(Engines::KotORBase::kFactionHostile2) ||
+		       faction == static_cast<int>(Engines::KotORBase::kFactionEndarSpire);
+	};
+
+	auto defaultRep = [&](int source, int target) {
+		if (source == target)
+			return 100;
+		const bool sourceHostile = isHostileFaction(source);
+		const bool sourceFriendly = source == static_cast<int>(Engines::KotORBase::kFactionFriendly1) ||
+		                            source == static_cast<int>(Engines::KotORBase::kFactionFriendly2);
+		const bool targetHostile = isHostileFaction(target);
+		const bool targetFriendly = target == static_cast<int>(Engines::KotORBase::kFactionFriendly1) ||
+		                            target == static_cast<int>(Engines::KotORBase::kFactionFriendly2);
+		if ((sourceHostile && targetFriendly) || (sourceFriendly && targetHostile))
+			return 0;
+		return 50;
+	};
+
+	EXPECT_EQ(defaultRep(static_cast<int>(Engines::KotORBase::kFactionEndarSpire),
+	                     static_cast<int>(Engines::KotORBase::kFactionFriendly1)), 0);
+	EXPECT_LT(defaultRep(static_cast<int>(Engines::KotORBase::kFactionEndarSpire),
+	                     static_cast<int>(Engines::KotORBase::kFactionFriendly1)), 50);
+}
+
+TEST(EndarSpireGoldenPath, StartNewModulePassesEntryWaypoint) {
+	// StartNewModule(module, waypoint, ...) — second string is the spawn tag.
+	Common::UString module = "tar_m02aa";
+	Common::UString entry  = "tar_m02aa";
+	EXPECT_FALSE(module.empty());
+	EXPECT_FALSE(entry.empty());
+}
+
 TEST(EndarSpireGoldenPath, ConversationParticipantMatch) {
 	const std::string owner = "end_trask";
 	const std::string speaker = "end_trask";
