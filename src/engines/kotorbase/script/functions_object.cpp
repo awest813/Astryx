@@ -309,7 +309,14 @@ void Functions::getNearestCreature(Aurora::NWScript::FunctionContext &ctx) {
 	int nth = ctx.getParams()[3].getInt();
 
 	criteria.secondCriteriaType = static_cast<CreatureType>(ctx.getParams()[4].getInt());
-	void Functions::getNearestObject(Aurora::NWScript::FunctionContext &ctx) {
+	criteria.secondCriteriaValue = ctx.getParams()[5].getInt();
+	criteria.thirdCriteriaType = static_cast<CreatureType>(ctx.getParams()[6].getInt());
+	criteria.thirdCriteriaValue = ctx.getParams()[7].getInt();
+
+	ctx.getReturn() = _game->getModule().getCurrentArea()->getNearestCreature(target, nth, criteria);
+}
+
+void Functions::getNearestObject(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
 
 	const uint32_t typeFilter = ctx.getParams()[0].getInt();
@@ -356,11 +363,6 @@ void Functions::getNearestCreature(Aurora::NWScript::FunctionContext &ctx) {
 	          });
 
 	ctx.getReturn() = matches[nth].second;
-}Aurora::NWScript::FunctionContext &ctx) {
-	// Nearest object ignoring criteria or finding just basic placeables.
-	// For Endar Spire, we can just return a null object for now since full 
-	// spatial searches for non-creatures aren't implemented in Area yet.
-	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
 }
 
 void Functions::getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx) {
