@@ -82,6 +82,10 @@ void Game::saveGame(const Common::UString &slot, const Common::UString &name) {
 	_module->saveGame(slot, name);
 }
 
+void Game::loadGame(const Common::UString &UNUSED(slot)) {
+	warning("Game::loadGame(): not implemented for this KotOR variant");
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

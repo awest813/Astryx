@@ -427,6 +427,10 @@ void HUD::hideTargetInformation() {
 	hideTargetButtons();
 }
 
+void HUD::showFloatingText(Object *object, const Common::UString &text, float duration) {
+	_floatingText.show(object, text, duration);
+}
+
 void HUD::notifyJournalUpdated() {
 	if (!_journalNotification)
 		_journalNotification = getLabel("LBL_JOURNAL_NOTIFY");
@@ -440,6 +444,8 @@ void HUD::notifyJournalUpdated() {
 }
 
 void HUD::update(float dt) {
+	_floatingText.update(dt);
+
 	if (_journalNotificationTime > 0.0f) {
 		_journalNotificationTime -= dt;
 
@@ -452,8 +458,6 @@ void HUD::update(float dt) {
 		if (_journalNotificationTime <= 0.0f)
 			_journalNotification->hide();
 	}
-
-	updateSelection();
 }
 
 } // End of namespace KotORBase

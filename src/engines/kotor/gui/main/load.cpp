@@ -25,7 +25,6 @@
 #include "src/common/configman.h"
 #include "src/common/filepath.h"
 #include "src/common/filelist.h"
-
 #include "src/engines/odyssey/listbox.h"
 #include "src/engines/odyssey/label.h"
 
@@ -57,9 +56,8 @@ void LoadScreen::updateSaveList() {
 	lbSaves->removeAllItems();
 	_saveSlots.clear();
 
-	// In a real implementation we'd use ConfigMan.getGameDataDir() + "/saves"
-	Common::UString savePath = "saves";
-	Common::FileList saves(savePath, "", true);
+	Common::UString savesDir = Common::FilePath::normalize(ConfigMan.getString("path") + "/saves");
+	Common::FileList saves(savesDir, "", true);
 
 	for (auto const& save : saves) {
 		if (save.isDirectory) {
@@ -85,8 +83,9 @@ void LoadScreen::loadSelected() {
 	if (index < 0 || index >= (int)_saveSlots.size())
 		return;
 
-	Common::UString slot = _saveSlots[index];
-	// _game.loadGame(slot); // TODO: Implement Game::loadGame
+	Common::UString savesDir = Common::FilePath::normalize(ConfigMan.getString("path") + "/saves");
+	Common::UString slot = Common::FilePath::normalize(savesDir + "/" + _saveSlots[index]);
+	_game.loadGame(slot);
 }
 
 } // End of namespace KotOR

@@ -30,6 +30,7 @@
 #include "src/aurora/gff3file.h"
 #include "src/aurora/gff3writer.h"
 
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/object.h"
@@ -114,4 +115,8 @@ GTEST_TEST(KotORSaveSerialization, objectStateRoundTrip) {
 
 	EXPECT_EQ(loaded.getCurrentHitPoints(), 7);
 	EXPECT_FALSE(loaded.isUsable());
+}
+
+GTEST_TEST(KotORSaveSerialization, defaultMapExploredTileCount) {
+	EXPECT_EQ(Engines::KotORBase::Area::getDefaultMapExploredTileCount(), 153U);
 }

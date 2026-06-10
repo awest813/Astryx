@@ -46,6 +46,7 @@ public:
 	bool hasModule(const Common::UString &module) const override;
 
 	void run() override;
+	void loadGame(const Common::UString &slot) override;
 	void showLevelUpGUI() override;
 	void openStoreGUI(const Common::UString &tag) override;
 

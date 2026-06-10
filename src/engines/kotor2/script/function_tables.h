@@ -522,7 +522,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 400, "ActionEquipMostDamagingRanged"       , &Functions::stubFunction                                                },
 	{ 401, "GetItemACValue"                      , &Functions::getItemACValue                                                },
 	{ 402, "EffectForceResisted"                 , &Functions::stubFunction                                                },
-	{ 403, "ExploreAreaForPlayer"                , &Functions::stubFunction                                                },
+	{ 403, "ExploreAreaForPlayer"                , &Functions::exploreAreaForPlayer                                        },
 	{ 404, "ActionEquipMostEffectiveArmor"       , &Functions::stubFunction                                                },
 	{ 405, "GetIsDay"                            , &Functions::stubFunction                                                },
 	{ 406, "GetIsNight"                          , &Functions::stubFunction                                                },

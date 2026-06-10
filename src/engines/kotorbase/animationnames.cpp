@@ -22,13 +22,18 @@
  *  KotOR animation ID to model animation name mapping.
  */
 
+#include <map>
+
+#include "src/aurora/2dafile.h"
+#include "src/aurora/2dareg.h"
+
 #include "src/engines/kotorbase/animationnames.h"
 
 namespace Engines {
 
 namespace KotORBase {
 
-Common::UString getAnimationNameById(int animID) {
+static Common::UString getHardcodedAnimationName(int animID) {
 	switch (animID) {
 		case  0: return "pause1";
 		case  1: return "pause2";
@@ -63,6 +68,40 @@ Common::UString getAnimationNameById(int animID) {
 		case 58: return "castarea";
 		default: return Common::UString();
 	}
+}
+
+static const std::map<int, Common::UString> &getAnimationTable() {
+	static std::map<int, Common::UString> table;
+	static bool loaded = false;
+
+	if (!loaded) {
+		loaded = true;
+
+		try {
+			const Aurora::TwoDAFile &twoda = TwoDAReg.get2DA("animations");
+			for (size_t i = 0; i < twoda.getRowCount(); ++i) {
+				const Aurora::TwoDARow &row = twoda.getRow(i);
+				Common::UString name = row.getString("name");
+				if (name.empty())
+					name = row.getString("label");
+				if (!name.empty())
+					table[static_cast<int>(i)] = name;
+			}
+		} catch (...) {
+			// Fall back to the hardcoded subset when animations.2da is unavailable.
+		}
+	}
+
+	return table;
+}
+
+Common::UString getAnimationNameById(int animID) {
+	const std::map<int, Common::UString> &table = getAnimationTable();
+	auto it = table.find(animID);
+	if (it != table.end())
+		return it->second;
+
+	return getHardcodedAnimationName(animID);
 }
 
 } // End of namespace KotORBase

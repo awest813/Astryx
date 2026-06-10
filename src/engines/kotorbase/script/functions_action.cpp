@@ -726,23 +726,12 @@ void Functions::getLastAttacker(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionSpeakString(Aurora::NWScript::FunctionContext &ctx) {
-
-	// In the original engine, ActionSpeakString queues a spoken line above
-
-	// the creature's head. We log it so script logic is not silently skipped.
-
 	const Common::UString &str = ctx.getParams()[0].getString();
-
-
-
 	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	if (!caller || str.empty())
+		return;
 
-	const Common::UString tag = caller ? caller->getTag() : Common::UString("(unknown)");
-
-
-
-	status("ActionSpeakString [%s]: %s", tag.c_str(), str.c_str());
-
+	_game->getModule().showFloatingText(caller, str);
 }
 
 
@@ -756,23 +745,16 @@ void Functions::speakString(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionSpeakStringByStrRef(Aurora::NWScript::FunctionContext &ctx) {
-
 	const uint32_t strRef = static_cast<uint32_t>(ctx.getParams()[0].getInt());
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	if (!caller)
+		return;
 
 	Common::UString text = TalkMan.getString(strRef);
-
 	if (text.empty())
-
 		text = Common::String::format("<strref:%u>", strRef);
 
-
-
-	Object *caller = ObjectContainer::toObject(ctx.getCaller());
-
-	const Common::UString who = caller ? caller->getTag() : Common::UString("(unknown)");
-
-	status("ActionSpeakStringByStrRef [%s]: %s", who.c_str(), text.c_str());
-
+	_game->getModule().showFloatingText(caller, text);
 }
 
 
@@ -783,8 +765,6 @@ void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 
 	const int animID = ctx.getParams()[0].getInt();
-	if (getAnimationNameById(animID).empty())
-		return;
 
 	float speed  = ctx.getParams()[1].getFloat();
 	float length = ctx.getParams()[2].getFloat();
@@ -817,12 +797,8 @@ void Functions::playAnimation(Aurora::NWScript::FunctionContext &ctx) {
 	const int animID = ctx.getParams()[0].getInt();
 
 	const Common::UString animName = getAnimationNameById(animID);
-
 	if (animName.empty())
-
 		return;
-
-
 
 	float speed  = ctx.getParams()[1].getFloat();
 

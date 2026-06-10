@@ -459,18 +459,16 @@ void Functions::getSelectedPlanet(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::floatingTextStringOnCreature(Aurora::NWScript::FunctionContext &ctx) {
-	// void FloatingTextStringOnCreature(string sText, object oCreatureToFloatOn, int bBroadcastToParty = TRUE)
 	const Common::UString &text = ctx.getParams()[0].getString();
 	Object *object = ObjectContainer::toObject(ctx.getParams()[1].getObject());
 
 	if (!object || text.empty())
 		return;
 
-	status("FloatingText [%s]: %s", object->getTag().c_str(), text.c_str());
+	_game->getModule().showFloatingText(object, text);
 }
 
 void Functions::floatingTextStrRefOnCreature(Aurora::NWScript::FunctionContext &ctx) {
-	// void FloatingTextStrRefOnCreature(int nStrRef, object oCreatureToFloatOn, int bBroadcastToParty = TRUE)
 	int strRef = ctx.getParams()[0].getInt();
 	Object *object = ObjectContainer::toObject(ctx.getParams()[1].getObject());
 
@@ -478,8 +476,10 @@ void Functions::floatingTextStrRefOnCreature(Aurora::NWScript::FunctionContext &
 		return;
 
 	Common::UString text = TalkMan.getString(strRef);
-	if (!text.empty())
-		status("FloatingTextStrRef [%s]: %s", object->getTag().c_str(), text.c_str());
+	if (text.empty())
+		text = Common::String::format("<strref:%d>", strRef);
+
+	_game->getModule().showFloatingText(object, text);
 }
 
 void Functions::addJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) {

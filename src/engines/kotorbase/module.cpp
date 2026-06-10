@@ -720,6 +720,9 @@ void Module::processEventQueue() {
 	updateSoundListener();
 	updateSelection();
 
+	if (!_inDialog)
+		_ingame->getHUD().update(_frameTime);
+
 	GfxMan.unlockFrame();
 
 	if (getGlobalBoolean("__open_galaxymap")) {
@@ -1960,6 +1963,19 @@ void Module::setCutsceneMode(bool enabled) {
 
 void Module::setMapExplored(const Common::UString &resRef, const std::vector<bool> &data) {
 	_exploredMaps[resRef] = data;
+}
+
+void Module::showFloatingText(Object *object, const Common::UString &text, float duration) {
+	if (_ingame && object && !text.empty())
+		_ingame->getHUD().showFloatingText(object, text, duration);
+}
+
+void Module::exploreAreaFully(Area *area) {
+	if (!area)
+		return;
+
+	area->exploreMapFully();
+	setMapExplored(area->getResRef(), area->getMapExplored());
 }
 
 const std::vector<bool> *Module::getMapExplored(const Common::UString &resRef) const {

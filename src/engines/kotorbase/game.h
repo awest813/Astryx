@@ -66,6 +66,7 @@ public:
 	KotORBase::Module &getModule();
 
 	void saveGame(const Common::UString &slot, const Common::UString &name);
+	virtual void loadGame(const Common::UString &slot);
 
 	virtual Functions &getFunctions() = 0;
 

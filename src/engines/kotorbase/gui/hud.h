@@ -28,6 +28,7 @@
 #include "src/engines/kotorbase/types.h"
 
 #include "src/engines/kotorbase/gui/gui.h"
+#include "src/engines/kotorbase/gui/floatingtext.h"
 #include "src/engines/kotorbase/gui/selectioncircle.h"
 
 namespace Engines {
@@ -81,6 +82,8 @@ public:
 	void hideSelection();
 
 	virtual void notifyJournalUpdated();
+
+	void showFloatingText(Object *object, const Common::UString &text, float duration = 6.0f);
 
 	virtual void update(float dt);
 
@@ -142,6 +145,8 @@ private:
 
 	Odyssey::WidgetLabel *_journalNotification { nullptr };
 	float                _journalNotificationTime { 0.0f };
+
+	FloatingTextManager _floatingText;
 };
 
 } // End of namespace KotORBase

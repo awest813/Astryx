@@ -357,6 +357,9 @@ public:
 	void setMapExplored(const Common::UString &resRef, const std::vector<bool> &data);
 	const std::vector<bool> *getMapExplored(const Common::UString &resRef) const;
 
+	void showFloatingText(Object *object, const Common::UString &text, float duration = 6.0f);
+	void exploreAreaFully(Area *area);
+
 	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
 	void setCameraMode(CameraMode mode, Object *target = nullptr);
 	void setCinematicFocus(Object *target);

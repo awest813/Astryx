@@ -163,6 +163,9 @@ public:
 	const std::vector<bool> &getMapExplored() const { return _mapExplored; }
 	void setMapExplored(const std::vector<bool> &data) { _mapExplored = data; }
 
+	static size_t getDefaultMapExploredTileCount();
+	void exploreMapFully();
+
 	// Camera style
 
 	struct CameraStyle {

@@ -302,6 +302,24 @@ void Area::getWorldPoint2(float &x, float &y) {
 	y = _worldPt2Y;
 }
 
+size_t Area::getDefaultMapExploredTileCount() {
+	// KotOR minimap textures are 512x256; exploration tracks 32x32 cells (+1 row/col).
+	static const int kCellSize = 32;
+	static const int kMapWidth = 512;
+	static const int kMapHeight = 256;
+	const int cols = (kMapWidth / kCellSize) + 1;
+	const int rows = (kMapHeight / kCellSize) + 1;
+	return static_cast<size_t>(cols * rows);
+}
+
+void Area::exploreMapFully() {
+	size_t count = _mapExplored.size();
+	if (count == 0)
+		count = getDefaultMapExploredTileCount();
+
+	_mapExplored.assign(count, true);
+}
+
 void Area::show() {
 	if (_visible)
 		return;

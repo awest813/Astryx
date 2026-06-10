@@ -49,6 +49,7 @@
 #include "src/engines/kotor/module.h"
 
 #include "src/engines/kotor/gui/main/main.h"
+#include "src/engines/kotor/savedgame.h"
 
 #include "src/engines/kotor/script/functions.h"
 #include "src/engines/kotor/gui/ingame/levelup.h"
@@ -83,6 +84,15 @@ void Game::run() {
 	}
 
 	_module.reset();
+}
+
+void Game::loadGame(const Common::UString &slot) {
+	try {
+		std::unique_ptr<SavedGame> save = std::make_unique<SavedGame>(slot, true);
+		_module->loadSavedGame(save.get());
+	} catch (Common::Exception &e) {
+		warning("Failed to load saved game \"%s\": %s", slot.c_str(), e.what());
+	}
 }
 
 void Game::runModule() {

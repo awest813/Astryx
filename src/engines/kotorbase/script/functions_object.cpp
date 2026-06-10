@@ -664,9 +664,21 @@ void Functions::getDistanceBetweenLocations2D(Aurora::NWScript::FunctionContext 
 }
 
 void Functions::exploreAreaForPlayer(Aurora::NWScript::FunctionContext &ctx) {
-	// Marks the entire area as explored on the minimap for the given player.
-	// Full minimap revelation requires a rendering-layer hook; this stub
-	// satisfies script execution so the Endar Spire module runs without error.
+	Object *areaObj = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	Object *player = ObjectContainer::toObject(getParamObject(ctx, 1));
+
+	(void)player;
+
+	Area *area = nullptr;
+	if (areaObj && areaObj->getType() == kObjectTypeArea)
+		area = static_cast<Area *>(areaObj);
+	else
+		area = _game->getModule().getCurrentArea();
+
+	if (!area)
+		return;
+
+	_game->getModule().exploreAreaFully(area);
 }
 
 void Functions::getFirstItemInInventory(Aurora::NWScript::FunctionContext &ctx) {
