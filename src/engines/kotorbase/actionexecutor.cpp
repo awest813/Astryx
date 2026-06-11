@@ -512,6 +512,8 @@ void ActionExecutor::loadSpells() {
 			SpellInfo info;
 			info.id = i;
 			info.label = row.getString("label");
+			if (!row.empty("name"))
+				info.nameStrRef = row.getInt("name");
 			info.cost = row.getInt("forcepoints");
 			info.impactScript = row.getString("impactscript");
 			info.hostile = row.getInt("hostile") != 0;

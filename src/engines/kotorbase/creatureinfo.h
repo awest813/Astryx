@@ -41,6 +41,9 @@ namespace Engines {
 
 namespace KotORBase {
 
+/** True for base Jedi classes and prestige Force-using classes. */
+bool isJediClass(Class charClass);
+
 class CharacterGenerationInfo;
 
 class CreatureInfo {

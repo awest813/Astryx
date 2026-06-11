@@ -273,7 +273,43 @@ void HUD::showContainer(KotORBase::Inventory &inv) {
 	}
 }
 
-void HUD::setPortrait(uint8_t n, bool visible, const Common::UString &portrait) {
+void HUD::updatePortraitVitals(uint8_t n, KotORBase::Creature *creature) {
+	const bool visible = creature != nullptr;
+
+	Odyssey::WidgetProgressbar *vitals = getProgressbar(Common::UString("PB_VIT") + Common::composeString(n));
+	if (vitals) {
+		if (visible) {
+			vitals->setMaxValue(creature->getMaxHitPoints());
+			vitals->setCurrentValue(creature->getCurrentHitPoints());
+		}
+		vitals->setInvisible(!visible);
+		if (visible && _visible)
+			vitals->show();
+		else
+			vitals->hide();
+	}
+
+	Odyssey::WidgetProgressbar *force = getProgressbar(Common::UString("PB_FORCE") + Common::composeString(n));
+	if (force) {
+		const bool showForce = visible && creature->getCreatureInfo().isJedi();
+		force->setInvisible(!showForce);
+		if (showForce) {
+			force->setMaxValue(creature->getMaxForcePoints());
+			force->setCurrentValue(creature->getForcePoints());
+			if (_visible)
+				force->show();
+			else
+				force->hide();
+		} else {
+			force->hide();
+		}
+	}
+}
+
+void HUD::setPortrait(uint8_t n, KotORBase::Creature *creature) {
+	const bool visible = creature != nullptr;
+	const Common::UString portrait = visible ? creature->getPortrait() : "";
+
 	Odyssey::WidgetLabel *labelBack = getLabel(Common::UString("LBL_BACK") + Common::composeString(n));
 	if (labelBack)
 		labelBack->setInvisible(!visible);
@@ -284,37 +320,41 @@ void HUD::setPortrait(uint8_t n, bool visible, const Common::UString &portrait) 
 		labelChar->setFill(portrait);
 	}
 
-	Odyssey::WidgetProgressbar *vitals = getProgressbar(Common::UString("PB_VIT") + Common::composeString(n));
-	if (vitals)
-		vitals->setInvisible(!visible);
-
 	if (visible && _visible) {
 		if (labelBack)
 			labelBack->show();
 		if (labelChar)
 			labelChar->show();
-		if (vitals)
-			vitals->show();
 	} else {
 		if (labelBack)
 			labelBack->hide();
 		if (labelChar)
 			labelChar->hide();
-		if (vitals)
-			vitals->hide();
 	}
+
+	updatePortraitVitals(n, creature);
 }
 
 void HUD::setPartyLeader(KotORBase::Creature *creature) {
-	setPortrait(1, creature != 0, creature ? creature->getPortrait() : "");
+	setPortrait(1, creature);
 }
 
 void HUD::setPartyMember1(KotORBase::Creature *creature) {
-	setPortrait(3, creature != 0, creature ? creature->getPortrait() : "");
+	setPortrait(3, creature);
 }
 
 void HUD::setPartyMember2(KotORBase::Creature *creature) {
-	setPortrait(2, creature != 0, creature ? creature->getPortrait() : "");
+	setPortrait(2, creature);
+}
+
+void HUD::updatePartyVitals() {
+	static const uint8_t kPortraitSlots[] = { 1, 3, 2 };
+	static const int kPartyIndices[] = { 0, 1, 2 };
+
+	for (size_t i = 0; i < ARRAYSIZE(kPortraitSlots); ++i) {
+		KotORBase::Creature *member = _module.getPartyMemberByIndex(kPartyIndices[i]);
+		updatePortraitVitals(kPortraitSlots[i], member);
+	}
 }
 
 void HUD::setLevelUpIndicator(uint8_t n, bool visible) {
@@ -352,6 +392,7 @@ void HUD::updateLevelUpIndicators() {
 
 void HUD::update(float dt) {
 	KotORBase::HUD::update(dt);
+	updatePartyVitals();
 	updateLevelUpIndicators();
 }
 

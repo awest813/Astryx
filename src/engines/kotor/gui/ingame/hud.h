@@ -77,9 +77,11 @@ private:
 
 	void update(int width, int height);
 	void initWidget(Widget &widget);
-	void setPortrait(uint8_t n, bool visible, const Common::UString &portrait = "");
+	void setPortrait(uint8_t n, KotORBase::Creature *creature);
 	void setLevelUpIndicator(uint8_t n, bool visible);
 	void updateLevelUpIndicators();
+	void updatePortraitVitals(uint8_t n, KotORBase::Creature *creature);
+	void updatePartyVitals();
 	void notifyResized(int oldWidth, int oldHeight, int newWidth, int newHeight);
 };
 

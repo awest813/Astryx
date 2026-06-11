@@ -46,6 +46,7 @@ public:
 	struct SpellInfo {
 		uint32_t id;
 		Common::UString label;
+		uint32_t nameStrRef { 0 };
 		int cost;
 		Common::UString impactScript;
 		bool hostile;

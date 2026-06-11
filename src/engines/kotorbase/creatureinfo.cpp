@@ -301,11 +301,26 @@ int CreatureInfo::getSavingThrowBonus(SavingThrow type) const {
 	return baseSave + getAbilityModifier(ability);
 }
 
+bool isJediClass(Class charClass) {
+	switch (charClass) {
+	case kClassJediGuardian:
+	case kClassJediConsular:
+	case kClassJediSentinel:
+	case kClassJediWeaponMaster:
+	case kClassJediMaster:
+	case kClassJediWatchMan:
+	case kClassSithMarauder:
+	case kClassSithAssassin:
+	case kClassSithLord:
+		return true;
+	default:
+		return false;
+	}
+}
+
 bool CreatureInfo::isJedi() const {
 	for (const auto &cl : _levels) {
-		if (cl.characterClass == kClassJediGuardian || 
-		    cl.characterClass == kClassJediConsular || 
-		    cl.characterClass == kClassJediSentinel)
+		if (isJediClass(cl.characterClass))
 			return true;
 	}
 	return false;

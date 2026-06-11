@@ -35,6 +35,7 @@
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/item.h"
@@ -123,8 +124,7 @@ void Functions::changeToJedi(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 	}
 
-	// Add the Jedi class at level 1
-	creature->getCreatureInfo().incrementClassLevel(static_cast<Class>(jediClass));
+	applyJediClass(*creature, static_cast<Class>(jediClass));
 
 	debugC(Common::kDebugEngineLogic, 1, "Creature \"%s\" changed to Jedi class %d",
 	       creature->getTag().c_str(), jediClass);

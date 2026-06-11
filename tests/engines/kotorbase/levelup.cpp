@@ -24,22 +24,32 @@
 
 #include "gtest/gtest.h"
 
+#include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/types.h"
 
+using Engines::KotORBase::Creature;
 using Engines::KotORBase::CreatureInfo;
+using Engines::KotORBase::applyJediClass;
 using Engines::KotORBase::grantsAbilityIncrease;
 using Engines::KotORBase::previewStatsAtLevel1;
 using Engines::KotORBase::hpGainOnLevelUp;
+using Engines::KotORBase::kAbilityCharisma;
+using Engines::KotORBase::kAbilityWisdom;
 using Engines::KotORBase::kClassJediGuardian;
+using Engines::KotORBase::kClassJediWeaponMaster;
 using Engines::KotORBase::kClassScoundrel;
 using Engines::KotORBase::kClassScout;
 using Engines::KotORBase::kClassSoldier;
+using Engines::KotORBase::kFeatJediDefense;
 using Engines::KotORBase::kFeatPowerAttack;
 using Engines::KotORBase::levelUpThreshold;
 using Engines::KotORBase::getSelectableFeats;
 using Engines::KotORBase::getClassDisplayName;
+using Engines::KotORBase::getForcePowerDisplayName;
 using Engines::KotORBase::formatAbilityModifier;
+using Engines::KotORBase::isJediClass;
 using Engines::KotORBase::kClassJediConsular;
 
 TEST(LevelUpHelpers, ThresholdLevel2Is1000) {
@@ -115,4 +125,36 @@ TEST(LevelUpHelpers, SoldierFeatListExcludesKnownFeats) {
 	const auto feats = getSelectableFeats(info);
 	for (uint32_t feat : feats)
 		EXPECT_NE(feat, kFeatPowerAttack);
+}
+
+TEST(LevelUpHelpers, IsJediClassIncludesPrestige) {
+	EXPECT_TRUE(isJediClass(kClassJediWeaponMaster));
+	EXPECT_FALSE(isJediClass(kClassSoldier));
+}
+
+TEST(LevelUpHelpers, IsJediWithPrestigeClass) {
+	CreatureInfo info;
+	info.incrementClassLevel(kClassJediWeaponMaster);
+	EXPECT_TRUE(info.isJedi());
+}
+
+TEST(LevelUpHelpers, ForcePowerDisplayNameFallback) {
+	EXPECT_EQ(getForcePowerDisplayName(1), "Force Heal");
+	EXPECT_EQ(getForcePowerDisplayName(5), "Force Stun");
+}
+
+TEST(LevelUpHelpers, ApplyJediClassGrantsDefenseAndForcePool) {
+	Creature creature;
+	creature.initAsFakePC();
+
+	CreatureInfo &info = creature.getCreatureInfo();
+	info.setAbilityScore(kAbilityWisdom, 14);
+	info.setAbilityScore(kAbilityCharisma, 12);
+
+	applyJediClass(creature, kClassJediConsular);
+
+	EXPECT_EQ(creature.getLevel(kClassJediConsular), 1);
+	EXPECT_TRUE(info.hasFeat(kFeatJediDefense));
+	EXPECT_EQ(creature.getMaxForcePoints(), 11);
+	EXPECT_EQ(creature.getForcePoints(), 11);
 }

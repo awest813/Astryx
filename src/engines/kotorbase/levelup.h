@@ -55,6 +55,9 @@ int hpGainOnLevelUp(Class charClass, int constitutionModifier);
 /** Apply a completed level-up (class level, HP, force points). */
 void applyLevelUp(Creature &creature);
 
+/** Story/script Jedi conversion: add class level, Jedi Defense, and refresh FP pool. */
+void applyJediClass(Creature &creature, Class jediClass);
+
 /** Auto-distribute skill points and a default feat when manual GUI is skipped. */
 void autoLevelUp(Creature &creature);
 
@@ -87,6 +90,9 @@ CharacterPreviewStats previewStatsAtLevel1(Class charClass, const CreatureInfo::
 
 /** Localized (or fallback English) label for a base/Jedi class. */
 Common::UString getClassDisplayName(Class charClass);
+
+/** Localized (or fallback English) label for a Force power spell row. */
+Common::UString getForcePowerDisplayName(uint32_t powerId);
 
 /** Format an ability modifier for GUI display (e.g. "+3", "-1", "0"). */
 Common::UString formatAbilityModifier(int modifier);

@@ -30,6 +30,7 @@
 
 #include "src/aurora/talkman.h"
 
+#include "src/engines/kotorbase/actionexecutor.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/levelup.h"
@@ -87,6 +88,22 @@ void applyLevelUp(Creature &creature) {
 	status("Level up applied for %s. New HitDice: %d", creature.getName().c_str(), creature.getHitDice());
 }
 
+void applyJediClass(Creature &creature, Class jediClass) {
+	if (!isJediClass(jediClass)) {
+		warning("applyJediClass(): invalid Jedi class %d", static_cast<int>(jediClass));
+		return;
+	}
+
+	CreatureInfo &info = creature.getCreatureInfo();
+	info.incrementClassLevel(jediClass);
+
+	if (!info.hasFeat(kFeatJediDefense))
+		info.addFeat(kFeatJediDefense);
+
+	creature.setMaxForcePoints(creature.computeMaxForcePoints());
+	creature.setForcePoints(creature.getMaxForcePoints());
+}
+
 bool isClassSkill(Class c, Skill s) {
 	switch (c) {
 	case kClassScout:
@@ -120,10 +137,12 @@ static int skillPointsPerLevel(const CreatureInfo &info) {
 	int base = 1;
 	if (info.getNumClasses() > 0) {
 		switch (info.getLatestClass()) {
-		case kClassScout:        base = 2; break;
-		case kClassScoundrel:    base = 3; break;
-		case kClassJediSentinel: base = 2; break;
-		case kClassExpertDroid:  base = 4; break;
+		case kClassScout:           base = 2; break;
+		case kClassScoundrel:       base = 3; break;
+		case kClassJediGuardian:    base = 1; break;
+		case kClassJediConsular:    base = 1; break;
+		case kClassJediSentinel:    base = 2; break;
+		case kClassExpertDroid:     base = 4; break;
 		default:                 base = 1; break;
 		}
 	}
@@ -230,15 +249,21 @@ Common::UString getClassDisplayName(Class charClass) {
 	uint32_t strRef = 0;
 
 	switch (charClass) {
-	case kClassSoldier:   strRef = 134; break;
-	case kClassScout:     strRef = 133; break;
-	case kClassScoundrel: strRef = 135; break;
+	case kClassSoldier:       strRef = 134; break;
+	case kClassScout:         strRef = 133; break;
+	case kClassScoundrel:     strRef = 135; break;
+	case kClassJediGuardian:  strRef = 89;  break;
+	case kClassJediConsular:  strRef = 90;  break;
+	case kClassJediSentinel:  strRef = 91;  break;
 	default:
 		break;
 	}
 
-	if (strRef)
-		return TalkMan.getString(strRef);
+	if (strRef) {
+		const Common::UString &localized = TalkMan.getString(strRef);
+		if (!localized.empty())
+			return localized;
+	}
 
 	switch (charClass) {
 	case kClassJediGuardian:     return "Jedi Guardian";
@@ -259,6 +284,28 @@ Common::UString formatAbilityModifier(int modifier) {
 	if (modifier > 0)
 		return "+" + Common::composeString(modifier);
 	return Common::composeString(modifier);
+}
+
+Common::UString getForcePowerDisplayName(uint32_t powerId) {
+	const ActionExecutor::SpellInfo *spell = ActionExecutor::getSpellInfo(powerId);
+	if (spell && spell->nameStrRef) {
+		const Common::UString &localized = TalkMan.getString(spell->nameStrRef);
+		if (!localized.empty())
+			return localized;
+	}
+
+	switch (powerId) {
+	case 1: return "Force Heal";
+	case 2: return "Force Push";
+	case 3: return "Burst of Speed";
+	case 4: return "Affect Mind";
+	case 5: return "Force Stun";
+	case 6: return "Force Armor";
+	default:
+		if (spell && !spell->label.empty())
+			return spell->label;
+		return Common::composeString(powerId);
+	}
 }
 
 CharacterPreviewStats previewStatsAtLevel1(Class charClass, const CreatureInfo::Abilities &abilities) {
