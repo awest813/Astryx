@@ -37,6 +37,7 @@ namespace Engines {
 
 namespace KotORBase {
 
+class CharacterGenerationInfo;
 class Creature;
 class CreatureInfo;
 
@@ -57,6 +58,9 @@ void applyLevelUp(Creature &creature);
 
 /** Story/script Jedi conversion: add class level, Jedi Defense, and refresh FP pool. */
 void applyJediClass(Creature &creature, Class jediClass);
+
+/** Fill in default feat and skill picks for quick character creation. */
+void applyDefaultChargenBuild(CharacterGenerationInfo &info);
 
 /** Auto-distribute skill points and a default feat when manual GUI is skipped. */
 void autoLevelUp(Creature &creature);

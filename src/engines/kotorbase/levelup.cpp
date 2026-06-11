@@ -33,11 +33,64 @@
 #include "src/engines/kotorbase/actionexecutor.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/gui/chargeninfo.h"
 #include "src/engines/kotorbase/levelup.h"
 
 namespace Engines {
 
 namespace KotORBase {
+
+/** Map prestige Jedi classes to their base class for feats, skills, and saves. */
+static Class progressionClass(Class charClass) {
+	switch (charClass) {
+	case kClassJediWeaponMaster:
+	case kClassSithMarauder:
+		return kClassJediGuardian;
+	case kClassJediWatchMan:
+	case kClassSithAssassin:
+		return kClassJediSentinel;
+	case kClassJediMaster:
+	case kClassSithLord:
+		return kClassJediConsular;
+	default:
+		return charClass;
+	}
+}
+
+static int totalSkillRanks(const CreatureInfo::Skills &skills) {
+	return static_cast<int>(skills.computerUse + skills.demolitions + skills.stealth +
+	                        skills.awareness + skills.persuade + skills.repair +
+	                        skills.security + skills.treatInjury);
+}
+
+static int chargenSkillRank(const CharacterGenerationInfo &info, Skill skill) {
+	const CreatureInfo::Skills &s = info.getSkills();
+	switch (skill) {
+	case kSkillComputerUse:  return static_cast<int>(s.computerUse);
+	case kSkillDemolitions:  return static_cast<int>(s.demolitions);
+	case kSkillStealth:      return static_cast<int>(s.stealth);
+	case kSkillAwareness:    return static_cast<int>(s.awareness);
+	case kSkillPersuade:     return static_cast<int>(s.persuade);
+	case kSkillRepair:       return static_cast<int>(s.repair);
+	case kSkillSecurity:     return static_cast<int>(s.security);
+	case kSkillTreatInjury:  return static_cast<int>(s.treatInjury);
+	default:                 return 0;
+	}
+}
+
+static int chargenSkillPointBudget(const CharacterGenerationInfo &info) {
+	int base = 4;
+	switch (info.getClass()) {
+	case kClassScout:     base = 6; break;
+	case kClassScoundrel: base = 8; break;
+	default:              break;
+	}
+
+	const int intScore = static_cast<int>(info.getAbilities().intelligence);
+	const int intMod = (intScore - 10) / 2;
+	const int total = base + intMod;
+	return (total < 1) ? 1 : total;
+}
 
 int levelUpThreshold(int currentLevel) {
 	if (currentLevel < 1)
@@ -52,7 +105,7 @@ bool canLevelUp(const Creature &creature) {
 }
 
 int classHitDie(Class charClass) {
-	switch (charClass) {
+	switch (progressionClass(charClass)) {
 	case kClassScout:
 	case kClassJediSentinel:
 		return 8;
@@ -105,6 +158,8 @@ void applyJediClass(Creature &creature, Class jediClass) {
 }
 
 bool isClassSkill(Class c, Skill s) {
+	c = progressionClass(c);
+
 	switch (c) {
 	case kClassScout:
 		return (s == kSkillComputerUse || s == kSkillDemolitions ||
@@ -136,14 +191,14 @@ bool isClassSkill(Class c, Skill s) {
 static int skillPointsPerLevel(const CreatureInfo &info) {
 	int base = 1;
 	if (info.getNumClasses() > 0) {
-		switch (info.getLatestClass()) {
+		switch (progressionClass(info.getLatestClass())) {
 		case kClassScout:           base = 2; break;
 		case kClassScoundrel:       base = 3; break;
 		case kClassJediGuardian:    base = 1; break;
 		case kClassJediConsular:    base = 1; break;
 		case kClassJediSentinel:    base = 2; break;
 		case kClassExpertDroid:     base = 4; break;
-		default:                 base = 1; break;
+		default:                    base = 1; break;
 		}
 	}
 
@@ -157,7 +212,7 @@ bool grantsAbilityIncrease(int currentLevel) {
 
 static void appendClassFeats(std::vector<uint32_t> &feats, Class pcClass,
                             const std::vector<uint32_t> &knownFeats) {
-	switch (pcClass) {
+	switch (progressionClass(pcClass)) {
 	case kClassSoldier:
 		for (uint32_t feat : { kFeatPowerAttack, kFeatFlurry, kFeatCriticalStrike,
 		                       kFeatToughness, kFeatConditioning }) {
@@ -336,6 +391,45 @@ std::vector<uint32_t> getSelectableForcePowers(const CreatureInfo &info) {
 	}
 
 	return powers;
+}
+
+void applyDefaultChargenBuild(CharacterGenerationInfo &info) {
+	if (info.getFeats().empty()) {
+		const auto feats = getSelectableFeats(info.getClass(), info.getFeats());
+		if (!feats.empty())
+			info.addFeat(feats.front());
+	}
+
+	if (totalSkillRanks(info.getSkills()) > 0)
+		return;
+
+	int points = chargenSkillPointBudget(info);
+	const Class pcClass = info.getClass();
+
+	while (points > 0) {
+		Skill bestSkill = kSkillComputerUse;
+		int bestRank = -1;
+		bool bestIsClassSkill = false;
+
+		for (int i = 0; i < kSkillMAX; ++i) {
+			const Skill skill = static_cast<Skill>(i);
+			const int rank = chargenSkillRank(info, skill);
+			const bool classSkill = isClassSkill(pcClass, skill);
+
+			if (rank > bestRank || (rank == bestRank && classSkill && !bestIsClassSkill)) {
+				bestRank = rank;
+				bestSkill = skill;
+				bestIsClassSkill = classSkill;
+			}
+		}
+
+		const int cost = isClassSkill(pcClass, bestSkill) ? 1 : 2;
+		if (points < cost)
+			break;
+
+		info.setSkillRank(bestSkill, chargenSkillRank(info, bestSkill) + 1);
+		points -= cost;
+	}
 }
 
 void autoLevelUp(Creature &creature) {

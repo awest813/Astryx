@@ -94,6 +94,9 @@ CreatureInfo::CreatureInfo(const CharacterGenerationInfo &info) {
 	_levels[0].level = 1;
 	_abilities = info.getAbilities();
 	_skills = info.getSkills();
+
+	for (uint32_t feat : info.getFeats())
+		addFeat(feat);
 }
 
 CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
@@ -267,24 +270,26 @@ int CreatureInfo::getSavingThrowBonus(SavingThrow type) const {
 		const int lv = cl.level;
 		bool good = false;
 
+		const Class saveClass = progressionClass(cl.characterClass);
+
 		switch (type) {
 		case kSavingThrowFortitude:
-			good = (cl.characterClass == kClassSoldier || 
-			        cl.characterClass == kClassScout || 
-			        cl.characterClass == kClassJediGuardian || 
-			        cl.characterClass == kClassJediConsular || 
-			        cl.characterClass == kClassJediSentinel);
+			good = (saveClass == kClassSoldier ||
+			        saveClass == kClassScout ||
+			        saveClass == kClassJediGuardian ||
+			        saveClass == kClassJediConsular ||
+			        saveClass == kClassJediSentinel);
 			break;
 		case kSavingThrowReflex:
-			good = (cl.characterClass == kClassScout || 
-			        cl.characterClass == kClassScoundrel || 
-			        cl.characterClass == kClassJediGuardian || 
-			        cl.characterClass == kClassJediConsular || 
-			        cl.characterClass == kClassJediSentinel);
+			good = (saveClass == kClassScout ||
+			        saveClass == kClassScoundrel ||
+			        saveClass == kClassJediGuardian ||
+			        saveClass == kClassJediConsular ||
+			        saveClass == kClassJediSentinel);
 			break;
 		case kSavingThrowWill:
-			good = (cl.characterClass == kClassJediConsular || 
-			        cl.characterClass == kClassJediSentinel);
+			good = (saveClass == kClassJediConsular ||
+			        saveClass == kClassJediSentinel);
 			break;
 		}
 
@@ -299,6 +304,22 @@ int CreatureInfo::getSavingThrowBonus(SavingThrow type) const {
 	if (type == kSavingThrowWill)   ability = kAbilityWisdom;
 
 	return baseSave + getAbilityModifier(ability);
+}
+
+static Class progressionClass(Class charClass) {
+	switch (charClass) {
+	case kClassJediWeaponMaster:
+	case kClassSithMarauder:
+		return kClassJediGuardian;
+	case kClassJediWatchMan:
+	case kClassSithAssassin:
+		return kClassJediSentinel;
+	case kClassJediMaster:
+	case kClassSithLord:
+		return kClassJediConsular;
+	default:
+		return charClass;
+	}
 }
 
 bool isJediClass(Class charClass) {

@@ -128,13 +128,13 @@ void Functions::getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getCurrentForcePoints(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = creature ? creature->getForcePoints() : 0;
 }
 
 void Functions::getMaxForcePoints(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = creature ? creature->getMaxForcePoints() : 0;
 }
 
 void Functions::pauseGame(Aurora::NWScript::FunctionContext &ctx) {

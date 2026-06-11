@@ -26,16 +26,20 @@
 
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/gui/chargeninfo.h"
 #include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/types.h"
 
 using Engines::KotORBase::Creature;
 using Engines::KotORBase::CreatureInfo;
+using Engines::KotORBase::applyDefaultChargenBuild;
 using Engines::KotORBase::applyJediClass;
+using Engines::KotORBase::CharacterGenerationInfo;
 using Engines::KotORBase::grantsAbilityIncrease;
 using Engines::KotORBase::previewStatsAtLevel1;
 using Engines::KotORBase::hpGainOnLevelUp;
 using Engines::KotORBase::kAbilityCharisma;
+using Engines::KotORBase::kAbilityIntelligence;
 using Engines::KotORBase::kAbilityWisdom;
 using Engines::KotORBase::kClassJediGuardian;
 using Engines::KotORBase::kClassJediWeaponMaster;
@@ -141,6 +145,24 @@ TEST(LevelUpHelpers, IsJediWithPrestigeClass) {
 TEST(LevelUpHelpers, ForcePowerDisplayNameFallback) {
 	EXPECT_EQ(getForcePowerDisplayName(1), "Force Heal");
 	EXPECT_EQ(getForcePowerDisplayName(5), "Force Stun");
+}
+
+TEST(LevelUpHelpers, ChargenInfoCopiesFeats) {
+	CharacterGenerationInfo info;
+	info.addFeat(kFeatPowerAttack);
+
+	const CreatureInfo creatureInfo(info);
+	EXPECT_TRUE(creatureInfo.hasFeat(kFeatPowerAttack));
+}
+
+TEST(LevelUpHelpers, ApplyDefaultChargenBuildFillsQuickChar) {
+	CharacterGenerationInfo info;
+	info.setAbilityScore(kAbilityIntelligence, 12);
+
+	applyDefaultChargenBuild(info);
+
+	EXPECT_FALSE(info.getFeats().empty());
+	EXPECT_GT(info.getSkills().awareness, 0u);
 }
 
 TEST(LevelUpHelpers, ApplyJediClassGrantsDefenseAndForcePool) {

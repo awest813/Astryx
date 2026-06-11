@@ -68,8 +68,6 @@ LevelUpFeatsMenu::LevelUpFeatsMenu(KotORBase::CreatureInfo &info, Console *conso
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
 	_availableFeats = KotORBase::getSelectableFeats(_info);
-	if (_availableFeats.empty())
-		_availableFeats.push_back(KotORBase::kFeatToughness);
 
 	updateLabels();
 }

@@ -28,6 +28,7 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/creaturesearch.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
+#include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
@@ -486,27 +487,7 @@ namespace KotORBase {
 			_skin = chargenInfo.getSkin();
 			_face = chargenInfo.getFace();
 			_minOneHitPoint = true;
-			// Compute starting max HP: class hit die (max value) + Constitution modifier.	// The fallback of 6 matches the Scoundrel hit die and is also the minimum	// d6 that any KotOR class uses.	static
-			const
-			int kDefaultHitDie = 6;
-			int hitDie = kDefaultHitDie;
-			try {
-				const Aurora::TwoDAFile &classes = TwoDAReg.get2DA("classes");
-				Common::UString label;
-				switch (chargenInfo.getClass()) {
-					case kClassSoldier:   label = "Soldier";
-					break;
-					case kClassScout:     label = "Scout";
-					break;
-					case kClassScoundrel: label = "Scoundrel";
-					break;
-					default: break;
-				}
-				if (!label.empty())			hitDie = classes.getRow("label", label).getInt("hitdie");
-			}
-			catch (...) {
-				// Keep the default if the 2DA lookup fails.
-			}
+			int hitDie = classHitDie(chargenInfo.getClass());
 			int conMod = _info.getAbilityModifier(kAbilityConstitution);
 			int hp = hitDie + conMod;
 			if (hp < 1)		hp = 1;

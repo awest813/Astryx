@@ -30,6 +30,7 @@
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/gui/guiskilltags.h"
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/chargen/chargenskills.h"
 
@@ -68,15 +69,21 @@ CharacterGenerationSkillsMenu::CharacterGenerationSkillsMenu(
 	_ranks[KotORBase::kSkillTreatInjury] = s.treatInjury;
 
 	// Compute how many points are still available.
-	int total = computeSkillPoints();
-	int spent = 0;
-	for (int i = 0; i < KotORBase::kSkillMAX; ++i)
-		spent += static_cast<int>(_ranks[i]);
-	_remainingPoints = total - spent;
+	_remainingPoints = computeSkillPoints() - computeSpentPoints();
 	if (_remainingPoints < 0)
 		_remainingPoints = 0;
 
 	updateLabels();
+}
+
+int CharacterGenerationSkillsMenu::computeSpentPoints() const {
+	int spent = 0;
+	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
+		const KotORBase::Skill skill = static_cast<KotORBase::Skill>(i);
+		const int cost = KotORBase::isClassSkill(_info.getClass(), skill) ? 1 : 2;
+		spent += static_cast<int>(_ranks[skill]) * cost;
+	}
+	return spent;
 }
 
 int CharacterGenerationSkillsMenu::computeSkillPoints() const {
@@ -112,17 +119,19 @@ void CharacterGenerationSkillsMenu::callbackActive(Widget &widget) {
 	for (size_t i = 0; i < KotORBase::kSkillWidgetTagCount; ++i) {
 		const KotORBase::Skill skill = KotORBase::kSkillWidgetTags[i].skill;
 		if ((tag == KotORBase::kSkillWidgetTags[i].plusTag) || (tag == KotORBase::kSkillWidgetTags[i].legacyPlusTag)) {
-			if (_remainingPoints > 0) {
+			const int cost = KotORBase::isClassSkill(_info.getClass(), skill) ? 1 : 2;
+			if (_remainingPoints >= cost) {
 				++_ranks[skill];
-				--_remainingPoints;
+				_remainingPoints -= cost;
 				updateLabels();
 			}
 			return;
 		}
 		if ((tag == KotORBase::kSkillWidgetTags[i].minusTag) || (tag == KotORBase::kSkillWidgetTags[i].legacyMinusTag)) {
 			if (_ranks[skill] > 0) {
+				const int cost = KotORBase::isClassSkill(_info.getClass(), skill) ? 1 : 2;
 				--_ranks[skill];
-				++_remainingPoints;
+				_remainingPoints += cost;
 				updateLabels();
 			}
 			return;
@@ -140,11 +149,7 @@ void CharacterGenerationSkillsMenu::callbackActive(Widget &widget) {
 		_ranks[KotORBase::kSkillSecurity]    = s.security;
 		_ranks[KotORBase::kSkillTreatInjury] = s.treatInjury;
 
-		int total = computeSkillPoints();
-		int spent = 0;
-		for (int i = 0; i < KotORBase::kSkillMAX; ++i)
-			spent += static_cast<int>(_ranks[i]);
-		_remainingPoints = total - spent;
+		_remainingPoints = computeSkillPoints() - computeSpentPoints();
 		if (_remainingPoints < 0)
 			_remainingPoints = 0;
 

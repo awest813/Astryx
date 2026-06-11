@@ -311,6 +311,8 @@ void CharacterGenerationMenu::start() {
 	hide();
 
 	try {
+		KotORBase::applyDefaultChargenBuild(*_pc);
+
 		// Prepare the PC; the opening encounter loads end_m01aa after the crawl.
 		_module->usePC(*_pc);
 	} catch (...) {

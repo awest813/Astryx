@@ -69,8 +69,6 @@ LevelUpForcePowersMenu::LevelUpForcePowersMenu(KotORBase::CreatureInfo &info, Co
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
 	_availablePowers = KotORBase::getSelectableForcePowers(_info);
-	if (_availablePowers.empty())
-		_availablePowers.push_back(1);
 
 	updateLabels();
 }

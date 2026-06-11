@@ -56,6 +56,8 @@ private:
 
 	/** Compute initial skill points for the chosen class and Intelligence. */
 	int computeSkillPoints() const;
+	/** Skill points spent given class/cross-class costs. */
+	int computeSpentPoints() const;
 
 	void updateLabels();
 
