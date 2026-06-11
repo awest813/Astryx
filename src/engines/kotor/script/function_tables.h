@@ -763,15 +763,15 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 643, "SWMG_GetPlayerSpeed"                 , &Functions::swmgGetPlayerSpeed                    },
 	{ 644, "SWMG_GetPlayerMinSpeed"              , &Functions::stubSWMGFunctionSWMG_GetPlayerMinSpeed
 	{ 645, "SWMG_GetPlayerAccelerationPerSecond" , &Functions::stubSWMGFunctionSWMG_GetPlayerAccelerationPerSecond
-	{ 646, "SWMG_GetPlayerTunnelPos"             , &Functions::stubSWMGFunctionSWMG_GetPlayerTunnelPos
+	{ 646, "SWMG_GetPlayerTunnelPos"             , &Functions::swmgGetPlayerTunnelPos
 	{ 647, "SWMG_SetPlayerOffset"                , &Functions::swmgSetPlayerOffset                                                },
 	{ 648, "SWMG_SetPlayerInvincibility"         , &Functions::stubSWMGFunctionSWMG_SetPlayerInvincibility
 	{ 649, "SWMG_SetPlayerSpeed"                 , &Functions::swmgSetPlayerSpeed                    },
 	{ 650, "SWMG_SetPlayerMinSpeed"              , &Functions::stubSWMGFunctionSWMG_SetPlayerMinSpeed
 	{ 651, "SWMG_SetPlayerAccelerationPerSecond" , &Functions::stubSWMGFunctionSWMG_SetPlayerAccelerationPerSecond
-	{ 652, "SWMG_SetPlayerTunnelPos"             , &Functions::stubSWMGFunctionSWMG_SetPlayerTunnelPos
-	{ 653, "SWMG_GetPlayerTunnelNeg"             , &Functions::stubSWMGFunctionSWMG_GetPlayerTunnelNeg
-	{ 654, "SWMG_SetPlayerTunnelNeg"             , &Functions::stubSWMGFunctionSWMG_SetPlayerTunnelNeg
+	{ 652, "SWMG_SetPlayerTunnelPos"             , &Functions::swmgSetPlayerTunnelPos
+	{ 653, "SWMG_GetPlayerTunnelNeg"             , &Functions::swmgGetPlayerTunnelNeg
+	{ 654, "SWMG_SetPlayerTunnelNeg"             , &Functions::swmgSetPlayerTunnelNeg
 	{ 655, "SWMG_GetPlayerOrigin"                , &Functions::stubSWMGFunctionSWMG_GetPlayerOrigin
 	{ 656, "SWMG_SetPlayerOrigin"                , &Functions::stubSWMGFunctionSWMG_SetPlayerOrigin
 	{ 657, "SWMG_GetGunBankHorizontalSpread"     , &Functions::stubSWMGFunctionSWMG_GetGunBankHorizontalSpread

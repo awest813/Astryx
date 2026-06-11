@@ -7,6 +7,10 @@
 namespace Engines {
 namespace KotOR {
 
+/** Special side-deck card markers (values 1-6 and -1..-6 are normal). */
+static const int kPazaakCardFlip   = 100;
+static const int kPazaakCardDouble = 200;
+
 class PazaakPlayer {
 public:
 	int score { 0 };
@@ -46,15 +50,22 @@ public:
 	PazaakPlayer &getPlayer() { return _player; }
 	PazaakPlayer &getOpponent() { return _opponent; }
 
+	/** Build a side deck preset for chargen / script side index. */
+	static std::vector<int> sideDeckForIndex(int sideIndex);
+
 private:
 	void checkRoundEnd();
 	void nextTurn();
 	int drawMainCard();
+	void applySideCard(PazaakPlayer &who, int card);
 
 	PazaakPlayer _player;
 	PazaakPlayer _opponent;
 	State _state;
 	int _winner { 0 };
+	int _lastMainDraw { 0 };
+	bool _playerDoubleNext { false };
+	bool _opponentDoubleNext { false };
 };
 
 } // End of namespace KotOR

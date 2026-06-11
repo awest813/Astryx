@@ -57,7 +57,9 @@ void performTurretMinigame(KotORBase::Module &module) {
 	module.getFadeQuad().fadeOut();
 	module.runCinematicBeat(0.5f);
 
-	module.signalEncounter("ebon_turret");
+	module.setGlobalNumber("__turret_active", 1);
+	module.setGlobalNumber("__swmg_enemy_count", 3);
+	module.signalEncounter("turret_combat_start");
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);

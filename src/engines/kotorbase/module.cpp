@@ -772,6 +772,8 @@ void Module::processEventQueue() {
 		showWorkbench();
 	}
 
+	onFrameUpdate(_frameTime);
+
 	handleDelayedInteractions();
 }
 
@@ -1636,6 +1638,13 @@ bool Module::getPlanetAvailable(int planet) const {
 
 int Module::getSelectedPlanet() const {
 	return _selectedPlanet;
+}
+
+void Module::setSelectedPlanet(int planet) {
+	_selectedPlanet = planet;
+}
+
+void Module::onFrameUpdate(float UNUSED(frameTime)) {
 }
 
 void Module::setGlobalString(const Common::UString &id, const Common::UString &value) {

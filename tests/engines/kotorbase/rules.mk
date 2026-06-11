@@ -83,6 +83,11 @@ tests_engines_kotorbase_test_levelup_SOURCES                = tests/engines/koto
 tests_engines_kotorbase_test_levelup_LDADD                  = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_levelup_CXXFLAGS               = $(test_CXXFLAGS)
 
+check_PROGRAMS                                              += tests/engines/kotorbase/test_swoopminigame
+tests_engines_kotorbase_test_swoopminigame_SOURCES          = tests/engines/kotorbase/swoopminigame.cpp
+tests_engines_kotorbase_test_swoopminigame_LDADD            = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_swoopminigame_CXXFLAGS         = $(test_CXXFLAGS)
+
 check_PROGRAMS                                           += tests/engines/kotorbase/test_camera_cutscene
 tests_engines_kotorbase_test_camera_cutscene_SOURCES        = tests/engines/kotorbase/camera_cutscene.cpp
 tests_engines_kotorbase_test_camera_cutscene_LDADD          = $(kotorbase_LIBS)

@@ -1711,9 +1711,10 @@ protected:
 
 	void swmgSetSpeedBlurEffect(Aurora::NWScript::FunctionContext &ctx);
 
-
-
-
+	void swmgGetPlayerTunnelPos(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetPlayerTunnelPos(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetPlayerTunnelNeg(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetPlayerTunnelNeg(Aurora::NWScript::FunctionContext &ctx);
 
 	// Party, functions_party.cpp
 

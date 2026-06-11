@@ -286,6 +286,8 @@ public:
 	bool getPlanetAvailable(int planet) const;
 	/** Get the currently selected planet. */
 	int getSelectedPlanet() const;
+	/** Set the currently selected planet (galaxy map travel). */
+	void setSelectedPlanet(int planet);
 
 	// Reputation
 
@@ -304,6 +306,9 @@ public:
 	virtual void enter();
 
 protected:
+	/** Per-frame hook for game-specific systems (minigames, etc.). */
+	virtual void onFrameUpdate(float frameTime);
+
 	/** When true, enter() loads the area but keeps the ingame HUD hidden (cinematic handoff). */
 	virtual bool deferIngameHUDOnEnter() const { return false; }
 	/** Leave the running module, quitting it. */

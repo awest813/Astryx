@@ -1,6 +1,10 @@
 #ifndef ENGINES_KOTOR_GUI_INGAME_WORKBENCH_H
 #define ENGINES_KOTOR_GUI_INGAME_WORKBENCH_H
 
+#include <vector>
+
+#include "src/common/ustring.h"
+
 #include "src/engines/kotorbase/gui/gui.h"
 
 namespace Engines {
@@ -23,6 +27,8 @@ protected:
 
 private:
 	KotORBase::Module &_module;
+	Common::UString _selectedItemTag;
+	std::vector<Common::UString> _itemTags;
 
 	void fillItemList();
 	void showItemUpgrades(const Common::UString &itemTag);
