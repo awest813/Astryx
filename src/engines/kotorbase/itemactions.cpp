@@ -24,10 +24,13 @@
 
 #include "src/common/exception.h"
 
+#include "src/engines/kotorbase/actionexecutor.h"
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/itemactions.h"
+#include "src/engines/kotorbase/module.h"
 
 namespace Engines {
 
@@ -37,9 +40,38 @@ static bool itemClassIs(const Item &item, const char *itemClass) {
 	return item.getItemClass().equalsIgnoreCase(itemClass);
 }
 
+static int healAmountForSpell(uint32_t spellId, int propertyValue) {
+	if (propertyValue > 0)
+		return propertyValue;
+
+	switch (spellId) {
+	case 1:  return 15;
+	case 37: return 25;
+	case 38: return 40;
+	case 39: return 60;
+	default:
+		break;
+	}
+
+	const ActionExecutor::SpellInfo *spell = ActionExecutor::getSpellInfo(spellId);
+	if (spell) {
+		Common::UString label = spell->label;
+		label.toLower();
+		if (label.contains("heal"))
+			return 20;
+	}
+
+	return 0;
+}
+
 static int healAmountForItem(const Item &item) {
-	if (item.hasItemProperty(kItemPropertyCastSpell))
-		return item.getItemPropertyValue(kItemPropertyCastSpell, 15);
+	if (item.hasItemProperty(kItemPropertyCastSpell)) {
+		const int propertyValue = item.getItemPropertyValue(kItemPropertyCastSpell, 0);
+		const int spellId = item.getItemPropertySubtype(kItemPropertyCastSpell, 0);
+		const int spellHeal = healAmountForSpell(spellId, propertyValue);
+		if (spellHeal > 0)
+			return spellHeal;
+	}
 
 	if (itemClassIs(item, "medpac"))
 		return 30;
@@ -55,6 +87,17 @@ static int forceHealAmountForItem(const Item &item) {
 	if (itemClassIs(item, "stim"))
 		return 10;
 	return 0;
+}
+
+int grenadeDamageForItem(const Item &item) {
+	int dice = item.getNumDice();
+	int die = item.getDieToRoll();
+	if (dice <= 0)
+		dice = 4;
+	if (die <= 0)
+		die = 6;
+
+	return dice * die;
 }
 
 bool isEquipableItem(const Item &item) {
@@ -112,7 +155,47 @@ InventorySlot findEquipSlot(const Item &item, const Creature &creature) {
 	return kInventorySlotInvalid;
 }
 
-ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag) {
+static ItemActionResult useGrenade(Creature &target, Creature &inventoryOwner,
+                                   const Item &item, const Common::UString &tag, Module *module) {
+	ItemActionResult result;
+
+	if (!module) {
+		result.message = "Grenades cannot be used here.";
+		return result;
+	}
+
+	Area *area = module->getCurrentArea();
+	if (!area) {
+		result.message = "Grenades cannot be used here.";
+		return result;
+	}
+
+	const int damage = grenadeDamageForItem(item);
+	int targetsHit = 0;
+
+	for (Creature *creature : area->getCreatures()) {
+		if (!creature || creature->isDead() || creature->isPC())
+			continue;
+		if (module->isObjectPartyMember(creature))
+			continue;
+		if (target.getDistanceTo(creature) > 8.0f)
+			continue;
+
+		creature->applyEffect(Effect(kKotOREffectDamage, damage));
+		++targetsHit;
+	}
+
+	module->playSound("exp_generic");
+	inventoryOwner.getCreatureInfo().removeInventoryItem(tag, 1);
+	result.success = true;
+	result.message = targetsHit > 0 ?
+	                 "Grenade detonated." :
+	                 "Grenade detonated, but nothing was in range.";
+	return result;
+}
+
+ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag,
+                                  Module *module) {
 	ItemActionResult result;
 
 	if (!inventoryOwner.getInventory().hasItem(tag)) {
@@ -123,6 +206,9 @@ ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, co
 	try {
 		Item item(tag);
 
+		if (itemClassIs(item, "grenade"))
+			return useGrenade(target, inventoryOwner, item, tag, module);
+
 		const int heal = healAmountForItem(item);
 		if (heal > 0) {
 			if (target.getCurrentHitPoints() >= target.getMaxHitPoints()) {
@@ -132,6 +218,8 @@ ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, co
 
 			target.applyEffect(Effect(kKotOREffectHeal, heal));
 			inventoryOwner.getCreatureInfo().removeInventoryItem(tag, 1);
+			if (module)
+				module->playSound("gui_actuse");
 			result.success = true;
 			result.message = "Item used.";
 			return result;
@@ -154,6 +242,8 @@ ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, co
 				forcePoints = target.getMaxForcePoints();
 			target.setForcePoints(forcePoints);
 			inventoryOwner.getCreatureInfo().removeInventoryItem(tag, 1);
+			if (module)
+				module->playSound("gui_actuse");
 			result.success = true;
 			result.message = "Item used.";
 			return result;
@@ -196,7 +286,8 @@ ItemActionResult equipInventoryItem(Creature &target, Creature &inventoryOwner, 
 	return result;
 }
 
-ItemActionResult dropInventoryItem(Creature &inventoryOwner, const Common::UString &tag, int count) {
+ItemActionResult dropInventoryItem(Creature &inventoryOwner, const Common::UString &tag, int count,
+                                   Module *module) {
 	ItemActionResult result;
 
 	if (!inventoryOwner.getInventory().hasItem(tag)) {
@@ -208,6 +299,19 @@ ItemActionResult dropInventoryItem(Creature &inventoryOwner, const Common::UStri
 		count = 1;
 
 	inventoryOwner.getCreatureInfo().removeInventoryItem(tag, count);
+
+	if (module) {
+		module->playSound("gui_actuse");
+		Creature *leader = module->getPartyLeader();
+		if (leader) {
+			float x, y, z;
+			leader->getPosition(x, y, z);
+			module->setGlobalString("DROP_LAST_TAG", tag);
+			module->setGlobalNumber("DROP_LAST_X", static_cast<int>(x));
+			module->setGlobalNumber("DROP_LAST_Y", static_cast<int>(y));
+		}
+	}
+
 	result.success = true;
 	result.message = "Item dropped.";
 	return result;

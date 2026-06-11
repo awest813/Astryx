@@ -167,6 +167,14 @@ int Item::getItemPropertyValue(int propertyType, int fallback) const {
 	return fallback;
 }
 
+int Item::getItemPropertySubtype(int propertyType, int fallback) const {
+	for (const ItemPropertyData &prop : _properties) {
+		if (prop.type == propertyType)
+			return prop.subtype;
+	}
+	return fallback;
+}
+
 int Item::getStackSize() const {
 	return _stackSize;
 }

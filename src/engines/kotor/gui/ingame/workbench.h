@@ -54,11 +54,16 @@ private:
 	KotORBase::Module &_module;
 	Common::UString _selectedItemTag;
 	std::vector<Common::UString> _itemTags;
+	std::vector<Common::UString> _upgradeTags;
+	int _selectedUpgradeIndex;
+	int _selectedSlot;
 
 	void fillItemList();
+	void fillUpgradeList();
 	void showItemUpgrades(const Common::UString &itemTag);
 	void applyUpgrade(const Common::UString &upgradeTag, int slot);
 	void selectItemByIndex(int index);
+	int findFirstOpenSlot() const;
 };
 
 } // End of namespace KotOR

@@ -28,6 +28,8 @@
 
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/listbox.h"
+#include "src/engines/kotorbase/item.h"
+#include "src/engines/kotorbase/itemupgrades.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotor/gui/ingame/workbench.h"
@@ -39,7 +41,9 @@ namespace KotOR {
 WorkbenchMenu::WorkbenchMenu(KotORBase::Module &module, ::Engines::Console *console) :
 		KotORBase::GUI(console),
 		_module(module),
-		_selectedItemTag() {
+		_selectedItemTag(),
+		_selectedUpgradeIndex(-1),
+		_selectedSlot(0) {
 
 	load("workbench");
 	addBackground(KotORBase::kBackgroundTypeMenu);
@@ -61,6 +65,8 @@ void WorkbenchMenu::fillItemList() {
 	lb->removeAllItems();
 	_selectedItemTag.clear();
 	_itemTags.clear();
+	_upgradeTags.clear();
+	_selectedUpgradeIndex = -1;
 
 	KotORBase::Creature *pc = _module.getPC();
 	if (!pc)
@@ -71,15 +77,26 @@ void WorkbenchMenu::fillItemList() {
 		if (entry.second.count <= 0)
 			continue;
 
-		_itemTags.push_back(entry.first);
+		try {
+			const KotORBase::Item item(entry.second.tag);
+			if (!KotORBase::isUpgradeableItem(item))
+				continue;
 
-		Common::UString label = entry.first;
-		if (entry.second.count > 1)
-			label += " (" + Common::composeString(entry.second.count) + ")";
-		lb->addItem(label);
+			_itemTags.push_back(entry.first);
+
+			Common::UString label = item.getName();
+			if (entry.second.count > 1)
+				label += " (" + Common::composeString(entry.second.count) + ")";
+			lb->addItem(label);
+		} catch (Common::Exception &e) {
+			warning("WorkbenchMenu::fillItemList: %s", e.what());
+		}
 	}
 
 	lb->refreshItemWidgets();
+
+	if (lb->isEmpty())
+		setWidgetText("LBL_MESSAGE", "No upgradeable items in inventory.");
 }
 
 void WorkbenchMenu::selectItemByIndex(int index) {
@@ -89,22 +106,106 @@ void WorkbenchMenu::selectItemByIndex(int index) {
 	showItemUpgrades(_itemTags[index]);
 }
 
+void WorkbenchMenu::fillUpgradeList() {
+	_upgradeTags.clear();
+	_selectedUpgradeIndex = -1;
+
+	Odyssey::WidgetListBox *lb = getListBox("LB_UPGRADES");
+	if (!lb)
+		lb = getListBox("LB_UPGRADE");
+	if (!lb)
+		return;
+
+	lb->removeAllItems();
+
+	if (_selectedItemTag.empty())
+		return;
+
+	KotORBase::Creature *pc = _module.getPC();
+	if (!pc)
+		return;
+
+	try {
+		const KotORBase::Item target(_selectedItemTag);
+		_upgradeTags = KotORBase::getCompatibleUpgradeParts(target, pc->getInventory());
+
+		for (const Common::UString &tag : _upgradeTags) {
+			try {
+				const KotORBase::Item part(tag);
+				lb->addItem(part.getName());
+			} catch (...) {
+				lb->addItem(tag);
+			}
+		}
+	} catch (Common::Exception &e) {
+		setWidgetText("LBL_MESSAGE", e.what());
+	}
+
+	lb->refreshItemWidgets();
+}
+
+int WorkbenchMenu::findFirstOpenSlot() const {
+	if (_selectedItemTag.empty())
+		return -1;
+
+	try {
+		const KotORBase::Item target(_selectedItemTag);
+		const int slotCount = KotORBase::getUpgradeSlotCount(target);
+		for (int slot = 0; slot < slotCount; ++slot) {
+			if (KotORBase::getAppliedUpgrade(_module, _selectedItemTag, slot).empty())
+				return slot;
+		}
+	} catch (...) {
+	}
+
+	return -1;
+}
+
 void WorkbenchMenu::showItemUpgrades(const Common::UString &itemTag) {
 	_selectedItemTag = itemTag;
-	setWidgetText("LBL_SLOTNAME", itemTag);
+
+	try {
+		const KotORBase::Item item(itemTag);
+		setWidgetText("LBL_SLOTNAME", item.getName());
+
+		Common::UString status = "Upgrade slots: " + Common::composeString(KotORBase::getUpgradeSlotCount(item));
+		const int slotCount = KotORBase::getUpgradeSlotCount(item);
+		for (int slot = 0; slot < slotCount; ++slot) {
+			const Common::UString applied = KotORBase::getAppliedUpgrade(_module, itemTag, slot);
+			if (!applied.empty()) {
+				status += "\nSlot " + Common::composeString(slot + 1) + ": " + applied;
+			}
+		}
+		setWidgetText("LBL_MESSAGE", status);
+	} catch (Common::Exception &e) {
+		setWidgetText("LBL_SLOTNAME", itemTag);
+		setWidgetText("LBL_MESSAGE", e.what());
+	}
+
+	fillUpgradeList();
 }
 
 void WorkbenchMenu::applyUpgrade(const Common::UString &upgradeTag, int slot) {
-	(void)upgradeTag;
-	(void)slot;
-
 	if (_selectedItemTag.empty()) {
 		setWidgetText("LBL_MESSAGE", "Select an item first.");
 		return;
 	}
 
-	_module.playSound("fx_workbench_apply");
-	setWidgetText("LBL_MESSAGE", "Upgrade applied to " + _selectedItemTag);
+	KotORBase::Creature *pc = _module.getPC();
+	if (!pc)
+		return;
+
+	const KotORBase::ItemActionResult result =
+		KotORBase::applyWorkbenchUpgrade(_module, *pc, _selectedItemTag, upgradeTag, slot);
+
+	if (result.success)
+		_module.playSound("fx_workbench_apply");
+
+	setWidgetText("LBL_MESSAGE", result.message);
+	if (result.success) {
+		showItemUpgrades(_selectedItemTag);
+		fillUpgradeList();
+	}
 }
 
 void WorkbenchMenu::callbackActive(Widget &widget) {
@@ -116,7 +217,18 @@ void WorkbenchMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "BTN_ASSEMBLE") {
-		applyUpgrade("selected_upgrade", 0);
+		if (_selectedUpgradeIndex < 0 || _selectedUpgradeIndex >= (int)_upgradeTags.size()) {
+			setWidgetText("LBL_MESSAGE", "Select an upgrade part first.");
+			return;
+		}
+
+		const int slot = findFirstOpenSlot();
+		if (slot < 0) {
+			setWidgetText("LBL_MESSAGE", "All upgrade slots are full.");
+			return;
+		}
+
+		applyUpgrade(_upgradeTags[_selectedUpgradeIndex], slot);
 		return;
 	}
 
@@ -126,6 +238,20 @@ void WorkbenchMenu::callbackActive(Widget &widget) {
 			list = getListBox("LB_ITEMS");
 		if (list)
 			selectItemByIndex(list->getSelectedIndex());
+		return;
+	}
+
+	if (tag == "LB_UPGRADES" || tag == "LB_UPGRADE" ||
+	    tag.beginsWith("LB_UPGRADES") || tag.beginsWith("LB_UPGRADE")) {
+		Odyssey::WidgetListBox *list = dynamic_cast<Odyssey::WidgetListBox *>(&widget);
+		if (!list) {
+			list = getListBox("LB_UPGRADES");
+			if (!list)
+				list = getListBox("LB_UPGRADE");
+		}
+		if (list)
+			_selectedUpgradeIndex = list->getSelectedIndex();
+		return;
 	}
 }
 

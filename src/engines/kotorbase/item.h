@@ -60,6 +60,8 @@ public:
 	bool hasItemProperty(int propertyType) const;
 	/** Returns Param1Value for the first property of @p propertyType, or @p fallback. */
 	int getItemPropertyValue(int propertyType, int fallback = 0) const;
+	/** Returns Subtype for the first property of @p propertyType, or @p fallback. */
+	int getItemPropertySubtype(int propertyType, int fallback = 0) const;
 
 	int  getStackSize() const;
 	void setStackSize(int size);

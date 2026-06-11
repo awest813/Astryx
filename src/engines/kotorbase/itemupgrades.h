@@ -19,43 +19,40 @@
  */
 
 /** @file
- *  Inventory item use, equip, and drop helpers for KotOR games.
+ *  Workbench upgrade helpers for KotOR games.
  */
 
-#ifndef ENGINES_KOTORBASE_ITEMACTIONS_H
-#define ENGINES_KOTORBASE_ITEMACTIONS_H
+#ifndef ENGINES_KOTORBASE_ITEMUPGRADES_H
+#define ENGINES_KOTORBASE_ITEMUPGRADES_H
+
+#include <vector>
 
 #include "src/common/ustring.h"
-
-#include "src/engines/kotorbase/types.h"
 
 namespace Engines {
 
 namespace KotORBase {
 
 class Creature;
+class Inventory;
 class Item;
 class Module;
 
-struct ItemActionResult {
-	bool success { false };
-	Common::UString message;
-};
+struct ItemActionResult;
 
-bool isEquipableItem(const Item &item);
-bool isUsableConsumable(const Item &item);
-InventorySlot findEquipSlot(const Item &item, const Creature &creature);
+bool isUpgradeableItem(const Item &item);
+bool isUpgradeComponent(const Item &item);
+int getUpgradeSlotCount(const Item &item);
 
-int grenadeDamageForItem(const Item &item);
+Common::UString getAppliedUpgrade(const Module &module, const Common::UString &itemTag, int slot);
+std::vector<Common::UString> getCompatibleUpgradeParts(const Item &target, const Inventory &inventory);
 
-ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag,
-                                  Module *module = nullptr);
-ItemActionResult equipInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag);
-ItemActionResult dropInventoryItem(Creature &inventoryOwner, const Common::UString &tag, int count = 1,
-                                   Module *module = nullptr);
+ItemActionResult applyWorkbenchUpgrade(Module &module, Creature &inventoryOwner,
+                                       const Common::UString &itemTag,
+                                       const Common::UString &upgradeTag, int slot);
 
 } // End of namespace KotORBase
 
 } // End of namespace Engines
 
-#endif // ENGINES_KOTORBASE_ITEMACTIONS_H
+#endif // ENGINES_KOTORBASE_ITEMUPGRADES_H

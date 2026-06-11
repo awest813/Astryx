@@ -232,7 +232,7 @@ bool MenuInventory::performUseSelectedItem() {
 		return false;
 
 	const KotORBase::ItemActionResult result =
-		KotORBase::useInventoryItem(*leader, *pc, _visibleItems[_selectedIndex]);
+		KotORBase::useInventoryItem(*leader, *pc, _visibleItems[_selectedIndex], _module);
 
 	setStatusMessage(result.message);
 	if (result.success && _module->getCurrentArea())
@@ -271,7 +271,7 @@ bool MenuInventory::performDropSelectedItem() {
 		return false;
 
 	const KotORBase::ItemActionResult result =
-		KotORBase::dropInventoryItem(*pc, _visibleItems[_selectedIndex], 1);
+		KotORBase::dropInventoryItem(*pc, _visibleItems[_selectedIndex], 1, _module);
 
 	setStatusMessage(result.message);
 	if (result.success)
