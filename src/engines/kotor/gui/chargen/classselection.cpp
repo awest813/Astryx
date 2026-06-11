@@ -56,11 +56,11 @@ ClassSelectionMenu::ClassSelectionMenu(KotORBase::Module *module, ::Engines::Con
 	// Get the description label
 	_labelDesc = getLabel("LBL_DESC");
 	_labelDesc->setWrapped(true);
-	_labelDesc->setText(TalkMan.getString(32111));
+	setWidgetText("LBL_DESC", TalkMan.getString(32111));
 
 	// Get the title label
 	_labelTitle = getLabel("LBL_CLASS");
-	_labelTitle->setText("");
+	setWidgetText("LBL_CLASS", "");
 
 	// Get the class descriptions
 	_soldierDesc = TalkMan.getString(32111);
@@ -148,38 +148,38 @@ void ClassSelectionMenu::createCharacterGeneration(CharacterGenerationInfo *info
 void ClassSelectionMenu::callbackRun() {
 	// Check if a specific button is hovered and set title and description
 	if (_maleSoldierButton->isHovered() && _hoveredButton != _maleSoldierButton) {
-		_labelDesc->setText(_soldierDesc);
-		_labelTitle->setText(_soldierMaleTitle);
+		setWidgetText("LBL_DESC", _soldierDesc);
+		setWidgetText("LBL_CLASS", _soldierMaleTitle);
 		_hoveredButton = _maleSoldierButton;
 		return;
 	}
 	if (_femaleSoldierButton->isHovered() && _hoveredButton != _femaleSoldierButton) {
-		_labelDesc->setText(_soldierDesc);
-		_labelTitle->setText(_soldierFemaleTitle);
+		setWidgetText("LBL_DESC", _soldierDesc);
+		setWidgetText("LBL_CLASS", _soldierFemaleTitle);
 		_hoveredButton = _femaleSoldierButton;
 		return;
 	}
 	if (_maleScoutButton->isHovered() && _hoveredButton != _maleScoutButton) {
-		_labelDesc->setText(_scoutDesc);
-		_labelTitle->setText(_scoutMaleTitle);
+		setWidgetText("LBL_DESC", _scoutDesc);
+		setWidgetText("LBL_CLASS", _scoutMaleTitle);
 		_hoveredButton = _maleScoutButton;
 		return;
 	}
 	if (_femaleScoutButton->isHovered() && _hoveredButton != _femaleScoutButton) {
-		_labelDesc->setText(_scoutDesc);
-		_labelTitle->setText(_scoutFemaleTitle);
+		setWidgetText("LBL_DESC", _scoutDesc);
+		setWidgetText("LBL_CLASS", _scoutFemaleTitle);
 		_hoveredButton = _femaleScoutButton;
 		return;
 	}
 	if (_maleScoundrelButton->isHovered() && _hoveredButton != _maleScoundrelButton) {
-		_labelDesc->setText(_scoundrelDesc);
-		_labelTitle->setText(_scoundrelMaleTitle);
+		setWidgetText("LBL_DESC", _scoundrelDesc);
+		setWidgetText("LBL_CLASS", _scoundrelMaleTitle);
 		_hoveredButton = _maleScoundrelButton;
 		return;
 	}
 	if (_femaleScoundrelButton->isHovered() && _hoveredButton != _femaleScoundrelButton) {
-		_labelDesc->setText(_scoundrelDesc);
-		_labelTitle->setText(_scoundrelFemaleTitle);
+		setWidgetText("LBL_DESC", _scoundrelDesc);
+		setWidgetText("LBL_CLASS", _scoundrelFemaleTitle);
 		_hoveredButton = _femaleScoundrelButton;
 		return;
 	}

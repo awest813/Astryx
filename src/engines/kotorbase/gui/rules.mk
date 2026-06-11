@@ -32,6 +32,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/gui/floatingtext.h \
     src/engines/kotorbase/gui/hud.h \
     src/engines/kotorbase/gui/menubase.h \
+    src/engines/kotorbase/gui/guiskilltags.h \
     $(EMPTY)
 
 src_engines_kotorbase_libkotorbase_la_SOURCES += \

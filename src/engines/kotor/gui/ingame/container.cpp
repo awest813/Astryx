@@ -53,7 +53,7 @@ ContainerMenu::ContainerMenu(Console *console) : KotORBase::GUI(console) {
 
 void ContainerMenu::fillFromInventory(const KotORBase::Inventory &inv) {
 	if (inv.getItems().empty())
-		getLabel("LBL_MESSAGE")->setText(TalkMan.getString(394));
+		setWidgetText("LBL_MESSAGE", TalkMan.getString(394));
 
 	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
 	lbItems->removeAllItems();

@@ -26,6 +26,9 @@
 #include <vector>
 
 #include "src/common/util.h"
+#include "src/common/strutil.h"
+
+#include "src/aurora/talkman.h"
 
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
@@ -221,6 +224,41 @@ static int abilityModifier(int score) {
 	if (mod >= 0)
 		return mod / 2;
 	return (mod - 1) / 2;
+}
+
+Common::UString getClassDisplayName(Class charClass) {
+	uint32_t strRef = 0;
+
+	switch (charClass) {
+	case kClassSoldier:   strRef = 134; break;
+	case kClassScout:     strRef = 133; break;
+	case kClassScoundrel: strRef = 135; break;
+	default:
+		break;
+	}
+
+	if (strRef)
+		return TalkMan.getString(strRef);
+
+	switch (charClass) {
+	case kClassJediGuardian:     return "Jedi Guardian";
+	case kClassJediSentinel:     return "Jedi Sentinel";
+	case kClassJediConsular:     return "Jedi Consular";
+	case kClassJediWeaponMaster: return "Jedi Weapon Master";
+	case kClassJediMaster:       return "Jedi Master";
+	case kClassJediWatchMan:     return "Jedi Watchman";
+	case kClassSithMarauder:     return "Sith Marauder";
+	case kClassSithLord:         return "Sith Lord";
+	case kClassSithAssassin:     return "Sith Assassin";
+	default:
+		return "";
+	}
+}
+
+Common::UString formatAbilityModifier(int modifier) {
+	if (modifier > 0)
+		return "+" + Common::composeString(modifier);
+	return Common::composeString(modifier);
 }
 
 CharacterPreviewStats previewStatsAtLevel1(Class charClass, const CreatureInfo::Abilities &abilities) {

@@ -68,15 +68,12 @@ void MenuJournal::fillJournal() {
 		list->addItem(quest);
 	}
 
-	Odyssey::WidgetLabel *desc = getLabel("LBL_QUESTDESC");
-	if (desc) {
-		if (list->isEmpty()) {
-			desc->setText(_category == kCategoryActive ? 
-				"No active missions in your log." : 
-				"No completed missions in your log.");
-		} else {
-			desc->setText("Select a mission to review your progress and historical data.");
-		}
+	if (list->isEmpty()) {
+		setWidgetText("LBL_QUESTDESC", _category == kCategoryActive ?
+			"No active missions in your log." :
+			"No completed missions in your log.");
+	} else {
+		setWidgetText("LBL_QUESTDESC", "Select a mission to review your progress and historical data.");
 	}
 }
 
@@ -100,11 +97,8 @@ void MenuJournal::callbackActive(Widget &widget) {
 			int index = list->getSelectedIndex();
 			if (index >= 0) {
 				Common::UString selected = list->getItem(index);
-				Odyssey::WidgetLabel *desc = getLabel("LBL_QUESTDESC");
-				if (desc) {
-					// In a full implementation, we'd lookup localized description
-					desc->setText("Selected Mission: " + selected + "\n\nDetails of the current objective and historical logs for this mission will be displayed here.");
-				}
+				setWidgetText("LBL_QUESTDESC",
+					"Selected Mission: " + selected + "\n\nDetails of the current objective and historical logs for this mission will be displayed here.");
 			}
 		}
 		return;

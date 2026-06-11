@@ -38,6 +38,9 @@ using Engines::KotORBase::kClassSoldier;
 using Engines::KotORBase::kFeatPowerAttack;
 using Engines::KotORBase::levelUpThreshold;
 using Engines::KotORBase::getSelectableFeats;
+using Engines::KotORBase::getClassDisplayName;
+using Engines::KotORBase::formatAbilityModifier;
+using Engines::KotORBase::kClassJediConsular;
 
 TEST(LevelUpHelpers, ThresholdLevel2Is1000) {
 	EXPECT_EQ(levelUpThreshold(1), 1000);
@@ -90,6 +93,18 @@ TEST(LevelUpHelpers, PreviewStatsSoldierCon14) {
 	EXPECT_EQ(stats.vitality, 12); // d10 + 2 CON
 	EXPECT_EQ(stats.defense, 11);  // 10 + 1 DEX
 	EXPECT_EQ(stats.fortitude, 13);
+}
+
+TEST(LevelUpHelpers, FormatAbilityModifierPositive) {
+	EXPECT_EQ(formatAbilityModifier(3), "+3");
+}
+
+TEST(LevelUpHelpers, FormatAbilityModifierNegative) {
+	EXPECT_EQ(formatAbilityModifier(-2), "-2");
+}
+
+TEST(LevelUpHelpers, ClassDisplayNameJediFallback) {
+	EXPECT_EQ(getClassDisplayName(kClassJediConsular), "Jedi Consular");
 }
 
 TEST(LevelUpHelpers, SoldierFeatListExcludesKnownFeats) {

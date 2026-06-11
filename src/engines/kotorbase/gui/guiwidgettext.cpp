@@ -22,6 +22,8 @@
  *  Helpers for setting dynamic text on KotOR GUI widgets.
  */
 
+#include "src/engines/aurora/widget.h"
+
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
 #include "src/engines/odyssey/widget.h"
@@ -50,8 +52,15 @@ void GUI::setWidgetText(const Common::UString &tag, const Common::UString &text)
 		return;
 	}
 
-	if (Odyssey::WidgetButton *button = getButton(tag, false))
+	if (Odyssey::WidgetButton *button = getButton(tag, false)) {
 		applyWidgetText(button, text);
+		return;
+	}
+
+	if (Widget *widget = getWidget(tag, false)) {
+		if (Odyssey::Widget *ody = dynamic_cast<Odyssey::Widget *>(widget))
+			applyWidgetText(ody, text);
+	}
 }
 
 void GUI::setWidgetTextAliases(const char *const *tags, size_t count, const Common::UString &text) {

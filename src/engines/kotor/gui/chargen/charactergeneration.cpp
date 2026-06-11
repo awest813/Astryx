@@ -32,8 +32,6 @@
 #include "src/common/strutil.h"
 #include "src/common/configman.h"
 
-#include "src/aurora/talkman.h"
-
 #include "src/graphics/aurora/subscenequad.h"
 #include "src/graphics/aurora/model.h"
 
@@ -91,19 +89,7 @@ CharacterGenerationMenu::CharacterGenerationMenu(KotORBase::Module *module,
 			widget->setInvisible(true);
 	}
 
-	switch (pc->getClass()) {
-		case KotORBase::kClassSoldier:
-			setWidgetText("LBL_CLASS", TalkMan.getString(134));
-			break;
-		case KotORBase::kClassScout:
-			setWidgetText("LBL_CLASS", TalkMan.getString(133));
-			break;
-		case KotORBase::kClassScoundrel:
-			setWidgetText("LBL_CLASS", TalkMan.getString(135));
-			break;
-		default:
-			setWidgetText("LBL_CLASS", "");
-	}
+	setWidgetText("LBL_CLASS", KotORBase::getClassDisplayName(pc->getClass()));
 
 	Odyssey::WidgetLabel *lblPortrait = getLabel("PORTRAIT_LBL");
 	if (lblPortrait)

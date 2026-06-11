@@ -64,9 +64,7 @@ MenuEquipment::MenuEquipment(KotORBase::Module &module, Console *console) :
 	_dirty = true;
 	_selectedItem = -1;
 
-	Odyssey::WidgetLabel *slotName = getLabel("LBL_SLOTNAME");
-	if (slotName)
-		slotName->setText(getSlotName(KotORBase::kInventorySlotBody));
+	setWidgetText("LBL_SLOTNAME", getSlotName(KotORBase::kInventorySlotBody));
 
 	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
 	if (lbItems) {
@@ -156,7 +154,7 @@ void MenuEquipment::callbackRun() {
 
 		_selectedSlot = newSlot;
 		getSlotButton(_selectedSlot)->setHighlight(true);
-		getLabel("LBL_SLOTNAME")->setText(getSlotName(_selectedSlot));
+		setWidgetText("LBL_SLOTNAME", getSlotName(_selectedSlot));
 		_dirty = true;
 	}
 }

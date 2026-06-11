@@ -46,7 +46,7 @@ CharacterGenerationNameMenu::CharacterGenerationNameMenu(KotORBase::CharacterGen
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
 	_nameLabel = getLabel("NAME_BOX_EDIT");
-	_nameLabel->setText(_info.getName() + "_");
+	setWidgetText("NAME_BOX_EDIT", _info.getName() + "_");
 
 	EventMan.enableTextInput(true);
 	EventMan.enableKeyRepeat(true);
@@ -55,7 +55,7 @@ CharacterGenerationNameMenu::CharacterGenerationNameMenu(KotORBase::CharacterGen
 void CharacterGenerationNameMenu::callbackActive(Widget &widget) {
 	if (widget.getTag() == "BTN_RANDOM") {
 		_name = _humanFirst.generateRandomName(8) + " " + _humanLast.generateRandomName(8);
-		_nameLabel->setText(_name + "_");
+		setWidgetText("NAME_BOX_EDIT", _name + "_");
 		_info.setName(_name);
 		return;
 	}
@@ -80,7 +80,7 @@ void CharacterGenerationNameMenu::callbackKeyInput(const Events::Key &key, const
 	if (key == Events::kKeyBackspace && type == Events::kEventKeyDown) {
 		if (!_name.empty()) {
 			_name.erase(--_name.end());
-			_nameLabel->setText(_name + "_");
+			setWidgetText("NAME_BOX_EDIT", _name + "_");
 			_info.setName(_name);
 		}
 	}
@@ -94,7 +94,7 @@ void CharacterGenerationNameMenu::callbackTextInput(const Common::UString &text)
 
 	_name += text;
 	_info.setName(_name);
-	_nameLabel->setText(_name + "_");
+	setWidgetText("NAME_BOX_EDIT", _name + "_");
 }
 
 } // End of namespace KotOR

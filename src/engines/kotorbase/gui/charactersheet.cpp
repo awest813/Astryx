@@ -25,50 +25,28 @@
 #include "src/common/util.h"
 #include "src/common/strutil.h"
 
-#include "src/aurora/talkman.h"
-
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotorbase/gui/gui.h"
+#include "src/engines/kotorbase/gui/guiskilltags.h"
 
 namespace Engines {
 
 namespace KotORBase {
 
-static Common::UString classDisplayName(Class charClass) {
-	uint32_t strRef = 0;
-
-	switch (charClass) {
-	case kClassSoldier:   strRef = 134; break;
-	case kClassScout:     strRef = 133; break;
-	case kClassScoundrel: strRef = 135; break;
-	default:
-		break;
-	}
-
-	if (strRef)
-		return TalkMan.getString(strRef);
-
-	switch (charClass) {
-	case kClassJediGuardian:     return "Jedi Guardian";
-	case kClassJediSentinel:     return "Jedi Sentinel";
-	case kClassJediConsular:     return "Jedi Consular";
-	case kClassJediWeaponMaster: return "Jedi Weapon Master";
-	case kClassJediMaster:       return "Jedi Master";
-	case kClassJediWatchMan:     return "Jedi Watchman";
-	case kClassSithMarauder:     return "Sith Marauder";
-	case kClassSithLord:         return "Sith Lord";
-	case kClassSithAssassin:     return "Sith Assassin";
-	default:
-		return "";
-	}
-}
-
 static void setStatPair(GUI &gui, const char *primaryTag, const char *legacyTag, const Common::UString &text) {
 	gui.setWidgetText(primaryTag, text);
 	if (legacyTag)
 		gui.setWidgetText(legacyTag, text);
+}
+
+static void setStatPairMany(GUI &gui, const char *const *tags, size_t count, const Common::UString &text) {
+	for (size_t i = 0; i < count; ++i) {
+		if (tags[i])
+			gui.setWidgetText(tags[i], text);
+	}
 }
 
 void GUI::populateCharacterSheet(Creature &creature) {
@@ -83,7 +61,7 @@ void GUI::populateCharacterSheet(Creature &creature) {
 	for (int i = 0; i < 2; ++i) {
 		const Common::UString index = Common::composeString(i + 1);
 		if (i < numClasses) {
-			setWidgetText("LBL_CLASS" + index, classDisplayName(info.getClassByPosition(i)));
+			setWidgetText("LBL_CLASS" + index, getClassDisplayName(info.getClassByPosition(i)));
 			setWidgetText("LBL_LEVEL" + index, Common::composeString(info.getLevelByPosition(i)));
 		} else {
 			setWidgetText("LBL_CLASS" + index, "");
@@ -92,7 +70,7 @@ void GUI::populateCharacterSheet(Creature &creature) {
 	}
 
 	if (numClasses == 1)
-		setWidgetText("LBL_CLASS", classDisplayName(info.getClassByPosition(0)));
+		setWidgetText("LBL_CLASS", getClassDisplayName(info.getClassByPosition(0)));
 	else if (numClasses == 0)
 		setWidgetText("LBL_CLASS", "");
 
@@ -108,6 +86,21 @@ void GUI::populateCharacterSheet(Creature &creature) {
 	setStatPair(*this, "LBL_FORT_VAL", "FORT_VAL_LBL", Common::composeString(fort));
 	setStatPair(*this, "LBL_REFL_VAL", "REFL_VAL_LBL", Common::composeString(refl));
 	setStatPair(*this, "LBL_WILL_VAL", "WILL_VAL_LBL", Common::composeString(will));
+
+	const Common::UString xp = Common::composeString(creature.getCurrentXP());
+	setStatPairMany(*this,
+		(const char *const[]){ "LBL_XP_VAL", "XP_VAL_LBL", "LBL_XP" }, 3, xp);
+
+	if (info.isJedi()) {
+		const Common::UString forcePoints = Common::composeString(creature.getForcePoints())
+		                                  + "/" + Common::composeString(creature.getMaxForcePoints());
+		setStatPairMany(*this,
+			(const char *const[]){ "LBL_FORCE_VAL", "FORCE_VAL_LBL", "FP_VAL_LBL", "LBL_FORCE" }, 4,
+			forcePoints);
+	}
+
+	setWidgetText("LBL_BAB_VAL", Common::composeString(creature.getBAB()));
+	setWidgetText("BAB_VAL_LBL", Common::composeString(creature.getBAB()));
 }
 
 void GUI::populateAbilitiesSheet(Creature &creature) {
@@ -116,19 +109,31 @@ void GUI::populateAbilitiesSheet(Creature &creature) {
 	static const struct {
 		Ability ability;
 		const char *pointTag;
-		const char *legacyTag;
+		const char *valTag;
+		const char *modTag;
+		const char *legacyPointTag;
 	} kAbilityTags[] = {
-		{ kAbilityStrength,     "STR_POINTS_BTN", "BTN_STR_PLUS"  },
-		{ kAbilityDexterity,    "DEX_POINTS_BTN", "BTN_DEX_PLUS"  },
-		{ kAbilityConstitution, "CON_POINTS_BTN", "BTN_CON_PLUS"  },
-		{ kAbilityIntelligence, "INT_POINTS_BTN", "BTN_INT_PLUS"  },
-		{ kAbilityWisdom,       "WIS_POINTS_BTN", "BTN_WIS_PLUS"  },
-		{ kAbilityCharisma,     "CHA_POINTS_BTN", "BTN_CHA_PLUS"  },
+		{ kAbilityStrength,     "STR_POINTS_BTN", "STR_VAL_BTN", "STR_MOD_BTN", "BTN_STR_PLUS"  },
+		{ kAbilityDexterity,    "DEX_POINTS_BTN", "DEX_VAL_BTN", "DEX_MOD_BTN", "BTN_DEX_PLUS"  },
+		{ kAbilityConstitution, "CON_POINTS_BTN", "CON_VAL_BTN", "CON_MOD_BTN", "BTN_CON_PLUS"  },
+		{ kAbilityIntelligence, "INT_POINTS_BTN", "INT_VAL_BTN", "INT_MOD_BTN", "BTN_INT_PLUS"  },
+		{ kAbilityWisdom,       "WIS_POINTS_BTN", "WIS_VAL_BTN", "WIS_MOD_BTN", "BTN_WIS_PLUS"  },
+		{ kAbilityCharisma,     "CHA_POINTS_BTN", "CHA_VAL_BTN", "CHA_MOD_BTN", "BTN_CHA_PLUS"  },
 	};
 
 	for (size_t i = 0; i < ARRAYSIZE(kAbilityTags); ++i) {
 		const Common::UString score = Common::composeString(info.getAbilityScore(kAbilityTags[i].ability));
-		setStatPair(*this, kAbilityTags[i].pointTag, kAbilityTags[i].legacyTag, score);
+		const Common::UString mod = formatAbilityModifier(info.getAbilityModifier(kAbilityTags[i].ability));
+
+		setStatPairMany(*this,
+			(const char *const[]){ kAbilityTags[i].pointTag, kAbilityTags[i].valTag, kAbilityTags[i].legacyPointTag },
+			3, score);
+		setWidgetText(kAbilityTags[i].modTag, mod);
+	}
+
+	for (size_t i = 0; i < kSkillWidgetTagCount; ++i) {
+		const Common::UString rank = Common::composeString(info.getSkillRank(kSkillWidgetTags[i].skill));
+		setStatPair(*this, kSkillWidgetTags[i].pointTag, kSkillWidgetTags[i].legacyPointTag, rank);
 	}
 }
 

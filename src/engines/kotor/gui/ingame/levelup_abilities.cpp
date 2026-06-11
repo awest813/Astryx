@@ -28,6 +28,8 @@
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
 
+#include "src/engines/kotorbase/levelup.h"
+
 #include "src/engines/kotor/gui/ingame/levelup_abilities.h"
 
 namespace Engines {
@@ -62,12 +64,25 @@ LevelUpAbilitiesMenu::~LevelUpAbilitiesMenu() {
 }
 
 void LevelUpAbilitiesMenu::updateLabels() {
-	setWidgetText("STR_POINTS_BTN", Common::composeString(_str));
-	setWidgetText("DEX_POINTS_BTN", Common::composeString(_dex));
-	setWidgetText("CON_POINTS_BTN", Common::composeString(_con));
-	setWidgetText("INT_POINTS_BTN", Common::composeString(_intl));
-	setWidgetText("WIS_POINTS_BTN", Common::composeString(_wis));
-	setWidgetText("CHA_POINTS_BTN", Common::composeString(_cha));
+	static const struct {
+		uint32_t *value;
+		const char *pointTag;
+		const char *modTag;
+	} kAbilityRows[] = {
+		{ &_str,  "STR_POINTS_BTN", "STR_MOD_BTN" },
+		{ &_dex,  "DEX_POINTS_BTN", "DEX_MOD_BTN" },
+		{ &_con,  "CON_POINTS_BTN", "CON_MOD_BTN" },
+		{ &_intl, "INT_POINTS_BTN", "INT_MOD_BTN" },
+		{ &_wis,  "WIS_POINTS_BTN", "WIS_MOD_BTN" },
+		{ &_cha,  "CHA_POINTS_BTN", "CHA_MOD_BTN" },
+	};
+
+	for (size_t i = 0; i < ARRAYSIZE(kAbilityRows); ++i) {
+		const int score = static_cast<int>(*kAbilityRows[i].value);
+		const int mod = (score - 10 >= 0) ? (score - 10) / 2 : (score - 10 - 1) / 2;
+		setWidgetText(kAbilityRows[i].pointTag, Common::composeString(score));
+		setWidgetText(kAbilityRows[i].modTag, KotORBase::formatAbilityModifier(mod));
+	}
 
 	setWidgetText("REMAINING_SELECTIONS_LBL", Common::composeString(_remainingPoints));
 }

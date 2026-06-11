@@ -28,6 +28,8 @@
 #include <vector>
 #include <cstdint>
 
+#include "src/common/ustring.h"
+
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/types.h"
 
@@ -82,6 +84,12 @@ struct CharacterPreviewStats {
 
 /** Preview HP and saving throws at level 1 from ability scores. */
 CharacterPreviewStats previewStatsAtLevel1(Class charClass, const CreatureInfo::Abilities &abilities);
+
+/** Localized (or fallback English) label for a base/Jedi class. */
+Common::UString getClassDisplayName(Class charClass);
+
+/** Format an ability modifier for GUI display (e.g. "+3", "-1", "0"). */
+Common::UString formatAbilityModifier(int modifier);
 
 } // End of namespace KotORBase
 
