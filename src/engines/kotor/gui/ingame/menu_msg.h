@@ -35,8 +35,16 @@ class MenuMessages : public KotORBase::GUI {
 public:
 	MenuMessages(::Engines::Console *console = 0);
 
+	void setModule(KotORBase::Module *module);
+	void show() override;
+
 protected:
 	void callbackActive(Widget &widget);
+
+private:
+	void fillMessages();
+
+	KotORBase::Module *_module { nullptr };
 };
 
 } // End of namespace KotOR

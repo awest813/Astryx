@@ -114,14 +114,14 @@ void Functions::executeScript(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::removeJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &plotId = ctx.getParams()[0].getString();
-	_game->getModule().setGlobalNumber("JRNL_" + plotId, -1);
+	_game->getModule().removeJournalQuestEntry(plotId);
 	info("QUEST REMOVED: %s", plotId.c_str());
 }
 
 void Functions::getJournalEntry(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &plotId = ctx.getParams()[0].getString();
 	ctx.getReturn().setType(Aurora::NWScript::kTypeInt);
-	ctx.getReturn() = _game->getModule().getGlobalNumber("JRNL_" + plotId);
+	ctx.getReturn() = static_cast<int>(_game->getModule().getJournalQuestState(plotId));
 }
 
 void Functions::getJournalQuestExperience(Aurora::NWScript::FunctionContext &ctx) {

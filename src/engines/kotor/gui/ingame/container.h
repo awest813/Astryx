@@ -25,6 +25,8 @@
 #ifndef ENGINES_KOTOR_GUI_INGAME_CONTAINER_H
 #define ENGINES_KOTOR_GUI_INGAME_CONTAINER_H
 
+#include <vector>
+
 #include "src/engines/aurora/console.h"
 
 #include "src/engines/kotorbase/inventory.h"
@@ -39,11 +41,21 @@ namespace KotOR {
 class ContainerMenu : public KotORBase::GUI {
 public:
 	ContainerMenu(Engines::Console *console = 0);
+
+	void bindInventories(KotORBase::Inventory &container, KotORBase::Inventory &party);
 	void fillFromInventory(const KotORBase::Inventory &inv);
 
 protected:
 	void callbackActive(Widget &widget);
 	void callbackKeyInput(const Events::Key &key, const Events::EventType &type);
+
+private:
+	void takeSelectedItem();
+	void takeAllItems();
+
+	KotORBase::Inventory *_container { nullptr };
+	KotORBase::Inventory *_party { nullptr };
+	std::vector<Common::UString> _itemTags;
 };
 
 } // End of namespace KotOR

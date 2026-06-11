@@ -157,7 +157,8 @@ bool Game::hasModule(const Common::UString &module) const {
 	return found != _modules.end();
 }
 
-void Game::showLevelUpGUI() {
+void Game::showLevelUpGUI(KotORBase::Creature *target) {
+	(void)target;
 	warning("KotOR II level-up GUI is not implemented yet");
 }
 

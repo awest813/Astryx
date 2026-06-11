@@ -22,9 +22,12 @@
  *  The ingame journal menu.
  */
 
+#include "src/aurora/talkman.h"
+
 #include "src/engines/odyssey/listbox.h"
 #include "src/engines/odyssey/label.h"
 
+#include "src/engines/kotorbase/journal.h"
 #include "src/engines/kotorbase/module.h"
 
 #include "src/engines/kotor/gui/ingame/menu_jou.h"
@@ -33,7 +36,15 @@ namespace Engines {
 
 namespace KotOR {
 
-MenuJournal::MenuJournal(Console *console) : KotORBase::GUI(console), _category(kCategoryActive) {
+static Common::UString journalText(uint32_t strref, const char *fallback) {
+	const Common::UString &localized = TalkMan.getString(strref);
+	return localized.empty() ? fallback : localized;
+}
+
+MenuJournal::MenuJournal(Console *console) :
+		KotORBase::GUI(console),
+		_category(kCategoryActive) {
+
 	load("journal");
 }
 
@@ -55,25 +66,69 @@ void MenuJournal::fillJournal() {
 		return;
 
 	list->removeAllItems();
+	_questTags.clear();
+	_worldTags.clear();
+
+	const KotORBase::JournalCatalog &catalog = KotORBase::JournalCatalog::get();
 
 	const std::map<Common::UString, uint32_t> &journal = _module->getJournal();
-	for (auto const& [quest, state] : journal) {
-		// Mock logic for completion
-		bool completed = (state >= 100); 
-		
+	for (const auto &entry : journal) {
+		const bool completed = catalog.isQuestCompleted(entry.first, entry.second);
+
 		if ((_category == kCategoryActive && completed) ||
 		    (_category == kCategoryCompleted && !completed))
 			continue;
 
-		list->addItem(quest);
+		_questTags.push_back(entry.first);
+		list->addItem(catalog.getQuestTitle(entry.first));
 	}
+
+	for (const auto &worldEntry : _module->getJournalWorldEntries()) {
+		if (_category != kCategoryActive)
+			continue;
+
+		_worldTags.push_back(worldEntry.tag);
+		list->addItem(worldEntry.tag);
+	}
+
+	list->refreshItemWidgets();
 
 	if (list->isEmpty()) {
 		setWidgetText("LBL_QUESTDESC", _category == kCategoryActive ?
-			"No active missions in your log." :
-			"No completed missions in your log.");
+			journalText(395, "No active missions in your log.") :
+			journalText(396, "No completed missions in your log."));
 	} else {
-		setWidgetText("LBL_QUESTDESC", "Select a mission to review your progress and historical data.");
+		setWidgetText("LBL_QUESTDESC", journalText(397, "Select a mission to review your progress."));
+	}
+}
+
+void MenuJournal::showQuestDescription(int index) {
+	if (!_module || index < 0)
+		return;
+
+	const KotORBase::JournalCatalog &catalog = KotORBase::JournalCatalog::get();
+
+	if (index < (int)_questTags.size()) {
+		const Common::UString &quest = _questTags[index];
+		const uint32_t state = _module->getJournalQuestState(quest);
+		const Common::UString title = catalog.getQuestTitle(quest);
+		Common::UString body = catalog.getQuestEntryText(quest, state);
+
+		if (body.empty())
+			body = journalText(398, "No journal text is available for this objective yet.");
+
+		setWidgetText("LBL_QUESTDESC", title + "\n\n" + body);
+		return;
+	}
+
+	const int worldIndex = index - static_cast<int>(_questTags.size());
+	if (worldIndex >= 0 && worldIndex < (int)_worldTags.size()) {
+		for (const auto &worldEntry : _module->getJournalWorldEntries()) {
+			if (worldEntry.tag == _worldTags[worldIndex]) {
+				setWidgetText("LBL_QUESTDESC", worldEntry.tag + "\n\n" + worldEntry.text);
+				return;
+			}
+		}
 	}
 }
 
@@ -91,16 +146,12 @@ void MenuJournal::callbackActive(Widget &widget) {
 		return;
 	}
 
-	if (tag == "LIST_QUESTS") {
+	if (tag == "LIST_QUESTS" || tag.beginsWith("LIST_QUESTS")) {
 		Odyssey::WidgetListBox *list = dynamic_cast<Odyssey::WidgetListBox *>(&widget);
-		if (list) {
-			int index = list->getSelectedIndex();
-			if (index >= 0) {
-				Common::UString selected = list->getItem(index);
-				setWidgetText("LBL_QUESTDESC",
-					"Selected Mission: " + selected + "\n\nDetails of the current objective and historical logs for this mission will be displayed here.");
-			}
-		}
+		if (!list)
+			list = getListBox("LIST_QUESTS");
+		if (list)
+			showQuestDescription(list->getSelectedIndex());
 		return;
 	}
 

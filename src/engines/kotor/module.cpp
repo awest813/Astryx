@@ -233,6 +233,8 @@ void Module::onFrameUpdate(float frameTime) {
 
 void Module::showJournal() {
 	MenuJournal gui(_console);
+	gui.setModule(this);
+	gui.show();
 	gui.run();
 }
 

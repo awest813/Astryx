@@ -64,8 +64,8 @@ void Functions::sendMessageToPC(Aurora::NWScript::FunctionContext &ctx) {
 	}
 
 	const Common::UString &msg = ctx.getParams()[1].getString();
-
-	warning("Send message to PC \"%s\": \"%s\"", pc->getName().c_str(), msg.c_str());
+	_game->getModule().addMessage(msg);
+	debugC(Common::kDebugEngineLogic, 1, "Send message to PC \"%s\": \"%s\"", pc->getName().c_str(), msg.c_str());
 }
 
 void Functions::printInteger(Aurora::NWScript::FunctionContext &ctx) {

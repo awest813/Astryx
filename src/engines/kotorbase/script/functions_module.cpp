@@ -357,8 +357,7 @@ void Functions::getLoadFromSaveGame(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &) {
-	// presents the level-up screen for the PC.
-	_game->showLevelUpGUI();
+	_game->showLevelUpGUI(nullptr);
 }
 
 void Functions::popUpGUIPanel(Aurora::NWScript::FunctionContext &ctx) {
@@ -486,25 +485,28 @@ void Functions::floatingTextStrRefOnCreature(Aurora::NWScript::FunctionContext &
 }
 
 void Functions::addJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) {
-	// void AddJournalWorldEntry(string sTag, string sText, object oPC = OBJECT_SELF)
 	const Common::UString &tag = ctx.getParams()[0].getString();
 	const Common::UString &text = ctx.getParams()[1].getString();
 
+	_game->getModule().addJournalWorldEntry(tag, text);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Added [%s]: %s", tag.c_str(), text.c_str());
-	// We'd store this in the journal state if we had a world-entry specific list
 }
 
 void Functions::addJournalWorldEntryStrref(Aurora::NWScript::FunctionContext &ctx) {
-	// void AddJournalWorldEntryStrref(string sTag, int nStrRef, object oPC = OBJECT_SELF)
 	const Common::UString &tag = ctx.getParams()[0].getString();
-	int strRef = ctx.getParams()[1].getInt();
+	const int strRef = ctx.getParams()[1].getInt();
 
 	Common::UString text = TalkMan.getString(strRef);
+	if (text.empty())
+		text = Common::String::format("<strref:%d>", strRef);
+
+	_game->getModule().addJournalWorldEntry(tag, text);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Added [%s]: %s", tag.c_str(), text.c_str());
 }
 
 void Functions::deleteJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &tag = ctx.getParams()[0].getString();
+	_game->getModule().deleteJournalWorldEntry(tag);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Deleted [%s]", tag.c_str());
 }
 

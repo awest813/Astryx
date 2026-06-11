@@ -257,20 +257,14 @@ void HUD::setRotation(float angle) {
 }
 
 void HUD::showContainer(KotORBase::Inventory &inv) {
+	KotORBase::Creature *pc = _module.getPC();
+	if (!pc)
+		return;
+
 	_container = std::make_unique<ContainerMenu>();
+	_container->bindInventories(inv, pc->getInventory());
 	_container->fillFromInventory(inv);
-
-	if (sub(*_container, kStartCodeNone, true, false) == 1) {
-		KotORBase::Inventory &partyInventory = _module.getPC()->getInventory();
-
-		const std::map<Common::UString, KotORBase::Inventory::ItemGroup> &items = inv.getItems();
-		for (std::map<Common::UString, KotORBase::Inventory::ItemGroup>::const_iterator i = items.begin();
-				i != items.end(); ++i) {
-			partyInventory.addItem(i->first, i->second.count);
-		}
-
-		inv.removeAllItems();
-	}
+	sub(*_container, kStartCodeNone, true, false);
 }
 
 void HUD::updatePortraitVitals(uint8_t n, KotORBase::Creature *creature) {
@@ -520,9 +514,12 @@ void HUD::callbackActive(Widget &widget) {
 	}
 
 	if (widget.getTag() == "LBL_LEVELUP1" || widget.getTag() == "LBL_LEVELUP2" || widget.getTag() == "LBL_LEVELUP3") {
-		KotORBase::Creature *pc = _module.getPC();
-		if (pc && KotORBase::canLevelUp(*pc))
-			_module.getGame().showLevelUpGUI();
+		static const int kPartyIndices[] = { 0, 2, 1 };
+		const int slot = widget.getTag() == "LBL_LEVELUP1" ? 0 :
+		                 widget.getTag() == "LBL_LEVELUP2" ? 1 : 2;
+		KotORBase::Creature *member = _module.getPartyMemberByIndex(kPartyIndices[slot]);
+		if (member && member->isPC() && KotORBase::canLevelUp(*member))
+			_module.getGame().showLevelUpGUI(member);
 		return;
 	}
 

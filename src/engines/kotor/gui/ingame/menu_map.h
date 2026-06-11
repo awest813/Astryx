@@ -31,16 +31,22 @@ namespace Engines {
 
 namespace KotOR {
 
+namespace KotORBase {
+	class Module;
+}
+
 class MenuMap : public KotORBase::GUI {
 public:
 	MenuMap(::Engines::Console *console = 0);
 
+	void setModule(KotORBase::Module *module);
 	void setReturnStrref(uint32_t id);
 	void setReturnQueryStrref(uint32_t id);
 	void setReturnEnabled(bool enabled);
 
 private:
 	Common::UString _returnQueryMessage;
+	KotORBase::Module *_module { nullptr };
 
 protected:
 	void callbackActive(Widget &widget);

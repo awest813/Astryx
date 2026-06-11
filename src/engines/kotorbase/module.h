@@ -66,6 +66,11 @@ class Console;
 
 namespace KotORBase {
 
+struct JournalWorldEntry {
+	Common::UString tag;
+	Common::UString text;
+};
+
 class Area;
 class Creature;
 class LoadScreen;
@@ -176,9 +181,21 @@ public:
 
 	// Journal
 
-	// Journal
 	void addJournalQuestEntry(const Common::UString &quest, uint32_t state);
+	void removeJournalQuestEntry(const Common::UString &quest);
+	uint32_t getJournalQuestState(const Common::UString &quest) const;
 	const std::map<Common::UString, uint32_t> &getJournal() const { return _journal; }
+
+	void addJournalWorldEntry(const Common::UString &tag, const Common::UString &text);
+	void deleteJournalWorldEntry(const Common::UString &tag);
+	const std::vector<JournalWorldEntry> &getJournalWorldEntries() const { return _journalWorld; }
+
+	void addMessage(const Common::UString &text);
+	const std::vector<Common::UString> &getMessages() const { return _messages; }
+
+	/** Module loaded when the area map return button is confirmed. */
+	const Common::UString &getReturnDestinationModule() const { return _returnDestinationModule; }
+	void setReturnDestinationModule(const Common::UString &module);
 
 	// Party transitions
 
@@ -451,6 +468,9 @@ private:
 
 	// Journal: key = quest tag, value = entry ID
 	std::map<Common::UString, uint32_t> _journal;
+	std::vector<JournalWorldEntry> _journalWorld;
+	std::vector<Common::UString> _messages;
+	Common::UString _returnDestinationModule { "m12aa" };
 
 	// Area Object Persistence: key = "areaTag:objectTag", value = state
 	std::map<Common::UString, std::shared_ptr<Aurora::GFF3File>> _areaObjectSaves;

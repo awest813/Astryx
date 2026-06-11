@@ -1790,10 +1790,57 @@ void Module::signalUserDefinedEvent(Object *owner, int number) {
 
 void Module::addJournalQuestEntry(const Common::UString &quest, uint32_t state) {
 	_journal[quest] = state;
+	_globalNumbers["JRNL_" + quest] = static_cast<int>(state);
 	debugC(Common::kDebugEngineLogic, 1, "Journal updated: Quest \"%s\" to state %u", quest.c_str(), state);
 
 	if (_ingame)
 		_ingame->getHUD().notifyJournalUpdated();
+}
+
+void Module::removeJournalQuestEntry(const Common::UString &quest) {
+	_journal.erase(quest);
+	_globalNumbers["JRNL_" + quest] = -1;
+}
+
+uint32_t Module::getJournalQuestState(const Common::UString &quest) const {
+	const auto it = _journal.find(quest);
+	if (it != _journal.end())
+		return it->second;
+	return 0;
+}
+
+void Module::addJournalWorldEntry(const Common::UString &tag, const Common::UString &text) {
+	for (auto &entry : _journalWorld) {
+		if (entry.tag.equalsIgnoreCase(tag)) {
+			entry.text = text;
+			return;
+		}
+	}
+
+	_journalWorld.push_back({ tag, text });
+
+	if (_ingame)
+		_ingame->getHUD().notifyJournalUpdated();
+}
+
+void Module::deleteJournalWorldEntry(const Common::UString &tag) {
+	for (auto it = _journalWorld.begin(); it != _journalWorld.end(); ++it) {
+		if (it->tag.equalsIgnoreCase(tag)) {
+			_journalWorld.erase(it);
+			return;
+		}
+	}
+}
+
+void Module::addMessage(const Common::UString &text) {
+	if (text.empty())
+		return;
+
+	_messages.push_back(text);
+}
+
+void Module::setReturnDestinationModule(const Common::UString &module) {
+	_returnDestinationModule = module;
 }
 
 std::shared_ptr<Aurora::GFF3File> Module::getAreaObjectSave(const Common::UString &key) {
@@ -2201,6 +2248,21 @@ void Module::saveState(Aurora::GFF3WriterStruct &gff) const {
 		item->addUint32("State", entry.second);
 	}
 
+	Aurora::GFF3WriterListPtr worldJournalList = gff.addList("WorldJournalEntries");
+	for (const auto &entry : _journalWorld) {
+		Aurora::GFF3WriterStructPtr item = worldJournalList->addStruct();
+		item->addExoString("Tag", entry.tag);
+		item->addExoString("Text", entry.text);
+	}
+
+	Aurora::GFF3WriterListPtr messageList = gff.addList("Messages");
+	for (const auto &message : _messages) {
+		Aurora::GFF3WriterStructPtr item = messageList->addStruct();
+		item->addExoString("Text", message);
+	}
+
+	gff.addExoString("ReturnDestinationModule", _returnDestinationModule);
+
 	Aurora::GFF3WriterListPtr mapList = gff.addList("ExploredMaps");
 	for (const auto &entry : _exploredMaps) {
 		Aurora::GFF3WriterStructPtr area = mapList->addStruct();
@@ -2246,9 +2308,33 @@ void Module::loadState(const Aurora::GFF3Struct &gff) {
 		for (const auto &entry : gff.getList("JournalEntries")) {
 			if (!entry)
 				continue;
-			_journal[entry->getString("Quest")] = entry->getUint("State");
+			const Common::UString quest = entry->getString("Quest");
+			const uint32_t state = entry->getUint("State");
+			_journal[quest] = state;
+			_globalNumbers["JRNL_" + quest] = static_cast<int>(state);
 		}
 	}
+
+	_journalWorld.clear();
+	if (gff.hasField("WorldJournalEntries")) {
+		for (const auto &entry : gff.getList("WorldJournalEntries")) {
+			if (!entry)
+				continue;
+			_journalWorld.push_back({ entry->getString("Tag"), entry->getString("Text") });
+		}
+	}
+
+	_messages.clear();
+	if (gff.hasField("Messages")) {
+		for (const auto &entry : gff.getList("Messages")) {
+			if (!entry)
+				continue;
+			_messages.push_back(entry->getString("Text"));
+		}
+	}
+
+	if (gff.hasField("ReturnDestinationModule"))
+		_returnDestinationModule = gff.getString("ReturnDestinationModule");
 
 	_exploredMaps.clear();
 	if (gff.hasField("ExploredMaps")) {

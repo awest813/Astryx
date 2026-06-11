@@ -47,6 +47,7 @@ protected:
 
 private:
 	void fillItems();
+	void showItemDescription(int index);
 
 	enum Category {
 		kCategoryAll,

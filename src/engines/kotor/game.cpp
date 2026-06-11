@@ -176,23 +176,23 @@ bool Game::hasModule(const Common::UString &module) const {
 	return found != _modules.end();
 }
 
-void Game::showLevelUpGUI() {
-	KotORBase::Creature *pc = static_cast<Module *>(_module.get())->getPC();
-	if (!pc)
+void Game::showLevelUpGUI(KotORBase::Creature *target) {
+	KotORBase::Creature *creature = target ? target : static_cast<Module *>(_module.get())->getPC();
+	if (!creature)
 		return;
 
-	if (!KotORBase::canLevelUp(*pc)) {
+	if (!KotORBase::canLevelUp(*creature)) {
 		status("ShowLevelUpGUI: insufficient XP (%d / %d required)",
-		       pc->getCurrentXP(), KotORBase::levelUpThreshold(pc->getHitDice()));
+		       creature->getCurrentXP(), KotORBase::levelUpThreshold(creature->getHitDice()));
 		return;
 	}
 
 	if (ConfigMan.getBool("autolevelup")) {
-		KotORBase::autoLevelUp(*pc);
+		KotORBase::autoLevelUp(*creature);
 		return;
 	}
 
-	LevelUpGUI gui(*_module, *pc, _console);
+	LevelUpGUI gui(*_module, *creature, _console);
 	gui.run();
 }
 

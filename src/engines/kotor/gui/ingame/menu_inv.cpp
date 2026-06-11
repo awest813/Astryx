@@ -22,9 +22,12 @@
  *  The ingame inventar menu.
  */
 
+#include "src/aurora/talkman.h"
+
 #include "src/graphics/graphics.h"
 
 #include "src/engines/odyssey/listbox.h"
+#include "src/engines/odyssey/label.h"
 
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/gui/inventoryitem.h"
@@ -88,7 +91,9 @@ void MenuInventory::fillItems() {
 			case kCategoryWeapons: show = isWeapon; break;
 			case kCategoryArmor: show = isArmor; break;
 			case kCategoryItems: show = !isWeapon && !isArmor; break;
-			case kCategoryMisc: show = item.getBaseItem() == 0; break; // Placeholder misc
+			case kCategoryMisc:
+				show = !isWeapon && !isArmor;
+				break;
 			}
 
 			if (!show)
@@ -108,6 +113,30 @@ void MenuInventory::fillItems() {
 	GfxMan.lockFrame();
 	lbItems->refreshItemWidgets();
 	GfxMan.unlockFrame();
+
+	if (_visibleItems.empty())
+		setWidgetText("LBL_DESC", TalkMan.getString(400).empty() ?
+		              "No items in this category." : TalkMan.getString(400));
+}
+
+void MenuInventory::showItemDescription(int index) {
+	if (index < 0 || index >= (int)_visibleItems.size())
+		return;
+
+	try {
+		KotORBase::Item item(_visibleItems[index]);
+		const Common::UString &desc = item.getDescription();
+		setWidgetText("LBL_DESC", desc.empty() ? item.getName() : desc);
+
+		Odyssey::WidgetListBox *lbDesc = getListBox("LB_DESC");
+		if (lbDesc) {
+			lbDesc->removeAllItems();
+			lbDesc->addItem(desc.empty() ? item.getName() : desc);
+			lbDesc->refreshItemWidgets();
+		}
+	} catch (Common::Exception &e) {
+		warning("MenuInventory::showItemDescription: %s", e.what());
+	}
 }
 
 void MenuInventory::callbackActive(Widget &widget) {
@@ -136,6 +165,20 @@ void MenuInventory::callbackActive(Widget &widget) {
 	if (tag == "BTN_CAT_ITEM") {
 		_category = kCategoryItems;
 		fillItems();
+		return;
+	}
+	if (tag == "BTN_CAT_MISC") {
+		_category = kCategoryMisc;
+		fillItems();
+		return;
+	}
+
+	if (tag == "LB_ITEMS" || tag.beginsWith("LB_ITEMS")) {
+		Odyssey::WidgetListBox *list = dynamic_cast<Odyssey::WidgetListBox *>(&widget);
+		if (!list)
+			list = getListBox("LB_ITEMS");
+		if (list)
+			showItemDescription(list->getSelectedIndex());
 		return;
 	}
 

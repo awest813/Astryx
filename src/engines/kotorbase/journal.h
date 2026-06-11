@@ -19,51 +19,50 @@
  */
 
 /** @file
- *  The ingame journal menu.
+ *  KotOR journal catalog backed by global.jrl when available.
  */
 
-#ifndef ENGINES_KOTOR_GUI_INGAME_MENU_JOU_H
-#define ENGINES_KOTOR_GUI_INGAME_MENU_JOU_H
+#ifndef ENGINES_KOTORBASE_JOURNAL_H
+#define ENGINES_KOTORBASE_JOURNAL_H
 
-#include <vector>
+#include <map>
 
 #include "src/common/ustring.h"
 
-#include "src/engines/kotorbase/gui/gui.h"
-
 namespace Engines {
 
-namespace KotOR {
+namespace KotORBase {
 
-class MenuJournal : public KotORBase::GUI {
+/** Lookup quest titles and entry text from global.jrl. */
+class JournalCatalog {
 public:
-	MenuJournal(::Engines::Console *console = 0);
-	
-	void setModule(KotORBase::Module *module);
+	static JournalCatalog &get();
 
-	void show();
-
-protected:
-	void callbackActive(Widget &widget);
+	Common::UString getQuestTitle(const Common::UString &questTag) const;
+	Common::UString getQuestEntryText(const Common::UString &questTag, uint32_t state) const;
+	bool isQuestCompleted(const Common::UString &questTag, uint32_t state) const;
 
 private:
-	void fillJournal();
-	void showQuestDescription(int index);
+	JournalCatalog();
 
-	enum Category {
-		kCategoryActive,
-		kCategoryCompleted
+	struct QuestEntry {
+		Common::UString text;
+		bool end { false };
 	};
 
-	Category _category;
+	struct QuestInfo {
+		Common::UString title;
+		std::map<uint32_t, QuestEntry> entries;
+	};
 
-	KotORBase::Module *_module { nullptr };
-	std::vector<Common::UString> _questTags;
-	std::vector<Common::UString> _worldTags;
+	void load();
+
+	bool _loaded { false };
+	std::map<Common::UString, QuestInfo> _quests;
 };
 
-} // End of namespace KotOR
+} // End of namespace KotORBase
 
 } // End of namespace Engines
 
-#endif // ENGINES_KOTOR_GUI_INGAME_MENU_JOU_H
+#endif // ENGINES_KOTORBASE_JOURNAL_H

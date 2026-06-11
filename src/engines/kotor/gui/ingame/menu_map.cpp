@@ -28,6 +28,8 @@
 
 #include "src/engines/odyssey/button.h"
 
+#include "src/engines/kotorbase/module.h"
+
 #include "src/engines/kotor/gui/ingame/menu_map.h"
 
 #include "src/engines/kotor/gui/dialogs/confirm.h"
@@ -38,6 +40,10 @@ namespace KotOR {
 
 MenuMap::MenuMap(Console *console) : KotORBase::GUI(console) {
 	load("map");
+}
+
+void MenuMap::setModule(KotORBase::Module *module) {
+	_module = module;
 }
 
 void MenuMap::setReturnStrref(uint32_t id) {
@@ -63,7 +69,12 @@ void MenuMap::callbackActive(Widget &widget) {
 
 		sub(dialog, kStartCodeNone, true, false);
 
-		// TODO: Return to the hideout/ebon hawk
+		if (dialog.getAccepted() && _module) {
+			_module->playMovie("Hyperspace");
+			_module->load(_module->getReturnDestinationModule());
+			_returnCode = 2;
+		}
+		return;
 	}
 
 	if (widget.getTag() == "BTN_EXIT") {
