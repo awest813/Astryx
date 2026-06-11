@@ -27,12 +27,16 @@
 #include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/types.h"
 
+using Engines::KotORBase::CreatureInfo;
+using Engines::KotORBase::grantsAbilityIncrease;
 using Engines::KotORBase::hpGainOnLevelUp;
 using Engines::KotORBase::kClassJediGuardian;
 using Engines::KotORBase::kClassScoundrel;
 using Engines::KotORBase::kClassScout;
 using Engines::KotORBase::kClassSoldier;
+using Engines::KotORBase::kFeatPowerAttack;
 using Engines::KotORBase::levelUpThreshold;
+using Engines::KotORBase::getSelectableFeats;
 
 TEST(LevelUpHelpers, ThresholdLevel2Is1000) {
 	EXPECT_EQ(levelUpThreshold(1), 1000);
@@ -61,4 +65,23 @@ TEST(LevelUpHelpers, ScoutHPGainCON10) {
 
 TEST(LevelUpHelpers, JediGuardianHPGainMinimumOne) {
 	EXPECT_EQ(hpGainOnLevelUp(kClassJediGuardian, -4), 1);
+}
+
+TEST(LevelUpHelpers, AbilityIncreaseAtLevelsFourEightTwelve) {
+	EXPECT_FALSE(grantsAbilityIncrease(1));
+	EXPECT_FALSE(grantsAbilityIncrease(2));
+	EXPECT_TRUE(grantsAbilityIncrease(3));
+	EXPECT_FALSE(grantsAbilityIncrease(4));
+	EXPECT_TRUE(grantsAbilityIncrease(7));
+	EXPECT_TRUE(grantsAbilityIncrease(11));
+}
+
+TEST(LevelUpHelpers, SoldierFeatListExcludesKnownFeats) {
+	CreatureInfo info;
+	info.incrementClassLevel(kClassSoldier);
+	info.addFeat(kFeatPowerAttack);
+
+	const auto feats = getSelectableFeats(info);
+	for (uint32_t feat : feats)
+		EXPECT_NE(feat, kFeatPowerAttack);
 }

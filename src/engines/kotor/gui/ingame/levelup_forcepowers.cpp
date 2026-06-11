@@ -23,15 +23,27 @@
  */
 
 #include "src/common/strutil.h"
+#include "src/common/util.h"
 
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
+
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/ingame/levelup_forcepowers.h"
 
 namespace Engines {
 
 namespace KotOR {
+
+static const char *kPowerButtonTags[] = {
+	"BTN_POWER_1",
+	"BTN_POWER_2",
+	"BTN_POWER_3",
+	"BTN_POWER_4",
+	"BTN_POWER_5",
+	"BTN_POWER_6",
+};
 
 LevelUpForcePowersMenu::LevelUpForcePowersMenu(KotORBase::CreatureInfo &info, Console *console) :
 		KotORBase::GUI(console),
@@ -47,11 +59,9 @@ LevelUpForcePowersMenu::LevelUpForcePowersMenu(KotORBase::CreatureInfo &info, Co
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
-	// Placeholder Force Powers for Phase 5.1
-	// These IDs are placeholders; full implementation requires spells.2da lookup.
-	_availablePowers.push_back(1); // Force Heal
-	_availablePowers.push_back(2); // Force Push
-	_availablePowers.push_back(3); // Burst of Speed
+	_availablePowers = KotORBase::getSelectableForcePowers(_info);
+	if (_availablePowers.empty())
+		_availablePowers.push_back(1);
 
 	updateLabels();
 }
@@ -77,12 +87,12 @@ void LevelUpForcePowersMenu::updateLabels() {
 void LevelUpForcePowersMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
-	if (tag == "BTN_POWER_1") {
-		_selectedPower = 1;
-	} else if (tag == "BTN_POWER_2") {
-		_selectedPower = 2;
-	} else if (tag == "BTN_POWER_3") {
-		_selectedPower = 3;
+	for (size_t i = 0; i < ARRAYSIZE(kPowerButtonTags) && i < _availablePowers.size(); ++i) {
+		if (tag == kPowerButtonTags[i]) {
+			_selectedPower = _availablePowers[i];
+			updateLabels();
+			return;
+		}
 	}
 
 	if (tag == "BTN_BACK") {

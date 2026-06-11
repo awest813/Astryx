@@ -25,6 +25,9 @@
 #ifndef ENGINES_KOTORBASE_LEVELUP_H
 #define ENGINES_KOTORBASE_LEVELUP_H
 
+#include <vector>
+#include <cstdint>
+
 #include "src/engines/kotorbase/types.h"
 
 namespace Engines {
@@ -51,6 +54,15 @@ void applyLevelUp(Creature &creature);
 
 /** Auto-distribute skill points and a default feat when manual GUI is skipped. */
 void autoLevelUp(Creature &creature);
+
+/** True when levelling from @p currentLevel grants an ability score increase. */
+bool grantsAbilityIncrease(int currentLevel);
+
+/** Feats the creature may pick on the next level (excludes ones already known). */
+std::vector<uint32_t> getSelectableFeats(const CreatureInfo &info);
+
+/** Force powers a Jedi may pick on the next level (excludes known powers). */
+std::vector<uint32_t> getSelectableForcePowers(const CreatureInfo &info);
 
 } // End of namespace KotORBase
 

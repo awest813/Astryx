@@ -78,10 +78,17 @@ void performDuelRingIntro(KotORBase::Module &module) {
 
 void performBekEntrance(KotORBase::Module &module) {
 	status("Orchestrating Hidden Bek Entrance...");
-	// Logic for Gadon Theeth's security protocol
 	module.setCutsceneMode(true);
+	module.setPlayerInputEnabled(false);
+
 	module.cameraTransitionToTarget("wp_bek_gadon_reveal", 4.0f);
+	module.runCinematicBeat(4.0f);
+
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
+
 	module.setCutsceneMode(false);
+	module.setPlayerInputEnabled(true);
 }
 
 void performLowerCityIntro(KotORBase::Module &module) {
@@ -92,6 +99,7 @@ void performLowerCityIntro(KotORBase::Module &module) {
 
 	// 1. Elevator exit focus
 	module.cameraTransitionToTarget("wp_tar_elevator_exit", 2.0f);
+	module.runCinematicBeat(2.0f);
 
 	// 2. Spawn combatants
 	KotORBase::Creature *sith = module.createCreatureByTemplate("n_sithsoldier001");
@@ -108,9 +116,12 @@ void performLowerCityIntro(KotORBase::Module &module) {
 
 	// 3. Play Skirmish Stinger
 	module.playMusicStinger("mus_bat_skirmish");
-	
-	// Ensure they are hostile to each other (Custom script signal)
+	module.runCinematicBeat(1.5f);
+
 	module.signalEncounter("tar_lower_skirmish_engage");
+
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
@@ -124,8 +135,9 @@ void performRakghoulAmbush(KotORBase::Module &module) {
 
 	// 1. Horror-style focus
 	module.cameraTransitionToTarget("wp_rakghoul_reveal", 3.0f);
+	module.runCinematicBeat(2.5f);
 	module.shakeCamera(1.5f, 0.5f);
-	
+
 	// 2. Play Rakghoul scream stinger
 	module.playMusicStinger("mus_vfx_rakghoul_scream");
 
@@ -141,6 +153,10 @@ void performRakghoulAmbush(KotORBase::Module &module) {
 	}
 
 	module.playMusicStinger("mus_bat_rakghoul");
+	module.runCinematicBeat(2.0f);
+
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
@@ -152,16 +168,17 @@ void performCaloNordReveal(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 1. Focus on the legendary bounty hunter sitting in the corner
 	module.cameraTransitionToTarget("wp_tar_calo_focus", 4.0f);
-	
-	// 2. Play Calo's Theme Stinger
+	module.runCinematicBeat(4.0f);
+
 	module.playMusicStinger("mus_theme_calo");
 
-	// 3. Zoom into his face for the iconic "One..." line setup
 	module.cameraTransitionToTarget("wp_tar_calo_face", 2.0f);
+	module.runCinematicBeat(2.5f);
 
-	// Restore control for the dialogue interaction
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
+
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
 }
@@ -172,19 +189,20 @@ void performEbonHawkEscape(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 1. Dramatic reveal of the Hawk in Davik's hangar
 	module.cameraTransitionToTarget("wp_ebon_hawk_reveal", 4.0f);
-	
-	// 2. Play Ship Power-up Stinger
-	module.playMusicStinger("mus_theme_ebonhawk");
-	module.shakeCamera(2.0f, 0.3f); // Engine vibration
+	module.runCinematicBeat(4.0f);
 
-	// 3. Final fade to black for the orbital transition
-	// In xoreos, we usually trigger a module transition at the end of the script
+	module.playMusicStinger("mus_theme_ebonhawk");
+	module.shakeCamera(2.0f, 0.3f);
+	module.runCinematicBeat(2.0f);
+
 	module.playMusicStinger("mus_vfx_ship_takeoff");
-	
-	// Transition to the space battle or next world (Dantooine)
-	// module.replaceModule("dan_m13"); 
+
+	module.restoreGameplayCamera(1.5f);
+	module.runCinematicBeat(1.5f);
+
+	module.setCutsceneMode(false);
+	module.setPlayerInputEnabled(true);
 }
 
 void performBrejikShowdown(KotORBase::Module &module) {
@@ -193,15 +211,15 @@ void performBrejikShowdown(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 1. Initial Pan of the winners circle
 	module.cameraTransitionToTarget("wp_tar_platform_pan", 4.0f);
-	
-	// 2. Focus on Bastila in the Neuromesh Cage
+	module.runCinematicBeat(4.0f);
+
 	module.cameraTransitionToTarget("wp_tar_bastila_cage", 3.0f);
+	module.runCinematicBeat(3.0f);
 	module.playMusicStinger("mus_vfx_electric_hum");
 
-	// 3. Brejik's confrontation reveal
 	module.cameraTransitionToTarget("wp_tar_brejik_approach", 2.0f);
+	module.runCinematicBeat(2.0f);
 	module.playMusicStinger("mus_theme_brejik");
 
 	// 4. Spawn Brejik and his guards
@@ -224,9 +242,12 @@ void performBrejikShowdown(KotORBase::Module &module) {
 		}
 	}
 
-	// 5. Final tension stinger before control is restored for combat
 	module.playMusicStinger("mus_bat_brejik");
+	module.runCinematicBeat(1.5f);
 	module.signalEncounter("tar_brejik_combat_start");
+
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);

@@ -80,9 +80,9 @@ void LevelUpGUI::callbackRun() {
 	int totalLevel = _pc.getHitDice();
 
 	switch (_step) {
-	case 1: // Abilities (Every 4 levels)
+	case 1: // Abilities (levels 4, 8, 12, ...)
 		_step++;
-		if (totalLevel % 4 == 0) {
+		if (KotORBase::grantsAbilityIncrease(totalLevel)) {
 			showAbilities();
 			return;
 		}

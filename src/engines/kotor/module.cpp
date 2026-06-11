@@ -103,6 +103,27 @@ void Module::showDeathGUI() {
 	showIngameOptionsMenu();
 }
 
+void Module::showGUIPanel(int panel) {
+	switch (panel) {
+	case 4: { // GUI_PANEL_INVENTORY
+		Menu menu(*this, _console);
+		menu.show();
+		menu.showMenu("BTN_INV");
+		menu.run();
+		break;
+	}
+	case 6: // GUI_PANEL_JOURNAL
+		showJournal();
+		break;
+	case 9: // GUI_PANEL_LEVELUP
+		getGame().showLevelUpGUI();
+		break;
+	default:
+		warning("Module::showGUIPanel(%d): unhandled panel", panel);
+		break;
+	}
+}
+
 void Module::showIngameOptionsMenu() {
 	if (_inDialog || !_ingame || !_running)
 		return;

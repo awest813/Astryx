@@ -56,6 +56,7 @@ public:
 	void showJournal() override;
 
 	void showMenu() override;
+	void showGUIPanel(int panel) override;
 	void showDeathGUI() override;
 
 	void enter() override;

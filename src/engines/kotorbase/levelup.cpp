@@ -129,6 +129,81 @@ static int skillPointsPerLevel(const CreatureInfo &info) {
 	return (total < 1) ? 1 : total;
 }
 
+bool grantsAbilityIncrease(int currentLevel) {
+	return ((currentLevel + 1) % 4) == 0;
+}
+
+static void appendIfNew(std::vector<uint32_t> &out, const CreatureInfo &info, uint32_t feat) {
+	if (!info.hasFeat(feat))
+		out.push_back(feat);
+}
+
+std::vector<uint32_t> getSelectableFeats(const CreatureInfo &info) {
+	std::vector<uint32_t> feats;
+	const Class pcClass = info.getNumClasses() > 0 ? info.getLatestClass() : kClassSoldier;
+
+	switch (pcClass) {
+	case kClassSoldier:
+		appendIfNew(feats, info, kFeatPowerAttack);
+		appendIfNew(feats, info, kFeatFlurry);
+		appendIfNew(feats, info, kFeatCriticalStrike);
+		appendIfNew(feats, info, kFeatToughness);
+		appendIfNew(feats, info, kFeatConditioning);
+		break;
+	case kClassScout:
+		appendIfNew(feats, info, kFeatFlurry);
+		appendIfNew(feats, info, kFeatPowerBlast);
+		appendIfNew(feats, info, kFeatRapidShot);
+		appendIfNew(feats, info, kFeatSniperShot);
+		appendIfNew(feats, info, kFeatToughness);
+		appendIfNew(feats, info, kFeatConditioning);
+		break;
+	case kClassScoundrel:
+		appendIfNew(feats, info, kFeatCriticalStrike);
+		appendIfNew(feats, info, kFeatSniperShot);
+		appendIfNew(feats, info, kFeatRapidShot);
+		appendIfNew(feats, info, kFeatToughness);
+		appendIfNew(feats, info, kFeatConditioning);
+		break;
+	case kClassJediGuardian:
+		appendIfNew(feats, info, kFeatFlurry);
+		appendIfNew(feats, info, kFeatPowerAttack);
+		appendIfNew(feats, info, kFeatJediDefense);
+		appendIfNew(feats, info, kFeatToughness);
+		break;
+	case kClassJediSentinel:
+		appendIfNew(feats, info, kFeatFlurry);
+		appendIfNew(feats, info, kFeatCriticalStrike);
+		appendIfNew(feats, info, kFeatJediDefense);
+		appendIfNew(feats, info, kFeatConditioning);
+		break;
+	case kClassJediConsular:
+		appendIfNew(feats, info, kFeatJediDefense);
+		appendIfNew(feats, info, kFeatToughness);
+		appendIfNew(feats, info, kFeatConditioning);
+		break;
+	default:
+		appendIfNew(feats, info, kFeatPowerAttack);
+		appendIfNew(feats, info, kFeatToughness);
+		break;
+	}
+
+	return feats;
+}
+
+std::vector<uint32_t> getSelectableForcePowers(const CreatureInfo &info) {
+	std::vector<uint32_t> powers;
+
+	// Spell row indices used by ActionExecutor for core powers.
+	static const uint32_t kCorePowers[] = { 1, 2, 3, 4, 5, 6 };
+	for (uint32_t power : kCorePowers) {
+		if (!info.hasForcePower(power))
+			powers.push_back(power);
+	}
+
+	return powers;
+}
+
 void autoLevelUp(Creature &creature) {
 	CreatureInfo &info = creature.getCreatureInfo();
 	const Class pcClass = info.getLatestClass();

@@ -1996,6 +1996,8 @@ void Module::setCutsceneMode(bool enabled) {
 	_cutsceneMode = enabled;
 	if (enabled)
 		setPlayerInputEnabled(false);
+	else
+		resetToOrbit();
 
 	if (_ingame) {
 		if (enabled)
