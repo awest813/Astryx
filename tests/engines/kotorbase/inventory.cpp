@@ -201,6 +201,21 @@ GTEST_TEST(KotORInventory, assignmentCopiesItems) {
 	EXPECT_TRUE(dst.hasItem("g_i_boots01"));
 }
 
+GTEST_TEST(KotORItemActions, dropInventoryItemRemovesStack) {
+	Creature creature;
+	creature.getCreatureInfo().addInventoryItem("medpac", 2);
+
+	const auto result = dropInventoryItem(creature, "medpac", 1);
+	EXPECT_TRUE(result.success);
+	EXPECT_EQ(creature.getInventory().getItems().at("medpac").count, 1);
+}
+
+GTEST_TEST(KotORItemActions, dropAbsentItemFails) {
+	Creature creature;
+	const auto result = dropInventoryItem(creature, "missing_item", 1);
+	EXPECT_FALSE(result.success);
+}
+
 GTEST_TEST(KotORInventory, assignmentIsIndependent) {
 	// Modifying the copy must not affect the original
 	Inventory src;
