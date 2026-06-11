@@ -133,11 +133,6 @@ bool grantsAbilityIncrease(int currentLevel) {
 	return ((currentLevel + 1) % 4) == 0;
 }
 
-static void appendIfNew(std::vector<uint32_t> &out, const CreatureInfo &info, uint32_t feat) {
-	if (!info.hasFeat(feat))
-		out.push_back(feat);
-}
-
 static void appendClassFeats(std::vector<uint32_t> &feats, Class pcClass,
                             const std::vector<uint32_t> &knownFeats) {
 	switch (pcClass) {
