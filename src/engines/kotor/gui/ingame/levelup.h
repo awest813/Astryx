@@ -48,13 +48,14 @@ public:
 	void callbackActive(Widget &widget) override;
 	void callbackRun() override;
 
-	void showAbilities();
-	void showSkills();
-	void showFeats();
-	void showForcePowers();
-
 private:
 	void finalizeLevelUp();
+	void updateSummaryLabels();
+
+	bool showAbilities();
+	bool showSkills();
+	bool showFeats();
+	bool showForcePowers();
 
 	KotORBase::Module   &_module;
 	KotORBase::Creature &_pc;

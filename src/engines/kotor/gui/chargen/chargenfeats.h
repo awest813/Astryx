@@ -48,6 +48,7 @@ private:
 	uint32_t _selectedFeat;
 
 	void updateLabels();
+	bool isFeatAvailable(uint32_t feat) const;
 	void callbackActive(Widget &widget);
 };
 

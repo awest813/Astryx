@@ -46,7 +46,6 @@ public:
 	void callbackActive(Widget &widget) override;
 
 	bool isAccepted() const { return _accepted; }
-	bool isClassSkill(KotORBase::Class c, KotORBase::Skill s) const;
 
 private:
 	void updateLabels();

@@ -29,6 +29,7 @@
 #include "external/glm/gtc/matrix_transform.hpp"
 
 #include "src/common/util.h"
+#include "src/common/strutil.h"
 #include "src/common/configman.h"
 
 #include "src/aurora/talkman.h"
@@ -49,6 +50,10 @@
 #include "src/engines/kotor/gui/chargen/chargenabilities.h"
 #include "src/engines/kotor/gui/chargen/chargenskills.h"
 #include "src/engines/kotor/gui/chargen/chargenfeats.h"
+#include "src/engines/kotor/gui/chargen/quickchar.h"
+#include "src/engines/kotor/gui/chargen/customchar.h"
+
+#include "src/engines/kotorbase/levelup.h"
 
 namespace Engines {
 
@@ -150,6 +155,7 @@ CharacterGenerationMenu::CharacterGenerationMenu(KotORBase::Module *module,
 		_charSubScene->setGlobalTransformationMatrix(transformation);
 	}
 
+	refreshPreviewStats();
 	showQuickOrCustom();
 }
 
@@ -174,6 +180,7 @@ void CharacterGenerationMenu::showQuick() {
 	if (_customChar)
 		removeChild(_customChar.get());
 
+	_step = 0;
 	_quickChar = std::make_unique<QuickCharPanel>(this);
 	addChild(_quickChar.get());
 }
@@ -184,8 +191,40 @@ void CharacterGenerationMenu::showCustom() {
 	if (_quickChar)
 		removeChild(_quickChar.get());
 
+	_step = 0;
 	_customChar = std::make_unique<CustomCharPanel>(this);
 	addChild(_customChar.get());
+}
+
+void CharacterGenerationMenu::refreshPreviewStats() {
+	const KotORBase::CharacterPreviewStats stats =
+		KotORBase::previewStatsAtLevel1(_pc->getClass(), _pc->getAbilities());
+
+	auto setStat = [this](const char *tag, int value) {
+		Odyssey::WidgetLabel *lbl = getLabel(tag);
+		if (lbl)
+			lbl->setText(Common::composeString(value));
+	};
+
+	setStat("LBL_VIT_VAL", stats.vitality);
+	setStat("VIT_VAL_LBL", stats.vitality);
+	setStat("LBL_DEF_VAL", stats.defense);
+	setStat("DEF_VAL_LBL", stats.defense);
+	setStat("LBL_FORT_VAL", stats.fortitude);
+	setStat("FORT_VAL_LBL", stats.fortitude);
+	setStat("LBL_REFL_VAL", stats.reflex);
+	setStat("REFL_VAL_LBL", stats.reflex);
+	setStat("LBL_WILL_VAL", stats.will);
+	setStat("WILL_VAL_LBL", stats.will);
+}
+
+void CharacterGenerationMenu::refreshStepPanels() {
+	refreshPreviewStats();
+
+	if (_quickChar)
+		static_cast<QuickCharPanel *>(_quickChar.get())->updateButtons();
+	if (_customChar)
+		static_cast<CustomCharPanel *>(_customChar.get())->updateButtons();
 }
 
 void CharacterGenerationMenu::showPortrait() {
@@ -203,14 +242,19 @@ void CharacterGenerationMenu::showPortrait() {
 			lblPortrait->setFill(_pc->getPortrait());
 
 		std::unique_ptr<Graphics::Aurora::Model> head(Creature::createHeadModel(_pc));
-		if (head) {
+		if (head && _pcModel) {
 			GfxMan.lockFrame();
 			_pcModel->attachModel("headhook", head.release());
 			_pcModel->playAnimation("pause1", true, -1);
 			GfxMan.unlockFrame();
 		}
 
-		_step += 1;
+		if (_step < 1)
+			_step = 1;
+		if (_customChar && _step < 4)
+			_step = 4;
+
+		refreshStepPanels();
 	}
 }
 
@@ -228,7 +272,12 @@ void CharacterGenerationMenu::showName() {
 		if (lblName)
 			lblName->setText(info.getName());
 
-		_step += 1;
+		if (_step < 2)
+			_step = 2;
+		if (_customChar && _step < 5)
+			_step = 5;
+
+		refreshStepPanels();
 	}
 }
 
@@ -241,7 +290,9 @@ void CharacterGenerationMenu::showAbilities() {
 	sub(*_charGenMenu);
 	if (_charGenMenu->isAccepted()) {
 		*_pc = info;
-		_step += 1;
+		if (_step < 1)
+			_step = 1;
+		refreshStepPanels();
 	}
 }
 
@@ -254,7 +305,9 @@ void CharacterGenerationMenu::showSkills() {
 	sub(*_charGenMenu);
 	if (_charGenMenu->isAccepted()) {
 		*_pc = info;
-		_step += 1;
+		if (_step < 2)
+			_step = 2;
+		refreshStepPanels();
 	}
 }
 
@@ -267,7 +320,9 @@ void CharacterGenerationMenu::showFeats() {
 	sub(*_charGenMenu);
 	if (_charGenMenu->isAccepted()) {
 		*_pc = info;
-		_step += 1;
+		if (_step < 3)
+			_step = 3;
+		refreshStepPanels();
 	}
 }
 
@@ -277,6 +332,7 @@ int CharacterGenerationMenu::getStep() {
 
 void CharacterGenerationMenu::decStep() {
 	_step = MAX(0, _step - 1);
+	refreshStepPanels();
 }
 
 void CharacterGenerationMenu::start() {

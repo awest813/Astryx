@@ -28,6 +28,7 @@
 #include <vector>
 #include <cstdint>
 
+#include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/types.h"
 
 namespace Engines {
@@ -61,8 +62,26 @@ bool grantsAbilityIncrease(int currentLevel);
 /** Feats the creature may pick on the next level (excludes ones already known). */
 std::vector<uint32_t> getSelectableFeats(const CreatureInfo &info);
 
+/** Feats available during character creation for a class. */
+std::vector<uint32_t> getSelectableFeats(Class charClass, const std::vector<uint32_t> &knownFeats);
+
 /** Force powers a Jedi may pick on the next level (excludes known powers). */
 std::vector<uint32_t> getSelectableForcePowers(const CreatureInfo &info);
+
+/** True when @p skill is a class skill for @p charClass. */
+bool isClassSkill(Class charClass, Skill skill);
+
+/** Derived combat numbers shown on the character creation summary panel. */
+struct CharacterPreviewStats {
+	int vitality { 0 };
+	int defense { 0 };
+	int fortitude { 0 };
+	int reflex { 0 };
+	int will { 0 };
+};
+
+/** Preview HP and saving throws at level 1 from ability scores. */
+CharacterPreviewStats previewStatsAtLevel1(Class charClass, const CreatureInfo::Abilities &abilities);
 
 } // End of namespace KotORBase
 

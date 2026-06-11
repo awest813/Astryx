@@ -22,7 +22,12 @@
  *  The character level-up GUI.
  */
 
+#include "src/common/strutil.h"
+
+#include "src/aurora/talkman.h"
+
 #include "src/engines/aurora/widget.h"
+#include "src/engines/odyssey/label.h"
 
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
@@ -47,9 +52,50 @@ LevelUpGUI::LevelUpGUI(KotORBase::Module &module, KotORBase::Creature &pc, ::Eng
 	load("levelpnl");
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
+	updateSummaryLabels();
 }
 
 LevelUpGUI::~LevelUpGUI() {
+}
+
+void LevelUpGUI::updateSummaryLabels() {
+	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
+		Odyssey::WidgetLabel *lbl = getLabel(tag);
+		if (lbl)
+			lbl->setText(text);
+	};
+
+	setWidgetText("LBL_NAME", _pc.getName());
+
+	const int nextLevel = _pc.getHitDice() + 1;
+	setWidgetText("LBL_LEVEL_VAL", Common::composeString(nextLevel));
+	setWidgetText("LBL_LEVEL", Common::composeString(nextLevel));
+
+	uint32_t classStr = 0;
+	switch (_pc.getCreatureInfo().getLatestClass()) {
+	case KotORBase::kClassSoldier:       classStr = 134; break;
+	case KotORBase::kClassScout:         classStr = 133; break;
+	case KotORBase::kClassScoundrel:     classStr = 135; break;
+	default: break;
+	}
+
+	if (classStr) {
+		setWidgetText("LBL_CLASS", TalkMan.getString(classStr));
+	} else {
+		switch (_pc.getCreatureInfo().getLatestClass()) {
+		case KotORBase::kClassJediGuardian:
+			setWidgetText("LBL_CLASS", "Jedi Guardian");
+			break;
+		case KotORBase::kClassJediSentinel:
+			setWidgetText("LBL_CLASS", "Jedi Sentinel");
+			break;
+		case KotORBase::kClassJediConsular:
+			setWidgetText("LBL_CLASS", "Jedi Consular");
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 void LevelUpGUI::callbackActive(::Engines::Widget &widget) {
@@ -65,45 +111,53 @@ void LevelUpGUI::callbackActive(::Engines::Widget &widget) {
 		}
 
 		_step = 1;
-		callbackRun(); // Start the first step
+		callbackRun();
 		return;
 	}
 }
 
 void LevelUpGUI::callbackRun() {
-	if (_step == 0) return;
+	if (_step == 0)
+		return;
 
-	// In xoreos, sub-GUIs are pushed to the stack. 
-	// This callbackRun will be skipped while the sub-GUI is active.
-	// When we are back here, it means the sub-GUI has finished.
-
-	int totalLevel = _pc.getHitDice();
+	const int totalLevel = _pc.getHitDice();
 
 	switch (_step) {
-	case 1: // Abilities (levels 4, 8, 12, ...)
+	case 1:
 		_step++;
 		if (KotORBase::grantsAbilityIncrease(totalLevel)) {
-			showAbilities();
+			if (!showAbilities()) {
+				_step = 0;
+				return;
+			}
+		}
+		// Fall through
+	case 2:
+		_step++;
+		if (!showSkills()) {
+			_step = 0;
 			return;
 		}
 		// Fall through
-	case 2: // Skills
+	case 3:
 		_step++;
-		showSkills();
-		return;
-	case 3: // Feats
-		_step++;
-		showFeats();
-		return;
-	case 4: // Force Powers
+		if (!showFeats()) {
+			_step = 0;
+			return;
+		}
+		// Fall through
+	case 4:
 		_step++;
 		if (_pc.getCreatureInfo().isJedi()) {
-			showForcePowers();
-			return;
+			if (!showForcePowers()) {
+				_step = 0;
+				return;
+			}
 		}
 		// Fall through
-	case 5: // Finalize
+	case 5:
 		finalizeLevelUp();
+		updateSummaryLabels();
 		_step = 0;
 		_returnCode = 1;
 		break;
@@ -114,24 +168,28 @@ void LevelUpGUI::finalizeLevelUp() {
 	KotORBase::applyLevelUp(_pc);
 }
 
-void LevelUpGUI::showAbilities() {
+bool LevelUpGUI::showAbilities() {
 	LevelUpAbilitiesMenu menu(_pc.getCreatureInfo(), _console);
 	sub(menu);
+	return menu.isAccepted();
 }
 
-void LevelUpGUI::showSkills() {
+bool LevelUpGUI::showSkills() {
 	LevelUpSkillsMenu menu(_pc.getCreatureInfo(), _console);
 	sub(menu);
+	return menu.isAccepted();
 }
 
-void LevelUpGUI::showFeats() {
+bool LevelUpGUI::showFeats() {
 	LevelUpFeatsMenu menu(_pc.getCreatureInfo(), _console);
 	sub(menu);
+	return menu.isAccepted();
 }
 
-void LevelUpGUI::showForcePowers() {
+bool LevelUpGUI::showForcePowers() {
 	LevelUpForcePowersMenu menu(_pc.getCreatureInfo(), _console);
 	sub(menu);
+	return menu.isAccepted();
 }
 
 } // End of namespace KotOR

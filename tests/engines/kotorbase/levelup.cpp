@@ -29,6 +29,7 @@
 
 using Engines::KotORBase::CreatureInfo;
 using Engines::KotORBase::grantsAbilityIncrease;
+using Engines::KotORBase::previewStatsAtLevel1;
 using Engines::KotORBase::hpGainOnLevelUp;
 using Engines::KotORBase::kClassJediGuardian;
 using Engines::KotORBase::kClassScoundrel;
@@ -74,6 +75,21 @@ TEST(LevelUpHelpers, AbilityIncreaseAtLevelsFourEightTwelve) {
 	EXPECT_FALSE(grantsAbilityIncrease(4));
 	EXPECT_TRUE(grantsAbilityIncrease(7));
 	EXPECT_TRUE(grantsAbilityIncrease(11));
+}
+
+TEST(LevelUpHelpers, PreviewStatsSoldierCon14) {
+	KotORBase::CreatureInfo::Abilities ab;
+	ab.strength = 14;
+	ab.dexterity = 12;
+	ab.constitution = 14;
+	ab.intelligence = 10;
+	ab.wisdom = 10;
+	ab.charisma = 10;
+
+	const auto stats = previewStatsAtLevel1(kClassSoldier, ab);
+	EXPECT_EQ(stats.vitality, 12); // d10 + 2 CON
+	EXPECT_EQ(stats.defense, 11);  // 10 + 1 DEX
+	EXPECT_EQ(stats.fortitude, 13);
 }
 
 TEST(LevelUpHelpers, SoldierFeatListExcludesKnownFeats) {

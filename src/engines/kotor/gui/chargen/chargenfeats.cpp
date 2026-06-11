@@ -23,18 +23,36 @@
  */
 
 #include "src/common/strutil.h"
+#include "src/common/util.h"
 
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
 
 #include "src/engines/kotorbase/gui/chargeninfo.h"
-#include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/chargen/chargenfeats.h"
 
 namespace Engines {
 
 namespace KotOR {
+
+struct FeatButtonMap {
+	const char *tag;
+	uint32_t    feat;
+};
+
+static const FeatButtonMap kFeatButtons[] = {
+	{ "BTN_POWER_ATTACK", KotORBase::kFeatPowerAttack },
+	{ "BTN_FLURRY",       KotORBase::kFeatFlurry },
+	{ "BTN_CRITICAL",     KotORBase::kFeatCriticalStrike },
+	{ "BTN_POWER_BLAST",  KotORBase::kFeatPowerBlast },
+	{ "BTN_RAPID_SHOT",   KotORBase::kFeatRapidShot },
+	{ "BTN_SNIPER_SHOT",  KotORBase::kFeatSniperShot },
+	{ "BTN_CONDITIONING", KotORBase::kFeatConditioning },
+	{ "BTN_TOUGHNESS",    KotORBase::kFeatToughness },
+	{ "BTN_JEDI_DEFENSE", KotORBase::kFeatJediDefense },
+};
 
 CharacterGenerationFeatsMenu::CharacterGenerationFeatsMenu(
 		KotORBase::CharacterGenerationInfo &info,
@@ -45,18 +63,14 @@ CharacterGenerationFeatsMenu::CharacterGenerationFeatsMenu(
 	try {
 		load("ftchrgen");
 	} catch (...) {
-		// Fallback for some alternate versions of data
 		load("featpnl");
 	}
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
-	// In a real implementation, we would populate available feats from feats.2da
-	// based on the character's class, level, and ability requirements.
-	// For this parity milestone, we just provide a basic choice.
-	_availableFeats.push_back(KotORBase::kFeatPowerAttack);
-	_availableFeats.push_back(KotORBase::kFeatFlurry);
-	_availableFeats.push_back(KotORBase::kFeatCriticalStrike);
+	_availableFeats = KotORBase::getSelectableFeats(info.getClass(), info.getFeats());
+	if (_availableFeats.empty())
+		_availableFeats.push_back(KotORBase::kFeatToughness);
 
 	updateLabels();
 }
@@ -72,34 +86,32 @@ void CharacterGenerationFeatsMenu::updateLabels() {
 			btn->setText(text);
 	};
 
-	// Highlight selected feat if any.
-	// We assume there's a label describing the selection.
 	setWidgetText("REMAINING_SELECTIONS_LBL", (_selectedFeat == 0xFFFFFFFF) ? "1" : "0");
+}
+
+bool CharacterGenerationFeatsMenu::isFeatAvailable(uint32_t feat) const {
+	for (uint32_t available : _availableFeats) {
+		if (available == feat)
+			return true;
+	}
+	return false;
 }
 
 void CharacterGenerationFeatsMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
-	// In a real GUI, each feat would have a button in a list.
-	// For this implementation, we map tags to feat choices.
-	if (tag == "BTN_POWER_ATTACK") {
-		_selectedFeat = KotORBase::kFeatPowerAttack;
-		updateLabels();
-		return;
-	}
-	if (tag == "BTN_FLURRY") {
-		_selectedFeat = KotORBase::kFeatFlurry;
-		updateLabels();
-		return;
-	}
-	if (tag == "BTN_CRITICAL") {
-		_selectedFeat = KotORBase::kFeatCriticalStrike;
+	for (size_t i = 0; i < ARRAYSIZE(kFeatButtons); ++i) {
+		if (tag != kFeatButtons[i].tag)
+			continue;
+
+		if (isFeatAvailable(kFeatButtons[i].feat))
+			_selectedFeat = kFeatButtons[i].feat;
 		updateLabels();
 		return;
 	}
 
-	if (tag == "BTN_RECOMMENDED") {
-		_selectedFeat = KotORBase::kFeatPowerAttack;
+	if (tag == "BTN_RECOMMENDED" && !_availableFeats.empty()) {
+		_selectedFeat = _availableFeats.front();
 		updateLabels();
 		return;
 	}
@@ -110,7 +122,7 @@ void CharacterGenerationFeatsMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "BTN_ACCEPT") {
-		if (_selectedFeat != 0xFFFFFFFF) {
+		if (_selectedFeat != 0xFFFFFFFF && isFeatAvailable(_selectedFeat)) {
 			_info.addFeat(_selectedFeat);
 			accept();
 			_returnCode = 1;

@@ -27,6 +27,8 @@
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
 
+#include "src/engines/kotorbase/levelup.h"
+
 #include "src/engines/kotor/gui/ingame/levelup_skills.h"
 
 namespace Engines {
@@ -37,17 +39,20 @@ struct SkillWidgetTags {
 	const char *pointTag;
 	const char *plusTag;
 	const char *minusTag;
+	const char *legacyPointTag;
+	const char *legacyPlusTag;
+	const char *legacyMinusTag;
 };
 
 static const SkillWidgetTags kSkillTags[] = {
-	{ "COMPUTER_USE_POINTS_BTN", "COM_PLUS_BTN", "COM_MINUS_BTN" }, // kSkillComputerUse
-	{ "DEMOLITIONS_POINTS_BTN",  "DEM_PLUS_BTN", "DEM_MINUS_BTN" }, // kSkillDemolitions
-	{ "STEALTH_POINTS_BTN",      "STE_PLUS_BTN", "STE_MINUS_BTN" }, // kSkillStealth
-	{ "AWARENESS_POINTS_BTN",    "AWA_PLUS_BTN", "AWA_MINUS_BTN" }, // kSkillAwareness
-	{ "PERSUADE_POINTS_BTN",     "PER_PLUS_BTN", "PER_MINUS_BTN" }, // kSkillPersuade
-	{ "REPAIR_POINTS_BTN",       "REP_PLUS_BTN", "REP_MINUS_BTN" }, // kSkillRepair
-	{ "SECURITY_POINTS_BTN",     "SEC_PLUS_BTN", "SEC_MINUS_BTN" }, // kSkillSecurity
-	{ "TREAT_INJURY_POINTS_BTN", "TRE_PLUS_BTN", "TRE_MINUS_BTN" }, // kSkillTreatInjury
+	{ "COMPUTER_USE_POINTS_BTN", "COM_PLUS_BTN", "COM_MINUS_BTN", "LBL_COMP_USE",    "BTN_COMP_USE_PLUS",    "BTN_COMP_USE_MINUS"    },
+	{ "DEMOLITIONS_POINTS_BTN",  "DEM_PLUS_BTN", "DEM_MINUS_BTN", "LBL_DEMOLITIONS", "BTN_DEMOLITIONS_PLUS", "BTN_DEMOLITIONS_MINUS" },
+	{ "STEALTH_POINTS_BTN",      "STE_PLUS_BTN", "STE_MINUS_BTN", "LBL_STEALTH",     "BTN_STEALTH_PLUS",     "BTN_STEALTH_MINUS"     },
+	{ "AWARENESS_POINTS_BTN",    "AWA_PLUS_BTN", "AWA_MINUS_BTN", "LBL_AWARENESS",   "BTN_AWARENESS_PLUS",   "BTN_AWARENESS_MINUS"   },
+	{ "PERSUADE_POINTS_BTN",     "PER_PLUS_BTN", "PER_MINUS_BTN", "LBL_PERSUADE",    "BTN_PERSUADE_PLUS",    "BTN_PERSUADE_MINUS"    },
+	{ "REPAIR_POINTS_BTN",       "REP_PLUS_BTN", "REP_MINUS_BTN", "LBL_REPAIR",      "BTN_REPAIR_PLUS",      "BTN_REPAIR_MINUS"      },
+	{ "SECURITY_POINTS_BTN",     "SEC_PLUS_BTN", "SEC_MINUS_BTN", "LBL_SECURITY",    "BTN_SECURITY_PLUS",    "BTN_SECURITY_MINUS"    },
+	{ "TREAT_INJURY_POINTS_BTN", "TRE_PLUS_BTN", "TRE_MINUS_BTN", "LBL_TREAT_INJ",   "BTN_TREAT_INJ_PLUS",   "BTN_TREAT_INJ_MINUS"   },
 };
 
 LevelUpSkillsMenu::LevelUpSkillsMenu(KotORBase::CreatureInfo &info, Console *console) :
@@ -75,23 +80,18 @@ LevelUpSkillsMenu::~LevelUpSkillsMenu() {
 }
 
 int LevelUpSkillsMenu::computeAvailablePoints() const {
-	// Base points per level based on the class being levelled.
 	int base = 1;
 	if (_info.getNumClasses() > 0) {
-		KotORBase::Class pcClass = _info.getLatestClass();
-		switch (pcClass) {
-			case KotORBase::kClassScout:         base = 2; break;
-			case KotORBase::kClassScoundrel:     base = 3; break;
-			case KotORBase::kClassJediSentinel:  base = 2; break;
-			case KotORBase::kClassExpertDroid:   base = 4; break;
-			default: base = 1; break;
+		switch (_info.getLatestClass()) {
+		case KotORBase::kClassScout:         base = 2; break;
+		case KotORBase::kClassScoundrel:     base = 3; break;
+		case KotORBase::kClassJediSentinel:  base = 2; break;
+		case KotORBase::kClassExpertDroid:   base = 4; break;
+		default: base = 1; break;
 		}
 	}
 
-	int intMod = _info.getAbilityModifier(KotORBase::kAbilityIntelligence);
-	int total = base + intMod;
-
-	// Minimum 1 point per level.
+	const int total = base + _info.getAbilityModifier(KotORBase::kAbilityIntelligence);
 	return (total < 1) ? 1 : total;
 }
 
@@ -108,19 +108,23 @@ void LevelUpSkillsMenu::updateLabels() {
 	};
 
 	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
-		setWidgetText(kSkillTags[i].pointTag, Common::composeString(_ranks[i]));
+		const Common::UString rank = Common::composeString(_ranks[i]);
+		setWidgetText(kSkillTags[i].pointTag, rank);
+		setWidgetText(kSkillTags[i].legacyPointTag, rank);
 	}
 
-	setWidgetText("REMAINING_SELECTIONS_LBL", Common::composeString(_remainingPoints));
+	const Common::UString remaining = Common::composeString(_remainingPoints);
+	setWidgetText("REMAINING_SELECTIONS_LBL", remaining);
+	setWidgetText("SELECTIONS_REMAINING_LBL", remaining);
 }
 
 void LevelUpSkillsMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
+	const KotORBase::Class pcClass = _info.getLatestClass();
 
 	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
-		if (tag == kSkillTags[i].plusTag) {
-			KotORBase::Class pcClass = _info.getLatestClass();
-			int cost = isClassSkill(pcClass, static_cast<KotORBase::Skill>(i)) ? 1 : 2;
+		if (tag == kSkillTags[i].plusTag || tag == kSkillTags[i].legacyPlusTag) {
+			const int cost = KotORBase::isClassSkill(pcClass, static_cast<KotORBase::Skill>(i)) ? 1 : 2;
 
 			if (_remainingPoints >= cost) {
 				_ranks[i]++;
@@ -129,10 +133,9 @@ void LevelUpSkillsMenu::callbackActive(Widget &widget) {
 			}
 			return;
 		}
-		if (tag == kSkillTags[i].minusTag) {
+		if (tag == kSkillTags[i].minusTag || tag == kSkillTags[i].legacyMinusTag) {
 			if (_ranks[i] > _originalRanks[i]) {
-				KotORBase::Class pcClass = _info.getLatestClass();
-				int cost = isClassSkill(pcClass, static_cast<KotORBase::Skill>(i)) ? 1 : 2;
+				const int cost = KotORBase::isClassSkill(pcClass, static_cast<KotORBase::Skill>(i)) ? 1 : 2;
 
 				_ranks[i]--;
 				_remainingPoints += cost;
@@ -151,40 +154,11 @@ void LevelUpSkillsMenu::callbackActive(Widget &widget) {
 		if (_remainingPoints == 0) {
 			for (int i = 0; i < KotORBase::kSkillMAX; ++i)
 				_info.setSkillRank(static_cast<KotORBase::Skill>(i), _ranks[i]);
-			
+
 			_accepted = true;
 			_returnCode = 1;
 		}
 		return;
-	}
-}
-
-bool LevelUpSkillsMenu::isClassSkill(KotORBase::Class c, KotORBase::Skill s) const {
-	switch (c) {
-		case KotORBase::kClassScout:
-			return (s == KotORBase::kSkillComputerUse || s == KotORBase::kSkillDemolitions || 
-			        s == KotORBase::kSkillStealth || s == KotORBase::kSkillAwareness || 
-			        s == KotORBase::kSkillRepair || s == KotORBase::kSkillTreatInjury);
-		case KotORBase::kClassScoundrel:
-			return (s == KotORBase::kSkillDemolitions || s == KotORBase::kSkillStealth || 
-			        s == KotORBase::kSkillAwareness || s == KotORBase::kSkillPersuade || 
-			        s == KotORBase::kSkillSecurity || s == KotORBase::kSkillTreatInjury);
-		case KotORBase::kClassSoldier:
-			return (s == KotORBase::kSkillDemolitions || s == KotORBase::kSkillAwareness || 
-			        s == KotORBase::kSkillTreatInjury);
-		case KotORBase::kClassJediGuardian:
-			return (s == KotORBase::kSkillAwareness || s == KotORBase::kSkillPersuade || 
-			        s == KotORBase::kSkillTreatInjury);
-		case KotORBase::kClassJediSentinel:
-			return (s == KotORBase::kSkillComputerUse || s == KotORBase::kSkillDemolitions || 
-			        s == KotORBase::kSkillAwareness || s == KotORBase::kSkillPersuade || 
-			        s == KotORBase::kSkillSecurity || s == KotORBase::kSkillTreatInjury);
-		case KotORBase::kClassJediConsular:
-			return (s == KotORBase::kSkillComputerUse || s == KotORBase::kSkillDemolitions || 
-			        s == KotORBase::kSkillAwareness || s == KotORBase::kSkillPersuade || 
-			        s == KotORBase::kSkillRepair || s == KotORBase::kSkillTreatInjury);
-		default:
-			return false;
 	}
 }
 

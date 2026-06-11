@@ -84,7 +84,7 @@ void applyLevelUp(Creature &creature) {
 	status("Level up applied for %s. New HitDice: %d", creature.getName().c_str(), creature.getHitDice());
 }
 
-static bool isClassSkill(Class c, Skill s) {
+bool isClassSkill(Class c, Skill s) {
 	switch (c) {
 	case kClassScout:
 		return (s == kSkillComputerUse || s == kSkillDemolitions ||
@@ -138,57 +138,111 @@ static void appendIfNew(std::vector<uint32_t> &out, const CreatureInfo &info, ui
 		out.push_back(feat);
 }
 
-std::vector<uint32_t> getSelectableFeats(const CreatureInfo &info) {
-	std::vector<uint32_t> feats;
-	const Class pcClass = info.getNumClasses() > 0 ? info.getLatestClass() : kClassSoldier;
-
+static void appendClassFeats(std::vector<uint32_t> &feats, Class pcClass,
+                            const std::vector<uint32_t> &knownFeats) {
 	switch (pcClass) {
 	case kClassSoldier:
-		appendIfNew(feats, info, kFeatPowerAttack);
-		appendIfNew(feats, info, kFeatFlurry);
-		appendIfNew(feats, info, kFeatCriticalStrike);
-		appendIfNew(feats, info, kFeatToughness);
-		appendIfNew(feats, info, kFeatConditioning);
+		for (uint32_t feat : { kFeatPowerAttack, kFeatFlurry, kFeatCriticalStrike,
+		                       kFeatToughness, kFeatConditioning }) {
+			bool known = false;
+			for (uint32_t k : knownFeats)
+				if (k == feat) { known = true; break; }
+			if (!known)
+				feats.push_back(feat);
+		}
 		break;
 	case kClassScout:
-		appendIfNew(feats, info, kFeatFlurry);
-		appendIfNew(feats, info, kFeatPowerBlast);
-		appendIfNew(feats, info, kFeatRapidShot);
-		appendIfNew(feats, info, kFeatSniperShot);
-		appendIfNew(feats, info, kFeatToughness);
-		appendIfNew(feats, info, kFeatConditioning);
+		for (uint32_t feat : { kFeatFlurry, kFeatPowerBlast, kFeatRapidShot,
+		                       kFeatSniperShot, kFeatToughness, kFeatConditioning }) {
+			bool known = false;
+			for (uint32_t k : knownFeats)
+				if (k == feat) { known = true; break; }
+			if (!known)
+				feats.push_back(feat);
+		}
 		break;
 	case kClassScoundrel:
-		appendIfNew(feats, info, kFeatCriticalStrike);
-		appendIfNew(feats, info, kFeatSniperShot);
-		appendIfNew(feats, info, kFeatRapidShot);
-		appendIfNew(feats, info, kFeatToughness);
-		appendIfNew(feats, info, kFeatConditioning);
+		for (uint32_t feat : { kFeatCriticalStrike, kFeatSniperShot, kFeatRapidShot,
+		                       kFeatToughness, kFeatConditioning }) {
+			bool known = false;
+			for (uint32_t k : knownFeats)
+				if (k == feat) { known = true; break; }
+			if (!known)
+				feats.push_back(feat);
+		}
 		break;
 	case kClassJediGuardian:
-		appendIfNew(feats, info, kFeatFlurry);
-		appendIfNew(feats, info, kFeatPowerAttack);
-		appendIfNew(feats, info, kFeatJediDefense);
-		appendIfNew(feats, info, kFeatToughness);
+		for (uint32_t feat : { kFeatFlurry, kFeatPowerAttack, kFeatJediDefense, kFeatToughness }) {
+			bool known = false;
+			for (uint32_t k : knownFeats)
+				if (k == feat) { known = true; break; }
+			if (!known)
+				feats.push_back(feat);
+		}
 		break;
 	case kClassJediSentinel:
-		appendIfNew(feats, info, kFeatFlurry);
-		appendIfNew(feats, info, kFeatCriticalStrike);
-		appendIfNew(feats, info, kFeatJediDefense);
-		appendIfNew(feats, info, kFeatConditioning);
+		for (uint32_t feat : { kFeatFlurry, kFeatCriticalStrike, kFeatJediDefense, kFeatConditioning }) {
+			bool known = false;
+			for (uint32_t k : knownFeats)
+				if (k == feat) { known = true; break; }
+			if (!known)
+				feats.push_back(feat);
+		}
 		break;
 	case kClassJediConsular:
-		appendIfNew(feats, info, kFeatJediDefense);
-		appendIfNew(feats, info, kFeatToughness);
-		appendIfNew(feats, info, kFeatConditioning);
+		for (uint32_t feat : { kFeatJediDefense, kFeatToughness, kFeatConditioning }) {
+			bool known = false;
+			for (uint32_t k : knownFeats)
+				if (k == feat) { known = true; break; }
+			if (!known)
+				feats.push_back(feat);
+		}
 		break;
 	default:
-		appendIfNew(feats, info, kFeatPowerAttack);
-		appendIfNew(feats, info, kFeatToughness);
+		for (uint32_t feat : { kFeatPowerAttack, kFeatToughness }) {
+			bool known = false;
+			for (uint32_t k : knownFeats)
+				if (k == feat) { known = true; break; }
+			if (!known)
+				feats.push_back(feat);
+		}
 		break;
 	}
+}
 
+std::vector<uint32_t> getSelectableFeats(Class charClass, const std::vector<uint32_t> &knownFeats) {
+	std::vector<uint32_t> feats;
+	appendClassFeats(feats, charClass, knownFeats);
 	return feats;
+}
+
+std::vector<uint32_t> getSelectableFeats(const CreatureInfo &info) {
+	const Class pcClass = info.getNumClasses() > 0 ? info.getLatestClass() : kClassSoldier;
+	return getSelectableFeats(pcClass, info.getFeats());
+}
+
+static int abilityModifier(int score) {
+	const int mod = score - 10;
+	if (mod >= 0)
+		return mod / 2;
+	return (mod - 1) / 2;
+}
+
+CharacterPreviewStats previewStatsAtLevel1(Class charClass, const CreatureInfo::Abilities &abilities) {
+	CharacterPreviewStats stats;
+
+	const int conMod = abilityModifier(static_cast<int>(abilities.constitution));
+	const int dexMod = abilityModifier(static_cast<int>(abilities.dexterity));
+	const int wisMod = abilityModifier(static_cast<int>(abilities.wisdom));
+
+	int hp = classHitDie(charClass) + conMod;
+	stats.vitality = (hp < 1) ? 1 : hp;
+	stats.defense = 10 + dexMod;
+	stats.fortitude = 11 + conMod;
+	stats.reflex = 11 + dexMod;
+	stats.will = 11 + wisMod;
+
+	return stats;
 }
 
 std::vector<uint32_t> getSelectableForcePowers(const CreatureInfo &info) {

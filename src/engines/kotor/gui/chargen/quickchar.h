@@ -37,11 +37,12 @@ class QuickCharPanel : public KotORBase::GUI {
 public:
 	QuickCharPanel(CharacterGenerationMenu *charGenMenu, Console *console = 0);
 
+	void updateButtons();
+
 private:
 	CharacterGenerationMenu *_charGen;
 
 	void callbackActive(Widget &widget);
-	void updateButtons();
 };
 
 } // End of namespace KotOR

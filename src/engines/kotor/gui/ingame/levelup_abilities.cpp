@@ -102,6 +102,15 @@ void LevelUpAbilitiesMenu::callbackActive(Widget &widget) {
 		{ "CHA_PLUS_BTN", "CHA_MINUS_BTN", &_cha,  0 },
 	};
 
+	static const char * const kLegacyPlus[] = {
+		"BTN_STR_PLUS", "BTN_DEX_PLUS", "BTN_CON_PLUS",
+		"BTN_INT_PLUS", "BTN_WIS_PLUS", "BTN_CHA_PLUS"
+	};
+	static const char * const kLegacyMinus[] = {
+		"BTN_STR_MINUS", "BTN_DEX_MINUS", "BTN_CON_MINUS",
+		"BTN_INT_MINUS", "BTN_WIS_MINUS", "BTN_CHA_MINUS"
+	};
+
 	// Update original values in the static array (shady but works for this local loop)
 	const_cast<AbilityRef&>(kAbilityRefs[0]).original = _originalStr;
 	const_cast<AbilityRef&>(kAbilityRefs[1]).original = _originalDex;
@@ -111,7 +120,7 @@ void LevelUpAbilitiesMenu::callbackActive(Widget &widget) {
 	const_cast<AbilityRef&>(kAbilityRefs[5]).original = _originalCha;
 
 	for (size_t i = 0; i < ARRAYSIZE(kAbilityRefs); ++i) {
-		if (tag == kAbilityRefs[i].plusTag) {
+		if (tag == kAbilityRefs[i].plusTag || tag == kLegacyPlus[i]) {
 			if (_remainingPoints > 0) {
 				_remainingPoints--;
 				(*kAbilityRefs[i].value)++;
@@ -119,7 +128,7 @@ void LevelUpAbilitiesMenu::callbackActive(Widget &widget) {
 			}
 			return;
 		}
-		if (tag == kAbilityRefs[i].minusTag) {
+		if (tag == kAbilityRefs[i].minusTag || tag == kLegacyMinus[i]) {
 			if (*kAbilityRefs[i].value > kAbilityRefs[i].original) {
 				_remainingPoints++;
 				(*kAbilityRefs[i].value)--;
