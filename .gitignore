@@ -109,3 +109,4 @@ Makefile.in
 /build-vcpkg-linux/
 /build-vcpkg-portable/
 /build-vcpkg-release/
+build-linux/

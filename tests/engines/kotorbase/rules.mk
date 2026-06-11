@@ -78,6 +78,16 @@ tests_engines_kotorbase_test_endar_spire_golden_SOURCES   = tests/engines/kotorb
 tests_engines_kotorbase_test_endar_spire_golden_LDADD     = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_endar_spire_golden_CXXFLAGS  = $(test_CXXFLAGS)
 
+check_PROGRAMS                                           += tests/engines/kotorbase/test_levelup
+tests_engines_kotorbase_test_levelup_SOURCES                = tests/engines/kotorbase/levelup.cpp
+tests_engines_kotorbase_test_levelup_LDADD                  = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_levelup_CXXFLAGS               = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_camera_cutscene
+tests_engines_kotorbase_test_camera_cutscene_SOURCES        = tests/engines/kotorbase/camera_cutscene.cpp
+tests_engines_kotorbase_test_camera_cutscene_LDADD          = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_camera_cutscene_CXXFLAGS       = $(test_CXXFLAGS)
+
 check_PROGRAMS                                           += tests/engines/kotorbase/test_taris_progression
 tests_engines_kotorbase_test_taris_progression_SOURCES    = tests/engines/kotorbase/taris_progression.cpp
 tests_engines_kotorbase_test_taris_progression_LDADD      = $(kotorbase_LIBS)

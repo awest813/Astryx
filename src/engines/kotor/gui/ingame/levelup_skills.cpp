@@ -75,10 +75,10 @@ LevelUpSkillsMenu::~LevelUpSkillsMenu() {
 }
 
 int LevelUpSkillsMenu::computeAvailablePoints() const {
-	// Base points per level based on the class being levelled (assume first class for now).
+	// Base points per level based on the class being levelled.
 	int base = 1;
 	if (_info.getNumClasses() > 0) {
-		KotORBase::Class pcClass = _info.getClassByPosition(0);
+		KotORBase::Class pcClass = _info.getLatestClass();
 		switch (pcClass) {
 			case KotORBase::kClassScout:         base = 2; break;
 			case KotORBase::kClassScoundrel:     base = 3; break;

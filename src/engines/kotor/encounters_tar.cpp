@@ -19,10 +19,12 @@ void performTarisAmbush(KotORBase::Module &module) {
 
 	// 2. Transition to the door before it blows
 	module.cameraTransitionToTarget("wp_tar_patrol_spawn", 2.0f);
-	
+	module.runCinematicBeat(2.0f);
+
 	// 3. Stinger & Combat
 	module.playMusicStinger("mus_vfx_explosion_lrg");
 	module.shakeCamera(0.8f, 0.4f); // Door kick/breach impact
+	module.runCinematicBeat(1.0f);
 	
 	// 4. Spawn Sith Patrol
 	KotORBase::Creature *s1 = module.createCreatureByTemplate("n_sithsoldier001");
@@ -38,9 +40,13 @@ void performTarisAmbush(KotORBase::Module &module) {
 	if (s2) s2->setAIArchetype(KotORBase::Creature::kAIArchetypeTacticalHumanoid);
 
 	module.playMusicStinger("mus_bat_sith");
-	
+	module.runCinematicBeat(1.5f);
+
 	// 5. Assign Tactical AI to Sith soldiers via encounter signal
 	module.signalEncounter("tar_patrol_engage");
+
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
@@ -54,14 +60,18 @@ void performDuelRingIntro(KotORBase::Module &module) {
 
 	// 1. Pan across the ring
 	module.cameraTransitionToTarget("wp_tar_duel_ring", 3.0f);
-	
+	module.runCinematicBeat(3.0f);
+
 	// 2. Crowd Cheering Stinger
 	module.playMusicStinger("mus_vfx_cheer");
-	
+
 	// 3. Zoom into Ajan Kest (Announcer)
 	module.cameraTransitionToTarget("wp_tar_announcer_focus", 2.0f);
+	module.runCinematicBeat(2.5f);
 
-	// 4. Hold for a moment then restore
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
+
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
 }

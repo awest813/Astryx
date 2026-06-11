@@ -229,7 +229,8 @@ void Functions::cameraLookAtObject(Aurora::NWScript::FunctionContext &ctx) {
 	// CameraLookAtObject(object oTarget, float fBlendTime)
 	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
 	float blendTime = ctx.getParams()[1].getFloat();
-	_game->getModule().setCameraTarget(target);
+	_game->getModule().enterCinematicMode();
+	_game->getModule().setCinematicFocus(target);
 	// Honour the requested blend so the look-at eases in rather than snapping.
 	_game->getModule().cameraTransitionToTarget(blendTime);
 }

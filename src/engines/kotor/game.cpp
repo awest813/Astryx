@@ -29,6 +29,7 @@
 #include "src/common/filepath.h"
 #include "src/common/filelist.h"
 #include "src/common/configman.h"
+#include "src/common/util.h"
 
 #include "src/graphics/graphics.h"
 
@@ -40,6 +41,7 @@
 
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/store.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 
@@ -178,6 +180,17 @@ void Game::showLevelUpGUI() {
 	KotORBase::Creature *pc = static_cast<Module *>(_module.get())->getPC();
 	if (!pc)
 		return;
+
+	if (!KotORBase::canLevelUp(*pc)) {
+		status("ShowLevelUpGUI: insufficient XP (%d / %d required)",
+		       pc->getCurrentXP(), KotORBase::levelUpThreshold(pc->getHitDice()));
+		return;
+	}
+
+	if (ConfigMan.getBool("autolevelup")) {
+		KotORBase::autoLevelUp(*pc);
+		return;
+	}
 
 	LevelUpGUI gui(*_module, *pc, _console);
 	gui.run();

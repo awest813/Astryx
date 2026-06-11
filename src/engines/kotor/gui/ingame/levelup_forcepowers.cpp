@@ -92,7 +92,7 @@ void LevelUpForcePowersMenu::callbackActive(Widget &widget) {
 
 	if (tag == "BTN_ACCEPT") {
 		if (_selectedPower != 0xFFFFFFFF) {
-			// In a real implementation, add the Force power to the character.
+			_info.addForcePower(_selectedPower);
 			_accepted = true;
 			_returnCode = 1;
 		}

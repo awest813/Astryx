@@ -60,6 +60,8 @@ public:
 	void setPartyMember1(KotORBase::Creature *creature);
 	void setPartyMember2(KotORBase::Creature *creature);
 
+	void update(float dt) override;
+
 protected:
 	void reset();
 	void init();
@@ -76,6 +78,8 @@ private:
 	void update(int width, int height);
 	void initWidget(Widget &widget);
 	void setPortrait(uint8_t n, bool visible, const Common::UString &portrait = "");
+	void setLevelUpIndicator(uint8_t n, bool visible);
+	void updateLevelUpIndicators();
 	void notifyResized(int oldWidth, int oldHeight, int newWidth, int newHeight);
 };
 

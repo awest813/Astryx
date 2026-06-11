@@ -26,6 +26,7 @@
 
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/ingame/levelup.h"
 #include "src/engines/kotor/gui/ingame/levelup_abilities.h"
@@ -58,6 +59,11 @@ void LevelUpGUI::callbackActive(::Engines::Widget &widget) {
 	}
 
 	if (widget.getTag() == "BTN_ACCEPT") {
+		if (!KotORBase::canLevelUp(_pc)) {
+			_returnCode = 1;
+			return;
+		}
+
 		_step = 1;
 		callbackRun(); // Start the first step
 		return;
@@ -105,28 +111,7 @@ void LevelUpGUI::callbackRun() {
 }
 
 void LevelUpGUI::finalizeLevelUp() {
-	KotORBase::CreatureInfo &info = _pc.getCreatureInfo();
-	KotORBase::Class pcClass = info.getLatestClass();
-	info.incrementClassLevel(pcClass);
-
-	// HP gain: based on class hit die + CON modifier.
-	int hpGain = 10;
-	if (pcClass == KotORBase::kClassScout)          hpGain = 8;
-	if (pcClass == KotORBase::kClassScoundrel)      hpGain = 6;
-	if (pcClass == KotORBase::kClassJediGuardian)   hpGain = 10;
-	if (pcClass == KotORBase::kClassJediSentinel)   hpGain = 8;
-	if (pcClass == KotORBase::kClassJediConsular)   hpGain = 6;
-
-	hpGain += info.getAbilityModifier(KotORBase::kAbilityConstitution);
-	if (hpGain < 1) hpGain = 1;
-
-	_pc.setMaxHitPoints(_pc.getMaxHitPoints() + hpGain);
-	_pc.setCurrentHitPoints(_pc.getMaxHitPoints());
-
-	_pc.setMaxForcePoints(_pc.computeMaxForcePoints());
-	_pc.setForcePoints(_pc.getMaxForcePoints());
-
-	status("Level Up Finalized for %s. New HitDice: %d", _pc.getName().c_str(), _pc.getHitDice());
+	KotORBase::applyLevelUp(_pc);
 }
 
 void LevelUpGUI::showAbilities() {

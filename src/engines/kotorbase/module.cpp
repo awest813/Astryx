@@ -709,7 +709,8 @@ void Module::cameraTransitionToTarget(const Common::UString &tag, float duration
 	if (!obj)
 		return;
 
-	_cameraController.setCameraTarget(obj);
+	_cameraController.enterCinematicMode();
+	_cameraController.setCinematicFocus(obj);
 	_cameraController.cameraTransitionToTarget(duration);
 }
 
@@ -1963,6 +1964,7 @@ void Module::setCameraTarget(Object *target) {
 }
 
 void Module::cameraTransitionToTarget(float blendTime) {
+	_cameraController.enterCinematicMode();
 	_cameraController.cameraTransitionToTarget(blendTime);
 }
 
@@ -1980,6 +1982,10 @@ void Module::restoreGameplayCamera(float blendTime) {
 
 void Module::resetToOrbit() {
 	_cameraController.resetToOrbit();
+}
+
+void Module::enterCinematicMode() {
+	_cameraController.enterCinematicMode();
 }
 
 void Module::setPlayerInputEnabled(bool enabled) {

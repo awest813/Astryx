@@ -23,6 +23,7 @@
  */
 
 #include "src/common/strutil.h"
+#include "src/common/util.h"
 
 #include "src/aurora/resman.h"
 
@@ -31,6 +32,7 @@
 
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/ingame/hud.h"
 
@@ -315,6 +317,44 @@ void HUD::setPartyMember2(KotORBase::Creature *creature) {
 	setPortrait(2, creature != 0, creature ? creature->getPortrait() : "");
 }
 
+void HUD::setLevelUpIndicator(uint8_t n, bool visible) {
+	Odyssey::WidgetLabel *bg = getLabel(Common::UString("LBL_LVLUPBG") + Common::composeString(n));
+	Odyssey::WidgetLabel *lbl = getLabel(Common::UString("LBL_LEVELUP") + Common::composeString(n));
+
+	if (bg)
+		bg->setInvisible(!visible);
+	if (lbl)
+		lbl->setInvisible(!visible);
+
+	if (visible && _visible) {
+		if (bg)
+			bg->show();
+		if (lbl)
+			lbl->show();
+	} else {
+		if (bg)
+			bg->hide();
+		if (lbl)
+			lbl->hide();
+	}
+}
+
+void HUD::updateLevelUpIndicators() {
+	static const uint8_t kPortraitSlots[] = { 1, 3, 2 };
+	static const int kPartyIndices[] = { 0, 1, 2 };
+
+	for (size_t i = 0; i < ARRAYSIZE(kPortraitSlots); ++i) {
+		KotORBase::Creature *member = _module.getPartyMemberByIndex(kPartyIndices[i]);
+		const bool show = member && member->isPC() && KotORBase::canLevelUp(*member);
+		setLevelUpIndicator(kPortraitSlots[i], show);
+	}
+}
+
+void HUD::update(float dt) {
+	KotORBase::HUD::update(dt);
+	updateLevelUpIndicators();
+}
+
 void HUD::update(int width, int height) {
 	std::set<Resolution> availableRes;
 
@@ -413,6 +453,10 @@ void HUD::initWidget(Engines::Widget &widget) {
 		widget.setInvisible(true);
 	if (widget.getTag().contains("PB_FORCE"))
 		widget.setInvisible(true);
+	if (widget.getTag().contains("LBL_LEVELUP"))
+		widget.setInvisible(true);
+	if (widget.getTag().contains("LBL_LVLUPBG"))
+		widget.setInvisible(true);
 }
 
 void HUD::callbackActive(Widget &widget) {
@@ -431,6 +475,13 @@ void HUD::callbackActive(Widget &widget) {
 	}
 	if (widget.getTag() == "LBL_CHAR3") {
 		_module.setPartyLeaderByIndex(1);
+		return;
+	}
+
+	if (widget.getTag() == "LBL_LEVELUP1" || widget.getTag() == "LBL_LEVELUP2" || widget.getTag() == "LBL_LEVELUP3") {
+		KotORBase::Creature *pc = _module.getPC();
+		if (pc && KotORBase::canLevelUp(*pc))
+			_module.getGame().showLevelUpGUI();
 		return;
 	}
 

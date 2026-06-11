@@ -376,6 +376,7 @@ protected:
 	void cameraHold(float duration);
 	void restoreGameplayCamera(float blendTime);
 	void resetToOrbit();
+	void enterCinematicMode();
 
 	void setCutsceneMode(bool enabled);
 	void setPlayerInputEnabled(bool enabled);
