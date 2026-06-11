@@ -118,16 +118,6 @@ int CharacterGenerationSkillsMenu::computeSkillPoints() const {
 }
 
 void CharacterGenerationSkillsMenu::updateLabels() {
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl)
-			lbl->setText(text);
-
-		Odyssey::WidgetButton *btn = getButton(tag);
-		if (btn)
-			btn->setText(text);
-	};
-
 	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
 		setWidgetText(kSkillTags[i].pointTag, Common::composeString(_ranks[i]));
 		setWidgetText(kSkillTags[i].legacyPointTag, Common::composeString(_ranks[i]));

@@ -78,11 +78,8 @@ CharacterGenerationMenu::CharacterGenerationMenu(KotORBase::Module *module,
 		"VIT_ARROW_LBL", "DEF_ARROW_LBL", "LBL_NAME"
 	};
 
-	for (size_t i = 0; i < ARRAYSIZE(kEmptyLabels); i++) {
-		Odyssey::WidgetLabel *label = getLabel(kEmptyLabels[i]);
-		if (label)
-			label->setText("");
-	}
+	for (size_t i = 0; i < ARRAYSIZE(kEmptyLabels); i++)
+		setWidgetText(kEmptyLabels[i], "");
 
 	static const char * const kInvisibleWidgets[] = {
 		"NEW_LBL", "OLD_LBL", "LBL_LEVEL", "LBL_LEVEL_VAL"
@@ -94,22 +91,18 @@ CharacterGenerationMenu::CharacterGenerationMenu(KotORBase::Module *module,
 			widget->setInvisible(true);
 	}
 
-	Odyssey::WidgetLabel *lblClass = getLabel("LBL_CLASS");
-	if (lblClass) {
-		// Set the class title according to the class of the character
-		switch (pc->getClass()) {
-			case KotORBase::kClassSoldier:
-				lblClass->setText(TalkMan.getString(134));
-				break;
-			case KotORBase::kClassScout:
-				lblClass->setText(TalkMan.getString(133));
-				break;
-			case KotORBase::kClassScoundrel:
-				lblClass->setText(TalkMan.getString(135));
-				break;
-			default:
-				lblClass->setText("");
-		}
+	switch (pc->getClass()) {
+		case KotORBase::kClassSoldier:
+			setWidgetText("LBL_CLASS", TalkMan.getString(134));
+			break;
+		case KotORBase::kClassScout:
+			setWidgetText("LBL_CLASS", TalkMan.getString(133));
+			break;
+		case KotORBase::kClassScoundrel:
+			setWidgetText("LBL_CLASS", TalkMan.getString(135));
+			break;
+		default:
+			setWidgetText("LBL_CLASS", "");
 	}
 
 	Odyssey::WidgetLabel *lblPortrait = getLabel("PORTRAIT_LBL");
@@ -200,22 +193,17 @@ void CharacterGenerationMenu::refreshPreviewStats() {
 	const KotORBase::CharacterPreviewStats stats =
 		KotORBase::previewStatsAtLevel1(_pc->getClass(), _pc->getAbilities());
 
-	auto setStat = [this](const char *tag, int value) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl)
-			lbl->setText(Common::composeString(value));
+	auto setStatPair = [this](const char *primaryTag, const char *legacyTag, int value) {
+		const Common::UString text = Common::composeString(value);
+		setWidgetText(primaryTag, text);
+		setWidgetText(legacyTag, text);
 	};
 
-	setStat("LBL_VIT_VAL", stats.vitality);
-	setStat("VIT_VAL_LBL", stats.vitality);
-	setStat("LBL_DEF_VAL", stats.defense);
-	setStat("DEF_VAL_LBL", stats.defense);
-	setStat("LBL_FORT_VAL", stats.fortitude);
-	setStat("FORT_VAL_LBL", stats.fortitude);
-	setStat("LBL_REFL_VAL", stats.reflex);
-	setStat("REFL_VAL_LBL", stats.reflex);
-	setStat("LBL_WILL_VAL", stats.will);
-	setStat("WILL_VAL_LBL", stats.will);
+	setStatPair("LBL_VIT_VAL", "VIT_VAL_LBL", stats.vitality);
+	setStatPair("LBL_DEF_VAL", "DEF_VAL_LBL", stats.defense);
+	setStatPair("LBL_FORT_VAL", "FORT_VAL_LBL", stats.fortitude);
+	setStatPair("LBL_REFL_VAL", "REFL_VAL_LBL", stats.reflex);
+	setStatPair("LBL_WILL_VAL", "WILL_VAL_LBL", stats.will);
 }
 
 void CharacterGenerationMenu::refreshStepPanels() {
@@ -268,9 +256,7 @@ void CharacterGenerationMenu::showName() {
 	if (_charGenMenu->isAccepted()) {
 		*_pc = info;
 
-		Odyssey::WidgetLabel *lblName = getLabel("LBL_NAME");
-		if (lblName)
-			lblName->setText(info.getName());
+		setWidgetText("LBL_NAME", info.getName());
 
 		if (_step < 2)
 			_step = 2;

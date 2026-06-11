@@ -47,4 +47,6 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/gui/floatingtext.cpp \
     src/engines/kotorbase/gui/hud.cpp \
     src/engines/kotorbase/gui/menubase.cpp \
+    src/engines/kotorbase/gui/guiwidgettext.cpp \
+    src/engines/kotorbase/gui/charactersheet.cpp \
     $(EMPTY)

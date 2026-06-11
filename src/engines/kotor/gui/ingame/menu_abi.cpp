@@ -24,6 +24,9 @@
 
 #include "src/engines/aurora/widget.h"
 
+#include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/module.h"
+
 #include "src/engines/kotor/gui/ingame/menu_abi.h"
 
 namespace Engines {
@@ -38,7 +41,11 @@ MenuAbilities::MenuAbilities(KotORBase::Module &module, Console *console) :
 
 void MenuAbilities::update() {
 	MenuBase::update();
-	updatePartyLeader("LBL_PORTRAIT");
+
+	if (KotORBase::Creature *leader = _module->getPartyLeader()) {
+		updatePartyLeader("LBL_PORTRAIT");
+		populateAbilitiesSheet(*leader);
+	}
 }
 
 void MenuAbilities::callbackActive(Widget &widget) {

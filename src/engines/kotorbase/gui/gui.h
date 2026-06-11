@@ -54,6 +54,8 @@ namespace Odyssey {
 
 namespace KotORBase {
 
+class Creature;
+
 class GUI : public Engines::GUI {
 public:
 	GUI(::Engines::Console *console = 0);
@@ -112,6 +114,16 @@ protected:
 
 	void setCheckBoxState(const Common::UString &tag, bool state);
 	bool getCheckBoxState(const Common::UString &tag);
+
+	/** Set label or button text, creating a font when the control has no TEXT field. */
+	void setWidgetText(const Common::UString &tag, const Common::UString &text);
+	/** Try each tag until one resolves to a widget. */
+	void setWidgetTextAliases(const char *const *tags, size_t count, const Common::UString &text);
+
+	/** Populate the in-game character profile sheet for @p creature. */
+	void populateCharacterSheet(Creature &creature);
+	/** Populate the in-game abilities sheet for @p creature. */
+	void populateAbilitiesSheet(Creature &creature);
 
 private:
 	struct WidgetContext {

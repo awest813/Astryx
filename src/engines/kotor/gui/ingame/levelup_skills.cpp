@@ -96,17 +96,6 @@ int LevelUpSkillsMenu::computeAvailablePoints() const {
 }
 
 void LevelUpSkillsMenu::updateLabels() {
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl) {
-			lbl->setText(text);
-			return;
-		}
-		Odyssey::WidgetButton *btn = getButton(tag);
-		if (btn)
-			btn->setText(text);
-	};
-
 	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
 		const Common::UString rank = Common::composeString(_ranks[i]);
 		setWidgetText(kSkillTags[i].pointTag, rank);

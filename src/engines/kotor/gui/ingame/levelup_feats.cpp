@@ -78,17 +78,6 @@ LevelUpFeatsMenu::~LevelUpFeatsMenu() {
 }
 
 void LevelUpFeatsMenu::updateLabels() {
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl) {
-			lbl->setText(text);
-			return;
-		}
-		Odyssey::WidgetButton *btn = getButton(tag);
-		if (btn)
-			btn->setText(text);
-	};
-
 	setWidgetText("REMAINING_SELECTIONS_LBL", (_selectedFeat == 0xFFFFFFFF) ? "1" : "0");
 }
 

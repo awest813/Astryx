@@ -22,12 +22,7 @@
  *  The character level-up GUI.
  */
 
-#include "src/common/strutil.h"
-
-#include "src/aurora/talkman.h"
-
 #include "src/engines/aurora/widget.h"
-#include "src/engines/odyssey/label.h"
 
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
@@ -59,43 +54,12 @@ LevelUpGUI::~LevelUpGUI() {
 }
 
 void LevelUpGUI::updateSummaryLabels() {
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl)
-			lbl->setText(text);
-	};
-
-	setWidgetText("LBL_NAME", _pc.getName());
+	populateCharacterSheet(_pc);
 
 	const int nextLevel = _pc.getHitDice() + 1;
-	setWidgetText("LBL_LEVEL_VAL", Common::composeString(nextLevel));
-	setWidgetText("LBL_LEVEL", Common::composeString(nextLevel));
-
-	uint32_t classStr = 0;
-	switch (_pc.getCreatureInfo().getLatestClass()) {
-	case KotORBase::kClassSoldier:       classStr = 134; break;
-	case KotORBase::kClassScout:         classStr = 133; break;
-	case KotORBase::kClassScoundrel:     classStr = 135; break;
-	default: break;
-	}
-
-	if (classStr) {
-		setWidgetText("LBL_CLASS", TalkMan.getString(classStr));
-	} else {
-		switch (_pc.getCreatureInfo().getLatestClass()) {
-		case KotORBase::kClassJediGuardian:
-			setWidgetText("LBL_CLASS", "Jedi Guardian");
-			break;
-		case KotORBase::kClassJediSentinel:
-			setWidgetText("LBL_CLASS", "Jedi Sentinel");
-			break;
-		case KotORBase::kClassJediConsular:
-			setWidgetText("LBL_CLASS", "Jedi Consular");
-			break;
-		default:
-			break;
-		}
-	}
+	const Common::UString nextLevelText = Common::composeString(nextLevel);
+	setWidgetText("LBL_LEVEL_VAL", nextLevelText);
+	setWidgetText("LBL_LEVEL", nextLevelText);
 }
 
 void LevelUpGUI::callbackActive(::Engines::Widget &widget) {

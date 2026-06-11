@@ -62,17 +62,6 @@ LevelUpAbilitiesMenu::~LevelUpAbilitiesMenu() {
 }
 
 void LevelUpAbilitiesMenu::updateLabels() {
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl) {
-			lbl->setText(text);
-			return;
-		}
-		Odyssey::WidgetButton *btn = getButton(tag);
-		if (btn)
-			btn->setText(text);
-	};
-
 	setWidgetText("STR_POINTS_BTN", Common::composeString(_str));
 	setWidgetText("DEX_POINTS_BTN", Common::composeString(_dex));
 	setWidgetText("CON_POINTS_BTN", Common::composeString(_con));
