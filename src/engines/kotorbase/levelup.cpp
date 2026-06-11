@@ -40,23 +40,6 @@ namespace Engines {
 
 namespace KotORBase {
 
-/** Map prestige Jedi classes to their base class for feats, skills, and saves. */
-static Class progressionClass(Class charClass) {
-	switch (charClass) {
-	case kClassJediWeaponMaster:
-	case kClassSithMarauder:
-		return kClassJediGuardian;
-	case kClassJediWatchMan:
-	case kClassSithAssassin:
-		return kClassJediSentinel;
-	case kClassJediMaster:
-	case kClassSithLord:
-		return kClassJediConsular;
-	default:
-		return charClass;
-	}
-}
-
 static int totalSkillRanks(const CreatureInfo::Skills &skills) {
 	return static_cast<int>(skills.computerUse + skills.demolitions + skills.stealth +
 	                        skills.awareness + skills.persuade + skills.repair +
@@ -188,7 +171,7 @@ bool isClassSkill(Class c, Skill s) {
 	}
 }
 
-static int skillPointsPerLevel(const CreatureInfo &info) {
+int skillPointsPerLevel(const CreatureInfo &info) {
 	int base = 1;
 	if (info.getNumClasses() > 0) {
 		switch (progressionClass(info.getLatestClass())) {

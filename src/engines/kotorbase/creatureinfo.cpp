@@ -306,7 +306,7 @@ int CreatureInfo::getSavingThrowBonus(SavingThrow type) const {
 	return baseSave + getAbilityModifier(ability);
 }
 
-static Class progressionClass(Class charClass) {
+Class progressionClass(Class charClass) {
 	switch (charClass) {
 	case kClassJediWeaponMaster:
 	case kClassSithMarauder:

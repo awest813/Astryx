@@ -44,6 +44,9 @@ namespace KotORBase {
 /** True for base Jedi classes and prestige Force-using classes. */
 bool isJediClass(Class charClass);
 
+/** Map prestige Jedi classes to their base class for feats, skills, and saves. */
+Class progressionClass(Class charClass);
+
 class CharacterGenerationInfo;
 
 class CreatureInfo {

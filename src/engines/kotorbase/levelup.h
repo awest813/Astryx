@@ -80,6 +80,9 @@ std::vector<uint32_t> getSelectableForcePowers(const CreatureInfo &info);
 /** True when @p skill is a class skill for @p charClass. */
 bool isClassSkill(Class charClass, Skill skill);
 
+/** Skill points granted on the next level-up for @p info. */
+int skillPointsPerLevel(const CreatureInfo &info);
+
 /** Derived combat numbers shown on the character creation summary panel. */
 struct CharacterPreviewStats {
 	int vitality { 0 };

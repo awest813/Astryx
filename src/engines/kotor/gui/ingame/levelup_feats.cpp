@@ -77,6 +77,26 @@ LevelUpFeatsMenu::~LevelUpFeatsMenu() {
 
 void LevelUpFeatsMenu::updateLabels() {
 	setWidgetText("REMAINING_SELECTIONS_LBL", (_selectedFeat == 0xFFFFFFFF) ? "1" : "0");
+
+	for (size_t i = 0; i < ARRAYSIZE(kFeatButtons); ++i) {
+		Odyssey::WidgetButton *button = getButton(kFeatButtons[i].tag);
+		if (!button)
+			continue;
+
+		const bool available = isFeatAvailable(kFeatButtons[i].feat);
+		button->setInvisible(!available);
+		if (!available) {
+			button->hide();
+			continue;
+		}
+
+		if (_selectedFeat == kFeatButtons[i].feat)
+			button->setStaticHighlight();
+		else
+			button->setPermanentHighlight(false);
+
+		button->show();
+	}
 }
 
 bool LevelUpFeatsMenu::isFeatAvailable(uint32_t feat) const {

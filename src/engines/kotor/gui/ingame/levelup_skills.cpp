@@ -61,23 +61,7 @@ LevelUpSkillsMenu::~LevelUpSkillsMenu() {
 }
 
 int LevelUpSkillsMenu::computeAvailablePoints() const {
-	int base = 1;
-	if (_info.getNumClasses() > 0) {
-		switch (_info.getLatestClass()) {
-		case KotORBase::kClassScout:            base = 2; break;
-		case KotORBase::kClassScoundrel:        base = 3; break;
-		case KotORBase::kClassJediGuardian:     base = 1; break;
-		case KotORBase::kClassJediConsular:     base = 1; break;
-		case KotORBase::kClassJediSentinel:     base = 2; break;
-		case KotORBase::kClassJediWatchMan:
-		case KotORBase::kClassSithAssassin:     base = 2; break;
-		case KotORBase::kClassExpertDroid:      base = 4; break;
-		default:                                base = 1; break;
-		}
-	}
-
-	const int total = base + _info.getAbilityModifier(KotORBase::kAbilityIntelligence);
-	return (total < 1) ? 1 : total;
+	return KotORBase::skillPointsPerLevel(_info);
 }
 
 void LevelUpSkillsMenu::updateLabels() {

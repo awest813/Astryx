@@ -54,6 +54,8 @@ using Engines::KotORBase::getClassDisplayName;
 using Engines::KotORBase::getForcePowerDisplayName;
 using Engines::KotORBase::formatAbilityModifier;
 using Engines::KotORBase::isJediClass;
+using Engines::KotORBase::progressionClass;
+using Engines::KotORBase::skillPointsPerLevel;
 using Engines::KotORBase::kClassJediConsular;
 
 TEST(LevelUpHelpers, ThresholdLevel2Is1000) {
@@ -129,6 +131,16 @@ TEST(LevelUpHelpers, SoldierFeatListExcludesKnownFeats) {
 	const auto feats = getSelectableFeats(info);
 	for (uint32_t feat : feats)
 		EXPECT_NE(feat, kFeatPowerAttack);
+}
+
+TEST(LevelUpHelpers, ProgressionClassMapsPrestigeToBase) {
+	EXPECT_EQ(progressionClass(kClassJediWeaponMaster), kClassJediGuardian);
+}
+
+TEST(LevelUpHelpers, SkillPointsPerLevelUsesPrestigeBase) {
+	CreatureInfo info;
+	info.incrementClassLevel(kClassJediWeaponMaster);
+	EXPECT_EQ(skillPointsPerLevel(info), 1);
 }
 
 TEST(LevelUpHelpers, IsJediClassIncludesPrestige) {

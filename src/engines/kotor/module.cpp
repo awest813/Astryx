@@ -22,11 +22,12 @@
  *  The context needed to run a Star Wars: Knights of the Old Republic module.
  */
 
+#include <algorithm>
+
 #include "src/common/strutil.h"
 
 #include "src/engines/kotor/module.h"
 #include "src/engines/kotor/game.h"
-#include "src/engines/kotor/creature.h"
 #include "src/engines/kotorbase/creature.h"
 
 #include "src/engines/kotor/gui/dialog.h"
@@ -209,10 +210,13 @@ void Module::signalEncounter(const Common::UString &id) {
 
 		const int wager = getGlobalNumber("__pazaak_wager");
 		if (wager > 0 && getPC()) {
-			if (playerWon)
-				getPC()->getInventory().addGold(static_cast<uint32_t>(wager));
-			else
-				getPC()->getInventory().removeGold(static_cast<uint32_t>(wager));
+			KotORBase::Inventory &inv = getPC()->getInventory();
+			if (playerWon) {
+				inv.addGold(static_cast<uint32_t>(wager));
+			} else {
+				const uint32_t paid = std::min(static_cast<uint32_t>(wager), inv.getGold());
+				inv.removeGold(paid);
+			}
 		}
 	}
 }
