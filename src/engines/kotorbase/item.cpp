@@ -155,6 +155,18 @@ int Item::getBaseItem() const {
 	return _baseItem;
 }
 
+const Common::UString &Item::getItemClass() const {
+	return _itemClass;
+}
+
+int Item::getItemPropertyValue(int propertyType, int fallback) const {
+	for (const ItemPropertyData &prop : _properties) {
+		if (prop.type == propertyType)
+			return prop.param1Value;
+	}
+	return fallback;
+}
+
 int Item::getStackSize() const {
 	return _stackSize;
 }

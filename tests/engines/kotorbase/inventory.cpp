@@ -29,9 +29,13 @@
 
 #include "gtest/gtest.h"
 
+#include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/inventory.h"
+#include "src/engines/kotorbase/itemactions.h"
 
+using Engines::KotORBase::Creature;
 using Engines::KotORBase::Inventory;
+using Engines::KotORBase::dropInventoryItem;
 
 // ---------------------------------------------------------------------------
 // Initial state

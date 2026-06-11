@@ -417,6 +417,7 @@ enum EffectType {
 enum ItemPropertyType {
 	kItemPropertyAbilityBonus     =  0,
 	kItemPropertyACBonus          =  1,
+	kItemPropertyCastSpell        =  6,
 	kItemPropertyEnhancementBonus =  7,
 	kItemPropertyDamageBonus      = 15,
 	kItemPropertyAttackBonus      = 58

@@ -55,8 +55,11 @@ public:
 	int getAttackBonus() const;
 	int getBaseItem() const;
 	int getCost() const;
+	const Common::UString &getItemClass() const;
 
 	bool hasItemProperty(int propertyType) const;
+	/** Returns Param1Value for the first property of @p propertyType, or @p fallback. */
+	int getItemPropertyValue(int propertyType, int fallback = 0) const;
 
 	int  getStackSize() const;
 	void setStackSize(int size);
