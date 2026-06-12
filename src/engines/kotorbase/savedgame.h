@@ -65,6 +65,8 @@ protected:
 	uint8_t _pcGender;
 	float _pcPosition[3];
 	bool _pcLoaded;
+	uint32_t _partyGold { 0 };
+	bool _hasPartyGold { false };
 
 	std::unique_ptr<Aurora::GFF3File> _globals;
 	std::unique_ptr<Aurora::GFF3File> _areaState;

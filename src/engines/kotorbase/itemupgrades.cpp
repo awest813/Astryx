@@ -159,6 +159,59 @@ ItemActionResult applyWorkbenchUpgrade(Module &module, Creature &inventoryOwner,
 	return result;
 }
 
+UpgradeStatBonuses computeUpgradeBonuses(const Module &module, const Common::UString &itemTag) {
+	UpgradeStatBonuses bonuses;
+
+	try {
+		const Item target(itemTag);
+		const int slotCount = getUpgradeSlotCount(target);
+		for (int slot = 0; slot < slotCount; ++slot) {
+			const Common::UString upgradeTag = getAppliedUpgrade(module, itemTag, slot);
+			if (upgradeTag.empty())
+				continue;
+
+			const Item upgrade(upgradeTag);
+			bonuses.attack += upgrade.getAttackBonus();
+			bonuses.damage += upgrade.getDamageBonus();
+			bonuses.ac += upgrade.getACBonus();
+		}
+	} catch (Common::Exception &e) {
+		warning("computeUpgradeBonuses: %s", e.what());
+	}
+
+	return bonuses;
+}
+
+void applyWorkbenchUpgradesToItem(Item &item, const Module &module, const Common::UString &itemTag) {
+	const UpgradeStatBonuses bonuses = computeUpgradeBonuses(module, itemTag);
+	item.setUpgradeBonuses(bonuses.attack, bonuses.damage, bonuses.ac);
+}
+
+void clearAppliedUpgrades(Module &module, const Common::UString &itemTag) {
+	try {
+		const Item target(itemTag);
+		const int slotCount = getUpgradeSlotCount(target);
+		for (int slot = 0; slot < slotCount; ++slot)
+			module.setGlobalString(upgradeGlobalKey(itemTag, slot), "");
+	} catch (Common::Exception &e) {
+		warning("clearAppliedUpgrades: %s", e.what());
+	}
+}
+
+void refreshCreatureEquipmentUpgrades(Creature &creature, Module &module) {
+	for (int i = static_cast<int>(kInventorySlotHead); i < static_cast<int>(kInventorySlotMAX); ++i) {
+		const InventorySlot slot = static_cast<InventorySlot>(i);
+		if (!creature.getCreatureInfo().isInventorySlotEquipped(slot))
+			continue;
+
+		Item *item = creature.getEquipedItem(slot);
+		if (!item)
+			continue;
+
+		applyWorkbenchUpgradesToItem(*item, module, creature.getCreatureInfo().getEquippedItem(slot));
+	}
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

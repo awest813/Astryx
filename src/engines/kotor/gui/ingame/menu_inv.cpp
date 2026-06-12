@@ -270,7 +270,7 @@ bool MenuInventory::performEquipSelectedItem() {
 		return false;
 
 	const KotORBase::ItemActionResult result =
-		KotORBase::equipInventoryItem(*leader, *pc, _visibleItems[_selectedIndex]);
+		KotORBase::equipInventoryItem(*leader, *pc, _visibleItems[_selectedIndex], _module);
 
 	setStatusMessage(result.message);
 	if (result.success && _module->getCurrentArea())

@@ -1100,11 +1100,17 @@ void Functions::noClicksFor(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionPutDownItem(Aurora::NWScript::FunctionContext &ctx) {
+	Item *item = dynamic_cast<Item *>(ObjectContainer::toObject(ctx.getParams()[0].getObject()));
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller || !item)
+		return;
 
-	(void)ctx;
-
-	// Inventory dropping is not yet modeled; keep script flow alive.
-
+	Action action(kActionDropItem);
+	action.object = item;
+	float x, y, z;
+	caller->getPosition(x, y, z);
+	action.location = glm::vec3(x, y, z);
+	caller->addAction(action);
 }
 
 

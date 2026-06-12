@@ -28,6 +28,7 @@
 #include "src/common/readfile.h"
 
 #include "src/engines/kotorbase/savedgame.h"
+#include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 
@@ -78,6 +79,13 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 
 		if (res.name.equalsIgnoreCase("GLOBALVARS") && res.type == Aurora::kFileTypeRES) {
 			_globals = std::make_unique<Aurora::GFF3File>(erf.getResource(res.index));
+			continue;
+		}
+
+		if (res.name.equalsIgnoreCase("partytable") && res.type == Aurora::kFileTypeRES) {
+			Aurora::GFF3File partyGff(erf.getResource(res.index));
+			_partyGold = partyGff.getTopLevel().getUint("PT_GOLD", 0);
+			_hasPartyGold = true;
 			continue;
 		}
 
@@ -155,6 +163,11 @@ void SavedGame::applyPersistedState(Module &module) const {
 
 	if (_areaState)
 		module.loadAreaObjectSaves(_areaState->getTopLevel());
+
+	if (_hasPartyGold) {
+		if (Creature *pc = module.getPC())
+			pc->getInventory().setGold(_partyGold);
+	}
 }
 
 } // End of namespace KotORBase

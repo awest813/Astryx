@@ -32,6 +32,7 @@
 #include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/itemactions.h"
+#include "src/engines/kotorbase/itemupgrades.h"
 #include "src/engines/kotorbase/module.h"
 
 namespace Engines {
@@ -252,7 +253,7 @@ ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, co
 		}
 
 		if (isEquipableItem(item))
-			return equipInventoryItem(target, inventoryOwner, tag);
+			return equipInventoryItem(target, inventoryOwner, tag, module);
 
 		result.message = "This item cannot be used.";
 	} catch (Common::Exception &e) {
@@ -262,7 +263,8 @@ ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, co
 	return result;
 }
 
-ItemActionResult equipInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag) {
+ItemActionResult equipInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag,
+                                    Module *module) {
 	ItemActionResult result;
 
 	if (!inventoryOwner.getInventory().hasItem(tag)) {
@@ -279,6 +281,8 @@ ItemActionResult equipInventoryItem(Creature &target, Creature &inventoryOwner, 
 		}
 
 		target.equipItem(tag, slot, inventoryOwner.getCreatureInfo());
+		if (module)
+			refreshCreatureEquipmentUpgrades(target, *module);
 		result.success = true;
 		result.message = "Item equipped.";
 	} catch (Common::Exception &e) {
@@ -289,7 +293,8 @@ ItemActionResult equipInventoryItem(Creature &target, Creature &inventoryOwner, 
 }
 
 ItemActionResult dropInventoryItem(Creature &inventoryOwner, const Common::UString &tag, int count,
-                                   Module *module) {
+                                   Module *module, float dropX, float dropY, float dropZ,
+                                   bool useFixedDropPosition) {
 	ItemActionResult result;
 
 	if (!inventoryOwner.getInventory().hasItem(tag)) {
@@ -301,14 +306,22 @@ ItemActionResult dropInventoryItem(Creature &inventoryOwner, const Common::UStri
 		count = 1;
 
 	inventoryOwner.getCreatureInfo().removeInventoryItem(tag, count);
+	const bool itemFullyRemoved = !inventoryOwner.getInventory().hasItem(tag);
 
 	if (module) {
 		module->playSound("gui_actuse");
-		Creature *leader = module->getPartyLeader();
 		Area *area = module->getCurrentArea();
-		if (leader && area) {
-			float x, y, z;
-			leader->getPosition(x, y, z);
+		if (area) {
+			float x = dropX;
+			float y = dropY;
+			float z = dropZ;
+
+			if (!useFixedDropPosition) {
+				Creature *leader = module->getPartyLeader();
+				if (leader)
+					leader->getPosition(x, y, z);
+			}
+
 			const float elevation = area->evaluateElevation(x, y);
 			if (elevation != FLT_MIN)
 				z = elevation;
@@ -319,6 +332,9 @@ ItemActionResult dropInventoryItem(Creature &inventoryOwner, const Common::UStri
 			module->setGlobalNumber("DROP_LAST_Y", static_cast<int>(y));
 			module->setGlobalNumber("DROP_LAST_Z", static_cast<int>(z));
 		}
+
+		if (itemFullyRemoved)
+			clearAppliedUpgrades(*module, tag);
 	}
 
 	result.success = true;

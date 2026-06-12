@@ -50,9 +50,11 @@ int grenadeDamageForItem(const Item &item);
 
 ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag,
                                   Module *module = nullptr);
-ItemActionResult equipInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag);
+ItemActionResult equipInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag,
+                                    Module *module = nullptr);
 ItemActionResult dropInventoryItem(Creature &inventoryOwner, const Common::UString &tag, int count = 1,
-                                   Module *module = nullptr);
+                                   Module *module = nullptr, float dropX = 0.0f, float dropY = 0.0f,
+                                   float dropZ = 0.0f, bool useFixedDropPosition = false);
 
 } // End of namespace KotORBase
 

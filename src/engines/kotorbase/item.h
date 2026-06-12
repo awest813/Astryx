@@ -84,6 +84,8 @@ public:
 	/** Load the world model and mark this item as a clickable ground pickup. */
 	void prepareWorldDrop(const Common::UString &templateResRef);
 
+	void setUpgradeBonuses(int attack, int damage, int ac);
+
 private:
 	struct ItemPropertyData {
 		int type { 0 };
@@ -107,6 +109,9 @@ private:
 	int _acBonus;
 	int _stackSize; ///< Stack count (grenades, medpacs, etc. — default 1).
 	int _cost;
+	int _upgradeAttackBonus { 0 };
+	int _upgradeDamageBonus { 0 };
+	int _upgradeACBonus { 0 };
 
 	std::vector<ItemPropertyData> _properties;
 	std::unique_ptr<Graphics::Aurora::Model> _model;

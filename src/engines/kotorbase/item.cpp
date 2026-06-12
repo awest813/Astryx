@@ -73,11 +73,11 @@ int Item::getEnhancementBonus() const {
 }
 
 int Item::getDamageBonus() const {
-	return getPropertyBonusSum(kItemPropertyDamageBonus);
+	return getPropertyBonusSum(kItemPropertyDamageBonus) + _upgradeDamageBonus;
 }
 
 int Item::getAttackBonus() const {
-	return getPropertyBonusSum(kItemPropertyAttackBonus) + getEnhancementBonus();
+	return getPropertyBonusSum(kItemPropertyAttackBonus) + getEnhancementBonus() + _upgradeAttackBonus;
 }
 
 void Item::load(const Aurora::GFF3Struct &gff) {
@@ -151,7 +151,7 @@ bool Item::isRangedWeapon() const {
 }
 
 int Item::getACBonus() const {
-	return _acBonus + getPropertyBonusSum(kItemPropertyACBonus);
+	return _acBonus + getPropertyBonusSum(kItemPropertyACBonus) + _upgradeACBonus;
 }
 
 int Item::getBaseItem() const {
@@ -224,6 +224,12 @@ void Item::setPosition(float x, float y, float z) {
 
 	if (_model)
 		_model->setPosition(x, y, z);
+}
+
+void Item::setUpgradeBonuses(int attack, int damage, int ac) {
+	_upgradeAttackBonus = attack;
+	_upgradeDamageBonus = damage;
+	_upgradeACBonus = ac;
 }
 
 void Item::prepareWorldDrop(const Common::UString &templateResRef) {

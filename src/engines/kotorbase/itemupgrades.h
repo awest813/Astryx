@@ -40,6 +40,12 @@ class Module;
 
 struct ItemActionResult;
 
+struct UpgradeStatBonuses {
+	int attack { 0 };
+	int damage { 0 };
+	int ac { 0 };
+};
+
 bool isUpgradeableItem(const Item &item);
 bool isUpgradeComponent(const Item &item);
 int getUpgradeSlotCount(const Item &item);
@@ -50,6 +56,11 @@ std::vector<Common::UString> getCompatibleUpgradeParts(const Item &target, const
 ItemActionResult applyWorkbenchUpgrade(Module &module, Creature &inventoryOwner,
                                        const Common::UString &itemTag,
                                        const Common::UString &upgradeTag, int slot);
+
+UpgradeStatBonuses computeUpgradeBonuses(const Module &module, const Common::UString &itemTag);
+void applyWorkbenchUpgradesToItem(Item &item, const Module &module, const Common::UString &itemTag);
+void clearAppliedUpgrades(Module &module, const Common::UString &itemTag);
+void refreshCreatureEquipmentUpgrades(Creature &creature, Module &module);
 
 } // End of namespace KotORBase
 

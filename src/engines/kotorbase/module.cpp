@@ -66,6 +66,7 @@
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/itemupgrades.h"
 #include "src/engines/kotorbase/area.h"
 
 #include "src/engines/kotorbase/gui/partyselection.h"
@@ -258,6 +259,15 @@ void Module::load() {
 	loadArea();
 	loadPC();
 	loadParty();
+
+	if (_pc)
+		refreshCreatureEquipmentUpgrades(*_pc, *this);
+
+	for (int i = 0; i < static_cast<int>(_partyController.getPartyMemberCount()); ++i) {
+		Creature *member = _partyController.getPartyMemberByIndex(i).second;
+		if (member && member != _pc)
+			refreshCreatureEquipmentUpgrades(*member, *this);
+	}
 }
 
 void Module::loadResources() {
@@ -820,8 +830,10 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 	{
 		Aurora::GFF3Writer partyWriter(MKTAG('P', 'T', 'A', 'B'));
 		Aurora::GFF3WriterStructPtr partyRoot = partyWriter.getTopLevel();
-		if (pc)
+		if (pc) {
 			partyRoot->addExoString("PT_PCNAME", pc->getTag());
+			partyRoot->addUint32("PT_GOLD", pc->getInventory().getGold());
+		}
 		partyWriter.write(partyMem);
 	}
 

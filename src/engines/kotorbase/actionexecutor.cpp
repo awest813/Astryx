@@ -22,6 +22,8 @@
  *  Creature action executor for KotOR games.
  */
 
+#include <cfloat>
+
 #include "external/glm/vec3.hpp"
 #include "external/glm/gtc/type_ptr.hpp"
 
@@ -35,6 +37,8 @@
 #include "src/aurora/2dareg.h"
 
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/item.h"
+#include "src/engines/kotorbase/itemactions.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/placeable.h"
@@ -75,6 +79,9 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 			break;
 		case kActionPickUpItem:
 			executePickUpItem(action, ctx);
+			break;
+		case kActionDropItem:
+			executeDropItem(action, ctx);
 			break;
 		case kActionWait:
 			executeWait(action, ctx);
@@ -257,6 +264,48 @@ void ActionExecutor::executePickUpItem(Action &action, const ExecutionContext &c
 			ctx.creature->getInventory().addItem(itemResRef);
 	}
 	ctx.area->removeObject(itemObject);
+}
+
+void ActionExecutor::executeDropItem(Action &action, const ExecutionContext &ctx) {
+	if (!action.object || !ctx.area || !ctx.creature) {
+		if (ctx.creature)
+			ctx.creature->popAction();
+		return;
+	}
+
+	Item *itemObj = dynamic_cast<Item *>(action.object);
+	if (!itemObj) {
+		ctx.creature->popAction();
+		return;
+	}
+
+	Common::UString tag = itemObj->getTemplateResRef();
+	if (tag.empty())
+		tag = itemObj->getTag();
+
+	Module *module = ctx.area->_module;
+	Creature *owner = ctx.creature;
+
+	for (int i = static_cast<int>(kInventorySlotHead); i < static_cast<int>(kInventorySlotMAX); ++i) {
+		const InventorySlot slot = static_cast<InventorySlot>(i);
+		if (!ctx.creature->getCreatureInfo().isInventorySlotEquipped(slot))
+			continue;
+
+		if (ctx.creature->getCreatureInfo().getEquippedItem(slot).equalsIgnoreCase(tag)) {
+			ctx.creature->equipItem("", slot);
+			break;
+		}
+	}
+
+	float x = action.location.x;
+	float y = action.location.y;
+	float z = action.location.z;
+	const float elevation = ctx.area->evaluateElevation(x, y);
+	if (elevation != FLT_MIN)
+		z = elevation;
+
+	dropInventoryItem(*owner, tag, 1, module, x, y, z, true);
+	ctx.creature->popAction();
 }
 
 bool ActionExecutor::isLocationReached(const glm::vec2 &location, float range, const ExecutionContext &ctx) {
