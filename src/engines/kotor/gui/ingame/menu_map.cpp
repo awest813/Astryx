@@ -44,9 +44,11 @@ namespace Engines {
 
 namespace KotOR {
 
-MenuMap::MenuMap(Console *console) : KotORBase::GUI(console) {
+MenuMap::MenuMap(::Engines::Console *console) : KotORBase::GUI(console) {
 	load("map");
 }
+
+MenuMap::~MenuMap() = default;
 
 void MenuMap::setModule(KotORBase::Module *module) {
 	_module = module;

@@ -49,6 +49,7 @@ protected:
 private:
 	void fillJournal();
 	void showQuestDescription(int index);
+	void setQuestPortrait(const Common::UString &portrait);
 
 	enum Category {
 		kCategoryActive,

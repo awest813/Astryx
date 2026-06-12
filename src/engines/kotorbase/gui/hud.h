@@ -44,7 +44,7 @@ class Object;
 
 class HUD : public GUI {
 public:
-	HUD(Module &module, Console *console = 0);
+	HUD(Module &module, ::Engines::Console *console = 0);
 
 	// Minimap
 

@@ -41,7 +41,7 @@ typedef std::function<void(unsigned int)> LoadingProgressFunc;
 
 class LoadScreen : public GUI {
 public:
-	LoadScreen(const Common::UString &name, Console *console = 0);
+	LoadScreen(const Common::UString &name, ::Engines::Console *console = 0);
 
 	void setLoadingProgress(unsigned int progress);
 	LoadingProgressFunc getLoadingProgressFunc();

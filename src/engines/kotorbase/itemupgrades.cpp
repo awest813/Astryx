@@ -23,7 +23,7 @@
  */
 
 #include "src/common/debug.h"
-#include "src/common/exception.h"
+#include "src/common/error.h"
 #include "src/common/strutil.h"
 
 #include "src/engines/kotorbase/creature.h"

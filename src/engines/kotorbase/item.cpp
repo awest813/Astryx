@@ -30,12 +30,15 @@
 #include "src/aurora/2dareg.h"
 
 #include "src/engines/aurora/model.h"
+#include "src/graphics/aurora/model.h"
 
 #include "src/engines/kotorbase/item.h"
 
 namespace Engines {
 
 namespace KotORBase {
+
+Item::~Item() = default;
 
 Item::Item(const Common::UString &item) : Object(kObjectTypeItem), _stackSize(1) {
 	std::unique_ptr<Aurora::GFF3File> uti = std::make_unique<Aurora::GFF3File>(item, Aurora::kFileTypeUTI);

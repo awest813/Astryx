@@ -36,16 +36,16 @@ namespace Engines {
 
 namespace KotORBase {
 
-static void setStatPair(GUI &gui, const char *primaryTag, const char *legacyTag, const Common::UString &text) {
-	gui.setWidgetText(primaryTag, text);
+void GUI::setStatPair(const char *primaryTag, const char *legacyTag, const Common::UString &text) {
+	setWidgetText(primaryTag, text);
 	if (legacyTag)
-		gui.setWidgetText(legacyTag, text);
+		setWidgetText(legacyTag, text);
 }
 
-static void setStatPairMany(GUI &gui, const char *const *tags, size_t count, const Common::UString &text) {
+void GUI::setStatPairMany(const char *const *tags, size_t count, const Common::UString &text) {
 	for (size_t i = 0; i < count; ++i) {
 		if (tags[i])
-			gui.setWidgetText(tags[i], text);
+			setWidgetText(tags[i], text);
 	}
 }
 
@@ -76,26 +76,24 @@ void GUI::populateCharacterSheet(Creature &creature) {
 
 	const Common::UString vitality = Common::composeString(creature.getCurrentHitPoints())
 	                               + "/" + Common::composeString(creature.getMaxHitPoints());
-	setStatPair(*this, "LBL_VIT_VAL", "VIT_VAL_LBL", vitality);
-	setStatPair(*this, "LBL_DEF_VAL", "DEF_VAL_LBL", Common::composeString(creature.getAC()));
+	setStatPair("LBL_VIT_VAL", "VIT_VAL_LBL", vitality);
+	setStatPair("LBL_DEF_VAL", "DEF_VAL_LBL", Common::composeString(creature.getAC()));
 
 	const int fort = 10 + creature.getSavingThrowBonus(kSavingThrowFortitude);
 	const int refl = 10 + creature.getSavingThrowBonus(kSavingThrowReflex);
 	const int will = 10 + creature.getSavingThrowBonus(kSavingThrowWill);
 
-	setStatPair(*this, "LBL_FORT_VAL", "FORT_VAL_LBL", Common::composeString(fort));
-	setStatPair(*this, "LBL_REFL_VAL", "REFL_VAL_LBL", Common::composeString(refl));
-	setStatPair(*this, "LBL_WILL_VAL", "WILL_VAL_LBL", Common::composeString(will));
+	setStatPair("LBL_FORT_VAL", "FORT_VAL_LBL", Common::composeString(fort));
+	setStatPair("LBL_REFL_VAL", "REFL_VAL_LBL", Common::composeString(refl));
+	setStatPair("LBL_WILL_VAL", "WILL_VAL_LBL", Common::composeString(will));
 
 	const Common::UString xp = Common::composeString(creature.getCurrentXP());
-	setStatPairMany(*this,
-		(const char *const[]){ "LBL_XP_VAL", "XP_VAL_LBL", "LBL_XP" }, 3, xp);
+	setStatPairMany((const char *const[]){ "LBL_XP_VAL", "XP_VAL_LBL", "LBL_XP" }, 3, xp);
 
 	if (info.isJedi()) {
 		const Common::UString forcePoints = Common::composeString(creature.getForcePoints())
 		                                  + "/" + Common::composeString(creature.getMaxForcePoints());
-		setStatPairMany(*this,
-			(const char *const[]){ "LBL_FORCE_VAL", "FORCE_VAL_LBL", "FP_VAL_LBL", "LBL_FORCE" }, 4,
+		setStatPairMany((const char *const[]){ "LBL_FORCE_VAL", "FORCE_VAL_LBL", "FP_VAL_LBL", "LBL_FORCE" }, 4,
 			forcePoints);
 	}
 
@@ -125,15 +123,14 @@ void GUI::populateAbilitiesSheet(Creature &creature) {
 		const Common::UString score = Common::composeString(info.getAbilityScore(kAbilityTags[i].ability));
 		const Common::UString mod = formatAbilityModifier(info.getAbilityModifier(kAbilityTags[i].ability));
 
-		setStatPairMany(*this,
-			(const char *const[]){ kAbilityTags[i].pointTag, kAbilityTags[i].valTag, kAbilityTags[i].legacyPointTag },
+		setStatPairMany((const char *const[]){ kAbilityTags[i].pointTag, kAbilityTags[i].valTag, kAbilityTags[i].legacyPointTag },
 			3, score);
 		setWidgetText(kAbilityTags[i].modTag, mod);
 	}
 
 	for (size_t i = 0; i < kSkillWidgetTagCount; ++i) {
 		const Common::UString rank = Common::composeString(info.getSkillRank(kSkillWidgetTags[i].skill));
-		setStatPair(*this, kSkillWidgetTags[i].pointTag, kSkillWidgetTags[i].legacyPointTag, rank);
+		setStatPair(kSkillWidgetTags[i].pointTag, kSkillWidgetTags[i].legacyPointTag, rank);
 	}
 }
 

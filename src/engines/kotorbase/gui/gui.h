@@ -120,6 +120,9 @@ protected:
 	/** Try each tag until one resolves to a widget. */
 	void setWidgetTextAliases(const char *const *tags, size_t count, const Common::UString &text);
 
+	void setStatPair(const char *primaryTag, const char *legacyTag, const Common::UString &text);
+	void setStatPairMany(const char *const *tags, size_t count, const Common::UString &text);
+
 	/** Populate the in-game character profile sheet for @p creature. */
 	void populateCharacterSheet(Creature &creature);
 	/** Populate the in-game abilities sheet for @p creature. */

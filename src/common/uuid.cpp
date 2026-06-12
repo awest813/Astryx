@@ -22,6 +22,7 @@
  *  Utility functions for generating unique IDs.
  */
 
+#include <algorithm>
 #include <sstream>
 #include <atomic>
 

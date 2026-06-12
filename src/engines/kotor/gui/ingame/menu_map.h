@@ -37,15 +37,16 @@ class Minimap;
 
 namespace Engines {
 
-namespace KotOR {
-
 namespace KotORBase {
-	class Module;
+class Module;
 }
+
+namespace KotOR {
 
 class MenuMap : public KotORBase::GUI {
 public:
 	MenuMap(::Engines::Console *console = 0);
+	~MenuMap() override;
 
 	void setModule(KotORBase::Module *module);
 	void setReturnStrref(uint32_t id);

@@ -79,7 +79,7 @@ void JournalCatalog::load() {
 
 				const uint32_t id = entry->getUint("ID");
 				QuestEntry questEntry;
-				questEntry.end = entry->getByte("End") != 0;
+				questEntry.end = entry->getBool("End");
 
 				Aurora::LocString text;
 				if (entry->getLocString("Text", text))

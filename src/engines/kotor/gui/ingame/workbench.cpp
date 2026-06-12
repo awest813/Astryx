@@ -29,6 +29,7 @@
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/listbox.h"
 #include "src/engines/kotorbase/item.h"
+#include "src/engines/kotorbase/itemactions.h"
 #include "src/engines/kotorbase/itemupgrades.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"

@@ -42,7 +42,7 @@ namespace Engines {
 
 namespace KotORBase {
 
-HUD::HUD(Module &module, Console *console) :
+HUD::HUD(Module &module, ::Engines::Console *console) :
 		GUI(console),
 		_module(module),
 		_hoveredCircle(new SelectionCircle()),

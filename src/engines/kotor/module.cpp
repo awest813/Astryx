@@ -28,6 +28,7 @@
 
 #include "src/engines/kotor/module.h"
 #include "src/engines/kotor/game.h"
+#include "src/engines/kotor/creature.h"
 #include "src/engines/kotorbase/creature.h"
 
 #include "src/engines/kotor/gui/dialog.h"

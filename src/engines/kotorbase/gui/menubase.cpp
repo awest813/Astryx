@@ -36,7 +36,7 @@ namespace Engines {
 
 namespace KotORBase {
 
-MenuBase::MenuBase(Module &module, Console *console) :
+MenuBase::MenuBase(Module &module, ::Engines::Console *console) :
 		GUI(console),
 		_module(&module) {
 }

@@ -292,7 +292,7 @@ void Area::setAmbientSoundDayVolume(int volume) {
 	const uint32_t clamped = CLIP<uint32_t>(volume, 0, 127);
 	_ambientDayVol = 1.25f * (1.0f - (1.0f / powf(5.0f, clamped / 127.0f)));
 
-	if (_ambientSound)
+	if (SoundMan.isValidChannel(_ambientSound))
 		SoundMan.setChannelGain(_ambientSound, _ambientDayVol);
 }
 
