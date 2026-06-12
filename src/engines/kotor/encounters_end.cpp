@@ -21,9 +21,9 @@ static KotORBase::Creature *findTraskUlgo(KotORBase::Module &module) {
 	if (!area)
 		return nullptr;
 
-	if (Object *o = area->getObjectByTag("end_trask"))
+	if (KotORBase::Object *o = area->getObjectByTag("end_trask"))
 		return KotORBase::ObjectContainer::toCreature(o);
-	if (Object *o = area->getObjectByTag("trask"))
+	if (KotORBase::Object *o = area->getObjectByTag("trask"))
 		return KotORBase::ObjectContainer::toCreature(o);
 
 	for (KotORBase::Creature *c : area->getCreatures()) {

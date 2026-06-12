@@ -25,7 +25,7 @@
 #include <cmath>
 #include <cfloat>
 
-#include "src/common/exception.h"
+#include "src/common/error.h"
 
 #include "src/engines/kotorbase/actionexecutor.h"
 #include "src/engines/kotorbase/area.h"

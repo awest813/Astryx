@@ -32,7 +32,7 @@ namespace Engines {
 
 namespace KotORBase {
 
-LoadScreen::LoadScreen(const Common::UString &UNUSED(name), Console *console) : GUI(console) {
+LoadScreen::LoadScreen(const Common::UString &UNUSED(name), ::Engines::Console *console) : GUI(console) {
 }
 
 void LoadScreen::setLoadingProgress(unsigned int progress) {

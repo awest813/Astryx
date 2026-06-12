@@ -36,6 +36,7 @@
 
 #include "src/engines/aurora/model.h"
 
+#include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/situated.h"
 
 namespace Engines {
@@ -169,7 +170,7 @@ Object *Situated::getTrapCreator() const {
 	if (_trapCreatedBy == 0)
 		return nullptr;
 
-	return Aurora::NWScript::ObjectMan.findObject(_trapCreatedBy);
+	return ObjectContainer::toObject(ObjectMan.findObject(_trapCreatedBy));
 }
 
 void Situated::setTrapDetectedBy(Object *detector) {

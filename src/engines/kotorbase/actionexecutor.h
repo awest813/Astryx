@@ -25,6 +25,12 @@
 #ifndef ENGINES_KOTORBASE_ACTIONEXECUTOR_H
 #define ENGINES_KOTORBASE_ACTIONEXECUTOR_H
 
+#include <map>
+
+#include "external/glm/vec2.hpp"
+
+#include "src/common/ustring.h"
+
 namespace Engines {
 
 namespace KotORBase {

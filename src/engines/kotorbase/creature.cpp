@@ -524,7 +524,7 @@ namespace KotORBase {
 		}
 		CreatureInfo Creature::buildSavedState() const {
 			CreatureInfo info = _info;
-			info.setHitPoints(getCurrentHitPoints(), getMaxHitPoints());
+			info.setHitPoints(_currentHitPoints, _maxHitPoints);
 			info.setForcePoints(getForcePoints());
 			info.setMaxForcePoints(getMaxForcePoints());
 			return info;

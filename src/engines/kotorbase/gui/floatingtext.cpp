@@ -39,7 +39,7 @@ void FloatingTextManager::show(Object *object, const Common::UString &text, floa
 	if (!object || text.empty())
 		return;
 
-	if (!_font)
+	if (_font.empty())
 		_font = FontMan.get("fnt_d16x16");
 
 	for (auto &entry : _entries) {
@@ -57,7 +57,7 @@ void FloatingTextManager::show(Object *object, const Common::UString &text, floa
 	entry.label = std::make_unique<Graphics::Aurora::Text>(
 		_font, 320.0f, 64.0f, text,
 		1.0f, 1.0f, 1.0f, 1.0f,
-		Graphics::kHAlignCenter, Graphics::kVAlignBottom);
+		Graphics::Aurora::kHAlignCenter, Graphics::Aurora::kVAlignBottom);
 	entry.label->disableColorTokens(true);
 	entry.label->show();
 	_entries.push_back(std::move(entry));

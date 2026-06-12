@@ -65,6 +65,10 @@ namespace Engines {
 
 class Console;
 
+namespace KotOR {
+class Game;
+}
+
 namespace KotORBase {
 
 struct JournalWorldEntry {
@@ -73,6 +77,11 @@ struct JournalWorldEntry {
 };
 
 class Area;
+class ActionExecutor;
+class Console;
+class DialogGUI;
+class Functions;
+class PartyLeaderController;
 class Creature;
 class LoadScreen;
 class Game;
@@ -331,33 +340,51 @@ public:
 	/** Enter the loaded module, starting it. */
 	virtual void enter();
 
+	/** Leave the running module, quitting it. */
+	void leave();
+	/** Add a single event for consideration into the event queue. */
+	void addEvent(const Events::Event &event);
+	/** Process the current event queue. */
+	void processEventQueue();
+
+	void loadSavedGame(SavedGame *save);
+	void saveGame(const Common::UString &slot, const Common::UString &name);
+
+	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
+	void setCameraMode(CameraMode mode, Object *target = nullptr);
+	void setCinematicFocus(Object *target);
+	void cameraTransitionToTarget(float blendTime);
+	void cameraMoveAlongPath(Object *start, Object *end, float duration);
+	void cameraHold(float duration);
+	void restoreGameplayCamera(float blendTime);
+	void resetToOrbit();
+	void enterCinematicMode();
+	void setCutsceneMode(bool enabled);
+	void setPlayerInputEnabled(bool enabled);
+	void playMusicStinger(const Common::UString &stinger);
+	Creature *createCreatureByTemplate(const Common::UString &resRef) const;
+	bool getObjectLocation(const Common::UString &object, ObjectType location,
+	                       float &entryX, float &entryY, float &entryZ, float &entryAngle);
+	bool isGrenadeTargeting() const;
+	void beginGrenadeTargeting(const Common::UString &itemTag);
+	void updateFrameTimestamp();
+	Common::UString getMinimapMapId() const;
+
 protected:
 	/** Per-frame hook for game-specific systems (minigames, etc.). */
 	virtual void onFrameUpdate(float frameTime);
 
 	/** When true, enter() loads the area but keeps the ingame HUD hidden (cinematic handoff). */
 	virtual bool deferIngameHUDOnEnter() const { return false; }
-	/** Leave the running module, quitting it. */
-	void leave();
 	/** Click an object with the mouse. */
 	void clickObject(Object *object);
 	/** Enter an object with the mouse. */
 	void enterObject(Object *object);
 	/** Leave an object with the mouse. */
 	void leaveObject(Object *object);
-	/** Add a single event for consideration into the event queue. */
-	void addEvent(const Events::Event &event);
-	/** Process the current event queue. */
-	void processEventQueue();
-	/** Update timestamp of the previous rendered frame. */
-	void updateFrameTimestamp();
-
 	// Saved games
-
-	void loadSavedGame(SavedGame *save);
 	/** Returns true if the current module was entered via a save-game load. */
 	bool isLoadedFromSaveGame() const;
-	void saveGame(const Common::UString &slot, const Common::UString &name);
 
 	/** Restore PC inventory/equipment/stats from a save before loadPC(). */
 	void setSavedPCInfo(const CreatureInfo &info);
@@ -368,8 +395,6 @@ protected:
 
 	// Grenade targeting
 
-	bool isGrenadeTargeting() const;
-	void beginGrenadeTargeting(const Common::UString &itemTag);
 	void cancelGrenadeTargeting();
 	bool handleGrenadeTargetingClick(int screenX, int screenY);
 
@@ -408,26 +433,12 @@ protected:
 	
 	void setMapExplored(const Common::UString &resRef, const std::vector<bool> &data);
 	const std::vector<bool> *getMapExplored(const Common::UString &resRef) const;
-	Common::UString getMinimapMapId() const;
 
 	void showFloatingText(Object *object, const Common::UString &text, float duration = 6.0f);
 	void exploreAreaFully(Area *area);
 
-	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
-	void setCameraMode(CameraMode mode, Object *target = nullptr);
-	void setCinematicFocus(Object *target);
 	void setCameraTarget(Object *target);
-	void cameraTransitionToTarget(float blendTime);
-	void cameraMoveAlongPath(Object *start, Object *end, float duration);
-	void cameraHold(float duration);
-	void restoreGameplayCamera(float blendTime);
-	void resetToOrbit();
-	void enterCinematicMode();
-
-	void setCutsceneMode(bool enabled);
-	void setPlayerInputEnabled(bool enabled);
 	void noClicksFor(float duration);
-	void playMusicStinger(const Common::UString &stinger);
 
 	// Delayed object interactions
 
@@ -441,16 +452,10 @@ protected:
 	void toggleTriggers();
 	int getNextCombatRound() const;
 
-	/** Create a creature from a blueprint template name (for script use). */
-	Creature *createCreatureByTemplate(const Common::UString &resRef) const;
-
 	/** Return the last item acquired via script events (may be null). */
 	Object *getLastAcquiredItem() const;
 	/** Record the last item acquired (called from createItemOnObject etc.). */
 	void setLastAcquiredItem(Object *item);
-
-	bool getObjectLocation(const Common::UString &object, ObjectType location,
-	                       float &entryX, float &entryY, float &entryZ, float &entryAngle);
 
 protected:
 	std::unique_ptr<IngameGUI> _ingame; ///< The ingame GUI.
@@ -533,7 +538,6 @@ private:
 protected:
 	Game &_game;
 	::Engines::Console *_console;
-private:
 
 	bool _hasModule; ///< Do we have a module?
 	bool _running;   ///< Are we currently running a module?
@@ -594,6 +598,7 @@ private:
 	bool _moviePlaying { false }; ///< Is a full-screen movie currently playing?
 	std::vector<Common::UString> _movieQueue; ///< Movies queued for PlayMovieQueue.
 
+private:
 	// Unloading
 
 	/** Unload the whole shebang.
@@ -678,6 +683,15 @@ private:
 	/** Award XP to the party for creatures that died this frame. */
 	void updateXPOnKill();
 
+	friend class Area;
+	friend class ActionExecutor;
+	friend class Console;
+	friend class DialogGUI;
+	friend class Functions;
+	friend class KotOR::Game;
+	friend class PartyLeaderController;
+	friend class SavedGame;
+	friend class Game;
 	friend class RoundController;
 };
 

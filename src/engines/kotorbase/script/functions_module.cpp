@@ -386,7 +386,7 @@ void Functions::displayFeedBackText(Aurora::NWScript::FunctionContext &ctx) {
 	try {
 		const Aurora::TwoDAFile &feedback = TwoDAReg.get2DA("feedbacktext");
 		if (textConstant >= 0 && static_cast<size_t>(textConstant) < feedback.getRowCount()) {
-			const uint32_t strRef = feedback.getRow(textConstant).getUint("STRREF");
+			const uint32_t strRef = static_cast<uint32_t>(feedback.getRow(textConstant).getInt("STRREF"));
 			if (strRef != Aurora::kStrRefInvalid)
 				text = TalkMan.getString(strRef);
 		}

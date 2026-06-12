@@ -24,6 +24,8 @@
 
 #include "src/aurora/talkman.h"
 
+#include "src/common/error.h"
+#include "src/common/string.h"
 #include "src/common/configman.h"
 #include "src/common/filelist.h"
 #include "src/common/filepath.h"
@@ -204,15 +206,23 @@ Common::UString SaveLoadMenu::getNewSaveDirectory() const {
 		if (!relativeDir.contains("Game"))
 			continue;
 
-		int slotNumber = 0;
-		if (!Common::parseString(relativeDir.substr(0, relativeDir.findFirst(' ')), slotNumber))
+		Common::UString::iterator spaceIt = relativeDir.findFirst(' ');
+		if (spaceIt == relativeDir.end())
 			continue;
+
+		Common::UString prefix = relativeDir.substr(relativeDir.begin(), spaceIt);
+		int slotNumber = 0;
+		try {
+			Common::parseString(prefix, slotNumber);
+		} catch (Common::Exception &) {
+			continue;
+		}
 
 		nextSlot = MAX(nextSlot, slotNumber + 1);
 	}
 
 	return Common::FilePath::normalize(savesDir + "/" +
-		Common::composeString("%06d - Game%d", nextSlot, nextSlot));
+		Common::UString(Common::String::format("%06d - Game%d", nextSlot, nextSlot)));
 }
 
 Common::UString SaveLoadMenu::getBaseNameFromDirectory(const Common::UString &dir) const {

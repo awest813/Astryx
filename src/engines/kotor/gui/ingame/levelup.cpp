@@ -22,6 +22,8 @@
  *  The character level-up GUI.
  */
 
+#include "src/common/strutil.h"
+
 #include "src/engines/aurora/widget.h"
 
 #include "src/engines/kotorbase/module.h"

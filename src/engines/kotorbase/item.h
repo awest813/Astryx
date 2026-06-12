@@ -39,6 +39,7 @@ namespace KotORBase {
 class Item : public Object {
 public:
 	Item(const Common::UString &item);
+	~Item() override;
 
 	// Basic properties
 

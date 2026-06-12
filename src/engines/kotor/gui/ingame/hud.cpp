@@ -30,6 +30,7 @@
 #include "src/engines/odyssey/label.h"
 #include "src/engines/odyssey/progressbar.h"
 
+#include "src/engines/kotor/game.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"

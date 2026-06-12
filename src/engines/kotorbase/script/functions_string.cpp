@@ -40,6 +40,7 @@
 
 #include "src/engines/aurora/tokenman.h"
 
+#include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/objectcontainer.h"

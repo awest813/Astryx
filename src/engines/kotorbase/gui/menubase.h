@@ -35,7 +35,7 @@ class Module;
 
 class MenuBase : public GUI {
 public:
-	MenuBase(Module &module, Console *console = nullptr);
+	MenuBase(Module &module, ::Engines::Console *console = nullptr);
 	virtual ~MenuBase();
 
 	virtual void update();

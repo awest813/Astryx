@@ -38,47 +38,43 @@ static const Common::UString kEncounterActiveKey("XOREOS_ENC_ACTIVE");
 static const Common::UString kEncounterSpawnMaxKey("XOREOS_ENC_SPAWN_MAX");
 static const Common::UString kEncounterSpawnCurKey("XOREOS_ENC_SPAWN_CUR");
 
-static Object *getEncounterObject(Aurora::NWScript::FunctionContext &ctx, size_t paramIndex = 0) {
-	return ObjectContainer::toObject(getParamObject(ctx, paramIndex));
-}
-
 void Functions::showUpgradeScreen(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
 	_game->getModule().setGlobalBoolean("__open_workbench", true);
 }
 
 void Functions::getEncounterActive(Aurora::NWScript::FunctionContext &ctx) {
-	Object *encounter = getEncounterObject(ctx);
+	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 0));
 	ctx.getReturn() = (encounter && encounter->getLocalInt(kEncounterActiveKey) != 0) ? 1 : 0;
 }
 
 void Functions::setEncounterActive(Aurora::NWScript::FunctionContext &ctx) {
 	int active = ctx.getParams()[0].getInt();
-	Object *encounter = getEncounterObject(ctx, 1);
+	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 1));
 	if (encounter)
 		encounter->setLocalInt(kEncounterActiveKey, active != 0 ? 1 : 0);
 }
 
 void Functions::getEncounterSpawnsMax(Aurora::NWScript::FunctionContext &ctx) {
-	Object *encounter = getEncounterObject(ctx);
+	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 0));
 	ctx.getReturn() = encounter ? encounter->getLocalInt(kEncounterSpawnMaxKey) : 0;
 }
 
 void Functions::setEncounterSpawnsMax(Aurora::NWScript::FunctionContext &ctx) {
 	int maxSpawns = ctx.getParams()[0].getInt();
-	Object *encounter = getEncounterObject(ctx, 1);
+	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 1));
 	if (encounter)
 		encounter->setLocalInt(kEncounterSpawnMaxKey, maxSpawns);
 }
 
 void Functions::getEncounterSpawnsCurrent(Aurora::NWScript::FunctionContext &ctx) {
-	Object *encounter = getEncounterObject(ctx);
+	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 0));
 	ctx.getReturn() = encounter ? encounter->getLocalInt(kEncounterSpawnCurKey) : 0;
 }
 
 void Functions::setEncounterSpawnsCurrent(Aurora::NWScript::FunctionContext &ctx) {
 	int current = ctx.getParams()[0].getInt();
-	Object *encounter = getEncounterObject(ctx, 1);
+	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 1));
 	if (encounter)
 		encounter->setLocalInt(kEncounterSpawnCurKey, current);
 }
