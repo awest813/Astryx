@@ -745,7 +745,8 @@ void Module::playMovie(const Common::UString &resRef, bool allowSkip) {
 
 	debugC(Common::kDebugEngineLogic, 1, "Playing Movie: %s (allowSkip: %d)", resRef.c_str(), allowSkip ? 1 : 0);
 	_moviePlaying = true;
-	::Engines::playVideo(resRef, allowSkip);
+	const int videoEffect = getGlobalNumber("__video_effect");
+	::Engines::playVideo(resRef, allowSkip, videoEffect >= 0 ? videoEffect : -1);
 	_moviePlaying = false;
 }
 
@@ -800,6 +801,12 @@ void Module::processEventQueue() {
 	_frameTime = (now - _prevTimestamp) / 1000.f;
 	_prevTimestamp = now;
 	_playTime += _frameTime;
+
+	if (_noClicksUntil != 0 && EventMan.getTimestamp() >= _noClicksUntil) {
+		_noClicksUntil = 0;
+		if (!_cutsceneMode && !_inDialog)
+			setPlayerInputEnabled(true);
+	}
 
 	handleEvents();
 	handleActions();
@@ -2292,6 +2299,14 @@ void Module::setPlayerInputEnabled(bool enabled) {
 	_playerInputEnabled = enabled;
 }
 
+void Module::noClicksFor(float duration) {
+	if (duration <= 0.0f)
+		return;
+
+	_noClicksUntil = EventMan.getTimestamp() + static_cast<uint32_t>(duration * 1000.0f);
+	setPlayerInputEnabled(false);
+}
+
 void Module::setCutsceneMode(bool enabled) {
 	_cutsceneMode = enabled;
 	if (enabled)
@@ -2322,6 +2337,7 @@ void Module::exploreAreaFully(Area *area) {
 
 	area->exploreMapFully();
 	setMapExplored(area->getResRef(), area->getMapExplored());
+	updateMinimap();
 }
 
 const std::vector<bool> *Module::getMapExplored(const Common::UString &resRef) const {

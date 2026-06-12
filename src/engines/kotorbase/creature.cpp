@@ -315,6 +315,7 @@ namespace KotORBase {
 			// Faction	_faction = Faction(gff.getUint("FactionID", _faction));
 			// Scripts	readScripts(gff, clearScripts);
 			_conversation = gff.getString("Conversation", _conversation);
+			setSoundSet(gff.getUint("SoundSetFile", Aurora::kFieldIDInvalid));
 		}
 		void Creature::loadPortrait(
 		const Aurora::GFF3Struct &gff) {

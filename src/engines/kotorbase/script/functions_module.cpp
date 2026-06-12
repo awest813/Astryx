@@ -36,6 +36,9 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/waypoint.h"
+
+#include "src/aurora/2dareg.h"
+#include "src/aurora/2dafile.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/aurora/talkman.h"
@@ -371,6 +374,29 @@ void Functions::popUpDeathGUIPanel(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
 	debugC(Common::kDebugEngineLogic, 1, "PopUpDeathGUIPanel");
 	_game->getModule().showDeathGUI();
+}
+
+void Functions::displayFeedBackText(Aurora::NWScript::FunctionContext &ctx) {
+	Object *creature = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const int textConstant = ctx.getParams()[1].getInt();
+	if (!creature)
+		return;
+
+	Common::UString text;
+	try {
+		const Aurora::TwoDAFile &feedback = TwoDAReg.get2DA("feedbacktext");
+		if (textConstant >= 0 && static_cast<size_t>(textConstant) < feedback.getRowCount()) {
+			const uint32_t strRef = feedback.getRow(textConstant).getUint("STRREF");
+			if (strRef != Aurora::kStrRefInvalid)
+				text = TalkMan.getString(strRef);
+		}
+	} catch (...) {
+	}
+
+	if (text.empty())
+		text = Common::String::format("<feedback:%d>", textConstant);
+
+	_game->getModule().showFloatingText(creature, text);
 }
 
 void Functions::addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx) {

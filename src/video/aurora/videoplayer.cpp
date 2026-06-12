@@ -47,7 +47,8 @@ namespace Video {
 
 namespace Aurora {
 
-VideoPlayer::VideoPlayer(const std::string &video) {
+VideoPlayer::VideoPlayer(const std::string &video, int videoEffect) :
+		_videoEffect(videoEffect) {
 	load(video);
 }
 
@@ -87,6 +88,7 @@ void VideoPlayer::load(const std::string &name) {
 		throw Common::Exception("Failed to load video \"%s\"", name.c_str());
 
 	_video->setScale(VideoDecoder::kScaleUpDown);
+	_video->setVideoEffect(_videoEffect);
 }
 
 void VideoPlayer::play(bool allowSkip) {

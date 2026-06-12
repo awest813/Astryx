@@ -64,6 +64,10 @@ public:
 
 	void setScale(Scale scale);
 
+	/** Apply a KotOR video post-process tint while rendering (VideoEffects.2da index). */
+	void setVideoEffect(int effect);
+	int getVideoEffect() const;
+
 	/**
 	 * Set the volume/gain of the audio tracks.
 	 *
@@ -494,6 +498,7 @@ private:
 	float _textureHeight;
 
 	Scale _scale;
+	int _videoEffect { -1 };
 
 	float _gain; ///< The volume/gain of the audio tracks.
 

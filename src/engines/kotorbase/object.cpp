@@ -30,6 +30,11 @@
 #include "src/common/maths.h"
 
 #include "src/aurora/nwscript/objectman.h"
+#include "src/aurora/2dareg.h"
+#include "src/aurora/2dafile.h"
+#include "src/aurora/ssffile.h"
+#include "src/aurora/talkman.h"
+#include "src/aurora/types.h"
 
 #include "src/sound/sound.h"
 
@@ -56,7 +61,8 @@ Object::Object(ObjectType type) :
 		_maxHitPoints(0),
 		_minOneHitPoint(false),
 	_plotFlag(false),
-	_persistent(false) {
+	_persistent(false),
+	_soundSet(Aurora::kFieldIDInvalid) {
 	_id = Common::generateIDNumber();
 	ObjectMan.registerObject(this);
 
@@ -301,6 +307,59 @@ void Object::playSound(const Common::UString &sound, bool pitchVariance) {
 		return;
 
 	_sound = ::Engines::playSound(sound, Sound::kSoundTypeVoice, false, 1.0f, pitchVariance);
+}
+
+void Object::setSoundSet(uint32_t soundSet) {
+	_soundSet = soundSet;
+	_ssf.reset();
+}
+
+const Aurora::SSFFile *Object::getSSF() const {
+	return _ssf.get();
+}
+
+void Object::loadSSF() {
+	if (_ssf || _soundSet == Aurora::kFieldIDInvalid)
+		return;
+
+	try {
+		const Aurora::TwoDAFile &soundSets = TwoDAReg.get2DA("soundset");
+		const Common::UString ssfFile = soundSets.getRow(_soundSet).getString("RESREF");
+		if (ssfFile.empty())
+			return;
+
+		_ssf = std::make_unique<Aurora::SSFFile>(ssfFile);
+	} catch (...) {
+		Common::exceptionDispatcherWarning();
+	}
+}
+
+bool Object::playSoundSetEntry(size_t index, bool pitchVariance) {
+	loadSSF();
+	if (!_ssf)
+		return false;
+
+	const uint32_t strRef = _ssf->getStrRef(index);
+	if (strRef == Aurora::kStrRefInvalid)
+		return false;
+
+	const Common::UString &sound = TalkMan.getSoundResRef(strRef);
+	if (sound.empty())
+		return false;
+
+	playSound(sound, pitchVariance);
+	return true;
+}
+
+bool Object::playBarkSound() {
+	static const size_t kBarkIndices[] = { 3, 4, 5 };
+
+	for (size_t index : kBarkIndices) {
+		if (playSoundSetEntry(index, true))
+			return true;
+	}
+
+	return false;
 }
 
 void Object::playAnimation(const Common::UString &UNUSED(anim), bool UNUSED(restart), float UNUSED(length), float UNUSED(speed)) {

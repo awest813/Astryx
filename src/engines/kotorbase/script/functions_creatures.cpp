@@ -1082,7 +1082,25 @@ void Functions::getFirstAttacker(Aurora::NWScript::FunctionContext &ctx) { ctx.g
 void Functions::getNextAttacker(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 void Functions::playRoomAnimation(Aurora::NWScript::FunctionContext &ctx) {}
 void Functions::effectPsychicStatic(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
-void Functions::playVisualAreaEffect(Aurora::NWScript::FunctionContext &ctx) {}
+void Functions::playVisualAreaEffect(Aurora::NWScript::FunctionContext &ctx) {
+	const int effectId = ctx.getParams()[0].getInt();
+	Location *location = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
+
+	debugC(Common::kDebugEngineLogic, 1, "PlayVisualAreaEffect: %d", effectId);
+
+	if (location) {
+		float x = 0.0f;
+		float y = 0.0f;
+		float z = 0.0f;
+		location->getPosition(x, y, z);
+		(void)x;
+		(void)y;
+		(void)z;
+	}
+
+	if (effectId != 0)
+		_game->getModule().shakeCamera(0.35f, 0.15f);
+}
 void Functions::aurPostString(Aurora::NWScript::FunctionContext &ctx) {
 	Common::UString str = ctx.getParams()[0].getString();
 	debugC(Common::kDebugEngineLogic, 1, "[AUR POST] %s", str.c_str());

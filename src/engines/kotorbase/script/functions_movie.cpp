@@ -100,7 +100,8 @@ void Functions::enableVideoEffect(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::disableVideoEffect(Aurora::NWScript::FunctionContext &ctx) {
-	_game->getModule().setGlobalNumber("__video_effect", 0);
+	(void)ctx;
+	_game->getModule().setGlobalNumber("__video_effect", -1);
 }
 
 void Functions::setDialogPlaceableCamera(Aurora::NWScript::FunctionContext &ctx) {

@@ -140,6 +140,18 @@ void Functions::ambientSoundChangeNight(Aurora::NWScript::FunctionContext &ctx) 
 		area->setAmbientSoundNightTrack(static_cast<uint32_t>(ctx.getParams()[1].getInt()));
 }
 
+void Functions::ambientSoundSetDayVolume(Aurora::NWScript::FunctionContext &ctx) {
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->setAmbientSoundDayVolume(ctx.getParams()[1].getInt());
+}
+
+void Functions::ambientSoundSetNightVolume(Aurora::NWScript::FunctionContext &ctx) {
+	Area *area = ObjectContainer::toArea(getParamObject(ctx, 0));
+	if (area)
+		area->setAmbientSoundNightVolume(ctx.getParams()[1].getInt());
+}
+
 void Functions::soundObjectFadeAndStop(Aurora::NWScript::FunctionContext &ctx) {
 	SoundObject *sound = ObjectContainer::toSoundObject(getParamObject(ctx, 0));
 	if (!sound)

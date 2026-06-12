@@ -42,7 +42,7 @@ namespace Aurora {
 namespace Engines {
 
 /** Play this video resource. */
-void playVideo(const Common::UString &video, bool allowSkip = true);
+void playVideo(const Common::UString &video, bool allowSkip = true, int videoEffect = -1);
 
 /** Play this sound resource. */
 Sound::ChannelHandle playSound(const Common::UString &sound, Sound::SoundType soundType,

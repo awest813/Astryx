@@ -112,6 +112,8 @@ public:
 
 	void setAmbientSoundDayTrack  (uint32_t track); ///< Set the ambient sound track playing by day.
 	void setAmbientSoundNightTrack(uint32_t track); ///< Set the ambient sound track playing by night.
+	void setAmbientSoundDayVolume(int volume);
+	void setAmbientSoundNightVolume(int volume);
 
 	void stopSound();        ///< Stop all sounds.
 	void stopAmbientMusic(); ///< Stop the ambient music.

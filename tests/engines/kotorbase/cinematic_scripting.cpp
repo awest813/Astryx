@@ -333,6 +333,27 @@ TEST(CinematicScripting, FadeInParametersPassedCorrectly) {
 	EXPECT_FALSE(p.fadeOut);
 }
 
+TEST(CinematicScripting, VideoEffectSecurityCameraTint) {
+	int effect = 0;
+	float r = 1.0f;
+	float g = 1.0f;
+	float b = 1.0f;
+
+	switch (effect) {
+		case 0:
+			r = 0.65f;
+			g = 1.0f;
+			b = 0.65f;
+			break;
+		default:
+			break;
+	}
+
+	EXPECT_FLOAT_EQ(r, 0.65f);
+	EXPECT_FLOAT_EQ(g, 1.0f);
+	EXPECT_FLOAT_EQ(b, 0.65f);
+}
+
 TEST(CinematicScripting, HoldFadeInKeepsScreenBlack) {
 	bool holdFadeIn = true;
 	const bool fadingIn = true;

@@ -761,7 +761,8 @@ void Functions::actionSpeakString(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 
 	_game->getModule().showFloatingText(caller, str);
-	caller->playSound("m_select", true);
+	if (!caller->playBarkSound())
+		caller->playSound("m_select", true);
 }
 
 
@@ -785,7 +786,8 @@ void Functions::actionSpeakStringByStrRef(Aurora::NWScript::FunctionContext &ctx
 		text = Common::String::format("<strref:%u>", strRef);
 
 	_game->getModule().showFloatingText(caller, text);
-	caller->playSound("m_select", true);
+	if (!caller->playBarkSound())
+		caller->playSound("m_select", true);
 }
 
 
@@ -1094,9 +1096,8 @@ void Functions::getUserActionsPending(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::noClicksFor(Aurora::NWScript::FunctionContext &ctx) {
-
-	(void)ctx;
-
+	const float duration = ctx.getParams()[0].getFloat();
+	_game->getModule().noClicksFor(duration);
 }
 
 
@@ -1174,7 +1175,7 @@ void Functions::actionBarkString(Aurora::NWScript::FunctionContext &ctx) {
 	if (caller)
 		_game->getModule().showFloatingText(caller, text);
 
-	if (caller)
+	if (caller && !caller->playBarkSound())
 		caller->playSound("m_select", true);
 
 	status("ActionBarkString [%s]: %s", who.c_str(), text.c_str());

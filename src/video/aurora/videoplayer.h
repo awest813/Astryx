@@ -37,13 +37,14 @@ namespace Aurora {
 /** A video player. */
 class VideoPlayer {
 public:
-	VideoPlayer(const std::string &video);
+	VideoPlayer(const std::string &video, int videoEffect = -1);
 	~VideoPlayer();
 
 	void play(bool allowSkip = true);
 
 private:
 	std::unique_ptr<VideoDecoder> _video;
+	int _videoEffect { -1 };
 
 	void load(const std::string &name);
 };

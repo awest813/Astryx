@@ -1898,7 +1898,10 @@ protected:
 	void ambientSoundStop(Aurora::NWScript::FunctionContext &ctx);
 	void ambientSoundChangeDay(Aurora::NWScript::FunctionContext &ctx);
 	void ambientSoundChangeNight(Aurora::NWScript::FunctionContext &ctx);
+	void ambientSoundSetDayVolume(Aurora::NWScript::FunctionContext &ctx);
+	void ambientSoundSetNightVolume(Aurora::NWScript::FunctionContext &ctx);
 
+	void displayFeedBackText(Aurora::NWScript::FunctionContext &ctx);
 
 	void barkString(Aurora::NWScript::FunctionContext &ctx);
 

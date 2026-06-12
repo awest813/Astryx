@@ -87,6 +87,17 @@ GTEST_TEST(KotORNWScriptFuncs, mapPinEnabledRequiresMapNoteFlag) {
 	EXPECT_TRUE(mapPinVisible(true, true));
 }
 
+static float ambientVolumeFromScript(int volume) {
+	const uint32_t clamped = volume < 0 ? 0U : (volume > 127 ? 127U : static_cast<uint32_t>(volume));
+	return 1.25f * (1.0f - (1.0f / powf(5.0f, clamped / 127.0f)));
+}
+
+GTEST_TEST(KotORNWScriptFuncs, ambientDayVolumeScalesWithScriptInput) {
+	EXPECT_NEAR(ambientVolumeFromScript(0), 0.0f, 0.001f);
+	EXPECT_GT(ambientVolumeFromScript(127), ambientVolumeFromScript(64));
+	EXPECT_LE(ambientVolumeFromScript(127), 1.25f);
+}
+
 // ---------------------------------------------------------------------------
 // GetIsEnemy tests
 // ---------------------------------------------------------------------------

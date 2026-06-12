@@ -426,6 +426,7 @@ protected:
 
 	void setCutsceneMode(bool enabled);
 	void setPlayerInputEnabled(bool enabled);
+	void noClicksFor(float duration);
 	void playMusicStinger(const Common::UString &stinger);
 
 	// Delayed object interactions
@@ -495,6 +496,7 @@ private:
 	std::map<std::pair<Common::UString, uint32_t>, Common::UString> _journalQuestPictures;
 	std::vector<JournalWorldEntry> _journalWorld;
 	bool _holdWorldFadeInForDialog { false };
+	uint32_t _noClicksUntil { 0 };
 	std::vector<Common::UString> _messages;
 	Common::UString _returnDestinationModule { "m12aa" };
 
