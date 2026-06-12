@@ -123,6 +123,11 @@ public:
 	/** Initialize the widget text. */
 	void createText(const Common::UString &font, const Common::UString &str);
 
+	/** True when the widget already has a text component. */
+	bool hasTextComponent() const;
+	/** Create a text component when the GUI control has no TEXT field. */
+	void ensureText(const Common::UString &font);
+
 	// Highlighting
 
 	/** Is the widget highlighted? */

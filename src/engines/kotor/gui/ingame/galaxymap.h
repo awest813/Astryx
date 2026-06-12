@@ -25,7 +25,7 @@ private:
 	KotORBase::Module &_module;
 
 	void fillPlanets();
-	void jumpToPlanet(const Common::UString &planetID);
+	void jumpToPlanet(int planetIndex, const Common::UString &targetResRef);
 };
 
 } // End of namespace KotOR

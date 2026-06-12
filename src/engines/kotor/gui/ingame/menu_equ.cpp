@@ -34,6 +34,7 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/itemupgrades.h"
 
 #include "src/engines/kotorbase/gui/inventoryitem.h"
 
@@ -64,9 +65,7 @@ MenuEquipment::MenuEquipment(KotORBase::Module &module, Console *console) :
 	_dirty = true;
 	_selectedItem = -1;
 
-	Odyssey::WidgetLabel *slotName = getLabel("LBL_SLOTNAME");
-	if (slotName)
-		slotName->setText(getSlotName(KotORBase::kInventorySlotBody));
+	setWidgetText("LBL_SLOTNAME", getSlotName(KotORBase::kInventorySlotBody));
 
 	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
 	if (lbItems) {
@@ -156,7 +155,7 @@ void MenuEquipment::callbackRun() {
 
 		_selectedSlot = newSlot;
 		getSlotButton(_selectedSlot)->setHighlight(true);
-		getLabel("LBL_SLOTNAME")->setText(getSlotName(_selectedSlot));
+		setWidgetText("LBL_SLOTNAME", getSlotName(_selectedSlot));
 		_dirty = true;
 	}
 }
@@ -171,6 +170,7 @@ void MenuEquipment::callbackActive(Widget &widget) {
 			KotORBase::Creature *pc = _module->getPC();
 			KotORBase::Creature *partyLeader = _module->getPartyLeader();
 			partyLeader->equipItem(itemTag, _selectedSlot, pc->getCreatureInfo());
+			KotORBase::refreshCreatureEquipmentUpgrades(*partyLeader, *_module);
 			_module->getCurrentArea()->addToObjectMap(partyLeader);
 
 			fillEquipedItems();

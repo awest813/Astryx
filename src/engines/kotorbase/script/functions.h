@@ -972,6 +972,9 @@ protected:
 
 	void addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
 
+	void setMapPinEnabled(Aurora::NWScript::FunctionContext &ctx);
+
+	void setJournalQuestEntryPicture(Aurora::NWScript::FunctionContext &ctx);
 
 	void removeJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
 
@@ -1711,9 +1714,10 @@ protected:
 
 	void swmgSetSpeedBlurEffect(Aurora::NWScript::FunctionContext &ctx);
 
-
-
-
+	void swmgGetPlayerTunnelPos(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetPlayerTunnelPos(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetPlayerTunnelNeg(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetPlayerTunnelNeg(Aurora::NWScript::FunctionContext &ctx);
 
 	// Party, functions_party.cpp
 
@@ -1894,7 +1898,10 @@ protected:
 	void ambientSoundStop(Aurora::NWScript::FunctionContext &ctx);
 	void ambientSoundChangeDay(Aurora::NWScript::FunctionContext &ctx);
 	void ambientSoundChangeNight(Aurora::NWScript::FunctionContext &ctx);
+	void ambientSoundSetDayVolume(Aurora::NWScript::FunctionContext &ctx);
+	void ambientSoundSetNightVolume(Aurora::NWScript::FunctionContext &ctx);
 
+	void displayFeedBackText(Aurora::NWScript::FunctionContext &ctx);
 
 	void barkString(Aurora::NWScript::FunctionContext &ctx);
 

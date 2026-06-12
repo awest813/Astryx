@@ -22,9 +22,13 @@
  *  The context needed to run a Star Wars: Knights of the Old Republic module.
  */
 
+#include <algorithm>
+
+#include "src/common/strutil.h"
+
 #include "src/engines/kotor/module.h"
 #include "src/engines/kotor/game.h"
-#include "src/engines/kotor/creature.h"
+#include "src/engines/kotorbase/creature.h"
 
 #include "src/engines/kotor/gui/dialog.h"
 
@@ -44,6 +48,8 @@
 #include "src/engines/kotor/encounters_ebon.h"
 #include "src/engines/kotor/pazaak.h"
 #include "src/engines/kotor/gui/ingame/pazaak.h"
+#include "src/engines/kotorbase/swoopminigame.h"
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotor/gui/ingame/menu.h"
 
 #include "src/graphics/graphics.h"
@@ -101,6 +107,27 @@ void Module::showMenu() {
 
 void Module::showDeathGUI() {
 	showIngameOptionsMenu();
+}
+
+void Module::showGUIPanel(int panel) {
+	switch (panel) {
+	case 4: { // GUI_PANEL_INVENTORY
+		Menu menu(*this, _console);
+		menu.show();
+		menu.showMenu("BTN_INV");
+		menu.run();
+		break;
+	}
+	case 6: // GUI_PANEL_JOURNAL
+		showJournal();
+		break;
+	case 9: // GUI_PANEL_LEVELUP
+		getGame().showLevelUpGUI();
+		break;
+	default:
+		warning("Module::showGUIPanel(%d): unhandled panel", panel);
+		break;
+	}
 }
 
 void Module::showIngameOptionsMenu() {
@@ -161,22 +188,53 @@ void Module::signalEncounter(const Common::UString &id) {
 		performPlanetArrival(*this);
 	} else if (id == "ebon_turret") {
 		performTurretMinigame(*this);
+	} else if (id == "turret_combat_start") {
+		setGlobalBoolean("__swmg_gunbank_targeting", true);
+	} else if (id == "swmg_obstacle_hit") {
+		setGlobalNumber("__swmg_last_event", KotORBase::SwoopMinigame::get().getLastEvent());
+	} else if (id == "tar_brejik_post_race") {
+		KotOR::performBrejikShowdown(*this);
 	} else if (id == "pazaak_start") {
+		const int sideIndex = getGlobalNumber("__pazaak_side");
+		const std::vector<int> playerDeck = PazaakEngine::sideDeckForIndex(sideIndex);
+		const std::vector<int> opponentDeck = {1, 2, 3, 4, 5, 6, kPazaakCardFlip};
+
 		PazaakEngine engine;
-		// Fetch side decks from module globals if needed, or use defaults
-		std::vector<int> playerDeck = {1, -1, 2, -2, 3, -3};
-		std::vector<int> opponentDeck = {1, 2, 3, 4, 5, 6};
 		engine.startMatch(playerDeck, opponentDeck);
 
 		PazaakGUI gui(engine, _console);
 		gui.run();
-		
-		setGlobalNumber("__pazaak_result", engine.getWinner() == 1 ? 1 : 0);
+
+		const bool playerWon = engine.getWinner() == 1;
+		setGlobalNumber("__pazaak_result", playerWon ? 1 : 0);
+
+		const int wager = getGlobalNumber("__pazaak_wager");
+		if (wager > 0 && getPC()) {
+			KotORBase::Inventory &inv = getPC()->getInventory();
+			if (playerWon) {
+				inv.addGold(static_cast<uint32_t>(wager));
+			} else {
+				const uint32_t paid = std::min(static_cast<uint32_t>(wager), inv.getGold());
+				inv.removeGold(paid);
+			}
+		}
 	}
+}
+
+void Module::onFrameUpdate(float frameTime) {
+	const bool swoopModule = _module.endsWith("mg");
+	const bool areaMinigame = _area && _area->isMinigame();
+	KotORBase::SwoopMinigame &swoop = KotORBase::SwoopMinigame::get();
+
+	swoop.setActive(swoopModule || areaMinigame);
+	if (swoop.isActive())
+		swoop.update(frameTime);
 }
 
 void Module::showJournal() {
 	MenuJournal gui(_console);
+	gui.setModule(this);
+	gui.show();
 	gui.run();
 }
 

@@ -49,6 +49,7 @@ public:
 
 private:
 	void updateLabels();
+	bool isPowerAvailable(uint32_t power) const;
 
 	KotORBase::CreatureInfo &_info;
 

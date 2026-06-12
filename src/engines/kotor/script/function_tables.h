@@ -483,7 +483,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 363, "GetIdFromTalent"                     , &Functions::getIdFromTalent                      },
 	{ 364, "PlayPazaak"                          , &Functions::playPazaak                           },
 	{ 365, "GetLastPazaakResult"                 , &Functions::getLastPazaakResult                  },
-	{ 366, "DisplayFeedBackText"                 , &Functions::stubFunction                                                },
+	{ 366, "DisplayFeedBackText"                 , &Functions::displayFeedBackText                                                },
 	{ 367, "AddJournalQuestEntry"                , &Functions::addJournalQuestEntry                 },
 	{ 368, "RemoveJournalQuestEntry"             , &Functions::removeJournalQuestEntry              },
 	{ 369, "GetJournalEntry"                     , &Functions::getJournalEntry                      },
@@ -503,7 +503,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 383, "ActionForceMoveToObject"             , &Functions::actionForceMoveToObject              },
 	{ 384, "GetJournalQuestExperience"           , &Functions::getJournalQuestExperience             },
 	{ 385, "JumpToObject"                        , &Functions::jumpToObject                         },
-	{ 386, "SetMapPinEnabled"                    , &Functions::stubFunction                                                },
+	{ 386, "SetMapPinEnabled"                    , &Functions::setMapPinEnabled                                                },
 	{ 387, "EffectHitPointChangeWhenDying"       , &Functions::stubFunction                                                },
 	{ 388, "PopUpGUIPanel"                       , &Functions::popUpGUIPanel                        },
 	{ 389, "AddMultiClass"                       , &Functions::stubFunction                                                },
@@ -684,8 +684,8 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 564, "EndGame"                             , &Functions::endGame                              },
 	{ 565, "GetRunScriptVar"                     , &Functions::getRunScriptVar                      },
 	{ 566, "GetCreatureMovmentType"              , &Functions::stubFunction                                                },
-	{ 567, "AmbientSoundSetDayVolume"            , &Functions::stubFunction                                                },
-	{ 568, "AmbientSoundSetNightVolume"          , &Functions::stubFunction                                                },
+	{ 567, "AmbientSoundSetDayVolume"            , &Functions::ambientSoundSetDayVolume                                                },
+	{ 568, "AmbientSoundSetNightVolume"          , &Functions::ambientSoundSetNightVolume                                                },
 	{ 569, "MusicBackgroundGetBattleTrack"       , &Functions::stubFunction                                                },
 	{ 570, "GetHasInventory"                     , &Functions::stubFunction                                                },
 	{ 571, "GetStrRefSoundDuration"              , &Functions::stubFunction                                                },
@@ -763,15 +763,15 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 643, "SWMG_GetPlayerSpeed"                 , &Functions::swmgGetPlayerSpeed                    },
 	{ 644, "SWMG_GetPlayerMinSpeed"              , &Functions::stubSWMGFunctionSWMG_GetPlayerMinSpeed
 	{ 645, "SWMG_GetPlayerAccelerationPerSecond" , &Functions::stubSWMGFunctionSWMG_GetPlayerAccelerationPerSecond
-	{ 646, "SWMG_GetPlayerTunnelPos"             , &Functions::stubSWMGFunctionSWMG_GetPlayerTunnelPos
+	{ 646, "SWMG_GetPlayerTunnelPos"             , &Functions::swmgGetPlayerTunnelPos
 	{ 647, "SWMG_SetPlayerOffset"                , &Functions::swmgSetPlayerOffset                                                },
 	{ 648, "SWMG_SetPlayerInvincibility"         , &Functions::stubSWMGFunctionSWMG_SetPlayerInvincibility
 	{ 649, "SWMG_SetPlayerSpeed"                 , &Functions::swmgSetPlayerSpeed                    },
 	{ 650, "SWMG_SetPlayerMinSpeed"              , &Functions::stubSWMGFunctionSWMG_SetPlayerMinSpeed
 	{ 651, "SWMG_SetPlayerAccelerationPerSecond" , &Functions::stubSWMGFunctionSWMG_SetPlayerAccelerationPerSecond
-	{ 652, "SWMG_SetPlayerTunnelPos"             , &Functions::stubSWMGFunctionSWMG_SetPlayerTunnelPos
-	{ 653, "SWMG_GetPlayerTunnelNeg"             , &Functions::stubSWMGFunctionSWMG_GetPlayerTunnelNeg
-	{ 654, "SWMG_SetPlayerTunnelNeg"             , &Functions::stubSWMGFunctionSWMG_SetPlayerTunnelNeg
+	{ 652, "SWMG_SetPlayerTunnelPos"             , &Functions::swmgSetPlayerTunnelPos
+	{ 653, "SWMG_GetPlayerTunnelNeg"             , &Functions::swmgGetPlayerTunnelNeg
+	{ 654, "SWMG_SetPlayerTunnelNeg"             , &Functions::swmgSetPlayerTunnelNeg
 	{ 655, "SWMG_GetPlayerOrigin"                , &Functions::stubSWMGFunctionSWMG_GetPlayerOrigin
 	{ 656, "SWMG_SetPlayerOrigin"                , &Functions::stubSWMGFunctionSWMG_SetPlayerOrigin
 	{ 657, "SWMG_GetGunBankHorizontalSpread"     , &Functions::stubSWMGFunctionSWMG_GetGunBankHorizontalSpread
@@ -795,7 +795,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{ 675, "EffectForceDrain"                    , &Functions::effectForceDrain                     },
 	{ 676, "EffectPsychicStatic"                 , &Functions::effectPsychicStatic                                                },
 	{ 677, "PlayVisualAreaEffect"                , &Functions::playVisualAreaEffect                                                },
-	{ 678, "SetJournalQuestEntryPicture"         , &Functions::stubFunction                                                },
+	{ 678, "SetJournalQuestEntryPicture"         , &Functions::setJournalQuestEntryPicture                                                },
 	{ 679, "GetLocalBoolean"                     , &Functions::getLocalBoolean                      },
 	{ 680, "SetLocalBoolean"                     , &Functions::setLocalBoolean                      },
 	{ 681, "GetLocalNumber"                      , &Functions::getLocalNumber                       },

@@ -29,6 +29,7 @@
 #include "src/engines/odyssey/label.h"
 
 #include "src/engines/kotorbase/gui/chargeninfo.h"
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/chargen/chargenabilities.h"
 
@@ -94,25 +95,25 @@ int CharacterGenerationAbilitiesMenu::lowerCost(uint32_t current) {
 }
 
 void CharacterGenerationAbilitiesMenu::updateLabels() {
-	// Helper to set a widget's text if the widget exists.
-	// Tries label first, then button, to handle either widget type.
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl) {
-			lbl->setText(text);
-			return;
-		}
-		Odyssey::WidgetButton *btn = getButton(tag);
-		if (btn)
-			btn->setText(text);
+	static const struct {
+		const char *pointTag;
+		const char *modTag;
+	} kAbilityRows[] = {
+		{ "STR_POINTS_BTN", "STR_MOD_BTN" },
+		{ "DEX_POINTS_BTN", "DEX_MOD_BTN" },
+		{ "CON_POINTS_BTN", "CON_MOD_BTN" },
+		{ "INT_POINTS_BTN", "INT_MOD_BTN" },
+		{ "WIS_POINTS_BTN", "WIS_MOD_BTN" },
+		{ "CHA_POINTS_BTN", "CHA_MOD_BTN" },
 	};
 
-	setWidgetText("STR_POINTS_BTN", Common::composeString(_str));
-	setWidgetText("DEX_POINTS_BTN", Common::composeString(_dex));
-	setWidgetText("CON_POINTS_BTN", Common::composeString(_con));
-	setWidgetText("INT_POINTS_BTN", Common::composeString(_intl));
-	setWidgetText("WIS_POINTS_BTN", Common::composeString(_wis));
-	setWidgetText("CHA_POINTS_BTN", Common::composeString(_cha));
+	uint32_t scores[] = { _str, _dex, _con, _intl, _wis, _cha };
+	for (size_t i = 0; i < ARRAYSIZE(kAbilityRows); ++i) {
+		const int score = static_cast<int>(scores[i]);
+		const int mod = (score - 10 >= 0) ? (score - 10) / 2 : (score - 10 - 1) / 2;
+		setWidgetText(kAbilityRows[i].pointTag, Common::composeString(score));
+		setWidgetText(kAbilityRows[i].modTag, KotORBase::formatAbilityModifier(mod));
+	}
 
 	setWidgetText("REMAINING_SELECTIONS_LBL", Common::composeString(_remainingPoints));
 }

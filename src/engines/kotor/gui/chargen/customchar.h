@@ -37,6 +37,8 @@ class CustomCharPanel : public KotORBase::GUI {
 public:
 	CustomCharPanel(CharacterGenerationMenu *charGenMenu, Console *console = 0);
 
+	void updateButtons();
+
 private:
 	CharacterGenerationMenu *_charGen;
 

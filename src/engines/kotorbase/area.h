@@ -60,6 +60,7 @@ class Module;
 class Room;
 class Situated;
 class Creature;
+class Item;
 class Pathfinding;
 struct CreatureSearchCriteria;
 
@@ -111,6 +112,8 @@ public:
 
 	void setAmbientSoundDayTrack  (uint32_t track); ///< Set the ambient sound track playing by day.
 	void setAmbientSoundNightTrack(uint32_t track); ///< Set the ambient sound track playing by night.
+	void setAmbientSoundDayVolume(int volume);
+	void setAmbientSoundNightVolume(int volume);
 
 	void stopSound();        ///< Stop all sounds.
 	void stopAmbientMusic(); ///< Stop the ambient music.
@@ -136,6 +139,7 @@ public:
 	// Walkmesh
 
 	float evaluateElevation(float x, float y);
+	bool getGroundPointAtScreen(int screenX, int screenY, float &outX, float &outY, float &outZ);
 	bool walkable(const glm::vec3 &orig, const glm::vec3 &dest) const;
 	void toggleWalkmesh();
 	bool rayTest(const glm::vec3 &orig, const glm::vec3 &dest, glm::vec3 &intersect) const;
@@ -152,6 +156,7 @@ public:
 	const std::vector<Creature *> &getCreatures() const;
 
 	void addCreature(Creature *creature);
+	Item *spawnDroppedItem(const Common::UString &tag, float x, float y, float z);
 	void addToObjectMap(Object *object);
 	void removeObject(Object *object);
 
@@ -165,6 +170,8 @@ public:
 
 	static size_t getDefaultMapExploredTileCount();
 	void exploreMapFully();
+	/** Reveal minimap tiles near a world position. Returns true if any tile changed. */
+	bool revealMapNear(float worldX, float worldY, int radiusTiles = 1);
 
 	// Camera style
 

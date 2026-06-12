@@ -29,6 +29,8 @@
 
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 #include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/gui/guiskilltags.h"
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/chargen/chargenskills.h"
 
@@ -40,29 +42,6 @@ namespace KotOR {
 static const int kSkillPointsBySoldier   = 4;
 static const int kSkillPointsByScout     = 6;
 static const int kSkillPointsByScoundrel = 8;
-
-// Widget tag mappings for skill points and +/- controls.
-struct SkillWidgetTags {
-	const char *pointTag;
-	const char *plusTag;
-	const char *minusTag;
-
-	// Legacy fallback names used by earlier milestone patches.
-	const char *legacyPointTag;
-	const char *legacyPlusTag;
-	const char *legacyMinusTag;
-};
-
-static const SkillWidgetTags kSkillTags[] = {
-	{ "COMPUTER_USE_POINTS_BTN", "COM_PLUS_BTN", "COM_MINUS_BTN", "LBL_COMP_USE",    "BTN_COMP_USE_PLUS",    "BTN_COMP_USE_MINUS"    }, // kSkillComputerUse
-	{ "DEMOLITIONS_POINTS_BTN",  "DEM_PLUS_BTN", "DEM_MINUS_BTN", "LBL_DEMOLITIONS", "BTN_DEMOLITIONS_PLUS", "BTN_DEMOLITIONS_MINUS" }, // kSkillDemolitions
-	{ "STEALTH_POINTS_BTN",      "STE_PLUS_BTN", "STE_MINUS_BTN", "LBL_STEALTH",     "BTN_STEALTH_PLUS",     "BTN_STEALTH_MINUS"     }, // kSkillStealth
-	{ "AWARENESS_POINTS_BTN",    "AWA_PLUS_BTN", "AWA_MINUS_BTN", "LBL_AWARENESS",   "BTN_AWARENESS_PLUS",   "BTN_AWARENESS_MINUS"   }, // kSkillAwareness
-	{ "PERSUADE_POINTS_BTN",     "PER_PLUS_BTN", "PER_MINUS_BTN", "LBL_PERSUADE",    "BTN_PERSUADE_PLUS",    "BTN_PERSUADE_MINUS"    }, // kSkillPersuade
-	{ "REPAIR_POINTS_BTN",       "REP_PLUS_BTN", "REP_MINUS_BTN", "LBL_REPAIR",      "BTN_REPAIR_PLUS",      "BTN_REPAIR_MINUS"      }, // kSkillRepair
-	{ "SECURITY_POINTS_BTN",     "SEC_PLUS_BTN", "SEC_MINUS_BTN", "LBL_SECURITY",    "BTN_SECURITY_PLUS",    "BTN_SECURITY_MINUS"    }, // kSkillSecurity
-	{ "TREAT_INJURY_POINTS_BTN", "TRE_PLUS_BTN", "TRE_MINUS_BTN", "LBL_TREAT_INJ",   "BTN_TREAT_INJ_PLUS",   "BTN_TREAT_INJ_MINUS"   }, // kSkillTreatInjury
-};
 
 CharacterGenerationSkillsMenu::CharacterGenerationSkillsMenu(
 		KotORBase::CharacterGenerationInfo &info,
@@ -90,15 +69,21 @@ CharacterGenerationSkillsMenu::CharacterGenerationSkillsMenu(
 	_ranks[KotORBase::kSkillTreatInjury] = s.treatInjury;
 
 	// Compute how many points are still available.
-	int total = computeSkillPoints();
-	int spent = 0;
-	for (int i = 0; i < KotORBase::kSkillMAX; ++i)
-		spent += static_cast<int>(_ranks[i]);
-	_remainingPoints = total - spent;
+	_remainingPoints = computeSkillPoints() - computeSpentPoints();
 	if (_remainingPoints < 0)
 		_remainingPoints = 0;
 
 	updateLabels();
+}
+
+int CharacterGenerationSkillsMenu::computeSpentPoints() const {
+	int spent = 0;
+	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
+		const KotORBase::Skill skill = static_cast<KotORBase::Skill>(i);
+		const int cost = KotORBase::isClassSkill(_info.getClass(), skill) ? 1 : 2;
+		spent += static_cast<int>(_ranks[skill]) * cost;
+	}
+	return spent;
 }
 
 int CharacterGenerationSkillsMenu::computeSkillPoints() const {
@@ -118,19 +103,10 @@ int CharacterGenerationSkillsMenu::computeSkillPoints() const {
 }
 
 void CharacterGenerationSkillsMenu::updateLabels() {
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl)
-			lbl->setText(text);
-
-		Odyssey::WidgetButton *btn = getButton(tag);
-		if (btn)
-			btn->setText(text);
-	};
-
-	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
-		setWidgetText(kSkillTags[i].pointTag, Common::composeString(_ranks[i]));
-		setWidgetText(kSkillTags[i].legacyPointTag, Common::composeString(_ranks[i]));
+	for (size_t i = 0; i < KotORBase::kSkillWidgetTagCount; ++i) {
+		const Common::UString rank = Common::composeString(_ranks[KotORBase::kSkillWidgetTags[i].skill]);
+		setWidgetText(KotORBase::kSkillWidgetTags[i].pointTag, rank);
+		setWidgetText(KotORBase::kSkillWidgetTags[i].legacyPointTag, rank);
 	}
 
 	setWidgetText("REMAINING_SELECTIONS_LBL", Common::composeString(_remainingPoints));
@@ -140,19 +116,22 @@ void CharacterGenerationSkillsMenu::updateLabels() {
 void CharacterGenerationSkillsMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
-	for (int i = 0; i < KotORBase::kSkillMAX; ++i) {
-		if ((tag == kSkillTags[i].plusTag) || (tag == kSkillTags[i].legacyPlusTag)) {
-			if (_remainingPoints > 0) {
-				++_ranks[i];
-				--_remainingPoints;
+	for (size_t i = 0; i < KotORBase::kSkillWidgetTagCount; ++i) {
+		const KotORBase::Skill skill = KotORBase::kSkillWidgetTags[i].skill;
+		if ((tag == KotORBase::kSkillWidgetTags[i].plusTag) || (tag == KotORBase::kSkillWidgetTags[i].legacyPlusTag)) {
+			const int cost = KotORBase::isClassSkill(_info.getClass(), skill) ? 1 : 2;
+			if (_remainingPoints >= cost) {
+				++_ranks[skill];
+				_remainingPoints -= cost;
 				updateLabels();
 			}
 			return;
 		}
-		if ((tag == kSkillTags[i].minusTag) || (tag == kSkillTags[i].legacyMinusTag)) {
-			if (_ranks[i] > 0) {
-				--_ranks[i];
-				++_remainingPoints;
+		if ((tag == KotORBase::kSkillWidgetTags[i].minusTag) || (tag == KotORBase::kSkillWidgetTags[i].legacyMinusTag)) {
+			if (_ranks[skill] > 0) {
+				const int cost = KotORBase::isClassSkill(_info.getClass(), skill) ? 1 : 2;
+				--_ranks[skill];
+				_remainingPoints += cost;
 				updateLabels();
 			}
 			return;
@@ -170,11 +149,7 @@ void CharacterGenerationSkillsMenu::callbackActive(Widget &widget) {
 		_ranks[KotORBase::kSkillSecurity]    = s.security;
 		_ranks[KotORBase::kSkillTreatInjury] = s.treatInjury;
 
-		int total = computeSkillPoints();
-		int spent = 0;
-		for (int i = 0; i < KotORBase::kSkillMAX; ++i)
-			spent += static_cast<int>(_ranks[i]);
-		_remainingPoints = total - spent;
+		_remainingPoints = computeSkillPoints() - computeSpentPoints();
 		if (_remainingPoints < 0)
 			_remainingPoints = 0;
 

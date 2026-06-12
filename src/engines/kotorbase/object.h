@@ -27,8 +27,13 @@
 
 #include <list>
 #include <map>
+#include <memory>
 
 #include "src/aurora/nwscript/object.h"
+
+namespace Aurora {
+class SSFFile;
+}
 
 #include "src/sound/types.h"
 
@@ -203,6 +208,13 @@ public:
 	void stopSound();
 	/** Play an object sound. */
 	void playSound(const Common::UString &sound, bool pitchVariance = false);
+	/** Assign the creature soundset index from soundset.2da. */
+	void setSoundSet(uint32_t soundSet);
+	/** Play a soundset entry by SSF index (KotOR uses TLK StrRefs). */
+	bool playSoundSetEntry(size_t index, bool pitchVariance = true);
+	/** Play a conversational bark from the object's soundset when available. */
+	bool playBarkSound();
+	const Aurora::SSFFile *getSSF() const;
 
 	// Animation
 
@@ -255,8 +267,13 @@ protected:
 	float _position[3];    ///< The object's position.
 	float _orientation[4]; ///< The object's orientation.
 
-	Sound::ChannelHandle _sound; ///< The currently playing object sound.
-	
+	Sound::ChannelHandle _sound; ///< The currently playing object sound;
+
+	uint32_t _soundSet; ///< Index into soundset.2da.
+	std::unique_ptr<Aurora::SSFFile> _ssf; ///< Loaded KotOR soundset.
+
+	void loadSSF();
+
 	std::map<Common::UString, int32_t> _localInts;
 	std::map<Common::UString, float>   _localFloats;
 	std::map<Common::UString, Common::UString> _localStrings;

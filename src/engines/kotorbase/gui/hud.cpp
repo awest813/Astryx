@@ -22,6 +22,7 @@
  *  Base in-game HUD for KotOR games.
  */
 
+#include "src/graphics/graphics.h"
 #include "src/graphics/aurora/cursorman.h"
 
 #include "src/engines/odyssey/button.h"
@@ -31,6 +32,7 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
 
@@ -44,10 +46,12 @@ HUD::HUD(Module &module, Console *console) :
 		GUI(console),
 		_module(module),
 		_hoveredCircle(new SelectionCircle()),
-		_targetCircle(new SelectionCircle()) {
+		_targetCircle(new SelectionCircle()),
+		_grenadeReticle(new SelectionCircle()) {
 
 	_hoveredCircle->setHovered(true);
 	_targetCircle->setTarget(true);
+	_grenadeReticle->setTarget(true);
 	clearTargetButtonActions();
 }
 
@@ -60,6 +64,12 @@ void HUD::setPosition(float UNUSED(x), float UNUSED(y)) {
 }
 
 void HUD::setRotation(float UNUSED(angle)) {
+}
+
+void HUD::updateMinimapExplored(const std::vector<bool> &UNUSED(explored)) {
+}
+
+void HUD::updateMinimapMapPins(const std::vector<MapPin> &UNUSED(pins)) {
 }
 
 void HUD::setReturnStrref(uint32_t UNUSED(id)) {
@@ -120,6 +130,38 @@ void HUD::resetSelection() {
 void HUD::updateSelection() {
 	updateTargetObject();
 	updateHoveredObject();
+}
+
+void HUD::updateGrenadeReticle(int screenX, int screenY) {
+	if (!_grenadeReticle)
+		return;
+
+	Area *area = _module.getCurrentArea();
+	if (!area) {
+		_grenadeReticle->hide();
+		return;
+	}
+
+	float worldX, worldY, worldZ;
+	if (!area->getGroundPointAtScreen(screenX, screenY, worldX, worldY, worldZ)) {
+		_grenadeReticle->hide();
+		return;
+	}
+
+	float screenProjX, screenProjY, screenProjZ;
+	if (!GfxMan.project(worldX, worldY, worldZ, screenProjX, screenProjY, screenProjZ) ||
+	    screenProjZ < 0.0f || screenProjZ > 1.0f) {
+		_grenadeReticle->hide();
+		return;
+	}
+
+	_grenadeReticle->setPosition(screenProjX, screenProjY);
+	_grenadeReticle->show();
+}
+
+void HUD::hideGrenadeReticle() {
+	if (_grenadeReticle)
+		_grenadeReticle->hide();
 }
 
 void HUD::hideSelection() {

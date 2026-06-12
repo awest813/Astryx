@@ -25,6 +25,10 @@
 #ifndef ENGINES_KOTOR_GUI_INGAME_MENU_JOU_H
 #define ENGINES_KOTOR_GUI_INGAME_MENU_JOU_H
 
+#include <vector>
+
+#include "src/common/ustring.h"
+
 #include "src/engines/kotorbase/gui/gui.h"
 
 namespace Engines {
@@ -44,6 +48,7 @@ protected:
 
 private:
 	void fillJournal();
+	void showQuestDescription(int index);
 
 	enum Category {
 		kCategoryActive,
@@ -53,6 +58,8 @@ private:
 	Category _category;
 
 	KotORBase::Module *_module { nullptr };
+	std::vector<Common::UString> _questTags;
+	std::vector<Common::UString> _worldTags;
 };
 
 } // End of namespace KotOR

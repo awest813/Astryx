@@ -49,6 +49,7 @@ public:
 
 private:
 	void updateLabels();
+	bool isFeatAvailable(uint32_t feat) const;
 
 	KotORBase::CreatureInfo &_info;
 

@@ -23,10 +23,13 @@
  */
 
 #include "src/common/string.h"
+#include "src/common/strutil.h"
 
 #include "src/aurora/gff3file.h"
 #include "src/aurora/2dafile.h"
 #include "src/aurora/2dareg.h"
+
+#include "src/engines/aurora/model.h"
 
 #include "src/engines/kotorbase/item.h"
 
@@ -70,11 +73,11 @@ int Item::getEnhancementBonus() const {
 }
 
 int Item::getDamageBonus() const {
-	return getPropertyBonusSum(kItemPropertyDamageBonus);
+	return getPropertyBonusSum(kItemPropertyDamageBonus) + _upgradeDamageBonus;
 }
 
 int Item::getAttackBonus() const {
-	return getPropertyBonusSum(kItemPropertyAttackBonus) + getEnhancementBonus();
+	return getPropertyBonusSum(kItemPropertyAttackBonus) + getEnhancementBonus() + _upgradeAttackBonus;
 }
 
 void Item::load(const Aurora::GFF3Struct &gff) {
@@ -148,11 +151,31 @@ bool Item::isRangedWeapon() const {
 }
 
 int Item::getACBonus() const {
-	return _acBonus + getPropertyBonusSum(kItemPropertyACBonus);
+	return _acBonus + getPropertyBonusSum(kItemPropertyACBonus) + _upgradeACBonus;
 }
 
 int Item::getBaseItem() const {
 	return _baseItem;
+}
+
+const Common::UString &Item::getItemClass() const {
+	return _itemClass;
+}
+
+int Item::getItemPropertyValue(int propertyType, int fallback) const {
+	for (const ItemPropertyData &prop : _properties) {
+		if (prop.type == propertyType)
+			return prop.param1Value;
+	}
+	return fallback;
+}
+
+int Item::getItemPropertySubtype(int propertyType, int fallback) const {
+	for (const ItemPropertyData &prop : _properties) {
+		if (prop.type == propertyType)
+			return prop.subtype;
+	}
+	return fallback;
 }
 
 int Item::getStackSize() const {
@@ -180,6 +203,51 @@ const Common::UString Item::getIcon() const {
 
 const Common::UString Item::getModelName() const {
 	return Common::String::format("%s_%03d", _itemClass.c_str(), _modelVariation);
+}
+
+bool Item::isVisible() const {
+	return _model && _model->isVisible();
+}
+
+void Item::show() {
+	if (_model)
+		_model->show();
+}
+
+void Item::hide() {
+	if (_model)
+		_model->hide();
+}
+
+void Item::setPosition(float x, float y, float z) {
+	Object::setPosition(x, y, z);
+
+	if (_model)
+		_model->setPosition(x, y, z);
+}
+
+void Item::setUpgradeBonuses(int attack, int damage, int ac) {
+	_upgradeAttackBonus = attack;
+	_upgradeDamageBonus = damage;
+	_upgradeACBonus = ac;
+}
+
+void Item::prepareWorldDrop(const Common::UString &templateResRef) {
+	_templateResRef = templateResRef;
+	_tag = templateResRef + "_" + Common::composeString(getID());
+	_usable = true;
+
+	const Common::UString &modelName = getModelName();
+	if (modelName.empty())
+		return;
+
+	_model.reset(loadModelObject(modelName));
+	if (!_model)
+		return;
+
+	_model->setTag(_tag);
+	_model->setClickable(isClickable());
+	_ids.push_back(_model->getID());
 }
 
 } // End of namespace KotORBase

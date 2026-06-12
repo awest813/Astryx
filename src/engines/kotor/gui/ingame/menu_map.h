@@ -25,22 +25,41 @@
 #ifndef ENGINES_KOTOR_GUI_INGAME_MENU_MAP_H
 #define ENGINES_KOTOR_GUI_INGAME_MENU_MAP_H
 
+#include <memory>
+
 #include "src/engines/kotorbase/gui/gui.h"
+
+namespace Engines {
+namespace KotOR {
+class Minimap;
+}
+}
 
 namespace Engines {
 
 namespace KotOR {
 
+namespace KotORBase {
+	class Module;
+}
+
 class MenuMap : public KotORBase::GUI {
 public:
 	MenuMap(::Engines::Console *console = 0);
 
+	void setModule(KotORBase::Module *module);
 	void setReturnStrref(uint32_t id);
 	void setReturnQueryStrref(uint32_t id);
 	void setReturnEnabled(bool enabled);
 
+	void show() override;
+
 private:
 	Common::UString _returnQueryMessage;
+	KotORBase::Module *_module { nullptr };
+	std::unique_ptr<Minimap> _areaMap;
+
+	void refreshAreaMap();
 
 protected:
 	void callbackActive(Widget &widget);

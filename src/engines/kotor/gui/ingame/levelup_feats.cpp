@@ -23,15 +23,35 @@
  */
 
 #include "src/common/strutil.h"
+#include "src/common/util.h"
 
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
+
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/ingame/levelup_feats.h"
 
 namespace Engines {
 
 namespace KotOR {
+
+struct FeatButtonMap {
+	const char *tag;
+	uint32_t    feat;
+};
+
+static const FeatButtonMap kFeatButtons[] = {
+	{ "BTN_POWER_ATTACK", KotORBase::kFeatPowerAttack },
+	{ "BTN_FLURRY",       KotORBase::kFeatFlurry },
+	{ "BTN_CRITICAL",     KotORBase::kFeatCriticalStrike },
+	{ "BTN_POWER_BLAST",  KotORBase::kFeatPowerBlast },
+	{ "BTN_RAPID_SHOT",   KotORBase::kFeatRapidShot },
+	{ "BTN_SNIPER_SHOT",  KotORBase::kFeatSniperShot },
+	{ "BTN_CONDITIONING", KotORBase::kFeatConditioning },
+	{ "BTN_TOUGHNESS",    KotORBase::kFeatToughness },
+	{ "BTN_JEDI_DEFENSE", KotORBase::kFeatJediDefense },
+};
 
 LevelUpFeatsMenu::LevelUpFeatsMenu(KotORBase::CreatureInfo &info, Console *console) :
 		KotORBase::GUI(console),
@@ -47,15 +67,7 @@ LevelUpFeatsMenu::LevelUpFeatsMenu(KotORBase::CreatureInfo &info, Console *conso
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
-	// Placeholder feats for Phase 5.1
-	_availableFeats.push_back(KotORBase::kFeatPowerAttack);
-	_availableFeats.push_back(KotORBase::kFeatFlurry);
-	_availableFeats.push_back(KotORBase::kFeatCriticalStrike);
-	_availableFeats.push_back(KotORBase::kFeatPowerBlast);
-	_availableFeats.push_back(KotORBase::kFeatRapidShot);
-	_availableFeats.push_back(KotORBase::kFeatSniperShot);
-	_availableFeats.push_back(KotORBase::kFeatConditioning);
-	_availableFeats.push_back(KotORBase::kFeatToughness);
+	_availableFeats = KotORBase::getSelectableFeats(_info);
 
 	updateLabels();
 }
@@ -64,40 +76,48 @@ LevelUpFeatsMenu::~LevelUpFeatsMenu() {
 }
 
 void LevelUpFeatsMenu::updateLabels() {
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl) {
-			lbl->setText(text);
-			return;
-		}
-		Odyssey::WidgetButton *btn = getButton(tag);
-		if (btn)
-			btn->setText(text);
-	};
-
 	setWidgetText("REMAINING_SELECTIONS_LBL", (_selectedFeat == 0xFFFFFFFF) ? "1" : "0");
+
+	for (size_t i = 0; i < ARRAYSIZE(kFeatButtons); ++i) {
+		Odyssey::WidgetButton *button = getButton(kFeatButtons[i].tag);
+		if (!button)
+			continue;
+
+		const bool available = isFeatAvailable(kFeatButtons[i].feat);
+		button->setInvisible(!available);
+		if (!available) {
+			button->hide();
+			continue;
+		}
+
+		if (_selectedFeat == kFeatButtons[i].feat)
+			button->setStaticHighlight();
+		else
+			button->setPermanentHighlight(false);
+
+		button->show();
+	}
+}
+
+bool LevelUpFeatsMenu::isFeatAvailable(uint32_t feat) const {
+	for (uint32_t available : _availableFeats) {
+		if (available == feat)
+			return true;
+	}
+	return false;
 }
 
 void LevelUpFeatsMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
-	// Basic tag mapping for placeholder feats
-	if (tag == "BTN_POWER_ATTACK") {
-		_selectedFeat = KotORBase::kFeatPowerAttack;
-	} else if (tag == "BTN_FLURRY") {
-		_selectedFeat = KotORBase::kFeatFlurry;
-	} else if (tag == "BTN_CRITICAL") {
-		_selectedFeat = KotORBase::kFeatCriticalStrike;
-	} else if (tag == "BTN_POWER_BLAST") {
-		_selectedFeat = KotORBase::kFeatPowerBlast;
-	} else if (tag == "BTN_RAPID_SHOT") {
-		_selectedFeat = KotORBase::kFeatRapidShot;
-	} else if (tag == "BTN_SNIPER_SHOT") {
-		_selectedFeat = KotORBase::kFeatSniperShot;
-	} else if (tag == "BTN_CONDITIONING") {
-		_selectedFeat = KotORBase::kFeatConditioning;
-	} else if (tag == "BTN_TOUGHNESS") {
-		_selectedFeat = KotORBase::kFeatToughness;
+	for (size_t i = 0; i < ARRAYSIZE(kFeatButtons); ++i) {
+		if (tag != kFeatButtons[i].tag)
+			continue;
+
+		if (isFeatAvailable(kFeatButtons[i].feat))
+			_selectedFeat = kFeatButtons[i].feat;
+		updateLabels();
+		return;
 	}
 
 	if (tag == "BTN_BACK") {
@@ -106,7 +126,7 @@ void LevelUpFeatsMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "BTN_ACCEPT") {
-		if (_selectedFeat != 0xFFFFFFFF) {
+		if (_selectedFeat != 0xFFFFFFFF && isFeatAvailable(_selectedFeat)) {
 			_info.addFeat(_selectedFeat);
 			_accepted = true;
 			_returnCode = 1;

@@ -46,6 +46,7 @@ public:
 	struct SpellInfo {
 		uint32_t id;
 		Common::UString label;
+		uint32_t nameStrRef { 0 };
 		int cost;
 		Common::UString impactScript;
 		bool hostile;
@@ -66,6 +67,7 @@ private:
 	static void executeUseObject(Action &action, const ExecutionContext &ctx);
 	static void executeAttackObject(Action &action, const ExecutionContext &ctx);
 	static void executePickUpItem(Action &action, const ExecutionContext &ctx);
+	static void executeDropItem(Action &action, const ExecutionContext &ctx);
 	static void executeWait(Action &action, const ExecutionContext &ctx);
 	static void executeCastSpell(Action &action, const ExecutionContext &ctx);
 	static void executeCutsceneAttack(Action &action, const ExecutionContext &ctx);

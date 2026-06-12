@@ -63,6 +63,9 @@ public:
 
 	void start();
 
+	void refreshPreviewStats();
+	void refreshStepPanels();
+
 private:
 	KotORBase::Module *_module;
 	CharacterGenerationInfo *_pc;

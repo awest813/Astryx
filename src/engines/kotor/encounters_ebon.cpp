@@ -11,11 +11,13 @@ void performHyperspaceJump(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 1. Play Hyperspace Movie
 	module.playMovie("Hyperspace");
 
-	// 2. Camera focus on the cockpit
 	module.cameraTransitionToTarget("wp_cockpit_focus", 2.0f);
+	module.runCinematicBeat(2.0f);
+
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
@@ -27,14 +29,15 @@ void performPlanetArrival(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 1. Play Landing Movie
 	module.playMovie("Landing");
 
-	// 2. Camera transition to the ship on the pad
 	module.cameraTransitionToTarget("wp_arrival_focus", 3.0f);
+	module.runCinematicBeat(3.0f);
 
-	// 3. Play Arrival Stinger
 	module.playMusicStinger("mus_vfx_arrival");
+
+	module.restoreGameplayCamera(1.5f);
+	module.runCinematicBeat(1.5f);
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
@@ -46,14 +49,17 @@ void performTurretMinigame(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 1. Play Sith Fighter Swarm Movie
 	module.playMovie("SithFighters");
 
-	// 2. Fade out for transition to Turret GUI
+	module.cameraTransitionToTarget("wp_turret_focus", 2.0f);
+	module.runCinematicBeat(2.0f);
+
 	module.getFadeQuad().fadeOut();
-	
-	// Signal a custom encounter for the turret mini-game
-	module.signalEncounter("ebon_turret_start");
+	module.runCinematicBeat(0.5f);
+
+	module.setGlobalNumber("__turret_active", 1);
+	module.setGlobalNumber("__swmg_enemy_count", 3);
+	module.signalEncounter("turret_combat_start");
 
 	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);

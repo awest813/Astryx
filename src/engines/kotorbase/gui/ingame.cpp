@@ -51,6 +51,14 @@ void IngameGUI::setRotation(float angle) {
 	_hud->setRotation(angle);
 }
 
+void IngameGUI::updateMinimapExplored(const std::vector<bool> &explored) {
+	_hud->updateMinimapExplored(explored);
+}
+
+void IngameGUI::updateMinimapMapPins(const std::vector<MapPin> &pins) {
+	_hud->updateMinimapMapPins(pins);
+}
+
 void IngameGUI::setReturnStrref(uint32_t id) {
 	_hud->setReturnStrref(id);
 }
@@ -101,6 +109,14 @@ void IngameGUI::resetSelection() {
 
 void IngameGUI::updateSelection() {
 	_hud->updateSelection();
+}
+
+void IngameGUI::updateGrenadeReticle(int screenX, int screenY) {
+	_hud->updateGrenadeReticle(screenX, screenY);
+}
+
+void IngameGUI::hideGrenadeReticle() {
+	_hud->hideGrenadeReticle();
 }
 
 void IngameGUI::hideSelection() {

@@ -29,9 +29,8 @@
 #include "external/glm/gtc/matrix_transform.hpp"
 
 #include "src/common/util.h"
+#include "src/common/strutil.h"
 #include "src/common/configman.h"
-
-#include "src/aurora/talkman.h"
 
 #include "src/graphics/aurora/subscenequad.h"
 #include "src/graphics/aurora/model.h"
@@ -49,6 +48,10 @@
 #include "src/engines/kotor/gui/chargen/chargenabilities.h"
 #include "src/engines/kotor/gui/chargen/chargenskills.h"
 #include "src/engines/kotor/gui/chargen/chargenfeats.h"
+#include "src/engines/kotor/gui/chargen/quickchar.h"
+#include "src/engines/kotor/gui/chargen/customchar.h"
+
+#include "src/engines/kotorbase/levelup.h"
 
 namespace Engines {
 
@@ -73,11 +76,8 @@ CharacterGenerationMenu::CharacterGenerationMenu(KotORBase::Module *module,
 		"VIT_ARROW_LBL", "DEF_ARROW_LBL", "LBL_NAME"
 	};
 
-	for (size_t i = 0; i < ARRAYSIZE(kEmptyLabels); i++) {
-		Odyssey::WidgetLabel *label = getLabel(kEmptyLabels[i]);
-		if (label)
-			label->setText("");
-	}
+	for (size_t i = 0; i < ARRAYSIZE(kEmptyLabels); i++)
+		setWidgetText(kEmptyLabels[i], "");
 
 	static const char * const kInvisibleWidgets[] = {
 		"NEW_LBL", "OLD_LBL", "LBL_LEVEL", "LBL_LEVEL_VAL"
@@ -89,23 +89,7 @@ CharacterGenerationMenu::CharacterGenerationMenu(KotORBase::Module *module,
 			widget->setInvisible(true);
 	}
 
-	Odyssey::WidgetLabel *lblClass = getLabel("LBL_CLASS");
-	if (lblClass) {
-		// Set the class title according to the class of the character
-		switch (pc->getClass()) {
-			case KotORBase::kClassSoldier:
-				lblClass->setText(TalkMan.getString(134));
-				break;
-			case KotORBase::kClassScout:
-				lblClass->setText(TalkMan.getString(133));
-				break;
-			case KotORBase::kClassScoundrel:
-				lblClass->setText(TalkMan.getString(135));
-				break;
-			default:
-				lblClass->setText("");
-		}
-	}
+	setWidgetText("LBL_CLASS", KotORBase::getClassDisplayName(pc->getClass()));
 
 	Odyssey::WidgetLabel *lblPortrait = getLabel("PORTRAIT_LBL");
 	if (lblPortrait)
@@ -150,6 +134,7 @@ CharacterGenerationMenu::CharacterGenerationMenu(KotORBase::Module *module,
 		_charSubScene->setGlobalTransformationMatrix(transformation);
 	}
 
+	refreshPreviewStats();
 	showQuickOrCustom();
 }
 
@@ -174,6 +159,7 @@ void CharacterGenerationMenu::showQuick() {
 	if (_customChar)
 		removeChild(_customChar.get());
 
+	_step = 0;
 	_quickChar = std::make_unique<QuickCharPanel>(this);
 	addChild(_quickChar.get());
 }
@@ -184,8 +170,35 @@ void CharacterGenerationMenu::showCustom() {
 	if (_quickChar)
 		removeChild(_quickChar.get());
 
+	_step = 0;
 	_customChar = std::make_unique<CustomCharPanel>(this);
 	addChild(_customChar.get());
+}
+
+void CharacterGenerationMenu::refreshPreviewStats() {
+	const KotORBase::CharacterPreviewStats stats =
+		KotORBase::previewStatsAtLevel1(_pc->getClass(), _pc->getAbilities());
+
+	auto setStatPair = [this](const char *primaryTag, const char *legacyTag, int value) {
+		const Common::UString text = Common::composeString(value);
+		setWidgetText(primaryTag, text);
+		setWidgetText(legacyTag, text);
+	};
+
+	setStatPair("LBL_VIT_VAL", "VIT_VAL_LBL", stats.vitality);
+	setStatPair("LBL_DEF_VAL", "DEF_VAL_LBL", stats.defense);
+	setStatPair("LBL_FORT_VAL", "FORT_VAL_LBL", stats.fortitude);
+	setStatPair("LBL_REFL_VAL", "REFL_VAL_LBL", stats.reflex);
+	setStatPair("LBL_WILL_VAL", "WILL_VAL_LBL", stats.will);
+}
+
+void CharacterGenerationMenu::refreshStepPanels() {
+	refreshPreviewStats();
+
+	if (_quickChar)
+		static_cast<QuickCharPanel *>(_quickChar.get())->updateButtons();
+	if (_customChar)
+		static_cast<CustomCharPanel *>(_customChar.get())->updateButtons();
 }
 
 void CharacterGenerationMenu::showPortrait() {
@@ -203,14 +216,19 @@ void CharacterGenerationMenu::showPortrait() {
 			lblPortrait->setFill(_pc->getPortrait());
 
 		std::unique_ptr<Graphics::Aurora::Model> head(Creature::createHeadModel(_pc));
-		if (head) {
+		if (head && _pcModel) {
 			GfxMan.lockFrame();
 			_pcModel->attachModel("headhook", head.release());
 			_pcModel->playAnimation("pause1", true, -1);
 			GfxMan.unlockFrame();
 		}
 
-		_step += 1;
+		if (_step < 1)
+			_step = 1;
+		if (_customChar && _step < 4)
+			_step = 4;
+
+		refreshStepPanels();
 	}
 }
 
@@ -224,11 +242,14 @@ void CharacterGenerationMenu::showName() {
 	if (_charGenMenu->isAccepted()) {
 		*_pc = info;
 
-		Odyssey::WidgetLabel *lblName = getLabel("LBL_NAME");
-		if (lblName)
-			lblName->setText(info.getName());
+		setWidgetText("LBL_NAME", info.getName());
 
-		_step += 1;
+		if (_step < 2)
+			_step = 2;
+		if (_customChar && _step < 5)
+			_step = 5;
+
+		refreshStepPanels();
 	}
 }
 
@@ -241,7 +262,9 @@ void CharacterGenerationMenu::showAbilities() {
 	sub(*_charGenMenu);
 	if (_charGenMenu->isAccepted()) {
 		*_pc = info;
-		_step += 1;
+		if (_step < 1)
+			_step = 1;
+		refreshStepPanels();
 	}
 }
 
@@ -254,7 +277,9 @@ void CharacterGenerationMenu::showSkills() {
 	sub(*_charGenMenu);
 	if (_charGenMenu->isAccepted()) {
 		*_pc = info;
-		_step += 1;
+		if (_step < 2)
+			_step = 2;
+		refreshStepPanels();
 	}
 }
 
@@ -267,7 +292,9 @@ void CharacterGenerationMenu::showFeats() {
 	sub(*_charGenMenu);
 	if (_charGenMenu->isAccepted()) {
 		*_pc = info;
-		_step += 1;
+		if (_step < 3)
+			_step = 3;
+		refreshStepPanels();
 	}
 }
 
@@ -277,12 +304,15 @@ int CharacterGenerationMenu::getStep() {
 
 void CharacterGenerationMenu::decStep() {
 	_step = MAX(0, _step - 1);
+	refreshStepPanels();
 }
 
 void CharacterGenerationMenu::start() {
 	hide();
 
 	try {
+		KotORBase::applyDefaultChargenBuild(*_pc);
+
 		// Prepare the PC; the opening encounter loads end_m01aa after the crawl.
 		_module->usePC(*_pc);
 	} catch (...) {

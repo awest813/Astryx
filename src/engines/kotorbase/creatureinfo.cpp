@@ -23,6 +23,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 
 #include "src/common/debug.h"
 #include "src/aurora/gff3file.h"
@@ -94,6 +95,9 @@ CreatureInfo::CreatureInfo(const CharacterGenerationInfo &info) {
 	_levels[0].level = 1;
 	_abilities = info.getAbilities();
 	_skills = info.getSkills();
+
+	for (uint32_t feat : info.getFeats())
+		addFeat(feat);
 }
 
 CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
@@ -106,6 +110,9 @@ CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
 	_forcePointsCurrent = other._forcePointsCurrent;
 	_forcePointsMax     = other._forcePointsMax;
 	_alignment          = other._alignment;
+	_currentHitPoints   = other._currentHitPoints;
+	_maxHitPoints       = other._maxHitPoints;
+	_hasHitPoints       = other._hasHitPoints;
 
 	return *this;
 }
@@ -137,6 +144,9 @@ void CreatureInfo::save(Aurora::GFF3WriterStruct &gff) const {
 	gff.addUint32("CurrentFP", _forcePointsCurrent);
 	gff.addUint32("MaxFP", _forcePointsMax);
 
+	if (_inventory.getGold() > 0)
+		gff.addUint32("Gold", _inventory.getGold());
+
 	Aurora::GFF3WriterListPtr itemList = gff.addList("ItemList");
 	_inventory.save(*itemList);
 
@@ -146,6 +156,11 @@ void CreatureInfo::save(Aurora::GFF3WriterStruct &gff) const {
 			Aurora::GFF3WriterStructPtr entry = equipList->addStruct("", 1U << equipped.first, true);
 			entry->addResRef("EquippedRes", equipped.second);
 		}
+	}
+
+	if (_hasHitPoints) {
+		gff.addSint32("CurrentHitPoints", _currentHitPoints);
+		gff.addSint32("MaxHitPoints", _maxHitPoints);
 	}
 }
 
@@ -162,6 +177,27 @@ void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
 
 	if (gff.hasField("ItemList")) {
 		_inventory.read(gff.getList("ItemList"));
+	}
+
+	_inventory.setGold(gff.getUint("Gold", 0));
+
+	if (gff.hasField("Equip_ItemList")) {
+		_equipment.clear();
+		for (const auto &entry : gff.getList("Equip_ItemList")) {
+			if (!entry)
+				continue;
+
+			const InventorySlot slot = InventorySlot(static_cast<int>(std::log2f(entry->getID())));
+			const Common::UString tag = entry->getString("EquippedRes");
+			if (!tag.empty())
+				_equipment.insert(std::make_pair(slot, tag));
+		}
+	}
+
+	if (gff.hasField("CurrentHitPoints") || gff.hasField("MaxHitPoints")) {
+		_currentHitPoints = gff.getSint("CurrentHitPoints", 0);
+		_maxHitPoints = gff.getSint("MaxHitPoints", _currentHitPoints);
+		_hasHitPoints = true;
 	}
 }
 
@@ -267,24 +303,26 @@ int CreatureInfo::getSavingThrowBonus(SavingThrow type) const {
 		const int lv = cl.level;
 		bool good = false;
 
+		const Class saveClass = progressionClass(cl.characterClass);
+
 		switch (type) {
 		case kSavingThrowFortitude:
-			good = (cl.characterClass == kClassSoldier || 
-			        cl.characterClass == kClassScout || 
-			        cl.characterClass == kClassJediGuardian || 
-			        cl.characterClass == kClassJediConsular || 
-			        cl.characterClass == kClassJediSentinel);
+			good = (saveClass == kClassSoldier ||
+			        saveClass == kClassScout ||
+			        saveClass == kClassJediGuardian ||
+			        saveClass == kClassJediConsular ||
+			        saveClass == kClassJediSentinel);
 			break;
 		case kSavingThrowReflex:
-			good = (cl.characterClass == kClassScout || 
-			        cl.characterClass == kClassScoundrel || 
-			        cl.characterClass == kClassJediGuardian || 
-			        cl.characterClass == kClassJediConsular || 
-			        cl.characterClass == kClassJediSentinel);
+			good = (saveClass == kClassScout ||
+			        saveClass == kClassScoundrel ||
+			        saveClass == kClassJediGuardian ||
+			        saveClass == kClassJediConsular ||
+			        saveClass == kClassJediSentinel);
 			break;
 		case kSavingThrowWill:
-			good = (cl.characterClass == kClassJediConsular || 
-			        cl.characterClass == kClassJediSentinel);
+			good = (saveClass == kClassJediConsular ||
+			        saveClass == kClassJediSentinel);
 			break;
 		}
 
@@ -301,11 +339,42 @@ int CreatureInfo::getSavingThrowBonus(SavingThrow type) const {
 	return baseSave + getAbilityModifier(ability);
 }
 
+Class progressionClass(Class charClass) {
+	switch (charClass) {
+	case kClassJediWeaponMaster:
+	case kClassSithMarauder:
+		return kClassJediGuardian;
+	case kClassJediWatchMan:
+	case kClassSithAssassin:
+		return kClassJediSentinel;
+	case kClassJediMaster:
+	case kClassSithLord:
+		return kClassJediConsular;
+	default:
+		return charClass;
+	}
+}
+
+bool isJediClass(Class charClass) {
+	switch (charClass) {
+	case kClassJediGuardian:
+	case kClassJediConsular:
+	case kClassJediSentinel:
+	case kClassJediWeaponMaster:
+	case kClassJediMaster:
+	case kClassJediWatchMan:
+	case kClassSithMarauder:
+	case kClassSithAssassin:
+	case kClassSithLord:
+		return true;
+	default:
+		return false;
+	}
+}
+
 bool CreatureInfo::isJedi() const {
 	for (const auto &cl : _levels) {
-		if (cl.characterClass == kClassJediGuardian || 
-		    cl.characterClass == kClassJediConsular || 
-		    cl.characterClass == kClassJediSentinel)
+		if (isJediClass(cl.characterClass))
 			return true;
 	}
 	return false;
@@ -614,6 +683,24 @@ void CreatureInfo::setAlignment(int alignment) {
 
 void CreatureInfo::adjustAlignment(int shift) {
 	setAlignment(_alignment + shift);
+}
+
+int CreatureInfo::getCurrentHitPoints() const {
+	return _currentHitPoints;
+}
+
+int CreatureInfo::getMaxHitPoints() const {
+	return _maxHitPoints;
+}
+
+bool CreatureInfo::hasHitPoints() const {
+	return _hasHitPoints;
+}
+
+void CreatureInfo::setHitPoints(int current, int max) {
+	_currentHitPoints = current;
+	_maxHitPoints = max;
+	_hasHitPoints = true;
 }
 
 int CreatureInfo::getFeatRank(uint32_t feat) const {

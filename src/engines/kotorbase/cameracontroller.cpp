@@ -281,9 +281,22 @@ void CameraController::processMovement(float frameTime) {
 			CameraMan.setPosition(_target.x, _target.y, _target.z);
 		} else if (_distance > 0.0f && focus) {
 			glm::vec3 camPos = getCameraPosition(_distance);
+			if (_shakeTime > 0.0f) {
+				_shakeTime -= frameTime;
+				camPos.x += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+				camPos.y += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+				camPos.z += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+			}
 			CameraMan.setPosition(camPos.x, camPos.y, camPos.z);
 		} else {
-			CameraMan.setPosition(_target.x, _target.y, _target.z);
+			glm::vec3 camPos(_target.x, _target.y, _target.z);
+			if (_shakeTime > 0.0f) {
+				_shakeTime -= frameTime;
+				camPos.x += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+				camPos.y += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+				camPos.z += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+			}
+			CameraMan.setPosition(camPos.x, camPos.y, camPos.z);
 		}
 
 		CameraMan.update();
@@ -316,8 +329,13 @@ void CameraController::processMovement(float frameTime) {
 		_actualDistance += delta;
 	}
 
-	// TODO: 3.5 is only an assumption for the max distance
-	_actualDistance = MIN(_actualDistance, 3.5f);
+	float maxDistance = 3.5f;
+	if (Area *area = _module->getCurrentArea()) {
+		const Area::CameraStyle &style = area->getCameraStyle();
+		if (style.distance > 0.0f)
+			maxDistance = style.distance;
+	}
+	_actualDistance = MIN(_actualDistance, maxDistance);
 
 	glm::vec3 actualPosition = getCameraPosition(_actualDistance);
 
@@ -483,6 +501,23 @@ void CameraController::restoreGameplayCamera(float blendTime) {
 	_restoreTime = 0.0f;
 	_restoreDuration = blendTime;
 	_restoringGameplay = true;
+	_dirty = true;
+}
+
+void CameraController::enterCinematicMode() {
+	_cinematic = true;
+
+	if (_distance <= 0.0f) {
+		if (Area *area = _module->getCurrentArea()) {
+			const Area::CameraStyle &style = area->getCameraStyle();
+			_distance = style.distance > 0.0f ? style.distance : 4.0f;
+			_pitch = style.pitch;
+			_height = style.height;
+		} else {
+			_distance = 4.0f;
+		}
+	}
+
 	_dirty = true;
 }
 

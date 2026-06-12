@@ -23,6 +23,7 @@
  */
 
 #include "src/common/strutil.h"
+#include "src/common/util.h"
 
 #include "src/aurora/resman.h"
 
@@ -30,7 +31,9 @@
 #include "src/engines/odyssey/progressbar.h"
 
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/ingame/hud.h"
 
@@ -231,9 +234,28 @@ void HUD::setMinimap(const Common::UString &map, int northAxis,
 	GfxMan.lockFrame();
 
 	_minimap = std::make_unique<Minimap>(map, northAxis, mapPt1X, mapPt1Y, mapPt2X, mapPt2Y, worldPt1X, worldPt1Y, worldPt2X, worldPt2Y);
+	_minimap->setMapExplored(_module.getCurrentArea() ? _module.getCurrentArea()->getMapExplored()
+	                                                  : std::vector<bool>());
 	mapView->setSubScene(_minimap.get());
 
 	GfxMan.unlockFrame();
+}
+
+void HUD::updateMinimapExplored(const std::vector<bool> &explored) {
+	if (_minimap)
+		_minimap->setMapExplored(explored);
+}
+
+void HUD::updateMinimapMapPins(const std::vector<KotORBase::MapPin> &pins) {
+	if (!_minimap)
+		return;
+
+	std::vector<MinimapMapPin> minimapPins;
+	minimapPins.reserve(pins.size());
+	for (const auto &pin : pins)
+		minimapPins.push_back({ pin.worldX, pin.worldY });
+
+	_minimap->setMapPins(minimapPins);
 }
 
 void HUD::setPosition(float x, float y) {
@@ -255,23 +277,53 @@ void HUD::setRotation(float angle) {
 }
 
 void HUD::showContainer(KotORBase::Inventory &inv) {
+	KotORBase::Creature *pc = _module.getPC();
+	if (!pc)
+		return;
+
 	_container = std::make_unique<ContainerMenu>();
+	_container->bindInventories(inv, pc->getInventory());
 	_container->fillFromInventory(inv);
+	sub(*_container, kStartCodeNone, true, false);
+}
 
-	if (sub(*_container, kStartCodeNone, true, false) == 1) {
-		KotORBase::Inventory &partyInventory = _module.getPC()->getInventory();
+void HUD::updatePortraitVitals(uint8_t n, KotORBase::Creature *creature) {
+	const bool visible = creature != nullptr;
 
-		const std::map<Common::UString, KotORBase::Inventory::ItemGroup> &items = inv.getItems();
-		for (std::map<Common::UString, KotORBase::Inventory::ItemGroup>::const_iterator i = items.begin();
-				i != items.end(); ++i) {
-			partyInventory.addItem(i->first, i->second.count);
+	Odyssey::WidgetProgressbar *vitals = getProgressbar(Common::UString("PB_VIT") + Common::composeString(n));
+	if (vitals) {
+		if (visible) {
+			vitals->setMaxValue(creature->getMaxHitPoints());
+			vitals->setCurrentValue(creature->getCurrentHitPoints());
 		}
+		vitals->setInvisible(!visible);
+		if (visible && _visible)
+			vitals->show();
+		else
+			vitals->hide();
+	}
 
-		inv.removeAllItems();
+	Odyssey::WidgetProgressbar *force = getProgressbar(Common::UString("PB_FORCE") + Common::composeString(n));
+	if (force) {
+		const bool showForce = visible && creature->getCreatureInfo().isJedi();
+		force->setInvisible(!showForce);
+		if (showForce) {
+			force->setMaxValue(creature->getMaxForcePoints());
+			force->setCurrentValue(creature->getForcePoints());
+			if (_visible)
+				force->show();
+			else
+				force->hide();
+		} else {
+			force->hide();
+		}
 	}
 }
 
-void HUD::setPortrait(uint8_t n, bool visible, const Common::UString &portrait) {
+void HUD::setPortrait(uint8_t n, KotORBase::Creature *creature) {
+	const bool visible = creature != nullptr;
+	const Common::UString portrait = visible ? creature->getPortrait() : "";
+
 	Odyssey::WidgetLabel *labelBack = getLabel(Common::UString("LBL_BACK") + Common::composeString(n));
 	if (labelBack)
 		labelBack->setInvisible(!visible);
@@ -282,37 +334,103 @@ void HUD::setPortrait(uint8_t n, bool visible, const Common::UString &portrait) 
 		labelChar->setFill(portrait);
 	}
 
-	Odyssey::WidgetProgressbar *vitals = getProgressbar(Common::UString("PB_VIT") + Common::composeString(n));
-	if (vitals)
-		vitals->setInvisible(!visible);
-
 	if (visible && _visible) {
 		if (labelBack)
 			labelBack->show();
 		if (labelChar)
 			labelChar->show();
-		if (vitals)
-			vitals->show();
 	} else {
 		if (labelBack)
 			labelBack->hide();
 		if (labelChar)
 			labelChar->hide();
-		if (vitals)
-			vitals->hide();
 	}
+
+	updatePortraitVitals(n, creature);
 }
 
 void HUD::setPartyLeader(KotORBase::Creature *creature) {
-	setPortrait(1, creature != 0, creature ? creature->getPortrait() : "");
+	setPortrait(1, creature);
 }
 
 void HUD::setPartyMember1(KotORBase::Creature *creature) {
-	setPortrait(3, creature != 0, creature ? creature->getPortrait() : "");
+	setPortrait(3, creature);
 }
 
 void HUD::setPartyMember2(KotORBase::Creature *creature) {
-	setPortrait(2, creature != 0, creature ? creature->getPortrait() : "");
+	setPortrait(2, creature);
+}
+
+void HUD::updatePartyVitals() {
+	static const uint8_t kPortraitSlots[] = { 1, 3, 2 };
+	static const int kPartyIndices[] = { 0, 1, 2 };
+
+	for (size_t i = 0; i < ARRAYSIZE(kPortraitSlots); ++i) {
+		KotORBase::Creature *member = _module.getPartyMemberByIndex(kPartyIndices[i]);
+		updatePortraitVitals(kPortraitSlots[i], member);
+	}
+}
+
+void HUD::setLevelUpIndicator(uint8_t n, bool visible) {
+	Odyssey::WidgetLabel *bg = getLabel(Common::UString("LBL_LVLUPBG") + Common::composeString(n));
+	Odyssey::WidgetLabel *lbl = getLabel(Common::UString("LBL_LEVELUP") + Common::composeString(n));
+
+	if (bg)
+		bg->setInvisible(!visible);
+	if (lbl)
+		lbl->setInvisible(!visible);
+
+	if (visible && _visible) {
+		if (bg)
+			bg->show();
+		if (lbl)
+			lbl->show();
+	} else {
+		if (bg)
+			bg->hide();
+		if (lbl)
+			lbl->hide();
+	}
+}
+
+void HUD::updateLevelUpIndicators() {
+	static const uint8_t kPortraitSlots[] = { 1, 3, 2 };
+	static const int kPartyIndices[] = { 0, 1, 2 };
+
+	for (size_t i = 0; i < ARRAYSIZE(kPortraitSlots); ++i) {
+		KotORBase::Creature *member = _module.getPartyMemberByIndex(kPartyIndices[i]);
+		const bool show = member && member->isPC() && KotORBase::canLevelUp(*member);
+		setLevelUpIndicator(kPortraitSlots[i], show);
+	}
+}
+
+void HUD::updateGrenadeTargetingPrompt() {
+	const bool active = _module.isGrenadeTargeting();
+
+	if (Odyssey::WidgetLabel *bg = getLabel("LBL_CMBTMSGBG")) {
+		bg->setInvisible(!active);
+		if (active && _visible)
+			bg->show();
+		else
+			bg->hide();
+	}
+
+	if (Odyssey::WidgetLabel *msg = getLabel("LBL_CMBTMODEMSG")) {
+		if (active)
+			msg->setText("Select where to throw the grenade. Press Esc to cancel.");
+		msg->setInvisible(!active);
+		if (active && _visible)
+			msg->show();
+		else
+			msg->hide();
+	}
+}
+
+void HUD::update(float dt) {
+	KotORBase::HUD::update(dt);
+	updatePartyVitals();
+	updateLevelUpIndicators();
+	updateGrenadeTargetingPrompt();
 }
 
 void HUD::update(int width, int height) {
@@ -413,6 +531,10 @@ void HUD::initWidget(Engines::Widget &widget) {
 		widget.setInvisible(true);
 	if (widget.getTag().contains("PB_FORCE"))
 		widget.setInvisible(true);
+	if (widget.getTag().contains("LBL_LEVELUP"))
+		widget.setInvisible(true);
+	if (widget.getTag().contains("LBL_LVLUPBG"))
+		widget.setInvisible(true);
 }
 
 void HUD::callbackActive(Widget &widget) {
@@ -431,6 +553,16 @@ void HUD::callbackActive(Widget &widget) {
 	}
 	if (widget.getTag() == "LBL_CHAR3") {
 		_module.setPartyLeaderByIndex(1);
+		return;
+	}
+
+	if (widget.getTag() == "LBL_LEVELUP1" || widget.getTag() == "LBL_LEVELUP2" || widget.getTag() == "LBL_LEVELUP3") {
+		static const int kPartyIndices[] = { 0, 2, 1 };
+		const int slot = widget.getTag() == "LBL_LEVELUP1" ? 0 :
+		                 widget.getTag() == "LBL_LEVELUP2" ? 1 : 2;
+		KotORBase::Creature *member = _module.getPartyMemberByIndex(kPartyIndices[slot]);
+		if (member && member->isPC() && KotORBase::canLevelUp(*member))
+			_module.getGame().showLevelUpGUI(member);
 		return;
 	}
 

@@ -40,6 +40,7 @@ namespace Engines {
 namespace KotOR {
 
 ContainerMenu::ContainerMenu(Console *console) : KotORBase::GUI(console) {
+
 	load("container");
 
 	Odyssey::WidgetPanel *guiPanel = getPanel("TGuiPanel");
@@ -51,9 +52,16 @@ ContainerMenu::ContainerMenu(Console *console) : KotORBase::GUI(console) {
 	lbItems->createItemWidgets(3);
 }
 
+void ContainerMenu::bindInventories(KotORBase::Inventory &container, KotORBase::Inventory &party) {
+	_container = &container;
+	_party = &party;
+}
+
 void ContainerMenu::fillFromInventory(const KotORBase::Inventory &inv) {
+	_itemTags.clear();
+
 	if (inv.getItems().empty())
-		getLabel("LBL_MESSAGE")->setText(TalkMan.getString(394));
+		setWidgetText("LBL_MESSAGE", TalkMan.getString(394));
 
 	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
 	lbItems->removeAllItems();
@@ -63,6 +71,7 @@ void ContainerMenu::fillFromInventory(const KotORBase::Inventory &inv) {
 			i != invItems.end(); ++i) {
 		try {
 			KotORBase::Item item(i->second.tag);
+			_itemTags.push_back(i->first);
 			lbItems->addItem(Common::String::format("%s|%s|%u",
 			                                         item.getName().c_str(),
 			                                         item.getIcon().c_str(),
@@ -76,16 +85,62 @@ void ContainerMenu::fillFromInventory(const KotORBase::Inventory &inv) {
 	lbItems->refreshItemWidgets();
 }
 
+void ContainerMenu::takeSelectedItem() {
+	if (!_container || !_party)
+		return;
+
+	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
+	if (!lbItems)
+		return;
+
+	const int index = lbItems->getSelectedIndex();
+	if (index < 0 || index >= (int)_itemTags.size())
+		return;
+
+	const Common::UString &tag = _itemTags[index];
+	const auto &items = _container->getItems();
+	const auto it = items.find(tag);
+	if (it == items.end())
+		return;
+
+	const int count = it->second.count > 0 ? it->second.count : 1;
+	_party->addItem(tag, count);
+	_container->removeItem(tag, count);
+
+	fillFromInventory(*_container);
+
+	if (!lbItems->isEmpty())
+		lbItems->selectItem(index < (int)_itemTags.size() ? index : (int)_itemTags.size() - 1);
+}
+
+void ContainerMenu::takeAllItems() {
+	if (!_container || !_party)
+		return;
+
+	const std::map<Common::UString, KotORBase::Inventory::ItemGroup> items = _container->getItems();
+	for (const auto &entry : items)
+		_party->addItem(entry.first, entry.second.count);
+
+	_container->removeAllItems();
+	fillFromInventory(*_container);
+}
+
 void ContainerMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
 	if (tag == "BTN_OK") {
+		takeAllItems();
 		_returnCode = 1;
 		return;
 	}
 
 	if (tag == "BTN_CANCEL") {
 		_returnCode = kReturnCodeAbort;
+		return;
+	}
+
+	if (tag == "LB_ITEMS" || tag.beginsWith("LB_ITEMS")) {
+		takeSelectedItem();
 		return;
 	}
 }
@@ -99,12 +154,14 @@ void ContainerMenu::callbackKeyInput(const Events::Key &key, const Events::Event
 			case Events::kKeyDown:
 				getListBox("LB_ITEMS")->selectNextItem();
 				break;
+			case Events::kKeyReturn:
+				takeSelectedItem();
+				break;
 			default:
 				break;
 		}
 	}
 }
-
 
 } // End of namespace KotOR
 

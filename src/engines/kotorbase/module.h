@@ -54,6 +54,7 @@ class GFF3WriterStruct;
 #include "src/engines/kotorbase/partycontroller.h"
 #include "src/engines/kotorbase/cameracontroller.h"
 #include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/partystate.h"
 #include "src/engines/kotorbase/round.h"
 
 #include "src/engines/kotorbase/gui/ingame.h"
@@ -65,6 +66,11 @@ namespace Engines {
 class Console;
 
 namespace KotORBase {
+
+struct JournalWorldEntry {
+	Common::UString tag;
+	Common::UString text;
+};
 
 class Area;
 class Creature;
@@ -120,6 +126,8 @@ public:
 	const std::vector<bool> &getWalkableSurfaces() const;
 	/** Return the fade quad. */
 	Graphics::Aurora::FadeQuad &getFadeQuad();
+	void holdWorldFadeInForDialog();
+	void releaseWorldFadeInForDialog();
 
 	void removeObject(Object &object);
 
@@ -160,7 +168,7 @@ public:
 	virtual void signalEncounter(const Common::UString &id);
 
 	/** Play an intro/cinematic movie. */
-	virtual void playMovie(const Common::UString &resRef);
+	virtual void playMovie(const Common::UString &resRef, bool allowSkip = true);
 
 	/** Is a Bink/MOV movie currently playing? */
 	bool isMoviePlaying() const;
@@ -176,9 +184,27 @@ public:
 
 	// Journal
 
-	// Journal
 	void addJournalQuestEntry(const Common::UString &quest, uint32_t state);
+	void removeJournalQuestEntry(const Common::UString &quest);
+	uint32_t getJournalQuestState(const Common::UString &quest) const;
 	const std::map<Common::UString, uint32_t> &getJournal() const { return _journal; }
+	void setJournalQuestEntryPicture(const Common::UString &quest, uint32_t state,
+	                                 const Common::UString &portrait, bool enabled);
+	Common::UString getJournalQuestEntryPicture(const Common::UString &quest, uint32_t state) const;
+	std::vector<MapPin> getMapPins() const;
+
+	void addJournalWorldEntry(const Common::UString &tag, const Common::UString &text);
+	void deleteJournalWorldEntry(const Common::UString &tag);
+	void deleteJournalWorldEntryByStrref(int strRef);
+	void deleteJournalWorldAllEntries();
+	const std::vector<JournalWorldEntry> &getJournalWorldEntries() const { return _journalWorld; }
+
+	void addMessage(const Common::UString &text);
+	const std::vector<Common::UString> &getMessages() const { return _messages; }
+
+	/** Module loaded when the area map return button is confirmed. */
+	const Common::UString &getReturnDestinationModule() const { return _returnDestinationModule; }
+	void setReturnDestinationModule(const Common::UString &module);
 
 	// Party transitions
 
@@ -286,6 +312,8 @@ public:
 	bool getPlanetAvailable(int planet) const;
 	/** Get the currently selected planet. */
 	int getSelectedPlanet() const;
+	/** Set the currently selected planet (galaxy map travel). */
+	void setSelectedPlanet(int planet);
 
 	// Reputation
 
@@ -304,6 +332,9 @@ public:
 	virtual void enter();
 
 protected:
+	/** Per-frame hook for game-specific systems (minigames, etc.). */
+	virtual void onFrameUpdate(float frameTime);
+
 	/** When true, enter() loads the area but keeps the ingame HUD hidden (cinematic handoff). */
 	virtual bool deferIngameHUDOnEnter() const { return false; }
 	/** Leave the running module, quitting it. */
@@ -327,6 +358,20 @@ protected:
 	/** Returns true if the current module was entered via a save-game load. */
 	bool isLoadedFromSaveGame() const;
 	void saveGame(const Common::UString &slot, const Common::UString &name);
+
+	/** Restore PC inventory/equipment/stats from a save before loadPC(). */
+	void setSavedPCInfo(const CreatureInfo &info);
+	/** Restore available/active party roster from a save before loadParty(). */
+	void setSavedPartyState(const std::map<int, Common::UString> &availableNPCs,
+	                        const std::vector<SavedPartyMemberState> &members,
+	                        int leaderIndex);
+
+	// Grenade targeting
+
+	bool isGrenadeTargeting() const;
+	void beginGrenadeTargeting(const Common::UString &itemTag);
+	void cancelGrenadeTargeting();
+	bool handleGrenadeTargetingClick(int screenX, int screenY);
 
 	// Conversation
 
@@ -363,6 +408,7 @@ protected:
 	
 	void setMapExplored(const Common::UString &resRef, const std::vector<bool> &data);
 	const std::vector<bool> *getMapExplored(const Common::UString &resRef) const;
+	Common::UString getMinimapMapId() const;
 
 	void showFloatingText(Object *object, const Common::UString &text, float duration = 6.0f);
 	void exploreAreaFully(Area *area);
@@ -376,9 +422,11 @@ protected:
 	void cameraHold(float duration);
 	void restoreGameplayCamera(float blendTime);
 	void resetToOrbit();
+	void enterCinematicMode();
 
 	void setCutsceneMode(bool enabled);
 	void setPlayerInputEnabled(bool enabled);
+	void noClicksFor(float duration);
 	void playMusicStinger(const Common::UString &stinger);
 
 	// Delayed object interactions
@@ -445,6 +493,12 @@ private:
 
 	// Journal: key = quest tag, value = entry ID
 	std::map<Common::UString, uint32_t> _journal;
+	std::map<std::pair<Common::UString, uint32_t>, Common::UString> _journalQuestPictures;
+	std::vector<JournalWorldEntry> _journalWorld;
+	bool _holdWorldFadeInForDialog { false };
+	uint32_t _noClicksUntil { 0 };
+	std::vector<Common::UString> _messages;
+	Common::UString _returnDestinationModule { "m12aa" };
 
 	// Area Object Persistence: key = "areaTag:objectTag", value = state
 	std::map<Common::UString, std::shared_ptr<Aurora::GFF3File>> _areaObjectSaves;
@@ -521,6 +575,14 @@ private:
 	bool _inDialog;
 	int _runScriptVar;
 	bool _soloMode;
+
+	Common::UString _grenadeItemTag;
+	bool _grenadeTargetingActive { false };
+
+	std::vector<SavedPartyMemberState> _savedPartyMembers;
+	std::map<int, Common::UString> _savedAvailableNPCs;
+	int _savedPartyLeaderIndex { 0 };
+	bool _hasSavedPartyState { false };
 	bool _playerInputEnabled { true };
 	bool _cutsceneMode { false };
 	int _userDefinedEventNumber { 0 };
@@ -582,6 +644,7 @@ private:
 
 	void initMinimap();
 	void updateMinimap();
+	std::vector<MapPin> collectMapPins() const;
 
 
 	bool getEntryObjectLocation(float &entryX, float &entryY, float &entryZ, float &entryAngle);

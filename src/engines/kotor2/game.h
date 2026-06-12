@@ -46,7 +46,7 @@ public:
 	bool hasModule(const Common::UString &module) const override;
 
 	void run() override;
-	void showLevelUpGUI() override;
+	void showLevelUpGUI(KotORBase::Creature *target = nullptr) override;
 	void openStoreGUI(const Common::UString &tag) override;
 
 	KotORBase::Functions &getFunctions() override;

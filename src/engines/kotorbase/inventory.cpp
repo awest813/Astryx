@@ -119,6 +119,10 @@ uint32_t Inventory::getGold() const {
 	return _gold;
 }
 
+void Inventory::setGold(uint32_t amount) {
+	_gold = amount;
+}
+
 void Inventory::addGold(uint32_t amount) {
 	_gold += amount;
 }

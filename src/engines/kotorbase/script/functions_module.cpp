@@ -35,6 +35,10 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
+#include "src/engines/kotorbase/waypoint.h"
+
+#include "src/aurora/2dareg.h"
+#include "src/aurora/2dafile.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/aurora/talkman.h"
@@ -128,13 +132,13 @@ void Functions::getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getCurrentForcePoints(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = creature ? creature->getForcePoints() : 0;
 }
 
 void Functions::getMaxForcePoints(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = creature ? creature->getMaxForcePoints() : 0;
 }
 
 void Functions::pauseGame(Aurora::NWScript::FunctionContext &ctx) {
@@ -229,7 +233,8 @@ void Functions::cameraLookAtObject(Aurora::NWScript::FunctionContext &ctx) {
 	// CameraLookAtObject(object oTarget, float fBlendTime)
 	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
 	float blendTime = ctx.getParams()[1].getFloat();
-	_game->getModule().setCameraTarget(target);
+	_game->getModule().enterCinematicMode();
+	_game->getModule().setCinematicFocus(target);
 	// Honour the requested blend so the look-at eases in rather than snapping.
 	_game->getModule().cameraTransitionToTarget(blendTime);
 }
@@ -356,8 +361,7 @@ void Functions::getLoadFromSaveGame(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &) {
-	// presents the level-up screen for the PC.
-	_game->showLevelUpGUI();
+	_game->showLevelUpGUI(nullptr);
 }
 
 void Functions::popUpGUIPanel(Aurora::NWScript::FunctionContext &ctx) {
@@ -372,10 +376,55 @@ void Functions::popUpDeathGUIPanel(Aurora::NWScript::FunctionContext &ctx) {
 	_game->getModule().showDeathGUI();
 }
 
+void Functions::displayFeedBackText(Aurora::NWScript::FunctionContext &ctx) {
+	Object *creature = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const int textConstant = ctx.getParams()[1].getInt();
+	if (!creature)
+		return;
+
+	Common::UString text;
+	try {
+		const Aurora::TwoDAFile &feedback = TwoDAReg.get2DA("feedbacktext");
+		if (textConstant >= 0 && static_cast<size_t>(textConstant) < feedback.getRowCount()) {
+			const uint32_t strRef = feedback.getRow(textConstant).getUint("STRREF");
+			if (strRef != Aurora::kStrRefInvalid)
+				text = TalkMan.getString(strRef);
+		}
+	} catch (...) {
+	}
+
+	if (text.empty())
+		text = Common::String::format("<feedback:%d>", textConstant);
+
+	_game->getModule().showFloatingText(creature, text);
+}
+
 void Functions::addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString quest = ctx.getParams()[0].getString();
 	const uint32_t state = ctx.getParams()[1].getInt();
 	_game->getModule().addJournalQuestEntry(quest, state);
+}
+
+void Functions::setMapPinEnabled(Aurora::NWScript::FunctionContext &ctx) {
+	Waypoint *waypoint = ObjectContainer::toWaypoint(getParamObject(ctx, 0));
+	if (!waypoint)
+		return;
+
+	waypoint->enableMapNote(ctx.getParams()[1].getInt() != 0);
+	_game->getModule().updateMinimap();
+}
+
+void Functions::setJournalQuestEntryPicture(Aurora::NWScript::FunctionContext &ctx) {
+	const Common::UString &quest = ctx.getParams()[0].getString();
+	Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	const uint32_t state = static_cast<uint32_t>(ctx.getParams()[2].getInt());
+	const bool enabled = ctx.getParams()[3].getInt() != 0;
+
+	Common::UString portrait;
+	if (source)
+		portrait = source->getPortrait();
+
+	_game->getModule().setJournalQuestEntryPicture(quest, state, portrait, enabled);
 }
 
 void Functions::openStore(Aurora::NWScript::FunctionContext &ctx) {
@@ -485,35 +534,40 @@ void Functions::floatingTextStrRefOnCreature(Aurora::NWScript::FunctionContext &
 }
 
 void Functions::addJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) {
-	// void AddJournalWorldEntry(string sTag, string sText, object oPC = OBJECT_SELF)
 	const Common::UString &tag = ctx.getParams()[0].getString();
 	const Common::UString &text = ctx.getParams()[1].getString();
 
+	_game->getModule().addJournalWorldEntry(tag, text);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Added [%s]: %s", tag.c_str(), text.c_str());
-	// We'd store this in the journal state if we had a world-entry specific list
 }
 
 void Functions::addJournalWorldEntryStrref(Aurora::NWScript::FunctionContext &ctx) {
-	// void AddJournalWorldEntryStrref(string sTag, int nStrRef, object oPC = OBJECT_SELF)
 	const Common::UString &tag = ctx.getParams()[0].getString();
-	int strRef = ctx.getParams()[1].getInt();
+	const int strRef = ctx.getParams()[1].getInt();
 
 	Common::UString text = TalkMan.getString(strRef);
+	if (text.empty())
+		text = Common::String::format("<strref:%d>", strRef);
+
+	_game->getModule().addJournalWorldEntry(tag, text);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Added [%s]: %s", tag.c_str(), text.c_str());
 }
 
 void Functions::deleteJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &tag = ctx.getParams()[0].getString();
+	_game->getModule().deleteJournalWorldEntry(tag);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Deleted [%s]", tag.c_str());
 }
 
 void Functions::deleteJournalWorldEntryStrref(Aurora::NWScript::FunctionContext &ctx) {
-	int strRef = ctx.getParams()[0].getInt();
+	const int strRef = ctx.getParams()[0].getInt();
+	_game->getModule().deleteJournalWorldEntryByStrref(strRef);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Deleted by Strref [%d]", strRef);
 }
 
 void Functions::deleteJournalWorldAllEntries(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
+	_game->getModule().deleteJournalWorldAllEntries();
 	debugC(Common::kDebugEngineLogic, 1, "All World Journal Entries Deleted");
 }
 
@@ -550,7 +604,10 @@ void Functions::getPCLevellingUp(Aurora::NWScript::FunctionContext &ctx) { ctx.g
 void Functions::setPlaceableIllumination(Aurora::NWScript::FunctionContext &ctx) {}
 void Functions::getPlaceableIllumination(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
 void Functions::resetDialogState(Aurora::NWScript::FunctionContext &ctx) {}
-void Functions::holdWorldFadeInForDialog(Aurora::NWScript::FunctionContext &ctx) {}
+void Functions::holdWorldFadeInForDialog(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	_game->getModule().holdWorldFadeInForDialog();
+}
 
 } // End of namespace KotORBase
 } // End of namespace Engines

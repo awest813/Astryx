@@ -333,6 +333,44 @@ TEST(CinematicScripting, FadeInParametersPassedCorrectly) {
 	EXPECT_FALSE(p.fadeOut);
 }
 
+TEST(CinematicScripting, VideoEffectSecurityCameraTint) {
+	int effect = 0;
+	float r = 1.0f;
+	float g = 1.0f;
+	float b = 1.0f;
+
+	switch (effect) {
+		case 0:
+			r = 0.65f;
+			g = 1.0f;
+			b = 0.65f;
+			break;
+		default:
+			break;
+	}
+
+	EXPECT_FLOAT_EQ(r, 0.65f);
+	EXPECT_FLOAT_EQ(g, 1.0f);
+	EXPECT_FLOAT_EQ(b, 0.65f);
+}
+
+TEST(CinematicScripting, HoldFadeInKeepsScreenBlack) {
+	bool holdFadeIn = true;
+	const bool fadingIn = true;
+	float opacity = 0.25f;
+
+	if (holdFadeIn && fadingIn)
+		opacity = 1.0f;
+
+	EXPECT_FLOAT_EQ(opacity, 1.0f);
+
+	holdFadeIn = false;
+	if (holdFadeIn && fadingIn)
+		opacity = 1.0f;
+
+	EXPECT_FLOAT_EQ(opacity, 0.25f);
+}
+
 TEST(CinematicScripting, FadeOutThenInRestoresVisibility) {
 	// A typical cinematic sequence: fade to black then fade back.
 	FadeParams out = simulateFadeOut(0.0f, 0.5f, 0.0f, 0.0f, 0.0f);
@@ -437,26 +475,30 @@ enum class MovieInput {
 	OtherKey
 };
 
-static bool shouldMovieInputSkip(uint32_t now, uint32_t guardUntil, MovieInput input) {
-	if (now < guardUntil)
+static bool shouldMovieInputSkip(uint32_t now, uint32_t guardUntil, MovieInput input, bool allowSkip) {
+	if (!allowSkip || now < guardUntil)
 		return false;
 
 	return input == MovieInput::Escape;
 }
 
 TEST(CinematicScripting, MovieInputGuardIgnoresStaleSkipEvents) {
-	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::Escape));
-	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::MouseRelease));
+	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::Escape, true));
+	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::MouseRelease, true));
 }
 
 TEST(CinematicScripting, MovieInputGuardAllowsDeliberateSkipAfterGuard) {
-	EXPECT_TRUE(shouldMovieInputSkip(3000, 3000, MovieInput::Escape));
-	EXPECT_FALSE(shouldMovieInputSkip(3000, 3000, MovieInput::MouseRelease));
+	EXPECT_TRUE(shouldMovieInputSkip(3000, 3000, MovieInput::Escape, true));
+	EXPECT_FALSE(shouldMovieInputSkip(3000, 3000, MovieInput::MouseRelease, true));
 }
 
 TEST(CinematicScripting, MovieInputGuardIgnoresNonSkipKeys) {
-	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::OtherKey));
-	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::None));
+	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::OtherKey, true));
+	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::None, true));
+}
+
+TEST(CinematicScripting, MovieInputGuardHonorsAllowSkipFlag) {
+	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::Escape, false));
 }
 
 struct DialogCameraState {

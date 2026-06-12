@@ -371,6 +371,14 @@ void VideoDecoder::getQuadDimensions(float &width, float &height) const {
 void VideoDecoder::calculateDistance() {
 }
 
+void VideoDecoder::setVideoEffect(int effect) {
+	_videoEffect = effect;
+}
+
+int VideoDecoder::getVideoEffect() const {
+	return _videoEffect;
+}
+
 void VideoDecoder::render(Graphics::RenderPass pass) {
 	if (pass == Graphics::kRenderPassTransparent)
 		return;
@@ -390,7 +398,31 @@ void VideoDecoder::render(Graphics::RenderPass pass) {
 	float hWidth  = width  / 2.0f;
 	float hHeight = height / 2.0f;
 
+	float r = 1.0f;
+	float g = 1.0f;
+	float b = 1.0f;
+	switch (_videoEffect) {
+		case 0: // Security camera
+			r = 0.65f;
+			g = 1.0f;
+			b = 0.65f;
+			break;
+		case 3: // Clairvoyance
+			r = 0.75f;
+			g = 0.85f;
+			b = 1.0f;
+			break;
+		case 4: // Force sight
+			r = 0.85f;
+			g = 0.55f;
+			b = 1.0f;
+			break;
+		default:
+			break;
+	}
+
 	glBindTexture(GL_TEXTURE_2D, _texture);
+	glColor4f(r, g, b, 1.0f);
 	glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 0.0f);
 		glVertex3f(-hWidth, -hHeight, -1.0f);
@@ -401,6 +433,7 @@ void VideoDecoder::render(Graphics::RenderPass pass) {
 		glTexCoord2f(0.0f, _textureHeight);
 		glVertex3f(-hWidth,  hHeight, -1.0f);
 	glEnd();
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void VideoDecoder::start() {

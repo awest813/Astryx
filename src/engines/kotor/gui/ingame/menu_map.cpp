@@ -24,11 +24,19 @@
 
 #include "src/aurora/talkman.h"
 
+#include "src/graphics/graphics.h"
+
 #include "src/engines/aurora/widget.h"
 
 #include "src/engines/odyssey/button.h"
+#include "src/engines/odyssey/label.h"
+
+#include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/module.h"
 
 #include "src/engines/kotor/gui/ingame/menu_map.h"
+#include "src/engines/kotor/gui/ingame/minimap.h"
 
 #include "src/engines/kotor/gui/dialogs/confirm.h"
 
@@ -38,6 +46,10 @@ namespace KotOR {
 
 MenuMap::MenuMap(Console *console) : KotORBase::GUI(console) {
 	load("map");
+}
+
+void MenuMap::setModule(KotORBase::Module *module) {
+	_module = module;
 }
 
 void MenuMap::setReturnStrref(uint32_t id) {
@@ -56,6 +68,56 @@ void MenuMap::setReturnEnabled(bool enabled) {
 		btnReturn->setDisabled(!enabled);
 }
 
+void MenuMap::show() {
+	KotORBase::GUI::show();
+	refreshAreaMap();
+}
+
+void MenuMap::refreshAreaMap() {
+	if (!_module)
+		return;
+
+	KotORBase::Area *area = _module->getCurrentArea();
+	if (!area)
+		return;
+
+	Odyssey::WidgetLabel *mapView = getLabel("LBL_MAPVIEW");
+	if (!mapView)
+		mapView = getLabel("LBL_MAPAREA");
+	if (!mapView)
+		return;
+
+	float mapPt1X, mapPt1Y, mapPt2X, mapPt2Y;
+	area->getMapPoint1(mapPt1X, mapPt1Y);
+	area->getMapPoint2(mapPt2X, mapPt2Y);
+
+	float worldPt1X, worldPt1Y, worldPt2X, worldPt2Y;
+	area->getWorldPoint1(worldPt1X, worldPt1Y);
+	area->getWorldPoint2(worldPt2X, worldPt2Y);
+
+	GfxMan.lockFrame();
+
+	_areaMap = std::make_unique<Minimap>(_module->getMinimapMapId(), area->getNorthAxis(),
+	                                     mapPt1X, mapPt1Y, mapPt2X, mapPt2Y,
+	                                     worldPt1X, worldPt1Y, worldPt2X, worldPt2Y);
+	_areaMap->setMapExplored(area->getMapExplored());
+
+	if (KotORBase::Creature *leader = _module->getPartyLeader()) {
+		float x, y, z;
+		leader->getPosition(x, y, z);
+		_areaMap->setPosition(x, y);
+	}
+
+	std::vector<MinimapMapPin> pins;
+	for (const auto &pin : _module->getMapPins())
+		pins.push_back({ pin.worldX, pin.worldY });
+	_areaMap->setMapPins(pins);
+
+	mapView->setSubScene(_areaMap.get());
+
+	GfxMan.unlockFrame();
+}
+
 void MenuMap::callbackActive(Widget &widget) {
 	if (widget.getTag() == "BTN_RETURN") {
 		ConfirmDialog dialog(_console);
@@ -63,7 +125,12 @@ void MenuMap::callbackActive(Widget &widget) {
 
 		sub(dialog, kStartCodeNone, true, false);
 
-		// TODO: Return to the hideout/ebon hawk
+		if (dialog.getAccepted() && _module) {
+			_module->playMovie("Hyperspace");
+			_module->load(_module->getReturnDestinationModule());
+			_returnCode = 2;
+		}
+		return;
 	}
 
 	if (widget.getTag() == "BTN_EXIT") {

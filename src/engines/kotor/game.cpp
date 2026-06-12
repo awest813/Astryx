@@ -29,6 +29,7 @@
 #include "src/common/filepath.h"
 #include "src/common/filelist.h"
 #include "src/common/configman.h"
+#include "src/common/util.h"
 
 #include "src/graphics/graphics.h"
 
@@ -40,6 +41,7 @@
 
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/store.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 
@@ -174,12 +176,23 @@ bool Game::hasModule(const Common::UString &module) const {
 	return found != _modules.end();
 }
 
-void Game::showLevelUpGUI() {
-	KotORBase::Creature *pc = static_cast<Module *>(_module.get())->getPC();
-	if (!pc)
+void Game::showLevelUpGUI(KotORBase::Creature *target) {
+	KotORBase::Creature *creature = target ? target : static_cast<Module *>(_module.get())->getPC();
+	if (!creature)
 		return;
 
-	LevelUpGUI gui(*_module, *pc, _console);
+	if (!KotORBase::canLevelUp(*creature)) {
+		status("ShowLevelUpGUI: insufficient XP (%d / %d required)",
+		       creature->getCurrentXP(), KotORBase::levelUpThreshold(creature->getHitDice()));
+		return;
+	}
+
+	if (ConfigMan.getBool("autolevelup")) {
+		KotORBase::autoLevelUp(*creature);
+		return;
+	}
+
+	LevelUpGUI gui(*_module, *creature, _console);
 	gui.run();
 }
 

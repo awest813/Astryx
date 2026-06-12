@@ -10,21 +10,18 @@ namespace KotOR {
 void performMandalorianAmbush(KotORBase::Module &module) {
 	status("Orchestrating Mandalorian Ambush in danm14...");
 
-	// 1. Lock player input for the reveal
+	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 2. Setup Camera
-	// Smooth pan towards the Grove's clearing
 	module.cameraTransitionToTarget("wp_mand_ambush_reveal", 3.0f);
+	module.runCinematicBeat(3.0f);
 
-	// 3. Spawn enemies (if not already spawned by GIT)
-	// In a real scenario, this would check plot flags first.
 	KotORBase::Creature *lead = module.createCreatureByTemplate("dan14_mand_lead");
 	KotORBase::Creature *thug1 = module.createCreatureByTemplate("dan14_mand_thug1");
 	KotORBase::Creature *thug2 = module.createCreatureByTemplate("dan14_mand_thug2");
 
 	if (lead) {
-		lead->setPosition(45.0f, -12.0f, 0.0f); 
+		lead->setPosition(45.0f, -12.0f, 0.0f);
 		lead->setAIArchetype(KotORBase::Creature::kAIArchetypeTacticalHumanoid);
 	}
 	if (thug1) {
@@ -36,59 +33,64 @@ void performMandalorianAmbush(KotORBase::Module &module) {
 		thug2->setAIArchetype(KotORBase::Creature::kAIArchetypeTacticalHumanoid);
 	}
 
-	// 4. Play Mandalorian Battle Stinger
 	module.playMusicStinger("mus_bat_mandalorian");
+	module.runCinematicBeat(1.5f);
 
-	// 5. Restore control and initiate combat
-	// In xoreos, restoring input allows the AI (driven by archetypes) to engage
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
+
+	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
 }
 
 void performKinrathSwarm(KotORBase::Module &module) {
 	status("Orchestrating Kinrath Swarm...");
 
-	// Kinrath ambush usually involves sudden spawns and poison archetypes.
+	module.setCutsceneMode(true);
+	module.setPlayerInputEnabled(false);
+
+	module.cameraTransitionToTarget("wp_kinrath_ambush", 2.0f);
+	module.shakeCamera(1.0f, 0.4f);
+
 	KotORBase::Creature *k1 = module.createCreatureByTemplate("dan14_kinrath1");
 	KotORBase::Creature *k2 = module.createCreatureByTemplate("dan14_kinrath2");
 
 	if (k1) k1->setAIArchetype(KotORBase::Creature::kAIArchetypeBeastPoison);
 	if (k2) k2->setAIArchetype(KotORBase::Creature::kAIArchetypeBeastPoison);
-	
+
 	module.playMusicStinger("mus_bat_beast");
+	module.runCinematicBeat(2.0f);
+
+	module.restoreGameplayCamera(1.0f);
+	module.runCinematicBeat(1.0f);
+
+	module.setCutsceneMode(false);
+	module.setPlayerInputEnabled(true);
 }
 
 void performStarMapReveal(KotORBase::Module &module) {
 	status("Orchestrating Star Map Reveal Climax...");
 
-	// 1. Cinematic lockdown
+	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	// 2. Open the inner Star Map doors
-	// We use SignalEncounter with a sub-ID that scripts can handle if needed
-	// or we can manipulate doors directly if we have tags.
 	KotORBase::Area *area = module.getCurrentArea();
 	if (area) {
 		KotORBase::Object *door = area->getObjectByTag("dan17_starmap_door");
-		if (door) {
-			// In a real KOTOR engine, doors are 'Situated' objects.
-			// KotORBase::Door *kDoor = ObjectContainer::toDoor(door);
-			// if (kDoor) kDoor->open();
-		}
+		(void)door;
 	}
 
-	// 3. Climax Camera Sweep
-	// Slow reveal of the ancient Rakatan technology
 	module.cameraTransitionToTarget("wp_starmap_reveal", 5.0f);
+	module.runCinematicBeat(5.0f);
 
-	// 4. Play Star Map Theme Stinger
 	module.playMusicStinger("mus_theme_starmap");
 
-	// 5. Update Journal to reflect the revelation
-	module.addJournalQuestEntry("k_main_quest", 50); // Found first Star Map
-	
-	// 6. Final Dialogue Hook (Reaction shot)
-	// After 5 seconds, restore control or trigger the next dialogue.
-	// For now, we restore control for 'immersion'.
+	module.addJournalQuestEntry("k_main_quest", 50);
+
+	module.restoreGameplayCamera(2.0f);
+	module.runCinematicBeat(2.0f);
+
+	module.setCutsceneMode(false);
 	module.setPlayerInputEnabled(true);
 }
 

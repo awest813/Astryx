@@ -47,7 +47,8 @@ namespace Video {
 
 namespace Aurora {
 
-VideoPlayer::VideoPlayer(const std::string &video) {
+VideoPlayer::VideoPlayer(const std::string &video, int videoEffect) :
+		_videoEffect(videoEffect) {
 	load(video);
 }
 
@@ -80,16 +81,17 @@ void VideoPlayer::load(const std::string &name) {
 			_video = std::make_unique<Matroska>(video.release());
 			break;
 		default:
-			break;
+			throw Common::Exception("Unsupported video resource type %d for \"%s\"", static_cast<int>(type), name.c_str());
 	}
 
 	if (!_video)
-		throw Common::Exception("Unsupported video resource type %d", (int) type);
+		throw Common::Exception("Failed to load video \"%s\"", name.c_str());
 
 	_video->setScale(VideoDecoder::kScaleUpDown);
+	_video->setVideoEffect(_videoEffect);
 }
 
-void VideoPlayer::play() {
+void VideoPlayer::play(bool allowSkip) {
 	RequestMan.sync();
 
 	Events::Event event;
@@ -117,7 +119,8 @@ void VideoPlayer::play() {
 			if (guardInput)
 				continue;
 
-			if ((event.type == Events::kEventKeyDown) &&
+			if (allowSkip &&
+			    (event.type == Events::kEventKeyDown) &&
 			    (event.key.keysym.sym == SDLK_ESCAPE))
 				brk = true;
 		}

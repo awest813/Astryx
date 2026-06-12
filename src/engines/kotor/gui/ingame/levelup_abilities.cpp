@@ -28,6 +28,8 @@
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
 
+#include "src/engines/kotorbase/levelup.h"
+
 #include "src/engines/kotor/gui/ingame/levelup_abilities.h"
 
 namespace Engines {
@@ -62,23 +64,25 @@ LevelUpAbilitiesMenu::~LevelUpAbilitiesMenu() {
 }
 
 void LevelUpAbilitiesMenu::updateLabels() {
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl) {
-			lbl->setText(text);
-			return;
-		}
-		Odyssey::WidgetButton *btn = getButton(tag);
-		if (btn)
-			btn->setText(text);
+	static const struct {
+		uint32_t *value;
+		const char *pointTag;
+		const char *modTag;
+	} kAbilityRows[] = {
+		{ &_str,  "STR_POINTS_BTN", "STR_MOD_BTN" },
+		{ &_dex,  "DEX_POINTS_BTN", "DEX_MOD_BTN" },
+		{ &_con,  "CON_POINTS_BTN", "CON_MOD_BTN" },
+		{ &_intl, "INT_POINTS_BTN", "INT_MOD_BTN" },
+		{ &_wis,  "WIS_POINTS_BTN", "WIS_MOD_BTN" },
+		{ &_cha,  "CHA_POINTS_BTN", "CHA_MOD_BTN" },
 	};
 
-	setWidgetText("STR_POINTS_BTN", Common::composeString(_str));
-	setWidgetText("DEX_POINTS_BTN", Common::composeString(_dex));
-	setWidgetText("CON_POINTS_BTN", Common::composeString(_con));
-	setWidgetText("INT_POINTS_BTN", Common::composeString(_intl));
-	setWidgetText("WIS_POINTS_BTN", Common::composeString(_wis));
-	setWidgetText("CHA_POINTS_BTN", Common::composeString(_cha));
+	for (size_t i = 0; i < ARRAYSIZE(kAbilityRows); ++i) {
+		const int score = static_cast<int>(*kAbilityRows[i].value);
+		const int mod = (score - 10 >= 0) ? (score - 10) / 2 : (score - 10 - 1) / 2;
+		setWidgetText(kAbilityRows[i].pointTag, Common::composeString(score));
+		setWidgetText(kAbilityRows[i].modTag, KotORBase::formatAbilityModifier(mod));
+	}
 
 	setWidgetText("REMAINING_SELECTIONS_LBL", Common::composeString(_remainingPoints));
 }
@@ -102,6 +106,15 @@ void LevelUpAbilitiesMenu::callbackActive(Widget &widget) {
 		{ "CHA_PLUS_BTN", "CHA_MINUS_BTN", &_cha,  0 },
 	};
 
+	static const char * const kLegacyPlus[] = {
+		"BTN_STR_PLUS", "BTN_DEX_PLUS", "BTN_CON_PLUS",
+		"BTN_INT_PLUS", "BTN_WIS_PLUS", "BTN_CHA_PLUS"
+	};
+	static const char * const kLegacyMinus[] = {
+		"BTN_STR_MINUS", "BTN_DEX_MINUS", "BTN_CON_MINUS",
+		"BTN_INT_MINUS", "BTN_WIS_MINUS", "BTN_CHA_MINUS"
+	};
+
 	// Update original values in the static array (shady but works for this local loop)
 	const_cast<AbilityRef&>(kAbilityRefs[0]).original = _originalStr;
 	const_cast<AbilityRef&>(kAbilityRefs[1]).original = _originalDex;
@@ -111,7 +124,7 @@ void LevelUpAbilitiesMenu::callbackActive(Widget &widget) {
 	const_cast<AbilityRef&>(kAbilityRefs[5]).original = _originalCha;
 
 	for (size_t i = 0; i < ARRAYSIZE(kAbilityRefs); ++i) {
-		if (tag == kAbilityRefs[i].plusTag) {
+		if (tag == kAbilityRefs[i].plusTag || tag == kLegacyPlus[i]) {
 			if (_remainingPoints > 0) {
 				_remainingPoints--;
 				(*kAbilityRefs[i].value)++;
@@ -119,7 +132,7 @@ void LevelUpAbilitiesMenu::callbackActive(Widget &widget) {
 			}
 			return;
 		}
-		if (tag == kAbilityRefs[i].minusTag) {
+		if (tag == kAbilityRefs[i].minusTag || tag == kLegacyMinus[i]) {
 			if (*kAbilityRefs[i].value > kAbilityRefs[i].original) {
 				_remainingPoints++;
 				(*kAbilityRefs[i].value)--;

@@ -72,7 +72,7 @@ public:
 
 	virtual void run() = 0;
 
-	virtual void showLevelUpGUI() = 0;
+	virtual void showLevelUpGUI(Creature *target = nullptr) = 0;
 	virtual void openStoreGUI(const Common::UString &tag) = 0;
 
 protected:

@@ -49,6 +49,11 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/partycontroller.h \
     src/engines/kotorbase/creaturesearch.h \
     src/engines/kotorbase/cameracontroller.h \
+    src/engines/kotorbase/levelup.h \
+    src/engines/kotorbase/journal.h \
+    src/engines/kotorbase/itemactions.h \
+    src/engines/kotorbase/itemupgrades.h \
+    src/engines/kotorbase/swoopminigame.h \
     src/engines/kotorbase/creatureinfo.h \
     src/engines/kotorbase/engine.h \
     src/engines/kotorbase/console.h \
@@ -85,6 +90,11 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/partycontroller.cpp \
     src/engines/kotorbase/creaturesearch.cpp \
     src/engines/kotorbase/cameracontroller.cpp \
+    src/engines/kotorbase/levelup.cpp \
+    src/engines/kotorbase/journal.cpp \
+    src/engines/kotorbase/itemactions.cpp \
+    src/engines/kotorbase/itemupgrades.cpp \
+    src/engines/kotorbase/swoopminigame.cpp \
     src/engines/kotorbase/creatureinfo.cpp \
     src/engines/kotorbase/engine.cpp \
     src/engines/kotorbase/console.cpp \

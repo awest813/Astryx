@@ -47,7 +47,7 @@ public:
 
 	void run() override;
 	void loadGame(const Common::UString &slot) override;
-	void showLevelUpGUI() override;
+	void showLevelUpGUI(KotORBase::Creature *target = nullptr) override;
 	void openStoreGUI(const Common::UString &tag) override;
 
 	KotORBase::Functions &getFunctions() override;

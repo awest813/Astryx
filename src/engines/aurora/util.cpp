@@ -53,7 +53,7 @@
 
 namespace Engines {
 
-void playVideo(const Common::UString &video) {
+void playVideo(const Common::UString &video, bool allowSkip, int videoEffect) {
 	if (ConfigMan.getBool("skipvideos", false)) {
 		debugC(Common::kDebugEngineVideo, 1, "Skipping video \"%s\"", video.c_str());
 		return;
@@ -65,11 +65,11 @@ void playVideo(const Common::UString &video) {
 	SoundMan.setTypeGain(Sound::kSoundTypeVoice, 0.0f);
 
 	try {
-		Video::Aurora::VideoPlayer videoPlayer(video.toString());
+		Video::Aurora::VideoPlayer videoPlayer(video.toString(), videoEffect);
 
-		debugC(Common::kDebugEngineVideo, 1, "Playing video \"%s\"", video.c_str());
+		debugC(Common::kDebugEngineVideo, 1, "Playing video \"%s\" (effect %d)", video.c_str(), videoEffect);
 
-		videoPlayer.play();
+		videoPlayer.play(allowSkip);
 	} catch (...) {
 		Common::exceptionDispatcherWarning();
 	}

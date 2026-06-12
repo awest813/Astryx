@@ -47,6 +47,7 @@
 #include "src/aurora/gff3writer.h"
 #include "src/aurora/2dareg.h"
 #include "src/aurora/2dafile.h"
+#include "src/aurora/talkman.h"
 
 #include "src/graphics/camera.h"
 
@@ -66,7 +67,10 @@
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/itemupgrades.h"
+#include "src/engines/kotorbase/itemactions.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/waypoint.h"
 
 #include "src/engines/kotorbase/gui/partyselection.h"
 
@@ -217,6 +221,19 @@ Graphics::Aurora::FadeQuad &Module::getFadeQuad() {
 	return *_fade;
 }
 
+void Module::holdWorldFadeInForDialog() {
+	_holdWorldFadeInForDialog = true;
+	_fade->setHoldFadeIn(true);
+}
+
+void Module::releaseWorldFadeInForDialog() {
+	if (!_holdWorldFadeInForDialog)
+		return;
+
+	_holdWorldFadeInForDialog = false;
+	_fade->setHoldFadeIn(false);
+}
+
 void Module::removeObject(Object &object) {
 	if (_ingame->getHoveredObject() == &object)
 		_ingame->setHoveredObject(0);
@@ -258,6 +275,15 @@ void Module::load() {
 	loadArea();
 	loadPC();
 	loadParty();
+
+	if (_pc)
+		refreshCreatureEquipmentUpgrades(*_pc, *this);
+
+	for (int i = 0; i < static_cast<int>(_partyController.getPartyMemberCount()); ++i) {
+		Creature *member = _partyController.getPartyMemberByIndex(i).second;
+		if (member && member != _pc)
+			refreshCreatureEquipmentUpgrades(*member, *this);
+	}
 }
 
 void Module::loadResources() {
@@ -319,6 +345,37 @@ void Module::loadPC() {
 }
 
 void Module::loadParty() {
+	if (_hasSavedPartyState) {
+		_partyController.clearCurrentParty();
+		_partyController.clearAvailableParty();
+
+		for (const auto &entry : _savedAvailableNPCs)
+			_partyController.addAvailableNPCByTemplate(entry.first, entry.second);
+
+		for (const SavedPartyMemberState &member : _savedPartyMembers) {
+			if (member.npcSlot == -1) {
+				_partyController.addPartyMember(-1, _pc);
+				continue;
+			}
+
+			if (member.templateResRef.empty())
+				continue;
+
+			Creature *creature = createCreature(member.templateResRef);
+			creature->applyCreatureInfo(member.info);
+			_partyController.addPartyMember(member.npcSlot, creature);
+			refreshCreatureEquipmentUpgrades(*creature, *this);
+		}
+
+		if (_savedPartyLeaderIndex > 0 &&
+		    _savedPartyLeaderIndex < static_cast<int>(_partyController.getPartyMemberCount()))
+			_partyController.setPartyLeaderByIndex(_savedPartyLeaderIndex);
+
+		_hasSavedPartyState = false;
+		updateCurrentPartyGUI();
+		return;
+	}
+
 	std::vector<int> partyMembers = _partyController.getPartyMembers();
 
 	if (partyMembers.empty()) {
@@ -478,8 +535,7 @@ void Module::replaceModule() {
 	try {
 		if (_area) {
 			_area->savePersistence();
-			// Save map exploration
-			setMapExplored(_module, _area->getMapExplored());
+			setMapExplored(_area->getResRef(), _area->getMapExplored());
 		}
 
 		unload(false);
@@ -612,9 +668,18 @@ void Module::clickObject(Object *object) {
 
 	bool attack = currentTarget->isEnemy() && !currentTarget->isDead();
 
-	KotORBase::Action action(attack ? kActionAttackObject : kActionUseObject);
+	KotORBase::Action action;
+	if (attack) {
+		action.type = kActionAttackObject;
+		action.range = 1.0f;
+	} else if (object->getType() & kObjectTypeItem) {
+		action.type = kActionPickUpItem;
+		action.range = 1.5f;
+	} else {
+		action.type = kActionUseObject;
+		action.range = 1.0f;
+	}
 	action.object = object;
-	action.range = 1.0f;
 
 	Creature *partyLeader = getPartyLeader();
 	if (!partyLeader) {
@@ -674,13 +739,14 @@ void Module::runCinematicBeat(float duration) {
 	updateFrameTimestamp();
 }
 
-void Module::playMovie(const Common::UString &resRef) {
+void Module::playMovie(const Common::UString &resRef, bool allowSkip) {
 	if (resRef.empty())
 		return;
 
-	debugC(Common::kDebugEngineLogic, 1, "Playing Movie: %s", resRef.c_str());
+	debugC(Common::kDebugEngineLogic, 1, "Playing Movie: %s (allowSkip: %d)", resRef.c_str(), allowSkip ? 1 : 0);
 	_moviePlaying = true;
-	::Engines::playVideo(resRef);
+	const int videoEffect = getGlobalNumber("__video_effect");
+	::Engines::playVideo(resRef, allowSkip, videoEffect >= 0 ? videoEffect : -1);
 	_moviePlaying = false;
 }
 
@@ -700,7 +766,7 @@ void Module::playMovieQueue(bool canSkip) {
 	while (!_movieQueue.empty()) {
 		Common::UString movie = _movieQueue.front();
 		_movieQueue.erase(_movieQueue.begin());
-		playMovie(movie);
+		playMovie(movie, canSkip);
 	}
 }
 
@@ -709,7 +775,8 @@ void Module::cameraTransitionToTarget(const Common::UString &tag, float duration
 	if (!obj)
 		return;
 
-	_cameraController.setCameraTarget(obj);
+	_cameraController.enterCinematicMode();
+	_cameraController.setCinematicFocus(obj);
 	_cameraController.cameraTransitionToTarget(duration);
 }
 
@@ -734,6 +801,12 @@ void Module::processEventQueue() {
 	_frameTime = (now - _prevTimestamp) / 1000.f;
 	_prevTimestamp = now;
 	_playTime += _frameTime;
+
+	if (_noClicksUntil != 0 && EventMan.getTimestamp() >= _noClicksUntil) {
+		_noClicksUntil = 0;
+		if (!_cutsceneMode && !_inDialog)
+			setPlayerInputEnabled(true);
+	}
 
 	handleEvents();
 	handleActions();
@@ -771,15 +844,75 @@ void Module::processEventQueue() {
 		showWorkbench();
 	}
 
+	onFrameUpdate(_frameTime);
+
 	handleDelayedInteractions();
+}
+
+void Module::setSavedPCInfo(const CreatureInfo &info) {
+	_pcInfo = info;
+}
+
+void Module::setSavedPartyState(const std::map<int, Common::UString> &availableNPCs,
+                                const std::vector<SavedPartyMemberState> &members,
+                                int leaderIndex) {
+	_savedAvailableNPCs = availableNPCs;
+	_savedPartyMembers = members;
+	_savedPartyLeaderIndex = leaderIndex;
+	_hasSavedPartyState = !members.empty();
+}
+
+bool Module::isGrenadeTargeting() const {
+	return _grenadeTargetingActive;
+}
+
+void Module::beginGrenadeTargeting(const Common::UString &itemTag) {
+	_grenadeItemTag = itemTag;
+	_grenadeTargetingActive = !itemTag.empty();
+}
+
+void Module::cancelGrenadeTargeting() {
+	_grenadeTargetingActive = false;
+	_grenadeItemTag.clear();
+	_ingame->hideGrenadeReticle();
+}
+
+bool Module::handleGrenadeTargetingClick(int screenX, int screenY) {
+	if (!_grenadeTargetingActive || _grenadeItemTag.empty() || !_area)
+		return false;
+
+	Creature *pc = getPC();
+	if (!pc || !pc->getInventory().hasItem(_grenadeItemTag)) {
+		cancelGrenadeTargeting();
+		return true;
+	}
+
+	float x, y, z;
+	if (!_area->getGroundPointAtScreen(screenX, screenY, x, y, z)) {
+		playSound("gui_actuse");
+		return true;
+	}
+
+	const ItemActionResult result = throwGrenadeAt(*pc, _grenadeItemTag, *this, x, y, z);
+	cancelGrenadeTargeting();
+
+	if (result.success)
+		_area->addToObjectMap(getPartyLeader());
+
+	return true;
 }
 
 void Module::saveGame(const Common::UString &slot, const Common::UString &name) {
 	if (slot.empty())
 		throw Common::Exception("Module::saveGame(): empty save slot path");
 
-	if (_area)
+	if (_pc)
+		_pcInfo = _pc->buildSavedState();
+
+	if (_area) {
+		setMapExplored(_area->getResRef(), _area->getMapExplored());
 		_area->savePersistence();
+	}
 
 	Common::FilePath::createDirectories(slot);
 
@@ -808,8 +941,32 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 	{
 		Aurora::GFF3Writer partyWriter(MKTAG('P', 'T', 'A', 'B'));
 		Aurora::GFF3WriterStructPtr partyRoot = partyWriter.getTopLevel();
-		if (pc)
+		if (pc) {
 			partyRoot->addExoString("PT_PCNAME", pc->getTag());
+			partyRoot->addUint32("PT_GOLD", pc->getInventory().getGold());
+			Aurora::GFF3WriterStructPtr pcState = partyRoot->addStruct("PT_PC_STATE");
+			_pcInfo.save(*pcState);
+		}
+
+		Aurora::GFF3WriterListPtr availList = partyRoot->addList("PT_AVAIL_NPCS");
+		for (const auto &entry : _partyController.getAvailableNPCs()) {
+			Aurora::GFF3WriterStructPtr avail = availList->addStruct();
+			avail->addSint32("Index", entry.first);
+			avail->addResRef("NPCResRef", entry.second);
+		}
+
+		Aurora::GFF3WriterListPtr membersList = partyRoot->addList("PT_MEMBERS");
+		for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+			const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+			Aurora::GFF3WriterStructPtr memberStruct = membersList->addStruct();
+			memberStruct->addSint32("NPCSlot", member.first);
+			if (member.first != -1 && member.second) {
+				memberStruct->addResRef("TemplateResRef", member.second->getTemplateResRef());
+				Aurora::GFF3WriterStructPtr state = memberStruct->addStruct("CreatureState");
+				member.second->buildSavedState().save(*state);
+			}
+		}
+		partyRoot->addUint32("PT_LEADER_INDEX", 0);
 		partyWriter.write(partyMem);
 	}
 
@@ -897,6 +1054,25 @@ void Module::handleEvents() {
 			continue;
 		}
 
+		if (_grenadeTargetingActive) {
+			if (event->type == Events::kEventMouseMove) {
+				_ingame->updateGrenadeReticle(event->motion.x, event->motion.y);
+				continue;
+			}
+
+			if (event->type == Events::kEventMouseUp &&
+			    event->button.button == SDL_BUTTON_LMASK) {
+				if (handleGrenadeTargetingClick(event->button.x, event->button.y))
+					continue;
+			}
+
+			if (event->type == Events::kEventKeyDown &&
+			    event->key.keysym.sym == SDLK_ESCAPE) {
+				cancelGrenadeTargeting();
+				continue;
+			}
+		}
+
 		if (event->type == Events::kEventKeyDown) {
 			// Menu
 			if (event->key.keysym.sym == SDLK_ESCAPE) {
@@ -941,6 +1117,13 @@ void Module::handleEvents() {
 	}
 }
 
+Common::UString Module::getMinimapMapId() const {
+	if (_module.contains('_'))
+		return _module.substr(++_module.findFirst("_"), _module.end());
+
+	return _module.substr(_module.getPosition(3), _module.end());
+}
+
 void Module::initMinimap() {
 	int northAxis = _area->getNorthAxis();
 
@@ -952,24 +1135,52 @@ void Module::initMinimap() {
 	_area->getWorldPoint1(worldPt1X, worldPt1Y);
 	_area->getWorldPoint2(worldPt2X, worldPt2Y);
 
-	Common::UString mapId;
-
-	if (_module.contains('_'))
-		mapId = _module.substr(++_module.findFirst("_"), _module.end());
-	else
-		mapId = _module.substr(_module.getPosition(3), _module.end());
-
-	_ingame->setMinimap(mapId, northAxis,
+	_ingame->setMinimap(getMinimapMapId(), northAxis,
 	                    worldPt1X, worldPt1Y, worldPt2X, worldPt2Y,
 	                    mapPt1X, mapPt1Y, mapPt2X, mapPt2Y);
 }
 
 void Module::updateMinimap() {
+	Creature *leader = _partyController.getPartyLeader();
+	if (!leader)
+		return;
+
 	float x, y, _;
-	_partyController.getPartyLeader()->getPosition(x, y, _);
+	leader->getPosition(x, y, _);
+
+	if (_area && _area->revealMapNear(x, y))
+		setMapExplored(_area->getResRef(), _area->getMapExplored());
 
 	_ingame->setPosition(x, y);
 	_ingame->setRotation(Common::rad2deg(_cameraController.getYaw()));
+
+	if (_area)
+		_ingame->updateMinimapExplored(_area->getMapExplored());
+
+	_ingame->updateMinimapMapPins(collectMapPins());
+}
+
+std::vector<MapPin> Module::getMapPins() const {
+	return collectMapPins();
+}
+
+std::vector<MapPin> Module::collectMapPins() const {
+	std::vector<MapPin> pins;
+
+	std::unique_ptr<Aurora::NWScript::ObjectSearch> search(findObjectsByType(kObjectTypeWaypoint));
+	while (search->get()) {
+		Waypoint *waypoint = ObjectContainer::toWaypoint(search->next());
+		if (!waypoint || !waypoint->enabledMapNote())
+			continue;
+
+		float x = 0.0f;
+		float y = 0.0f;
+		float z = 0.0f;
+		waypoint->getPosition(x, y, z);
+		pins.push_back({ x, y });
+	}
+
+	return pins;
 }
 
 void Module::updateSoundListener() {
@@ -1637,6 +1848,13 @@ int Module::getSelectedPlanet() const {
 	return _selectedPlanet;
 }
 
+void Module::setSelectedPlanet(int planet) {
+	_selectedPlanet = planet;
+}
+
+void Module::onFrameUpdate(float UNUSED(frameTime)) {
+}
+
 void Module::setGlobalString(const Common::UString &id, const Common::UString &value) {
 	_globalStrings[id] = value;
 }
@@ -1780,10 +1998,99 @@ void Module::signalUserDefinedEvent(Object *owner, int number) {
 
 void Module::addJournalQuestEntry(const Common::UString &quest, uint32_t state) {
 	_journal[quest] = state;
+	_globalNumbers["JRNL_" + quest] = static_cast<int>(state);
 	debugC(Common::kDebugEngineLogic, 1, "Journal updated: Quest \"%s\" to state %u", quest.c_str(), state);
 
 	if (_ingame)
 		_ingame->getHUD().notifyJournalUpdated();
+}
+
+void Module::removeJournalQuestEntry(const Common::UString &quest) {
+	_journal.erase(quest);
+	_globalNumbers["JRNL_" + quest] = -1;
+}
+
+uint32_t Module::getJournalQuestState(const Common::UString &quest) const {
+	const auto it = _journal.find(quest);
+	if (it != _journal.end())
+		return it->second;
+	return 0;
+}
+
+void Module::setJournalQuestEntryPicture(const Common::UString &quest, uint32_t state,
+                                         const Common::UString &portrait, bool enabled) {
+	const auto key = std::make_pair(quest, state);
+	if (!enabled || portrait.empty()) {
+		_journalQuestPictures.erase(key);
+		return;
+	}
+
+	_journalQuestPictures[key] = portrait;
+}
+
+Common::UString Module::getJournalQuestEntryPicture(const Common::UString &quest, uint32_t state) const {
+	const auto it = _journalQuestPictures.find(std::make_pair(quest, state));
+	if (it != _journalQuestPictures.end())
+		return it->second;
+
+	return Common::UString();
+}
+
+void Module::addJournalWorldEntry(const Common::UString &tag, const Common::UString &text) {
+	for (auto &entry : _journalWorld) {
+		if (entry.tag.equalsIgnoreCase(tag)) {
+			entry.text = text;
+			return;
+		}
+	}
+
+	_journalWorld.push_back({ tag, text });
+
+	if (_ingame)
+		_ingame->getHUD().notifyJournalUpdated();
+}
+
+void Module::deleteJournalWorldEntry(const Common::UString &tag) {
+	for (auto it = _journalWorld.begin(); it != _journalWorld.end(); ++it) {
+		if (it->tag.equalsIgnoreCase(tag)) {
+			_journalWorld.erase(it);
+			return;
+		}
+	}
+}
+
+void Module::deleteJournalWorldEntryByStrref(int strRef) {
+	const Common::UString text = TalkMan.getString(strRef);
+	const Common::UString placeholder = Common::String::format("<strref:%d>", strRef);
+
+	for (auto it = _journalWorld.begin(); it != _journalWorld.end(); ) {
+		if ((!text.empty() && it->text == text) ||
+		    it->text == placeholder ||
+		    it->tag == placeholder ||
+		    it->tag == text) {
+			it = _journalWorld.erase(it);
+		} else {
+			++it;
+		}
+	}
+}
+
+void Module::deleteJournalWorldAllEntries() {
+	_journalWorld.clear();
+
+	if (_ingame)
+		_ingame->getHUD().notifyJournalUpdated();
+}
+
+void Module::addMessage(const Common::UString &text) {
+	if (text.empty())
+		return;
+
+	_messages.push_back(text);
+}
+
+void Module::setReturnDestinationModule(const Common::UString &module) {
+	_returnDestinationModule = module;
 }
 
 std::shared_ptr<Aurora::GFF3File> Module::getAreaObjectSave(const Common::UString &key) {
@@ -1905,6 +2212,7 @@ void Module::startConversation(const Common::UString &name, Aurora::NWScript::Ob
 		_ingame->hideSelection();
 		_dialog->show();
 		_inDialog = true;
+		releaseWorldFadeInForDialog();
 
 		updateFrameTimestamp();
 	}
@@ -1963,6 +2271,7 @@ void Module::setCameraTarget(Object *target) {
 }
 
 void Module::cameraTransitionToTarget(float blendTime) {
+	_cameraController.enterCinematicMode();
 	_cameraController.cameraTransitionToTarget(blendTime);
 }
 
@@ -1982,14 +2291,28 @@ void Module::resetToOrbit() {
 	_cameraController.resetToOrbit();
 }
 
+void Module::enterCinematicMode() {
+	_cameraController.enterCinematicMode();
+}
+
 void Module::setPlayerInputEnabled(bool enabled) {
 	_playerInputEnabled = enabled;
+}
+
+void Module::noClicksFor(float duration) {
+	if (duration <= 0.0f)
+		return;
+
+	_noClicksUntil = EventMan.getTimestamp() + static_cast<uint32_t>(duration * 1000.0f);
+	setPlayerInputEnabled(false);
 }
 
 void Module::setCutsceneMode(bool enabled) {
 	_cutsceneMode = enabled;
 	if (enabled)
 		setPlayerInputEnabled(false);
+	else
+		resetToOrbit();
 
 	if (_ingame) {
 		if (enabled)
@@ -2014,6 +2337,7 @@ void Module::exploreAreaFully(Area *area) {
 
 	area->exploreMapFully();
 	setMapExplored(area->getResRef(), area->getMapExplored());
+	updateMinimap();
 }
 
 const std::vector<bool> *Module::getMapExplored(const Common::UString &resRef) const {
@@ -2184,6 +2508,29 @@ void Module::saveState(Aurora::GFF3WriterStruct &gff) const {
 		item->addUint32("State", entry.second);
 	}
 
+	Aurora::GFF3WriterListPtr worldJournalList = gff.addList("WorldJournalEntries");
+	for (const auto &entry : _journalWorld) {
+		Aurora::GFF3WriterStructPtr item = worldJournalList->addStruct();
+		item->addExoString("Tag", entry.tag);
+		item->addExoString("Text", entry.text);
+	}
+
+	Aurora::GFF3WriterListPtr journalPictureList = gff.addList("JournalQuestPictures");
+	for (const auto &entry : _journalQuestPictures) {
+		Aurora::GFF3WriterStructPtr item = journalPictureList->addStruct();
+		item->addExoString("Quest", entry.first.first);
+		item->addUint32("State", entry.first.second);
+		item->addExoString("Portrait", entry.second);
+	}
+
+	Aurora::GFF3WriterListPtr messageList = gff.addList("Messages");
+	for (const auto &message : _messages) {
+		Aurora::GFF3WriterStructPtr item = messageList->addStruct();
+		item->addExoString("Text", message);
+	}
+
+	gff.addExoString("ReturnDestinationModule", _returnDestinationModule);
+
 	Aurora::GFF3WriterListPtr mapList = gff.addList("ExploredMaps");
 	for (const auto &entry : _exploredMaps) {
 		Aurora::GFF3WriterStructPtr area = mapList->addStruct();
@@ -2229,9 +2576,47 @@ void Module::loadState(const Aurora::GFF3Struct &gff) {
 		for (const auto &entry : gff.getList("JournalEntries")) {
 			if (!entry)
 				continue;
-			_journal[entry->getString("Quest")] = entry->getUint("State");
+			const Common::UString quest = entry->getString("Quest");
+			const uint32_t state = entry->getUint("State");
+			_journal[quest] = state;
+			_globalNumbers["JRNL_" + quest] = static_cast<int>(state);
 		}
 	}
+
+	_journalWorld.clear();
+	if (gff.hasField("WorldJournalEntries")) {
+		for (const auto &entry : gff.getList("WorldJournalEntries")) {
+			if (!entry)
+				continue;
+			_journalWorld.push_back({ entry->getString("Tag"), entry->getString("Text") });
+		}
+	}
+
+	_journalQuestPictures.clear();
+	if (gff.hasField("JournalQuestPictures")) {
+		for (const auto &entry : gff.getList("JournalQuestPictures")) {
+			if (!entry)
+				continue;
+
+			const Common::UString quest = entry->getString("Quest");
+			const uint32_t state = entry->getUint("State");
+			const Common::UString portrait = entry->getString("Portrait");
+			if (!quest.empty() && !portrait.empty())
+				_journalQuestPictures[{ quest, state }] = portrait;
+		}
+	}
+
+	_messages.clear();
+	if (gff.hasField("Messages")) {
+		for (const auto &entry : gff.getList("Messages")) {
+			if (!entry)
+				continue;
+			_messages.push_back(entry->getString("Text"));
+		}
+	}
+
+	if (gff.hasField("ReturnDestinationModule"))
+		_returnDestinationModule = gff.getString("ReturnDestinationModule");
 
 	_exploredMaps.clear();
 	if (gff.hasField("ExploredMaps")) {

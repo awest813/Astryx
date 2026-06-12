@@ -76,6 +76,9 @@ public:
 	void restoreGameplayCamera(float blendTime);
 	void resetToOrbit();
 
+	/** Enter scripted camera control without resetting yaw/distance. */
+	void enterCinematicMode();
+
 	void shake(float duration, float intensity);
 
 private:

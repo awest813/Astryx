@@ -25,7 +25,10 @@
 #ifndef ENGINES_KOTORBASE_ITEM_H
 #define ENGINES_KOTORBASE_ITEM_H
 
+#include <memory>
 #include <vector>
+
+#include "src/graphics/aurora/types.h"
 
 #include "src/engines/kotorbase/object.h"
 
@@ -55,8 +58,13 @@ public:
 	int getAttackBonus() const;
 	int getBaseItem() const;
 	int getCost() const;
+	const Common::UString &getItemClass() const;
 
 	bool hasItemProperty(int propertyType) const;
+	/** Returns Param1Value for the first property of @p propertyType, or @p fallback. */
+	int getItemPropertyValue(int propertyType, int fallback = 0) const;
+	/** Returns Subtype for the first property of @p propertyType, or @p fallback. */
+	int getItemPropertySubtype(int propertyType, int fallback = 0) const;
 
 	int  getStackSize() const;
 	void setStackSize(int size);
@@ -67,6 +75,16 @@ public:
 	int getTextureVariation() const;
 	const Common::UString getIcon() const;
 	const Common::UString getModelName() const;
+
+	bool isVisible() const override;
+	void show() override;
+	void hide() override;
+	void setPosition(float x, float y, float z) override;
+
+	/** Load the world model and mark this item as a clickable ground pickup. */
+	void prepareWorldDrop(const Common::UString &templateResRef);
+
+	void setUpgradeBonuses(int attack, int damage, int ac);
 
 private:
 	struct ItemPropertyData {
@@ -91,8 +109,12 @@ private:
 	int _acBonus;
 	int _stackSize; ///< Stack count (grenades, medpacs, etc. — default 1).
 	int _cost;
+	int _upgradeAttackBonus { 0 };
+	int _upgradeDamageBonus { 0 };
+	int _upgradeACBonus { 0 };
 
 	std::vector<ItemPropertyData> _properties;
+	std::unique_ptr<Graphics::Aurora::Model> _model;
 
 	int getPropertyBonusSum(int propertyType) const;
 

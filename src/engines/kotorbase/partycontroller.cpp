@@ -156,6 +156,10 @@ void PartyController::removeAvailableNPC(int npc) {
 	_availableParty.erase(npc);
 }
 
+const std::map<int, Common::UString> &PartyController::getAvailableNPCs() const {
+	return _availableParty;
+}
+
 bool PartyController::handleEvent(const Events::Event &e) {
 	switch (e.type) {
 		case Events::kEventKeyDown:

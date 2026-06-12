@@ -44,9 +44,17 @@ public:
 
 protected:
 	void callbackActive(Widget &widget);
+	void callbackKeyInput(const Events::Key &key, const Events::EventType &type);
 
 private:
 	void fillItems();
+	void showItemDescription(int index);
+	void setStatusMessage(const Common::UString &message);
+	void updateActionButtons();
+	void updateCreditsLabel();
+	bool performUseSelectedItem();
+	bool performEquipSelectedItem();
+	bool performDropSelectedItem();
 
 	enum Category {
 		kCategoryAll,
@@ -57,6 +65,7 @@ private:
 	};
 
 	Category _category;
+	int _selectedIndex;
 	std::vector<Common::UString> _visibleItems;
 };
 

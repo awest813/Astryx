@@ -31,6 +31,12 @@
 #include "src/aurora/erffile.h"
 #include "src/aurora/gff3file.h"
 
+#include <map>
+#include <vector>
+
+#include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/partystate.h"
+
 namespace Engines {
 
 namespace KotORBase {
@@ -65,6 +71,14 @@ protected:
 	uint8_t _pcGender;
 	float _pcPosition[3];
 	bool _pcLoaded;
+	uint32_t _partyGold { 0 };
+	bool _hasPartyGold { false };
+	CreatureInfo _savedPCInfo;
+	bool _hasSavedPCInfo { false };
+	std::map<int, Common::UString> _savedAvailableNPCs;
+	std::vector<SavedPartyMemberState> _savedPartyMembers;
+	int _savedPartyLeaderIndex { 0 };
+	bool _hasSavedPartyState { false };
 
 	std::unique_ptr<Aurora::GFF3File> _globals;
 	std::unique_ptr<Aurora::GFF3File> _areaState;

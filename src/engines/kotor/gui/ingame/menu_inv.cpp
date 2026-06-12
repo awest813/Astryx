@@ -22,11 +22,19 @@
  *  The ingame inventar menu.
  */
 
+#include "src/aurora/talkman.h"
+
 #include "src/graphics/graphics.h"
 
-#include "src/engines/odyssey/listbox.h"
+#include "src/common/strutil.h"
 
+#include "src/engines/odyssey/button.h"
+#include "src/engines/odyssey/listbox.h"
+#include "src/engines/odyssey/label.h"
+
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/item.h"
+#include "src/engines/kotorbase/itemactions.h"
 #include "src/engines/kotorbase/gui/inventoryitem.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/module.h"
@@ -39,7 +47,9 @@ namespace Engines {
 namespace KotOR {
 
 MenuInventory::MenuInventory(KotORBase::Module &module, Console *console) :
-		KotORBase::MenuBase(module, console), _category(kCategoryAll) {
+		KotORBase::MenuBase(module, console),
+		_category(kCategoryAll),
+		_selectedIndex(-1) {
 
 	load("inventory");
 
@@ -57,15 +67,32 @@ MenuInventory::MenuInventory(KotORBase::Module &module, Console *console) :
 void MenuInventory::show() {
 	GUI::show();
 	fillItems();
+	updateCreditsLabel();
 }
 
 void MenuInventory::update() {
 	MenuBase::update();
 	updatePartyLeader("LBL_PORT");
+	updateCreditsLabel();
+
+	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
+	if (!lbItems)
+		return;
+
+	const int selected = lbItems->getSelectedIndex();
+	if (selected != _selectedIndex) {
+		_selectedIndex = selected;
+		showItemDescription(_selectedIndex);
+		updateActionButtons();
+	}
 }
 
 void MenuInventory::fillItems() {
-	KotORBase::Inventory &inv = _module->getPC()->getInventory();
+	KotORBase::Creature *pc = _module->getPC();
+	if (!pc)
+		return;
+
+	KotORBase::Inventory &inv = pc->getInventory();
 
 	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
 	if (!lbItems)
@@ -73,22 +100,23 @@ void MenuInventory::fillItems() {
 
 	lbItems->removeAllItems();
 	_visibleItems.clear();
+	_selectedIndex = -1;
 
 	for (const auto &itemPair : inv.getItems()) {
 		try {
 			KotORBase::Item item(itemPair.second.tag);
 
-			bool isWeapon = item.isSlotEquipable(KotORBase::kInventorySlotRightWeapon) || item.isSlotEquipable(KotORBase::kInventorySlotLeftWeapon);
-			bool isArmor = item.isSlotEquipable(KotORBase::kInventorySlotBody);
+			const bool isWeapon = item.isSlotEquipable(KotORBase::kInventorySlotRightWeapon) ||
+			                      item.isSlotEquipable(KotORBase::kInventorySlotLeftWeapon);
+			const bool isArmor = item.isSlotEquipable(KotORBase::kInventorySlotBody);
 
-			// Filtering
 			bool show = false;
 			switch (_category) {
 			case kCategoryAll: show = true; break;
 			case kCategoryWeapons: show = isWeapon; break;
 			case kCategoryArmor: show = isArmor; break;
 			case kCategoryItems: show = !isWeapon && !isArmor; break;
-			case kCategoryMisc: show = item.getBaseItem() == 0; break; // Placeholder misc
+			case kCategoryMisc: show = !isWeapon && !isArmor; break;
 			}
 
 			if (!show)
@@ -108,6 +136,173 @@ void MenuInventory::fillItems() {
 	GfxMan.lockFrame();
 	lbItems->refreshItemWidgets();
 	GfxMan.unlockFrame();
+
+	if (_visibleItems.empty()) {
+		setWidgetText("LBL_DESC", TalkMan.getString(400).empty() ?
+		              "No items in this category." : TalkMan.getString(400));
+	} else if (lbItems->getSelectedIndex() < 0) {
+		lbItems->selectItem(0);
+		_selectedIndex = 0;
+		showItemDescription(0);
+	}
+
+	updateActionButtons();
+}
+
+void MenuInventory::showItemDescription(int index) {
+	if (index < 0 || index >= (int)_visibleItems.size()) {
+		setWidgetText("LBL_DESC", "");
+		return;
+	}
+
+	try {
+		KotORBase::Item item(_visibleItems[index]);
+		const Common::UString &desc = item.getDescription();
+		setWidgetText("LBL_DESC", desc.empty() ? item.getName() : desc);
+
+		if (Odyssey::WidgetListBox *lbDesc = getListBox("LB_DESC")) {
+			lbDesc->removeAllItems();
+			lbDesc->addItem(desc.empty() ? item.getName() : desc);
+			lbDesc->refreshItemWidgets();
+		}
+	} catch (Common::Exception &e) {
+		warning("MenuInventory::showItemDescription: %s", e.what());
+	}
+}
+
+void MenuInventory::setStatusMessage(const Common::UString &message) {
+	if (!message.empty())
+		setWidgetText("LBL_DESC", message);
+}
+
+void MenuInventory::updateCreditsLabel() {
+	KotORBase::Creature *pc = _module->getPC();
+	if (!pc)
+		return;
+
+	const Common::UString credits = Common::composeString(pc->getInventory().getGold());
+	if (Odyssey::WidgetLabel *lbl = getLabel("LBL_CREDITS"))
+		lbl->setText(credits);
+	if (Odyssey::WidgetLabel *lbl = getLabel("LBL_PC_CREDITS"))
+		lbl->setText(credits);
+	if (Odyssey::WidgetLabel *lbl = getLabel("LBL_CREDITS_VALUE"))
+		lbl->setText(credits);
+}
+
+void MenuInventory::updateActionButtons() {
+	const bool hasSelection = _selectedIndex >= 0 && _selectedIndex < (int)_visibleItems.size();
+	bool canUse = false;
+	bool canEquip = false;
+
+	if (hasSelection) {
+		try {
+			const KotORBase::Item item(_visibleItems[_selectedIndex]);
+			canEquip = KotORBase::isEquipableItem(item);
+			canUse = KotORBase::isUsableConsumable(item) || canEquip;
+		} catch (...) {
+		}
+	}
+
+	if (Odyssey::WidgetButton *useBtn = getButton("BTN_USEITEM")) {
+		useBtn->setDisabled(!canUse);
+		useBtn->setInvisible(!canUse);
+		if (canUse)
+			useBtn->show();
+		else
+			useBtn->hide();
+	}
+
+	if (Odyssey::WidgetButton *legacyUseBtn = getButton("BTN_USE")) {
+		legacyUseBtn->setDisabled(!canUse);
+		legacyUseBtn->setInvisible(!canUse);
+		if (canUse)
+			legacyUseBtn->show();
+		else
+			legacyUseBtn->hide();
+	}
+
+	if (Odyssey::WidgetButton *equipBtn = getButton("BTN_EQUIP")) {
+		equipBtn->setDisabled(!canEquip);
+		equipBtn->setInvisible(!canEquip);
+		if (canEquip)
+			equipBtn->show();
+		else
+			equipBtn->hide();
+	}
+
+	if (Odyssey::WidgetButton *dropBtn = getButton("BTN_DROP")) {
+		dropBtn->setDisabled(!hasSelection);
+		dropBtn->setInvisible(!hasSelection);
+		if (hasSelection)
+			dropBtn->show();
+		else
+			dropBtn->hide();
+	}
+}
+
+bool MenuInventory::performUseSelectedItem() {
+	if (_selectedIndex < 0 || _selectedIndex >= (int)_visibleItems.size())
+		return false;
+
+	KotORBase::Creature *pc = _module->getPC();
+	KotORBase::Creature *leader = _module->getPartyLeader();
+	if (!pc || !leader)
+		return false;
+
+	const KotORBase::ItemActionResult result =
+		KotORBase::useInventoryItem(*leader, *pc, _visibleItems[_selectedIndex], _module);
+
+	if (result.needsTargeting) {
+		_module->beginGrenadeTargeting(_visibleItems[_selectedIndex]);
+		setStatusMessage(result.message);
+		_returnCode = 1;
+		return true;
+	}
+
+	setStatusMessage(result.message);
+	if (result.success && _module->getCurrentArea())
+		_module->getCurrentArea()->addToObjectMap(leader);
+
+	fillItems();
+	return result.success;
+}
+
+bool MenuInventory::performEquipSelectedItem() {
+	if (_selectedIndex < 0 || _selectedIndex >= (int)_visibleItems.size())
+		return false;
+
+	KotORBase::Creature *pc = _module->getPC();
+	KotORBase::Creature *leader = _module->getPartyLeader();
+	if (!pc || !leader)
+		return false;
+
+	const KotORBase::ItemActionResult result =
+		KotORBase::equipInventoryItem(*leader, *pc, _visibleItems[_selectedIndex], _module);
+
+	setStatusMessage(result.message);
+	if (result.success && _module->getCurrentArea())
+		_module->getCurrentArea()->addToObjectMap(leader);
+
+	fillItems();
+	return result.success;
+}
+
+bool MenuInventory::performDropSelectedItem() {
+	if (_selectedIndex < 0 || _selectedIndex >= (int)_visibleItems.size())
+		return false;
+
+	KotORBase::Creature *pc = _module->getPC();
+	if (!pc)
+		return false;
+
+	const KotORBase::ItemActionResult result =
+		KotORBase::dropInventoryItem(*pc, _visibleItems[_selectedIndex], 1, _module);
+
+	setStatusMessage(result.message);
+	if (result.success)
+		fillItems();
+
+	return result.success;
 }
 
 void MenuInventory::callbackActive(Widget &widget) {
@@ -138,8 +333,69 @@ void MenuInventory::callbackActive(Widget &widget) {
 		fillItems();
 		return;
 	}
+	if (tag == "BTN_CAT_MISC" || tag == "BTN_QUESTITEMS") {
+		_category = kCategoryMisc;
+		fillItems();
+		return;
+	}
+
+	if (tag == "BTN_USEITEM" || tag == "BTN_USE") {
+		performUseSelectedItem();
+		return;
+	}
+
+	if (tag == "BTN_EQUIP") {
+		performEquipSelectedItem();
+		return;
+	}
+
+	if (tag == "BTN_DROP" || tag == "BTN_DESTROY") {
+		performDropSelectedItem();
+		return;
+	}
+
+	if (tag == "LB_ITEMS" || tag.beginsWith("LB_ITEMS")) {
+		Odyssey::WidgetListBox *list = dynamic_cast<Odyssey::WidgetListBox *>(&widget);
+		if (!list)
+			list = getListBox("LB_ITEMS");
+		if (list) {
+			_selectedIndex = list->getSelectedIndex();
+			showItemDescription(_selectedIndex);
+			updateActionButtons();
+		}
+		return;
+	}
 
 	MenuBase::callbackActive(widget);
+}
+
+void MenuInventory::callbackKeyInput(const Events::Key &key, const Events::EventType &type) {
+	if (type != Events::kEventKeyDown)
+		return;
+
+	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
+	if (!lbItems)
+		return;
+
+	switch (key) {
+	case Events::kKeyUp:
+		lbItems->selectPreviousItem();
+		_selectedIndex = lbItems->getSelectedIndex();
+		showItemDescription(_selectedIndex);
+		updateActionButtons();
+		break;
+	case Events::kKeyDown:
+		lbItems->selectNextItem();
+		_selectedIndex = lbItems->getSelectedIndex();
+		showItemDescription(_selectedIndex);
+		updateActionButtons();
+		break;
+	case Events::kKeyReturn:
+		performUseSelectedItem();
+		break;
+	default:
+		break;
+	}
 }
 
 } // End of namespace KotOR

@@ -25,6 +25,8 @@
 #ifndef ENGINES_KOTORBASE_GUI_HUD_H
 #define ENGINES_KOTORBASE_GUI_HUD_H
 
+#include <vector>
+
 #include "src/engines/kotorbase/types.h"
 
 #include "src/engines/kotorbase/gui/gui.h"
@@ -52,6 +54,8 @@ public:
 
 	virtual void setPosition(float x, float y);
 	virtual void setRotation(float angle);
+	virtual void updateMinimapExplored(const std::vector<bool> &explored);
+	virtual void updateMinimapMapPins(const std::vector<MapPin> &pins);
 
 	// Return to hideout
 
@@ -81,6 +85,9 @@ public:
 	void updateSelection();
 	void hideSelection();
 
+	void updateGrenadeReticle(int screenX, int screenY);
+	void hideGrenadeReticle();
+
 	virtual void notifyJournalUpdated();
 
 	void showFloatingText(Object *object, const Common::UString &text, float duration = 6.0f);
@@ -104,6 +111,7 @@ private:
 
 	Object *_targetObject { nullptr };
 	std::unique_ptr<SelectionCircle> _targetCircle;
+	std::unique_ptr<SelectionCircle> _grenadeReticle;
 	bool _targetDirty { false };
 
 	// Widgets for showing target information

@@ -41,6 +41,7 @@ public:
 
 	void play();
 	void stop();
+	void fadeAndStop(float duration);
 
 private:
 	bool _positional;

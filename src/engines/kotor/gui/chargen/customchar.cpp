@@ -22,9 +22,13 @@
  *  The panel to customize a quick character.
  */
 
+#include "src/common/strutil.h"
+#include "src/common/util.h"
+
 #include "src/graphics/graphics.h"
 
 #include "src/engines/odyssey/label.h"
+#include "src/engines/odyssey/button.h"
 
 #include "src/engines/kotor/gui/chargen/customchar.h"
 
@@ -44,6 +48,38 @@ CustomCharPanel::CustomCharPanel(CharacterGenerationMenu *charGenMenu, Console *
 	float height = getLabel("LBL_BG")->getHeight();
 
 	getLabel("LBL_BG")->setScissor(5, 40, width - 5, height - 60);
+
+	for (int i = 1; i <= 6; ++i) {
+		if (Odyssey::WidgetButton *btn = getButton(Common::UString("BTN_STEPNAME") + Common::composeString(i)))
+			btn->setDisableHoverSound(true);
+	}
+
+	updateButtons();
+}
+
+void CustomCharPanel::updateButtons() {
+	static const char * const kStepTags[] = {
+		"BTN_STEPNAME1", "BTN_STEPNAME2", "BTN_STEPNAME3",
+		"BTN_STEPNAME4", "BTN_STEPNAME5", "BTN_STEPNAME6"
+	};
+
+	const int step = _charGen->getStep();
+
+	for (size_t i = 0; i < ARRAYSIZE(kStepTags); ++i) {
+		Odyssey::WidgetButton *btn = getButton(kStepTags[i]);
+		if (!btn)
+			continue;
+
+		const bool completed = static_cast<int>(i) < step;
+		const bool active = static_cast<int>(i) == step;
+
+		btn->setDisabled(!completed && !active);
+		btn->setPermanentHighlight(active);
+		btn->setDisableHighlight(!active);
+	}
+
+	if (Widget *back = getWidget("BTN_BACK"))
+		back->setDisabled(step == 0);
 }
 
 void CustomCharPanel::callbackActive(Widget &widget) {
@@ -56,14 +92,6 @@ void CustomCharPanel::callbackActive(Widget &widget) {
 		_charGen->decStep();
 		return;
 	}
-
-	// Custom character creation uses six ordered steps:
-	//   1. Ability score allocation
-	//   2. Skill point allocation
-	//   3. Feat selection
-	//   4. Portrait / appearance selection
-	//   5. Name entry
-	//   6. Confirm and start
 
 	if (widget.getTag() == "BTN_STEPNAME1") {
 		_charGen->showAbilities();
@@ -91,6 +119,9 @@ void CustomCharPanel::callbackActive(Widget &widget) {
 	}
 
 	if (widget.getTag() == "BTN_STEPNAME6") {
+		if (_charGen->getStep() < 5)
+			return;
+
 		_charGen->start();
 		GfxMan.lockFrame();
 		_returnCode = 2;

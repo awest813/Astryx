@@ -26,6 +26,7 @@
 
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/ingame/levelup.h"
 #include "src/engines/kotor/gui/ingame/levelup_abilities.h"
@@ -46,9 +47,19 @@ LevelUpGUI::LevelUpGUI(KotORBase::Module &module, KotORBase::Creature &pc, ::Eng
 	load("levelpnl");
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
+	updateSummaryLabels();
 }
 
 LevelUpGUI::~LevelUpGUI() {
+}
+
+void LevelUpGUI::updateSummaryLabels() {
+	populateCharacterSheet(_pc);
+
+	const int nextLevel = _pc.getHitDice() + 1;
+	const Common::UString nextLevelText = Common::composeString(nextLevel);
+	setWidgetText("LBL_LEVEL_VAL", nextLevelText);
+	setWidgetText("LBL_LEVEL", nextLevelText);
 }
 
 void LevelUpGUI::callbackActive(::Engines::Widget &widget) {
@@ -58,46 +69,62 @@ void LevelUpGUI::callbackActive(::Engines::Widget &widget) {
 	}
 
 	if (widget.getTag() == "BTN_ACCEPT") {
+		if (!KotORBase::canLevelUp(_pc)) {
+			_returnCode = 1;
+			return;
+		}
+
 		_step = 1;
-		callbackRun(); // Start the first step
+		callbackRun();
 		return;
 	}
 }
 
 void LevelUpGUI::callbackRun() {
-	if (_step == 0) return;
+	if (_step == 0)
+		return;
 
-	// In xoreos, sub-GUIs are pushed to the stack. 
-	// This callbackRun will be skipped while the sub-GUI is active.
-	// When we are back here, it means the sub-GUI has finished.
-
-	int totalLevel = _pc.getHitDice();
+	const int totalLevel = _pc.getHitDice();
 
 	switch (_step) {
-	case 1: // Abilities (Every 4 levels)
+	case 1:
 		_step++;
-		if (totalLevel % 4 == 0) {
-			showAbilities();
+		if (KotORBase::grantsAbilityIncrease(totalLevel)) {
+			if (!showAbilities()) {
+				_step = 0;
+				return;
+			}
+		}
+		// Fall through
+	case 2:
+		_step++;
+		if (!showSkills()) {
+			_step = 0;
 			return;
 		}
 		// Fall through
-	case 2: // Skills
+	case 3:
 		_step++;
-		showSkills();
-		return;
-	case 3: // Feats
-		_step++;
-		showFeats();
-		return;
-	case 4: // Force Powers
-		_step++;
-		if (_pc.getCreatureInfo().isJedi()) {
-			showForcePowers();
-			return;
+		if (!KotORBase::getSelectableFeats(_pc.getCreatureInfo()).empty()) {
+			if (!showFeats()) {
+				_step = 0;
+				return;
+			}
 		}
 		// Fall through
-	case 5: // Finalize
+	case 4:
+		_step++;
+		if (_pc.getCreatureInfo().isJedi() &&
+		    !KotORBase::getSelectableForcePowers(_pc.getCreatureInfo()).empty()) {
+			if (!showForcePowers()) {
+				_step = 0;
+				return;
+			}
+		}
+		// Fall through
+	case 5:
 		finalizeLevelUp();
+		updateSummaryLabels();
 		_step = 0;
 		_returnCode = 1;
 		break;
@@ -105,48 +132,31 @@ void LevelUpGUI::callbackRun() {
 }
 
 void LevelUpGUI::finalizeLevelUp() {
-	KotORBase::CreatureInfo &info = _pc.getCreatureInfo();
-	KotORBase::Class pcClass = info.getLatestClass();
-	info.incrementClassLevel(pcClass);
-
-	// HP gain: based on class hit die + CON modifier.
-	int hpGain = 10;
-	if (pcClass == KotORBase::kClassScout)          hpGain = 8;
-	if (pcClass == KotORBase::kClassScoundrel)      hpGain = 6;
-	if (pcClass == KotORBase::kClassJediGuardian)   hpGain = 10;
-	if (pcClass == KotORBase::kClassJediSentinel)   hpGain = 8;
-	if (pcClass == KotORBase::kClassJediConsular)   hpGain = 6;
-
-	hpGain += info.getAbilityModifier(KotORBase::kAbilityConstitution);
-	if (hpGain < 1) hpGain = 1;
-
-	_pc.setMaxHitPoints(_pc.getMaxHitPoints() + hpGain);
-	_pc.setCurrentHitPoints(_pc.getMaxHitPoints());
-
-	_pc.setMaxForcePoints(_pc.computeMaxForcePoints());
-	_pc.setForcePoints(_pc.getMaxForcePoints());
-
-	status("Level Up Finalized for %s. New HitDice: %d", _pc.getName().c_str(), _pc.getHitDice());
+	KotORBase::applyLevelUp(_pc);
 }
 
-void LevelUpGUI::showAbilities() {
+bool LevelUpGUI::showAbilities() {
 	LevelUpAbilitiesMenu menu(_pc.getCreatureInfo(), _console);
 	sub(menu);
+	return menu.isAccepted();
 }
 
-void LevelUpGUI::showSkills() {
+bool LevelUpGUI::showSkills() {
 	LevelUpSkillsMenu menu(_pc.getCreatureInfo(), _console);
 	sub(menu);
+	return menu.isAccepted();
 }
 
-void LevelUpGUI::showFeats() {
+bool LevelUpGUI::showFeats() {
 	LevelUpFeatsMenu menu(_pc.getCreatureInfo(), _console);
 	sub(menu);
+	return menu.isAccepted();
 }
 
-void LevelUpGUI::showForcePowers() {
+bool LevelUpGUI::showForcePowers() {
 	LevelUpForcePowersMenu menu(_pc.getCreatureInfo(), _console);
 	sub(menu);
+	return menu.isAccepted();
 }
 
 } // End of namespace KotOR

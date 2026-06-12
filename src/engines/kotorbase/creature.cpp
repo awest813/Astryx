@@ -28,6 +28,7 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/creaturesearch.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
+#include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
@@ -314,6 +315,7 @@ namespace KotORBase {
 			// Faction	_faction = Faction(gff.getUint("FactionID", _faction));
 			// Scripts	readScripts(gff, clearScripts);
 			_conversation = gff.getString("Conversation", _conversation);
+			setSoundSet(gff.getUint("SoundSetFile", Aurora::kFieldIDInvalid));
 		}
 		void Creature::loadPortrait(
 		const Aurora::GFF3Struct &gff) {
@@ -486,35 +488,46 @@ namespace KotORBase {
 			_skin = chargenInfo.getSkin();
 			_face = chargenInfo.getFace();
 			_minOneHitPoint = true;
-			// Compute starting max HP: class hit die (max value) + Constitution modifier.	// The fallback of 6 matches the Scoundrel hit die and is also the minimum	// d6 that any KotOR class uses.	static
-			const
-			int kDefaultHitDie = 6;
-			int hitDie = kDefaultHitDie;
-			try {
-				const Aurora::TwoDAFile &classes = TwoDAReg.get2DA("classes");
-				Common::UString label;
-				switch (chargenInfo.getClass()) {
-					case kClassSoldier:   label = "Soldier";
-					break;
-					case kClassScout:     label = "Scout";
-					break;
-					case kClassScoundrel: label = "Scoundrel";
-					break;
-					default: break;
-				}
-				if (!label.empty())			hitDie = classes.getRow("label", label).getInt("hitdie");
+			if (_info.hasHitPoints()) {
+				_currentHitPoints = _info.getCurrentHitPoints();
+				_maxHitPoints = _info.getMaxHitPoints();
+			} else {
+				int hitDie = classHitDie(chargenInfo.getClass());
+				int conMod = _info.getAbilityModifier(kAbilityConstitution);
+				int hp = hitDie + conMod;
+				if (hp < 1)		hp = 1;
+				_currentHitPoints = _maxHitPoints = hp;
 			}
-			catch (...) {
-				// Keep the default if the 2DA lookup fails.
+
+			if (_info.getMaxForcePoints() > 0) {
+				setMaxForcePoints(_info.getMaxForcePoints());
+				setForcePoints(_info.getForcePoints());
+			} else {
+				setMaxForcePoints(computeMaxForcePoints());
+				setForcePoints(getMaxForcePoints());
 			}
-			int conMod = _info.getAbilityModifier(kAbilityConstitution);
-			int hp = hitDie + conMod;
-			if (hp < 1)		hp = 1;
-			_currentHitPoints = _maxHitPoints = hp;
-			setMaxForcePoints(computeMaxForcePoints());
-			setForcePoints(getMaxForcePoints());
 			reloadEquipment();
 			loadEquippedModel();
+		}
+		void Creature::applyCreatureInfo(const CreatureInfo &info) {
+			_info = info;
+			if (info.hasHitPoints()) {
+				_currentHitPoints = info.getCurrentHitPoints();
+				_maxHitPoints = info.getMaxHitPoints();
+			}
+			if (info.getMaxForcePoints() > 0) {
+				setMaxForcePoints(info.getMaxForcePoints());
+				setForcePoints(info.getForcePoints());
+			}
+			reloadEquipment();
+			loadEquippedModel();
+		}
+		CreatureInfo Creature::buildSavedState() const {
+			CreatureInfo info = _info;
+			info.setHitPoints(getCurrentHitPoints(), getMaxHitPoints());
+			info.setForcePoints(getForcePoints());
+			info.setMaxForcePoints(getMaxForcePoints());
+			return info;
 		}
 		const Common::UString &Creature::getCursor()
 		const {

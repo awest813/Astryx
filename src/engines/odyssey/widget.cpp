@@ -306,6 +306,15 @@ bool Widget::isHighlight() const {
 	return _highlighted;
 }
 
+bool Widget::hasTextComponent() const {
+	return _text != nullptr;
+}
+
+void Widget::ensureText(const Common::UString &font) {
+	if (!_text)
+		createText(font, "");
+}
+
 void Widget::createText(const Common::UString &font, const Common::UString &str) {
 	const Graphics::Aurora::FontHandle f = FontMan.get(font);
 	const float width  = f.getFont().getWidth(str);

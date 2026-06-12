@@ -93,13 +93,15 @@ void performTraskEncounter(KotORBase::Module &module) {
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 
-	module.shakeCamera(1.5f, 0.4f);
 	module.playMusicStinger("mus_vfx_explosion");
 	module.cameraTransitionToTarget("wp_trask_reveal", 2.0f);
 
-	if (KotORBase::Creature *trask = findTraskUlgo(module))
+	if (KotORBase::Creature *trask = findTraskUlgo(module)) {
+		module.setCameraMode(KotORBase::kCameraModeMedium, trask);
 		module.setCinematicFocus(trask);
+	}
 
+	module.shakeCamera(1.5f, 0.4f);
 	module.runCinematicBeat(2.5f);
 
 	module.restoreGameplayCamera(1.0f);

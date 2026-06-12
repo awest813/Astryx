@@ -65,6 +65,7 @@ public:
 	void removeAllItems();
 
 	uint32_t getGold() const;
+	void setGold(uint32_t amount);
 	void addGold(uint32_t amount);
 	void removeGold(uint32_t amount);
 

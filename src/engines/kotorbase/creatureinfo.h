@@ -41,6 +41,12 @@ namespace Engines {
 
 namespace KotORBase {
 
+/** True for base Jedi classes and prestige Force-using classes. */
+bool isJediClass(Class charClass);
+
+/** Map prestige Jedi classes to their base class for feats, skills, and saves. */
+Class progressionClass(Class charClass);
+
 class CharacterGenerationInfo;
 
 class CreatureInfo {
@@ -163,6 +169,12 @@ public:
 	void setAlignment(int alignment);
 	void adjustAlignment(int shift);
 
+	// Hit Points (persisted in saves; optional for new characters)
+	int getCurrentHitPoints() const;
+	int getMaxHitPoints() const;
+	bool hasHitPoints() const;
+	void setHitPoints(int current, int max);
+
 private:
 	std::vector<ClassLevel> _levels;
 	Abilities _abilities;
@@ -175,6 +187,9 @@ private:
 	uint32_t _forcePointsCurrent { 0 };
 	uint32_t _forcePointsMax     { 0 };
 	int      _alignment          { 50 }; // Neutral by default
+	int      _currentHitPoints   { 0 };
+	int      _maxHitPoints       { 0 };
+	bool     _hasHitPoints       { false };
 
 	void saveAbilities(Aurora::GFF3WriterStruct &gff) const;
 	void loadAbilities(const Aurora::GFF3Struct &gff);

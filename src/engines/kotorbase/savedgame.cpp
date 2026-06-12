@@ -28,6 +28,8 @@
 #include "src/common/readfile.h"
 
 #include "src/engines/kotorbase/savedgame.h"
+#include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 
@@ -78,6 +80,47 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 
 		if (res.name.equalsIgnoreCase("GLOBALVARS") && res.type == Aurora::kFileTypeRES) {
 			_globals = std::make_unique<Aurora::GFF3File>(erf.getResource(res.index));
+			continue;
+		}
+
+		if (res.name.equalsIgnoreCase("partytable") && res.type == Aurora::kFileTypeRES) {
+			Aurora::GFF3File partyGff(erf.getResource(res.index));
+			const Aurora::GFF3Struct &partyRoot = partyGff.getTopLevel();
+			_partyGold = partyRoot.getUint("PT_GOLD", 0);
+			_hasPartyGold = true;
+			if (partyRoot.hasField("PT_PC_STATE")) {
+				_savedPCInfo.read(partyRoot.getStruct("PT_PC_STATE"));
+				_hasSavedPCInfo = true;
+			}
+
+			if (partyRoot.hasField("PT_AVAIL_NPCS")) {
+				const Aurora::GFF3List &availList = partyRoot.getList("PT_AVAIL_NPCS");
+				for (Aurora::GFF3List::const_iterator it = availList.begin(); it != availList.end(); ++it) {
+					if (!*it)
+						continue;
+					const int index = (*it)->getSint("Index");
+					const Common::UString resRef = (*it)->getString("NPCResRef");
+					if (!resRef.empty())
+						_savedAvailableNPCs[index] = resRef;
+				}
+			}
+
+			if (partyRoot.hasField("PT_MEMBERS")) {
+				const Aurora::GFF3List &membersList = partyRoot.getList("PT_MEMBERS");
+				for (Aurora::GFF3List::const_iterator it = membersList.begin(); it != membersList.end(); ++it) {
+					if (!*it)
+						continue;
+
+					SavedPartyMemberState member;
+					member.npcSlot = (*it)->getSint("NPCSlot", -1);
+					member.templateResRef = (*it)->getString("TemplateResRef");
+					if ((*it)->hasField("CreatureState"))
+						member.info.read((*it)->getStruct("CreatureState"));
+					_savedPartyMembers.push_back(member);
+				}
+				_savedPartyLeaderIndex = partyRoot.getUint("PT_LEADER_INDEX", 0);
+				_hasSavedPartyState = !_savedPartyMembers.empty();
+			}
 			continue;
 		}
 
@@ -155,6 +198,16 @@ void SavedGame::applyPersistedState(Module &module) const {
 
 	if (_areaState)
 		module.loadAreaObjectSaves(_areaState->getTopLevel());
+
+	if (_hasSavedPCInfo)
+		module.setSavedPCInfo(_savedPCInfo);
+	else if (_hasPartyGold) {
+		if (Creature *pc = module.getPC())
+			pc->getInventory().setGold(_partyGold);
+	}
+
+	if (_hasSavedPartyState)
+		module.setSavedPartyState(_savedAvailableNPCs, _savedPartyMembers, _savedPartyLeaderIndex);
 }
 
 } // End of namespace KotORBase

@@ -23,15 +23,36 @@
  */
 
 #include "src/common/strutil.h"
+#include "src/common/util.h"
 
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
+
+#include "src/engines/kotorbase/levelup.h"
 
 #include "src/engines/kotor/gui/ingame/levelup_forcepowers.h"
 
 namespace Engines {
 
 namespace KotOR {
+
+static const char *kPowerButtonTags[] = {
+	"BTN_POWER_1",
+	"BTN_POWER_2",
+	"BTN_POWER_3",
+	"BTN_POWER_4",
+	"BTN_POWER_5",
+	"BTN_POWER_6",
+};
+
+static const char *kLegacyPowerButtonTags[] = {
+	"BTN_FORCE_1",
+	"BTN_FORCE_2",
+	"BTN_FORCE_3",
+	"BTN_FORCE_4",
+	"BTN_FORCE_5",
+	"BTN_FORCE_6",
+};
 
 LevelUpForcePowersMenu::LevelUpForcePowersMenu(KotORBase::CreatureInfo &info, Console *console) :
 		KotORBase::GUI(console),
@@ -47,11 +68,7 @@ LevelUpForcePowersMenu::LevelUpForcePowersMenu(KotORBase::CreatureInfo &info, Co
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
-	// Placeholder Force Powers for Phase 5.1
-	// These IDs are placeholders; full implementation requires spells.2da lookup.
-	_availablePowers.push_back(1); // Force Heal
-	_availablePowers.push_back(2); // Force Push
-	_availablePowers.push_back(3); // Burst of Speed
+	_availablePowers = KotORBase::getSelectableForcePowers(_info);
 
 	updateLabels();
 }
@@ -59,30 +76,58 @@ LevelUpForcePowersMenu::LevelUpForcePowersMenu(KotORBase::CreatureInfo &info, Co
 LevelUpForcePowersMenu::~LevelUpForcePowersMenu() {
 }
 
-void LevelUpForcePowersMenu::updateLabels() {
-	auto setWidgetText = [this](const char *tag, const Common::UString &text) {
-		Odyssey::WidgetLabel *lbl = getLabel(tag);
-		if (lbl) {
-			lbl->setText(text);
-			return;
-		}
-		Odyssey::WidgetButton *btn = getButton(tag);
-		if (btn)
-			btn->setText(text);
-	};
+bool LevelUpForcePowersMenu::isPowerAvailable(uint32_t power) const {
+	for (uint32_t available : _availablePowers) {
+		if (available == power)
+			return true;
+	}
+	return false;
+}
 
+void LevelUpForcePowersMenu::updateLabels() {
 	setWidgetText("REMAINING_SELECTIONS_LBL", (_selectedPower == 0xFFFFFFFF) ? "1" : "0");
+
+	for (size_t i = 0; i < ARRAYSIZE(kPowerButtonTags); ++i) {
+		const bool hasPower = i < _availablePowers.size();
+		const uint32_t powerId = hasPower ? _availablePowers[i] : 0;
+		const Common::UString name = hasPower ? KotORBase::getForcePowerDisplayName(powerId) : "";
+
+		setWidgetText(kPowerButtonTags[i], name);
+		if (i < ARRAYSIZE(kLegacyPowerButtonTags))
+			setWidgetText(kLegacyPowerButtonTags[i], name);
+
+		Odyssey::WidgetButton *button = getButton(kPowerButtonTags[i]);
+		if (!button && i < ARRAYSIZE(kLegacyPowerButtonTags))
+			button = getButton(kLegacyPowerButtonTags[i]);
+
+		if (!button)
+			continue;
+
+		button->setInvisible(!hasPower);
+		if (!hasPower) {
+			button->hide();
+			continue;
+		}
+
+		if (_selectedPower == powerId)
+			button->setStaticHighlight();
+		else
+			button->setPermanentHighlight(false);
+
+		button->show();
+	}
 }
 
 void LevelUpForcePowersMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
-	if (tag == "BTN_POWER_1") {
-		_selectedPower = 1;
-	} else if (tag == "BTN_POWER_2") {
-		_selectedPower = 2;
-	} else if (tag == "BTN_POWER_3") {
-		_selectedPower = 3;
+	for (size_t i = 0; i < ARRAYSIZE(kPowerButtonTags) && i < _availablePowers.size(); ++i) {
+		if (tag == kPowerButtonTags[i] ||
+		    (i < ARRAYSIZE(kLegacyPowerButtonTags) && tag == kLegacyPowerButtonTags[i])) {
+			_selectedPower = _availablePowers[i];
+			updateLabels();
+			return;
+		}
 	}
 
 	if (tag == "BTN_BACK") {
@@ -91,8 +136,8 @@ void LevelUpForcePowersMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "BTN_ACCEPT") {
-		if (_selectedPower != 0xFFFFFFFF) {
-			// In a real implementation, add the Force power to the character.
+		if (_selectedPower != 0xFFFFFFFF && isPowerAvailable(_selectedPower)) {
+			_info.addForcePower(_selectedPower);
 			_accepted = true;
 			_returnCode = 1;
 		}

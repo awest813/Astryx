@@ -56,6 +56,7 @@ public:
 	void showJournal() override;
 
 	void showMenu() override;
+	void showGUIPanel(int panel) override;
 	void showDeathGUI() override;
 
 	void enter() override;
@@ -64,6 +65,7 @@ public:
 
 protected:
 	bool deferIngameHUDOnEnter() const override;
+	void onFrameUpdate(float frameTime) override;
 
 private:
 	void showIngameOptionsMenu();

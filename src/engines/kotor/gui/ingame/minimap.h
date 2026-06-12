@@ -25,12 +25,22 @@
 #ifndef ENGINES_KOTOR_GUI_INGAME_MINIMAP_H
 #define ENGINES_KOTOR_GUI_INGAME_MINIMAP_H
 
+#include <memory>
+#include <vector>
+
+#include "src/common/ustring.h"
+
 #include "src/graphics/aurora/guiquad.h"
 #include "src/graphics/aurora/subscenequad.h"
 
 namespace Engines {
 
 namespace KotOR {
+
+struct MinimapMapPin {
+	float worldX { 0.0f };
+	float worldY { 0.0f };
+};
 
 class Minimap : public Graphics::Aurora::SubSceneQuad {
 public:
@@ -39,14 +49,22 @@ public:
 	        float worldPt1X, float worldPt1Y, float worldPt2X, float worldPt2Y);
 
 	void setPosition(float x, float y);
+	void setMapExplored(const std::vector<bool> &explored);
+	void setMapPins(const std::vector<MinimapMapPin> &pins);
 	int getNorthAxis();
 
 private:
 	Graphics::Aurora::GUIQuad _mapQuad;
+	std::vector<std::unique_ptr<Graphics::Aurora::GUIQuad>> _fogTiles;
+	std::vector<std::unique_ptr<Graphics::Aurora::GUIQuad>> _pinQuads;
+	Common::UString _mapTexture;
 
 	int _northAxis;
 	float _mapPt1X, _mapPt1Y, _mapPt2X, _mapPt2Y;
 	float _worldPt1X, _worldPt1Y, _worldPt2X, _worldPt2Y;
+
+	void buildFogTiles();
+	void worldToMapPixels(float worldX, float worldY, float &mapX, float &mapY) const;
 };
 
 } // End of namespace KotOR

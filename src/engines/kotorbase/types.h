@@ -417,9 +417,16 @@ enum EffectType {
 enum ItemPropertyType {
 	kItemPropertyAbilityBonus     =  0,
 	kItemPropertyACBonus          =  1,
+	kItemPropertyCastSpell        =  6,
 	kItemPropertyEnhancementBonus =  7,
 	kItemPropertyDamageBonus      = 15,
 	kItemPropertyAttackBonus      = 58
+};
+
+/** World-space map note marker for minimap rendering. */
+struct MapPin {
+	float worldX { 0.0f };
+	float worldY { 0.0f };
 };
 
 } // End of namespace KotORBase
