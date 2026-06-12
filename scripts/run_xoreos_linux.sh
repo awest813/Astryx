@@ -58,9 +58,10 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-get_xoreos_executable() {
+	get_xoreos_executable() {
 	local candidates=(
 		"${REPO_ROOT}/${BUILD_DIR}/bin/xoreos"
+		"${REPO_ROOT}/build-linux-ci/bin/xoreos"
 		"${REPO_ROOT}/build-vcpkg-linux/bin/xoreos"
 		"${REPO_ROOT}/build-vcpkg/bin/Debug/xoreos"
 		"${REPO_ROOT}/build/bin/xoreos"
@@ -254,7 +255,7 @@ else
 fi
 
 if [[ -z "${EXE_PATH}" ]]; then
-	echo "xoreos was not found in the known build directories. Run scripts/bootstrap_linux.sh first." >&2
+	echo "xoreos was not found in the known build directories. Run scripts/build_ci_linux.sh or scripts/bootstrap_linux.sh first." >&2
 	exit 1
 fi
 
