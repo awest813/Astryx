@@ -81,6 +81,9 @@ public:
 	void updateSelection();
 	void hideSelection();
 
+	void updateGrenadeReticle(int screenX, int screenY);
+	void hideGrenadeReticle();
+
 	virtual void notifyJournalUpdated();
 
 	void showFloatingText(Object *object, const Common::UString &text, float duration = 6.0f);
@@ -104,6 +107,7 @@ private:
 
 	Object *_targetObject { nullptr };
 	std::unique_ptr<SelectionCircle> _targetCircle;
+	std::unique_ptr<SelectionCircle> _grenadeReticle;
 	bool _targetDirty { false };
 
 	// Widgets for showing target information

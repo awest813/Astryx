@@ -497,6 +497,11 @@ namespace KotORBase {
 			reloadEquipment();
 			loadEquippedModel();
 		}
+		void Creature::applyCreatureInfo(const CreatureInfo &info) {
+			_info = info;
+			reloadEquipment();
+			loadEquippedModel();
+		}
 		const Common::UString &Creature::getCursor()
 		const {
 			static Common::UString talkCursor("talk");

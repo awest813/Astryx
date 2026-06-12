@@ -81,6 +81,7 @@ public:
 	/** Remove a single NPC slot from the available party roster. */
 	void removeAvailableNPC(int npc);
 
+	const std::map<int, Common::UString> &getAvailableNPCs() const;
 
 	bool handleEvent(const Events::Event &e);
 	void raiseHeartbeatEvent();

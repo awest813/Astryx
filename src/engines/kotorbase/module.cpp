@@ -330,6 +330,37 @@ void Module::loadPC() {
 }
 
 void Module::loadParty() {
+	if (_hasSavedPartyState) {
+		_partyController.clearCurrentParty();
+		_partyController.clearAvailableParty();
+
+		for (const auto &entry : _savedAvailableNPCs)
+			_partyController.addAvailableNPCByTemplate(entry.first, entry.second);
+
+		for (const SavedPartyMemberState &member : _savedPartyMembers) {
+			if (member.npcSlot == -1) {
+				_partyController.addPartyMember(-1, _pc);
+				continue;
+			}
+
+			if (member.templateResRef.empty())
+				continue;
+
+			Creature *creature = createCreature(member.templateResRef);
+			creature->applyCreatureInfo(member.info);
+			_partyController.addPartyMember(member.npcSlot, creature);
+			refreshCreatureEquipmentUpgrades(*creature, *this);
+		}
+
+		if (_savedPartyLeaderIndex > 0 &&
+		    _savedPartyLeaderIndex < static_cast<int>(_partyController.getPartyMemberCount()))
+			_partyController.setPartyLeaderByIndex(_savedPartyLeaderIndex);
+
+		_hasSavedPartyState = false;
+		updateCurrentPartyGUI();
+		return;
+	}
+
 	std::vector<int> partyMembers = _partyController.getPartyMembers();
 
 	if (partyMembers.empty()) {
@@ -801,6 +832,15 @@ void Module::setSavedPCInfo(const CreatureInfo &info) {
 	_pcInfo = info;
 }
 
+void Module::setSavedPartyState(const std::map<int, Common::UString> &availableNPCs,
+                                const std::vector<SavedPartyMemberState> &members,
+                                int leaderIndex) {
+	_savedAvailableNPCs = availableNPCs;
+	_savedPartyMembers = members;
+	_savedPartyLeaderIndex = leaderIndex;
+	_hasSavedPartyState = !members.empty();
+}
+
 bool Module::isGrenadeTargeting() const {
 	return _grenadeTargetingActive;
 }
@@ -813,6 +853,7 @@ void Module::beginGrenadeTargeting(const Common::UString &itemTag) {
 void Module::cancelGrenadeTargeting() {
 	_grenadeTargetingActive = false;
 	_grenadeItemTag.clear();
+	_ingame->hideGrenadeReticle();
 }
 
 bool Module::handleGrenadeTargetingClick(int screenX, int screenY) {
@@ -883,6 +924,26 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 			Aurora::GFF3WriterStructPtr pcState = partyRoot->addStruct("PT_PC_STATE");
 			_pcInfo.save(*pcState);
 		}
+
+		Aurora::GFF3WriterListPtr availList = partyRoot->addList("PT_AVAIL_NPCS");
+		for (const auto &entry : _partyController.getAvailableNPCs()) {
+			Aurora::GFF3WriterStructPtr avail = availList->addStruct();
+			avail->addSint32("Index", entry.first);
+			avail->addResRef("NPCResRef", entry.second);
+		}
+
+		Aurora::GFF3WriterListPtr membersList = partyRoot->addList("PT_MEMBERS");
+		for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+			const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+			Aurora::GFF3WriterStructPtr memberStruct = membersList->addStruct();
+			memberStruct->addSint32("NPCSlot", member.first);
+			if (member.first != -1 && member.second) {
+				memberStruct->addResRef("TemplateResRef", member.second->getTemplateResRef());
+				Aurora::GFF3WriterStructPtr state = memberStruct->addStruct("CreatureState");
+				member.second->getCreatureInfo().save(*state);
+			}
+		}
+		partyRoot->addUint32("PT_LEADER_INDEX", 0);
 		partyWriter.write(partyMem);
 	}
 
@@ -971,6 +1032,11 @@ void Module::handleEvents() {
 		}
 
 		if (_grenadeTargetingActive) {
+			if (event->type == Events::kEventMouseMove) {
+				_ingame->updateGrenadeReticle(event->motion.x, event->motion.y);
+				continue;
+			}
+
 			if (event->type == Events::kEventMouseUp &&
 			    event->button.button == SDL_BUTTON_LMASK) {
 				if (handleGrenadeTargetingClick(event->button.x, event->button.y))

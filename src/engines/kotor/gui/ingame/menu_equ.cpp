@@ -34,6 +34,7 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/itemupgrades.h"
 
 #include "src/engines/kotorbase/gui/inventoryitem.h"
 
@@ -169,6 +170,7 @@ void MenuEquipment::callbackActive(Widget &widget) {
 			KotORBase::Creature *pc = _module->getPC();
 			KotORBase::Creature *partyLeader = _module->getPartyLeader();
 			partyLeader->equipItem(itemTag, _selectedSlot, pc->getCreatureInfo());
+			KotORBase::refreshCreatureEquipmentUpgrades(*partyLeader, *_module);
 			_module->getCurrentArea()->addToObjectMap(partyLeader);
 
 			fillEquipedItems();

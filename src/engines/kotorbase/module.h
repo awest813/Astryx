@@ -54,6 +54,7 @@ class GFF3WriterStruct;
 #include "src/engines/kotorbase/partycontroller.h"
 #include "src/engines/kotorbase/cameracontroller.h"
 #include "src/engines/kotorbase/creatureinfo.h"
+#include "src/engines/kotorbase/partystate.h"
 #include "src/engines/kotorbase/round.h"
 
 #include "src/engines/kotorbase/gui/ingame.h"
@@ -352,6 +353,10 @@ protected:
 
 	/** Restore PC inventory/equipment/stats from a save before loadPC(). */
 	void setSavedPCInfo(const CreatureInfo &info);
+	/** Restore available/active party roster from a save before loadParty(). */
+	void setSavedPartyState(const std::map<int, Common::UString> &availableNPCs,
+	                        const std::vector<SavedPartyMemberState> &members,
+	                        int leaderIndex);
 
 	// Grenade targeting
 
@@ -560,6 +565,11 @@ private:
 
 	Common::UString _grenadeItemTag;
 	bool _grenadeTargetingActive { false };
+
+	std::vector<SavedPartyMemberState> _savedPartyMembers;
+	std::map<int, Common::UString> _savedAvailableNPCs;
+	int _savedPartyLeaderIndex { 0 };
+	bool _hasSavedPartyState { false };
 	bool _playerInputEnabled { true };
 	bool _cutsceneMode { false };
 	int _userDefinedEventNumber { 0 };

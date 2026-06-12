@@ -22,6 +22,9 @@
  *  Round-trip tests for KotOR save serialization writers.
  */
 
+#include <map>
+#include <vector>
+
 #include "gtest/gtest.h"
 
 #include "src/common/memreadstream.h"
@@ -34,6 +37,7 @@
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/partystate.h"
 #include "src/engines/kotorbase/types.h"
 
 using Engines::KotORBase::CreatureInfo;
@@ -141,6 +145,79 @@ GTEST_TEST(KotORSaveSerialization, partyPCStateRoundTrip) {
 	EXPECT_EQ(loaded.getInventory().getItems().at("g_i_medpac01").count, 3);
 	EXPECT_TRUE(loaded.isInventorySlotEquipped(kInventorySlotBody));
 	EXPECT_EQ(loaded.getAbilityScore(kAbilityStrength), 16);
+}
+
+GTEST_TEST(KotORSaveSerialization, partyRosterRoundTrip) {
+	CreatureInfo companionInfo;
+	companionInfo.addInventoryItem("g_i_medpac01", 1);
+	companionInfo.equipItem("g_i_boots01", kInventorySlotBody);
+	companionInfo.setAbilityScore(kAbilityStrength, 13);
+
+	Aurora::GFF3Writer writer(MKTAG('P', 'T', 'A', 'B'));
+	Aurora::GFF3WriterStructPtr partyRoot = writer.getTopLevel();
+
+	Aurora::GFF3WriterListPtr availList = partyRoot->addList("PT_AVAIL_NPCS");
+	{
+		Aurora::GFF3WriterStructPtr avail = availList->addStruct();
+		avail->addSint32("Index", 0);
+		avail->addResRef("NPCResRef", "p_bastilla");
+	}
+	{
+		Aurora::GFF3WriterStructPtr avail = availList->addStruct();
+		avail->addSint32("Index", 1);
+		avail->addResRef("NPCResRef", "p_carth");
+	}
+
+	Aurora::GFF3WriterListPtr membersList = partyRoot->addList("PT_MEMBERS");
+	{
+		Aurora::GFF3WriterStructPtr member = membersList->addStruct();
+		member->addSint32("NPCSlot", -1);
+	}
+	{
+		Aurora::GFF3WriterStructPtr member = membersList->addStruct();
+		member->addSint32("NPCSlot", 0);
+		member->addResRef("TemplateResRef", "p_bastilla");
+		Aurora::GFF3WriterStructPtr state = member->addStruct("CreatureState");
+		companionInfo.save(*state);
+	}
+	partyRoot->addUint32("PT_LEADER_INDEX", 0);
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	const Aurora::GFF3Struct &loadedRoot = gff.getTopLevel();
+
+	std::map<int, Common::UString> availableNPCs;
+	const Aurora::GFF3List &availLoaded = loadedRoot.getList("PT_AVAIL_NPCS");
+	for (Aurora::GFF3List::const_iterator it = availLoaded.begin(); it != availLoaded.end(); ++it) {
+		if (!*it)
+			continue;
+		availableNPCs[(*it)->getSint("Index")] = (*it)->getString("NPCResRef");
+	}
+
+	std::vector<Engines::KotORBase::SavedPartyMemberState> members;
+	const Aurora::GFF3List &membersLoaded = loadedRoot.getList("PT_MEMBERS");
+	for (Aurora::GFF3List::const_iterator it = membersLoaded.begin(); it != membersLoaded.end(); ++it) {
+		if (!*it)
+			continue;
+
+		Engines::KotORBase::SavedPartyMemberState member;
+		member.npcSlot = (*it)->getSint("NPCSlot", -1);
+		member.templateResRef = (*it)->getString("TemplateResRef");
+		if ((*it)->hasField("CreatureState"))
+			member.info.read((*it)->getStruct("CreatureState"));
+		members.push_back(member);
+	}
+
+	EXPECT_EQ(availableNPCs.size(), 2U);
+	EXPECT_EQ(availableNPCs[0], Common::UString("p_bastilla"));
+	EXPECT_EQ(availableNPCs[1], Common::UString("p_carth"));
+	EXPECT_EQ(members.size(), 2U);
+	EXPECT_EQ(members[0].npcSlot, -1);
+	EXPECT_EQ(members[1].npcSlot, 0);
+	EXPECT_EQ(members[1].templateResRef, Common::UString("p_bastilla"));
+	EXPECT_TRUE(members[1].info.getInventory().hasItem("g_i_medpac01"));
+	EXPECT_TRUE(members[1].info.isInventorySlotEquipped(kInventorySlotBody));
+	EXPECT_EQ(members[1].info.getAbilityScore(kAbilityStrength), 13);
+	EXPECT_EQ(loadedRoot.getUint("PT_LEADER_INDEX", 0), 0U);
 }
 
 GTEST_TEST(KotORSaveSerialization, defaultMapExploredTileCount) {

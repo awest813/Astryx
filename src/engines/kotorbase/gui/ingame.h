@@ -83,6 +83,9 @@ public:
 	void updateSelection();
 	void hideSelection();
 
+	void updateGrenadeReticle(int screenX, int screenY);
+	void hideGrenadeReticle();
+
 	HUD &getHUD();
 
 

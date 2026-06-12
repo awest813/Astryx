@@ -103,6 +103,14 @@ void IngameGUI::updateSelection() {
 	_hud->updateSelection();
 }
 
+void IngameGUI::updateGrenadeReticle(int screenX, int screenY) {
+	_hud->updateGrenadeReticle(screenX, screenY);
+}
+
+void IngameGUI::hideGrenadeReticle() {
+	_hud->hideGrenadeReticle();
+}
+
 void IngameGUI::hideSelection() {
 	_hud->hideSelection();
 }

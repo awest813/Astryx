@@ -69,6 +69,8 @@ public:
 	void initAsFakePC();
 	/** Initialize this creature as a player character from a specified info class. */
 	void initAsPC(const CharacterGenerationInfo &chargenInfo, const CreatureInfo &info);
+	/** Replace stats/inventory/equipment from a saved CreatureInfo snapshot. */
+	void applyCreatureInfo(const CreatureInfo &info);
 
 	// Basic visuals
 

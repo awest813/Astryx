@@ -212,6 +212,9 @@ ItemActionResult throwGrenadeAt(Creature &inventoryOwner, const Common::UString 
 			}
 		}
 
+		if (leader)
+			leader->playAnimation("g8g1", false, 0.8f);
+
 		const int damage = grenadeDamageForItem(item);
 		const bool friendlyFire = grenadeHasFriendlyFire(item);
 		int targetsHit = 0;
@@ -231,6 +234,7 @@ ItemActionResult throwGrenadeAt(Creature &inventoryOwner, const Common::UString 
 		}
 
 		module.playSound("exp_generic");
+		module.shakeCamera(0.35f, 0.12f);
 		inventoryOwner.getCreatureInfo().removeInventoryItem(tag, 1);
 		result.success = true;
 		result.message = targetsHit > 0 ?

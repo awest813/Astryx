@@ -92,6 +92,35 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 				_savedPCInfo.read(partyRoot.getStruct("PT_PC_STATE"));
 				_hasSavedPCInfo = true;
 			}
+
+			if (partyRoot.hasField("PT_AVAIL_NPCS")) {
+				const Aurora::GFF3List &availList = partyRoot.getList("PT_AVAIL_NPCS");
+				for (Aurora::GFF3List::const_iterator it = availList.begin(); it != availList.end(); ++it) {
+					if (!*it)
+						continue;
+					const int index = (*it)->getSint("Index");
+					const Common::UString resRef = (*it)->getString("NPCResRef");
+					if (!resRef.empty())
+						_savedAvailableNPCs[index] = resRef;
+				}
+			}
+
+			if (partyRoot.hasField("PT_MEMBERS")) {
+				const Aurora::GFF3List &membersList = partyRoot.getList("PT_MEMBERS");
+				for (Aurora::GFF3List::const_iterator it = membersList.begin(); it != membersList.end(); ++it) {
+					if (!*it)
+						continue;
+
+					SavedPartyMemberState member;
+					member.npcSlot = (*it)->getSint("NPCSlot", -1);
+					member.templateResRef = (*it)->getString("TemplateResRef");
+					if ((*it)->hasField("CreatureState"))
+						member.info.read((*it)->getStruct("CreatureState"));
+					_savedPartyMembers.push_back(member);
+				}
+				_savedPartyLeaderIndex = partyRoot.getUint("PT_LEADER_INDEX", 0);
+				_hasSavedPartyState = !_savedPartyMembers.empty();
+			}
 			continue;
 		}
 
@@ -176,6 +205,9 @@ void SavedGame::applyPersistedState(Module &module) const {
 		if (Creature *pc = module.getPC())
 			pc->getInventory().setGold(_partyGold);
 	}
+
+	if (_hasSavedPartyState)
+		module.setSavedPartyState(_savedAvailableNPCs, _savedPartyMembers, _savedPartyLeaderIndex);
 }
 
 } // End of namespace KotORBase
