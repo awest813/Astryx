@@ -66,6 +66,9 @@ void HUD::setPosition(float UNUSED(x), float UNUSED(y)) {
 void HUD::setRotation(float UNUSED(angle)) {
 }
 
+void HUD::updateMinimapExplored(const std::vector<bool> &UNUSED(explored)) {
+}
+
 void HUD::setReturnStrref(uint32_t UNUSED(id)) {
 }
 

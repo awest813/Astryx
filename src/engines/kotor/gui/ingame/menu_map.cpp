@@ -24,13 +24,19 @@
 
 #include "src/aurora/talkman.h"
 
+#include "src/graphics/graphics.h"
+
 #include "src/engines/aurora/widget.h"
 
 #include "src/engines/odyssey/button.h"
+#include "src/engines/odyssey/label.h"
 
+#include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/module.h"
 
 #include "src/engines/kotor/gui/ingame/menu_map.h"
+#include "src/engines/kotor/gui/ingame/minimap.h"
 
 #include "src/engines/kotor/gui/dialogs/confirm.h"
 
@@ -60,6 +66,51 @@ void MenuMap::setReturnEnabled(bool enabled) {
 	Odyssey::WidgetButton *btnReturn = getButton("BTN_RETURN");
 	if (btnReturn)
 		btnReturn->setDisabled(!enabled);
+}
+
+void MenuMap::show() {
+	KotORBase::GUI::show();
+	refreshAreaMap();
+}
+
+void MenuMap::refreshAreaMap() {
+	if (!_module)
+		return;
+
+	KotORBase::Area *area = _module->getCurrentArea();
+	if (!area)
+		return;
+
+	Odyssey::WidgetLabel *mapView = getLabel("LBL_MAPVIEW");
+	if (!mapView)
+		mapView = getLabel("LBL_MAPAREA");
+	if (!mapView)
+		return;
+
+	float mapPt1X, mapPt1Y, mapPt2X, mapPt2Y;
+	area->getMapPoint1(mapPt1X, mapPt1Y);
+	area->getMapPoint2(mapPt2X, mapPt2Y);
+
+	float worldPt1X, worldPt1Y, worldPt2X, worldPt2Y;
+	area->getWorldPoint1(worldPt1X, worldPt1Y);
+	area->getWorldPoint2(worldPt2X, worldPt2Y);
+
+	GfxMan.lockFrame();
+
+	_areaMap = std::make_unique<Minimap>(_module->getMinimapMapId(), area->getNorthAxis(),
+	                                     mapPt1X, mapPt1Y, mapPt2X, mapPt2Y,
+	                                     worldPt1X, worldPt1Y, worldPt2X, worldPt2Y);
+	_areaMap->setMapExplored(area->getMapExplored());
+
+	if (KotORBase::Creature *leader = _module->getPartyLeader()) {
+		float x, y, z;
+		leader->getPosition(x, y, z);
+		_areaMap->setPosition(x, y);
+	}
+
+	mapView->setSubScene(_areaMap.get());
+
+	GfxMan.unlockFrame();
 }
 
 void MenuMap::callbackActive(Widget &widget) {

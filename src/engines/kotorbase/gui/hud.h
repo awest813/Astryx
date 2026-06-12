@@ -25,6 +25,8 @@
 #ifndef ENGINES_KOTORBASE_GUI_HUD_H
 #define ENGINES_KOTORBASE_GUI_HUD_H
 
+#include <vector>
+
 #include "src/engines/kotorbase/types.h"
 
 #include "src/engines/kotorbase/gui/gui.h"
@@ -52,6 +54,7 @@ public:
 
 	virtual void setPosition(float x, float y);
 	virtual void setRotation(float angle);
+	virtual void updateMinimapExplored(const std::vector<bool> &explored);
 
 	// Return to hideout
 

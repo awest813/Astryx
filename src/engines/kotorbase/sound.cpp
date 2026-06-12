@@ -30,6 +30,8 @@
 
 #include "src/sound/sound.h"
 
+#include "src/events/events.h"
+
 #include "src/engines/aurora/util.h"
 
 #include "src/engines/kotorbase/sound.h"
@@ -105,6 +107,25 @@ void SoundObject::play() {
 
 void SoundObject::stop() {
 	SoundMan.stopChannel(_sound);
+}
+
+void SoundObject::fadeAndStop(float duration) {
+	if (duration <= 0.0f) {
+		stop();
+		return;
+	}
+
+	static const int kFadeSteps = 8;
+	const float stepSeconds = duration / static_cast<float>(kFadeSteps);
+	float gain = 1.0f;
+
+	for (int step = 0; step < kFadeSteps; ++step) {
+		gain *= 0.65f;
+		SoundMan.setChannelGain(_sound, gain);
+		EventMan.delay(static_cast<uint32_t>(stepSeconds * 1000.0f));
+	}
+
+	stop();
 }
 
 } // End of namespace KotORBase

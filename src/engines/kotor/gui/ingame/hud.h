@@ -53,6 +53,7 @@ public:
 
 	void setPosition(float x, float y);
 	void setRotation(float angle);
+	void updateMinimapExplored(const std::vector<bool> &explored) override;
 
 	void showContainer(KotORBase::Inventory &inv);
 

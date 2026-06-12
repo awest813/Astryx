@@ -34,18 +34,56 @@ namespace Engines {
 
 namespace KotOR {
 
+namespace {
+
+static const int kFogCellSize = 32;
+static const int kFogCols = 17;
+static const int kFogRows = 9;
+
+} // Anonymous namespace
+
 Minimap::Minimap(const Common::UString &map, int northAxis,
                  float mapPt1X, float mapPt1Y, float mapPt2X, float mapPt2Y,
                  float worldPt1X, float worldPt1Y, float worldPt2X, float worldPt2Y) :
-		_mapQuad("lbl_map" + map, 0, 0, 512, 256), _northAxis(northAxis),
+		_mapQuad("lbl_map" + map, 0, 0, 512, 256), _mapTexture("lbl_map" + map), _northAxis(northAxis),
 		_mapPt1X(mapPt1X), _mapPt1Y(mapPt1Y), _mapPt2X(mapPt2X), _mapPt2Y(mapPt2Y),
 		_worldPt1X(worldPt1X), _worldPt1Y(worldPt1Y), _worldPt2X(worldPt2X), _worldPt2Y(worldPt2Y) {
 
 	add(&_mapQuad);
+	buildFogTiles();
 
 	glm::mat4 projection(glm::ortho(0.0f, 120.0f, 0.0f, 120.0f, -1.0f, 1.0f));
 
 	setProjectionMatrix(projection);
+}
+
+void Minimap::buildFogTiles() {
+	_fogTiles.clear();
+
+	for (int row = 0; row < kFogRows; ++row) {
+		for (int col = 0; col < kFogCols; ++col) {
+			const float x1 = static_cast<float>(col * kFogCellSize);
+			const float y1 = static_cast<float>(256 - (row + 1) * kFogCellSize);
+			const float x2 = x1 + kFogCellSize;
+			const float y2 = y1 + kFogCellSize;
+
+			std::unique_ptr<Graphics::Aurora::GUIQuad> fog(
+				new Graphics::Aurora::GUIQuad(_mapTexture, x1, y1, x2, y2));
+			fog->setColor(0.0f, 0.0f, 0.0f, 0.85f);
+			add(fog.get());
+			_fogTiles.push_back(std::move(fog));
+		}
+	}
+}
+
+void Minimap::setMapExplored(const std::vector<bool> &explored) {
+	for (size_t i = 0; i < _fogTiles.size(); ++i) {
+		const bool fogged = i >= explored.size() || !explored[i];
+		if (fogged)
+			_fogTiles[i]->show();
+		else
+			_fogTiles[i]->hide();
+	}
 }
 
 void Minimap::setPosition(float x, float y) {

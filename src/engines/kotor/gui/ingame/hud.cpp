@@ -31,6 +31,7 @@
 #include "src/engines/odyssey/progressbar.h"
 
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/levelup.h"
 
@@ -233,9 +234,16 @@ void HUD::setMinimap(const Common::UString &map, int northAxis,
 	GfxMan.lockFrame();
 
 	_minimap = std::make_unique<Minimap>(map, northAxis, mapPt1X, mapPt1Y, mapPt2X, mapPt2Y, worldPt1X, worldPt1Y, worldPt2X, worldPt2Y);
+	_minimap->setMapExplored(_module.getCurrentArea() ? _module.getCurrentArea()->getMapExplored()
+	                                                  : std::vector<bool>());
 	mapView->setSubScene(_minimap.get());
 
 	GfxMan.unlockFrame();
+}
+
+void HUD::updateMinimapExplored(const std::vector<bool> &explored) {
+	if (_minimap)
+		_minimap->setMapExplored(explored);
 }
 
 void HUD::setPosition(float x, float y) {

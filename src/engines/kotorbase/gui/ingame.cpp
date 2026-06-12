@@ -51,6 +51,10 @@ void IngameGUI::setRotation(float angle) {
 	_hud->setRotation(angle);
 }
 
+void IngameGUI::updateMinimapExplored(const std::vector<bool> &explored) {
+	_hud->updateMinimapExplored(explored);
+}
+
 void IngameGUI::setReturnStrref(uint32_t id) {
 	_hud->setReturnStrref(id);
 }

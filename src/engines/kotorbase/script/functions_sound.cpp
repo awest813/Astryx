@@ -140,7 +140,13 @@ void Functions::ambientSoundChangeNight(Aurora::NWScript::FunctionContext &ctx) 
 		area->setAmbientSoundNightTrack(static_cast<uint32_t>(ctx.getParams()[1].getInt()));
 }
 
-void Functions::soundObjectFadeAndStop(Aurora::NWScript::FunctionContext &ctx) {}
+void Functions::soundObjectFadeAndStop(Aurora::NWScript::FunctionContext &ctx) {
+	SoundObject *sound = ObjectContainer::toSoundObject(getParamObject(ctx, 0));
+	if (!sound)
+		return;
+
+	sound->fadeAndStop(ctx.getParams()[1].getFloat());
+}
 
 } // End of namespace KotORBase
 

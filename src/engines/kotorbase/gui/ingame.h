@@ -25,6 +25,8 @@
 #ifndef ENGINES_KOTORBASE_GUI_INGAME_H
 #define ENGINES_KOTORBASE_GUI_INGAME_H
 
+#include <vector>
+
 #include "src/engines/kotorbase/gui/gui.h"
 #include "src/engines/kotorbase/gui/hud.h"
 
@@ -54,6 +56,8 @@ public:
 	void setPosition(float x, float y);
 	/** Set the rotation for the minimap arrow. */
 	void setRotation(float angle);
+	/** Update minimap fog-of-war from explored tile data. */
+	void updateMinimapExplored(const std::vector<bool> &explored);
 
 	// Return to hideout
 

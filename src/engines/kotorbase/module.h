@@ -402,6 +402,7 @@ protected:
 	
 	void setMapExplored(const Common::UString &resRef, const std::vector<bool> &data);
 	const std::vector<bool> *getMapExplored(const Common::UString &resRef) const;
+	Common::UString getMinimapMapId() const;
 
 	void showFloatingText(Object *object, const Common::UString &text, float duration = 6.0f);
 	void exploreAreaFully(Area *area);

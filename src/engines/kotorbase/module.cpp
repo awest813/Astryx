@@ -1096,6 +1096,13 @@ void Module::handleEvents() {
 	}
 }
 
+Common::UString Module::getMinimapMapId() const {
+	if (_module.contains('_'))
+		return _module.substr(++_module.findFirst("_"), _module.end());
+
+	return _module.substr(_module.getPosition(3), _module.end());
+}
+
 void Module::initMinimap() {
 	int northAxis = _area->getNorthAxis();
 
@@ -1107,14 +1114,7 @@ void Module::initMinimap() {
 	_area->getWorldPoint1(worldPt1X, worldPt1Y);
 	_area->getWorldPoint2(worldPt2X, worldPt2Y);
 
-	Common::UString mapId;
-
-	if (_module.contains('_'))
-		mapId = _module.substr(++_module.findFirst("_"), _module.end());
-	else
-		mapId = _module.substr(_module.getPosition(3), _module.end());
-
-	_ingame->setMinimap(mapId, northAxis,
+	_ingame->setMinimap(getMinimapMapId(), northAxis,
 	                    worldPt1X, worldPt1Y, worldPt2X, worldPt2Y,
 	                    mapPt1X, mapPt1Y, mapPt2X, mapPt2Y);
 }
@@ -1132,6 +1132,9 @@ void Module::updateMinimap() {
 
 	_ingame->setPosition(x, y);
 	_ingame->setRotation(Common::rad2deg(_cameraController.getYaw()));
+
+	if (_area)
+		_ingame->updateMinimapExplored(_area->getMapExplored());
 }
 
 void Module::updateSoundListener() {
@@ -2009,6 +2012,9 @@ void Module::deleteJournalWorldEntryByStrref(int strRef) {
 
 void Module::deleteJournalWorldAllEntries() {
 	_journalWorld.clear();
+
+	if (_ingame)
+		_ingame->getHUD().notifyJournalUpdated();
 }
 
 void Module::addMessage(const Common::UString &text) {
