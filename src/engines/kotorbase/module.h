@@ -166,7 +166,7 @@ public:
 	virtual void signalEncounter(const Common::UString &id);
 
 	/** Play an intro/cinematic movie. */
-	virtual void playMovie(const Common::UString &resRef);
+	virtual void playMovie(const Common::UString &resRef, bool allowSkip = true);
 
 	/** Is a Bink/MOV movie currently playing? */
 	bool isMoviePlaying() const;
@@ -189,6 +189,8 @@ public:
 
 	void addJournalWorldEntry(const Common::UString &tag, const Common::UString &text);
 	void deleteJournalWorldEntry(const Common::UString &tag);
+	void deleteJournalWorldEntryByStrref(int strRef);
+	void deleteJournalWorldAllEntries();
 	const std::vector<JournalWorldEntry> &getJournalWorldEntries() const { return _journalWorld; }
 
 	void addMessage(const Common::UString &text);

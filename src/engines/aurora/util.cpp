@@ -53,7 +53,7 @@
 
 namespace Engines {
 
-void playVideo(const Common::UString &video) {
+void playVideo(const Common::UString &video, bool allowSkip) {
 	if (ConfigMan.getBool("skipvideos", false)) {
 		debugC(Common::kDebugEngineVideo, 1, "Skipping video \"%s\"", video.c_str());
 		return;
@@ -69,7 +69,7 @@ void playVideo(const Common::UString &video) {
 
 		debugC(Common::kDebugEngineVideo, 1, "Playing video \"%s\"", video.c_str());
 
-		videoPlayer.play();
+		videoPlayer.play(allowSkip);
 	} catch (...) {
 		Common::exceptionDispatcherWarning();
 	}

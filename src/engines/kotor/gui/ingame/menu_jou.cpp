@@ -41,6 +41,17 @@ static Common::UString journalText(uint32_t strref, const char *fallback) {
 	return localized.empty() ? fallback : localized;
 }
 
+static Common::UString worldEntryListLabel(const KotORBase::JournalWorldEntry &entry) {
+	if (!entry.text.empty()) {
+		const size_t newline = entry.text.findFirst('\n');
+		if (newline != Common::UString::npos)
+			return entry.text.substr(0, newline);
+		return entry.text;
+	}
+
+	return entry.tag;
+}
+
 MenuJournal::MenuJournal(Console *console) :
 		KotORBase::GUI(console),
 		_category(kCategoryActive) {
@@ -88,7 +99,7 @@ void MenuJournal::fillJournal() {
 			continue;
 
 		_worldTags.push_back(worldEntry.tag);
-		list->addItem(worldEntry.tag);
+		list->addItem(worldEntryListLabel(worldEntry));
 	}
 
 	list->refreshItemWidgets();
@@ -125,7 +136,8 @@ void MenuJournal::showQuestDescription(int index) {
 	if (worldIndex >= 0 && worldIndex < (int)_worldTags.size()) {
 		for (const auto &worldEntry : _module->getJournalWorldEntries()) {
 			if (worldEntry.tag == _worldTags[worldIndex]) {
-				setWidgetText("LBL_QUESTDESC", worldEntry.tag + "\n\n" + worldEntry.text);
+				const Common::UString title = worldEntryListLabel(worldEntry);
+				setWidgetText("LBL_QUESTDESC", title + "\n\n" + worldEntry.text);
 				return;
 			}
 		}

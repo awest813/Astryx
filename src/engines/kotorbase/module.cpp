@@ -47,6 +47,7 @@
 #include "src/aurora/gff3writer.h"
 #include "src/aurora/2dareg.h"
 #include "src/aurora/2dafile.h"
+#include "src/aurora/talkman.h"
 
 #include "src/graphics/camera.h"
 
@@ -724,13 +725,13 @@ void Module::runCinematicBeat(float duration) {
 	updateFrameTimestamp();
 }
 
-void Module::playMovie(const Common::UString &resRef) {
+void Module::playMovie(const Common::UString &resRef, bool allowSkip) {
 	if (resRef.empty())
 		return;
 
-	debugC(Common::kDebugEngineLogic, 1, "Playing Movie: %s", resRef.c_str());
+	debugC(Common::kDebugEngineLogic, 1, "Playing Movie: %s (allowSkip: %d)", resRef.c_str(), allowSkip ? 1 : 0);
 	_moviePlaying = true;
-	::Engines::playVideo(resRef);
+	::Engines::playVideo(resRef, allowSkip);
 	_moviePlaying = false;
 }
 
@@ -750,7 +751,7 @@ void Module::playMovieQueue(bool canSkip) {
 	while (!_movieQueue.empty()) {
 		Common::UString movie = _movieQueue.front();
 		_movieQueue.erase(_movieQueue.begin());
-		playMovie(movie);
+		playMovie(movie, canSkip);
 	}
 }
 
@@ -1988,6 +1989,26 @@ void Module::deleteJournalWorldEntry(const Common::UString &tag) {
 			return;
 		}
 	}
+}
+
+void Module::deleteJournalWorldEntryByStrref(int strRef) {
+	const Common::UString text = TalkMan.getString(strRef);
+	const Common::UString placeholder = Common::String::format("<strref:%d>", strRef);
+
+	for (auto it = _journalWorld.begin(); it != _journalWorld.end(); ) {
+		if ((!text.empty() && it->text == text) ||
+		    it->text == placeholder ||
+		    it->tag == placeholder ||
+		    it->tag == text) {
+			it = _journalWorld.erase(it);
+		} else {
+			++it;
+		}
+	}
+}
+
+void Module::deleteJournalWorldAllEntries() {
+	_journalWorld.clear();
 }
 
 void Module::addMessage(const Common::UString &text) {

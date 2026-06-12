@@ -40,7 +40,7 @@ public:
 	VideoPlayer(const std::string &video);
 	~VideoPlayer();
 
-	void play();
+	void play(bool allowSkip = true);
 
 private:
 	std::unique_ptr<VideoDecoder> _video;

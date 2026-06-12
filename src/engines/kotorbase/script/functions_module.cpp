@@ -511,12 +511,14 @@ void Functions::deleteJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) 
 }
 
 void Functions::deleteJournalWorldEntryStrref(Aurora::NWScript::FunctionContext &ctx) {
-	int strRef = ctx.getParams()[0].getInt();
+	const int strRef = ctx.getParams()[0].getInt();
+	_game->getModule().deleteJournalWorldEntryByStrref(strRef);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Deleted by Strref [%d]", strRef);
 }
 
 void Functions::deleteJournalWorldAllEntries(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
+	_game->getModule().deleteJournalWorldAllEntries();
 	debugC(Common::kDebugEngineLogic, 1, "All World Journal Entries Deleted");
 }
 

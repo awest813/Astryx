@@ -28,6 +28,7 @@
 #include <memory>
 
 #include "src/common/util.h"
+#include "src/common/random.h"
 #include "src/common/error.h"
 #include "src/common/readstream.h"
 #include "src/common/maths.h"
@@ -265,6 +266,12 @@ void Area::playBattleMusic() {
 		return;
 
 	stopAmbientMusic();
+
+	if (!_musicBattleStinger.empty()) {
+		const int index = RNG.getNext(0, static_cast<int>(_musicBattleStinger.size()));
+		::Engines::playSound(_musicBattleStinger[static_cast<size_t>(index)], Sound::kSoundTypeMusic, false);
+	}
+
 	_ambientMusic = ::Engines::playSound(_musicBattle, Sound::kSoundTypeMusic, true);
 }
 

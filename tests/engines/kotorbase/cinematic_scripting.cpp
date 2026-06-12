@@ -437,26 +437,30 @@ enum class MovieInput {
 	OtherKey
 };
 
-static bool shouldMovieInputSkip(uint32_t now, uint32_t guardUntil, MovieInput input) {
-	if (now < guardUntil)
+static bool shouldMovieInputSkip(uint32_t now, uint32_t guardUntil, MovieInput input, bool allowSkip) {
+	if (!allowSkip || now < guardUntil)
 		return false;
 
 	return input == MovieInput::Escape;
 }
 
 TEST(CinematicScripting, MovieInputGuardIgnoresStaleSkipEvents) {
-	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::Escape));
-	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::MouseRelease));
+	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::Escape, true));
+	EXPECT_FALSE(shouldMovieInputSkip(2999, 3000, MovieInput::MouseRelease, true));
 }
 
 TEST(CinematicScripting, MovieInputGuardAllowsDeliberateSkipAfterGuard) {
-	EXPECT_TRUE(shouldMovieInputSkip(3000, 3000, MovieInput::Escape));
-	EXPECT_FALSE(shouldMovieInputSkip(3000, 3000, MovieInput::MouseRelease));
+	EXPECT_TRUE(shouldMovieInputSkip(3000, 3000, MovieInput::Escape, true));
+	EXPECT_FALSE(shouldMovieInputSkip(3000, 3000, MovieInput::MouseRelease, true));
 }
 
 TEST(CinematicScripting, MovieInputGuardIgnoresNonSkipKeys) {
-	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::OtherKey));
-	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::None));
+	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::OtherKey, true));
+	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::None, true));
+}
+
+TEST(CinematicScripting, MovieInputGuardHonorsAllowSkipFlag) {
+	EXPECT_FALSE(shouldMovieInputSkip(4000, 3000, MovieInput::Escape, false));
 }
 
 struct DialogCameraState {

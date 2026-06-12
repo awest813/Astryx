@@ -242,6 +242,50 @@ GTEST_TEST(KotORSaveSerialization, partyRosterRoundTrip) {
 	EXPECT_EQ(loadedRoot.getUint("PT_LEADER_INDEX", 0), 0U);
 }
 
+GTEST_TEST(KotORSaveSerialization, journalStateRoundTrip) {
+	Aurora::GFF3Writer writer(MKTAG('G', 'V', 'A', 'R'));
+	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();
+
+	Aurora::GFF3WriterListPtr journalList = root->addList("JournalEntries");
+	{
+		Aurora::GFF3WriterStructPtr item = journalList->addStruct();
+		item->addExoString("Quest", "k_main_quest");
+		item->addUint32("State", 5U);
+	}
+
+	Aurora::GFF3WriterListPtr worldJournalList = root->addList("WorldJournalEntries");
+	{
+		Aurora::GFF3WriterStructPtr item = worldJournalList->addStruct();
+		item->addExoString("Tag", "endar_note");
+		item->addExoString("Text", "The Endar Spire is under attack.");
+	}
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	const Aurora::GFF3Struct &loadedRoot = gff.getTopLevel();
+
+	std::map<Common::UString, uint32_t> journal;
+	const Aurora::GFF3List &journalLoaded = loadedRoot.getList("JournalEntries");
+	for (Aurora::GFF3List::const_iterator it = journalLoaded.begin(); it != journalLoaded.end(); ++it) {
+		if (!*it)
+			continue;
+		journal[(*it)->getString("Quest")] = (*it)->getUint("State");
+	}
+
+	std::vector<std::pair<Common::UString, Common::UString>> worldJournal;
+	const Aurora::GFF3List &worldLoaded = loadedRoot.getList("WorldJournalEntries");
+	for (Aurora::GFF3List::const_iterator it = worldLoaded.begin(); it != worldLoaded.end(); ++it) {
+		if (!*it)
+			continue;
+		worldJournal.emplace_back((*it)->getString("Tag"), (*it)->getString("Text"));
+	}
+
+	EXPECT_EQ(journal.size(), 1U);
+	EXPECT_EQ(journal["k_main_quest"], 5U);
+	EXPECT_EQ(worldJournal.size(), 1U);
+	EXPECT_EQ(worldJournal[0].first, Common::UString("endar_note"));
+	EXPECT_EQ(worldJournal[0].second, Common::UString("The Endar Spire is under attack."));
+}
+
 GTEST_TEST(KotORSaveSerialization, defaultMapExploredTileCount) {
 	EXPECT_EQ(Engines::KotORBase::Area::getDefaultMapExploredTileCount(), 153U);
 }
