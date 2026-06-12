@@ -423,6 +423,12 @@ enum ItemPropertyType {
 	kItemPropertyAttackBonus      = 58
 };
 
+/** World-space map note marker for minimap rendering. */
+struct MapPin {
+	float worldX { 0.0f };
+	float worldY { 0.0f };
+};
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

@@ -289,3 +289,30 @@ GTEST_TEST(KotORSaveSerialization, journalStateRoundTrip) {
 GTEST_TEST(KotORSaveSerialization, defaultMapExploredTileCount) {
 	EXPECT_EQ(Engines::KotORBase::Area::getDefaultMapExploredTileCount(), 153U);
 }
+
+GTEST_TEST(KotORSaveSerialization, journalQuestPictureRoundTrip) {
+	Aurora::GFF3Writer writer(MKTAG('G', 'V', 'A', 'R'));
+	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();
+
+	Aurora::GFF3WriterListPtr pictureList = root->addList("JournalQuestPictures");
+	{
+		Aurora::GFF3WriterStructPtr item = pictureList->addStruct();
+		item->addExoString("Quest", "k_main_quest");
+		item->addUint32("State", 3U);
+		item->addExoString("Portrait", "po_bastilla");
+	}
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	const Aurora::GFF3Struct &loadedRoot = gff.getTopLevel();
+
+	std::map<std::pair<Common::UString, uint32_t>, Common::UString> pictures;
+	const Aurora::GFF3List &loaded = loadedRoot.getList("JournalQuestPictures");
+	for (Aurora::GFF3List::const_iterator it = loaded.begin(); it != loaded.end(); ++it) {
+		if (!*it)
+			continue;
+		pictures[{ (*it)->getString("Quest"), (*it)->getUint("State") }] = (*it)->getString("Portrait");
+	}
+
+	EXPECT_EQ(pictures.size(), 1U);
+	EXPECT_EQ(pictures[{ Common::UString("k_main_quest"), 3U }], Common::UString("po_bastilla"));
+}

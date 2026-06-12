@@ -70,6 +70,7 @@
 #include "src/engines/kotorbase/itemupgrades.h"
 #include "src/engines/kotorbase/itemactions.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/waypoint.h"
 
 #include "src/engines/kotorbase/gui/partyselection.h"
 
@@ -218,6 +219,19 @@ const std::vector<bool> &Module::getWalkableSurfaces() const {
 
 Graphics::Aurora::FadeQuad &Module::getFadeQuad() {
 	return *_fade;
+}
+
+void Module::holdWorldFadeInForDialog() {
+	_holdWorldFadeInForDialog = true;
+	_fade->setHoldFadeIn(true);
+}
+
+void Module::releaseWorldFadeInForDialog() {
+	if (!_holdWorldFadeInForDialog)
+		return;
+
+	_holdWorldFadeInForDialog = false;
+	_fade->setHoldFadeIn(false);
 }
 
 void Module::removeObject(Object &object) {
@@ -1135,6 +1149,31 @@ void Module::updateMinimap() {
 
 	if (_area)
 		_ingame->updateMinimapExplored(_area->getMapExplored());
+
+	_ingame->updateMinimapMapPins(collectMapPins());
+}
+
+std::vector<MapPin> Module::getMapPins() const {
+	return collectMapPins();
+}
+
+std::vector<MapPin> Module::collectMapPins() const {
+	std::vector<MapPin> pins;
+
+	std::unique_ptr<Aurora::NWScript::ObjectSearch> search(findObjectsByType(kObjectTypeWaypoint));
+	while (search->get()) {
+		Waypoint *waypoint = ObjectContainer::toWaypoint(search->next());
+		if (!waypoint || !waypoint->enabledMapNote())
+			continue;
+
+		float x = 0.0f;
+		float y = 0.0f;
+		float z = 0.0f;
+		waypoint->getPosition(x, y, z);
+		pins.push_back({ x, y });
+	}
+
+	return pins;
 }
 
 void Module::updateSoundListener() {
@@ -1971,6 +2010,25 @@ uint32_t Module::getJournalQuestState(const Common::UString &quest) const {
 	return 0;
 }
 
+void Module::setJournalQuestEntryPicture(const Common::UString &quest, uint32_t state,
+                                         const Common::UString &portrait, bool enabled) {
+	const auto key = std::make_pair(quest, state);
+	if (!enabled || portrait.empty()) {
+		_journalQuestPictures.erase(key);
+		return;
+	}
+
+	_journalQuestPictures[key] = portrait;
+}
+
+Common::UString Module::getJournalQuestEntryPicture(const Common::UString &quest, uint32_t state) const {
+	const auto it = _journalQuestPictures.find(std::make_pair(quest, state));
+	if (it != _journalQuestPictures.end())
+		return it->second;
+
+	return Common::UString();
+}
+
 void Module::addJournalWorldEntry(const Common::UString &tag, const Common::UString &text) {
 	for (auto &entry : _journalWorld) {
 		if (entry.tag.equalsIgnoreCase(tag)) {
@@ -2147,6 +2205,7 @@ void Module::startConversation(const Common::UString &name, Aurora::NWScript::Ob
 		_ingame->hideSelection();
 		_dialog->show();
 		_inDialog = true;
+		releaseWorldFadeInForDialog();
 
 		updateFrameTimestamp();
 	}
@@ -2440,6 +2499,14 @@ void Module::saveState(Aurora::GFF3WriterStruct &gff) const {
 		item->addExoString("Text", entry.text);
 	}
 
+	Aurora::GFF3WriterListPtr journalPictureList = gff.addList("JournalQuestPictures");
+	for (const auto &entry : _journalQuestPictures) {
+		Aurora::GFF3WriterStructPtr item = journalPictureList->addStruct();
+		item->addExoString("Quest", entry.first.first);
+		item->addUint32("State", entry.first.second);
+		item->addExoString("Portrait", entry.second);
+	}
+
 	Aurora::GFF3WriterListPtr messageList = gff.addList("Messages");
 	for (const auto &message : _messages) {
 		Aurora::GFF3WriterStructPtr item = messageList->addStruct();
@@ -2506,6 +2573,20 @@ void Module::loadState(const Aurora::GFF3Struct &gff) {
 			if (!entry)
 				continue;
 			_journalWorld.push_back({ entry->getString("Tag"), entry->getString("Text") });
+		}
+	}
+
+	_journalQuestPictures.clear();
+	if (gff.hasField("JournalQuestPictures")) {
+		for (const auto &entry : gff.getList("JournalQuestPictures")) {
+			if (!entry)
+				continue;
+
+			const Common::UString quest = entry->getString("Quest");
+			const uint32_t state = entry->getUint("State");
+			const Common::UString portrait = entry->getString("Portrait");
+			if (!quest.empty() && !portrait.empty())
+				_journalQuestPictures[{ quest, state }] = portrait;
 		}
 	}
 

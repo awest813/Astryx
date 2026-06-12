@@ -35,6 +35,7 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
+#include "src/engines/kotorbase/waypoint.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/aurora/talkman.h"
@@ -378,6 +379,28 @@ void Functions::addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx) {
 	_game->getModule().addJournalQuestEntry(quest, state);
 }
 
+void Functions::setMapPinEnabled(Aurora::NWScript::FunctionContext &ctx) {
+	Waypoint *waypoint = ObjectContainer::toWaypoint(getParamObject(ctx, 0));
+	if (!waypoint)
+		return;
+
+	waypoint->enableMapNote(ctx.getParams()[1].getInt() != 0);
+	_game->getModule().updateMinimap();
+}
+
+void Functions::setJournalQuestEntryPicture(Aurora::NWScript::FunctionContext &ctx) {
+	const Common::UString &quest = ctx.getParams()[0].getString();
+	Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
+	const uint32_t state = static_cast<uint32_t>(ctx.getParams()[2].getInt());
+	const bool enabled = ctx.getParams()[3].getInt() != 0;
+
+	Common::UString portrait;
+	if (source)
+		portrait = source->getPortrait();
+
+	_game->getModule().setJournalQuestEntryPicture(quest, state, portrait, enabled);
+}
+
 void Functions::openStore(Aurora::NWScript::FunctionContext &ctx) {
 	// OpenStore(object oStore, object oPC, int nBonusMarkUp=0, int nMarkDown=0)
 	// Presents the store GUI to the player.
@@ -555,7 +578,10 @@ void Functions::getPCLevellingUp(Aurora::NWScript::FunctionContext &ctx) { ctx.g
 void Functions::setPlaceableIllumination(Aurora::NWScript::FunctionContext &ctx) {}
 void Functions::getPlaceableIllumination(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
 void Functions::resetDialogState(Aurora::NWScript::FunctionContext &ctx) {}
-void Functions::holdWorldFadeInForDialog(Aurora::NWScript::FunctionContext &ctx) {}
+void Functions::holdWorldFadeInForDialog(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	_game->getModule().holdWorldFadeInForDialog();
+}
 
 } // End of namespace KotORBase
 } // End of namespace Engines

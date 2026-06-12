@@ -246,6 +246,18 @@ void HUD::updateMinimapExplored(const std::vector<bool> &explored) {
 		_minimap->setMapExplored(explored);
 }
 
+void HUD::updateMinimapMapPins(const std::vector<KotORBase::MapPin> &pins) {
+	if (!_minimap)
+		return;
+
+	std::vector<MinimapMapPin> minimapPins;
+	minimapPins.reserve(pins.size());
+	for (const auto &pin : pins)
+		minimapPins.push_back({ pin.worldX, pin.worldY });
+
+	_minimap->setMapPins(minimapPins);
+}
+
 void HUD::setPosition(float x, float y) {
 	if (_minimap)
 		_minimap->setPosition(x, y);

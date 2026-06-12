@@ -86,6 +86,63 @@ void Minimap::setMapExplored(const std::vector<bool> &explored) {
 	}
 }
 
+void Minimap::worldToMapPixels(float worldX, float worldY, float &mapX, float &mapY) const {
+	float scaleX = 0.0f;
+	float scaleY = 0.0f;
+	float relX = 0.0f;
+	float relY = 0.0f;
+
+	switch (_northAxis) {
+		case 0:
+			scaleY = (_mapPt1Y - _mapPt2Y) / (_worldPt1Y - _worldPt2Y);
+			scaleX = (_mapPt1X - _mapPt2X) / (_worldPt1X - _worldPt2X);
+			relX = (worldX - _worldPt1X) * scaleX + _mapPt1X;
+			relY = (worldY - _worldPt1Y) * scaleY + _mapPt1Y;
+			break;
+
+		case 3:
+			scaleX = (_mapPt1Y - _mapPt2Y) / (_worldPt1X - _worldPt2X);
+			scaleY = (_mapPt1X - _mapPt2X) / (_worldPt1Y - _worldPt2Y);
+			relX = (worldY - _worldPt1Y) * scaleY + _mapPt1X;
+			relY = (worldX - _worldPt1X) * scaleX + _mapPt1Y;
+			break;
+
+		default:
+			mapX = 0.0f;
+			mapY = 0.0f;
+			return;
+	}
+
+	mapX = relX * 435.0f;
+	mapY = 256.0f - relY * 256.0f;
+}
+
+void Minimap::setMapPins(const std::vector<MinimapMapPin> &pins) {
+	for (auto &pin : _pinQuads)
+		remove(pin.get());
+
+	_pinQuads.clear();
+
+	static const float kPinSize = 8.0f;
+
+	for (const auto &pin : pins) {
+		float mapX = 0.0f;
+		float mapY = 0.0f;
+		worldToMapPixels(pin.worldX, pin.worldY, mapX, mapY);
+
+		const float x1 = mapX - kPinSize * 0.5f;
+		const float y1 = mapY - kPinSize * 0.5f;
+		const float x2 = mapX + kPinSize * 0.5f;
+		const float y2 = mapY + kPinSize * 0.5f;
+
+		std::unique_ptr<Graphics::Aurora::GUIQuad> marker(
+			new Graphics::Aurora::GUIQuad(_mapTexture, x1, y1, x2, y2));
+		marker->setColor(1.0f, 0.85f, 0.2f, 1.0f);
+		add(marker.get());
+		_pinQuads.push_back(std::move(marker));
+	}
+}
+
 void Minimap::setPosition(float x, float y) {
 	glm::mat4 transformation;
 

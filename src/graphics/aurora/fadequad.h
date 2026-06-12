@@ -55,6 +55,10 @@ public:
 	/** Start a fade out. */
 	void fadeOut();
 
+	/** Keep a fade-in at full opacity until released (dialog transitions). */
+	void setHoldFadeIn(bool hold);
+	bool isHoldFadeIn() const;
+
 	void calculateDistance();
 	void render(RenderPass pass);
 
@@ -72,6 +76,7 @@ private:
 	uint32_t _wait;
 	uint32_t _run;
 	uint32_t _start;
+	bool _holdFadeIn { false };
 };
 
 } // End of namespace Aurora

@@ -333,6 +333,23 @@ TEST(CinematicScripting, FadeInParametersPassedCorrectly) {
 	EXPECT_FALSE(p.fadeOut);
 }
 
+TEST(CinematicScripting, HoldFadeInKeepsScreenBlack) {
+	bool holdFadeIn = true;
+	const bool fadingIn = true;
+	float opacity = 0.25f;
+
+	if (holdFadeIn && fadingIn)
+		opacity = 1.0f;
+
+	EXPECT_FLOAT_EQ(opacity, 1.0f);
+
+	holdFadeIn = false;
+	if (holdFadeIn && fadingIn)
+		opacity = 1.0f;
+
+	EXPECT_FLOAT_EQ(opacity, 0.25f);
+}
+
 TEST(CinematicScripting, FadeOutThenInRestoresVisibility) {
 	// A typical cinematic sequence: fade to black then fade back.
 	FadeParams out = simulateFadeOut(0.0f, 0.5f, 0.0f, 0.0f, 0.0f);

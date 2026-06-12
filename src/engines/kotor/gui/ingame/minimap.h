@@ -37,6 +37,11 @@ namespace Engines {
 
 namespace KotOR {
 
+struct MinimapMapPin {
+	float worldX { 0.0f };
+	float worldY { 0.0f };
+};
+
 class Minimap : public Graphics::Aurora::SubSceneQuad {
 public:
 	Minimap(const Common::UString &map, int northAxis,
@@ -45,11 +50,13 @@ public:
 
 	void setPosition(float x, float y);
 	void setMapExplored(const std::vector<bool> &explored);
+	void setMapPins(const std::vector<MinimapMapPin> &pins);
 	int getNorthAxis();
 
 private:
 	Graphics::Aurora::GUIQuad _mapQuad;
 	std::vector<std::unique_ptr<Graphics::Aurora::GUIQuad>> _fogTiles;
+	std::vector<std::unique_ptr<Graphics::Aurora::GUIQuad>> _pinQuads;
 	Common::UString _mapTexture;
 
 	int _northAxis;
@@ -57,6 +64,7 @@ private:
 	float _worldPt1X, _worldPt1Y, _worldPt2X, _worldPt2Y;
 
 	void buildFogTiles();
+	void worldToMapPixels(float worldX, float worldY, float &mapX, float &mapY) const;
 };
 
 } // End of namespace KotOR

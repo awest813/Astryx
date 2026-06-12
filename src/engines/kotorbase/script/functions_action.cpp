@@ -761,6 +761,7 @@ void Functions::actionSpeakString(Aurora::NWScript::FunctionContext &ctx) {
 		return;
 
 	_game->getModule().showFloatingText(caller, str);
+	caller->playSound("m_select", true);
 }
 
 
@@ -784,6 +785,7 @@ void Functions::actionSpeakStringByStrRef(Aurora::NWScript::FunctionContext &ctx
 		text = Common::String::format("<strref:%u>", strRef);
 
 	_game->getModule().showFloatingText(caller, text);
+	caller->playSound("m_select", true);
 }
 
 
@@ -1168,6 +1170,12 @@ void Functions::actionBarkString(Aurora::NWScript::FunctionContext &ctx) {
 	Object *caller = ObjectContainer::toObject(ctx.getCaller());
 
 	const Common::UString who = caller ? caller->getTag() : Common::UString("(unknown)");
+
+	if (caller)
+		_game->getModule().showFloatingText(caller, text);
+
+	if (caller)
+		caller->playSound("m_select", true);
 
 	status("ActionBarkString [%s]: %s", who.c_str(), text.c_str());
 

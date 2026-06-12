@@ -27,6 +27,7 @@
 
 #include <vector>
 
+#include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/gui/gui.h"
 #include "src/engines/kotorbase/gui/hud.h"
 
@@ -58,6 +59,8 @@ public:
 	void setRotation(float angle);
 	/** Update minimap fog-of-war from explored tile data. */
 	void updateMinimapExplored(const std::vector<bool> &explored);
+	/** Update enabled waypoint pins on the minimap. */
+	void updateMinimapMapPins(const std::vector<MapPin> &pins);
 
 	// Return to hideout
 

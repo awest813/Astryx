@@ -55,6 +55,10 @@ void IngameGUI::updateMinimapExplored(const std::vector<bool> &explored) {
 	_hud->updateMinimapExplored(explored);
 }
 
+void IngameGUI::updateMinimapMapPins(const std::vector<MapPin> &pins) {
+	_hud->updateMinimapMapPins(pins);
+}
+
 void IngameGUI::setReturnStrref(uint32_t id) {
 	_hud->setReturnStrref(id);
 }

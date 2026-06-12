@@ -41,6 +41,24 @@ static Common::UString journalText(uint32_t strref, const char *fallback) {
 	return localized.empty() ? fallback : localized;
 }
 
+static void setQuestPortrait(MenuJournal &menu, const Common::UString &portrait) {
+	if (portrait.empty())
+		return;
+
+	const char *const kPortraitTags[] = {
+		"LBL_PORTRAIT",
+		"LBL_QUESTPORTRAIT",
+		"LBL_NPCPORTRAIT"
+	};
+
+	for (const char *tag : kPortraitTags) {
+		if (Odyssey::WidgetLabel *label = menu.getLabel(tag, false)) {
+			label->setFill(portrait);
+			return;
+		}
+	}
+}
+
 static Common::UString worldEntryListLabel(const KotORBase::JournalWorldEntry &entry) {
 	if (!entry.text.empty()) {
 		const size_t newline = entry.text.findFirst('\n');
@@ -128,6 +146,7 @@ void MenuJournal::showQuestDescription(int index) {
 		if (body.empty())
 			body = journalText(398, "No journal text is available for this objective yet.");
 
+		setQuestPortrait(*this, _module->getJournalQuestEntryPicture(quest, state));
 		setWidgetText("LBL_QUESTDESC", title + "\n\n" + body);
 		return;
 	}

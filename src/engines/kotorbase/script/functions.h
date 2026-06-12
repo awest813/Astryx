@@ -972,6 +972,9 @@ protected:
 
 	void addJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
 
+	void setMapPinEnabled(Aurora::NWScript::FunctionContext &ctx);
+
+	void setJournalQuestEntryPicture(Aurora::NWScript::FunctionContext &ctx);
 
 	void removeJournalQuestEntry(Aurora::NWScript::FunctionContext &ctx);
 

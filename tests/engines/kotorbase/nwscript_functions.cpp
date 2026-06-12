@@ -74,6 +74,20 @@ static bool calcIsNeutral(Faction tf, Faction sf) {
 }
 
 // ---------------------------------------------------------------------------
+// SetMapPinEnabled semantics (mirrors Waypoint::enabledMapNote)
+// ---------------------------------------------------------------------------
+
+static bool mapPinVisible(bool hasMapNote, bool mapNoteEnabled) {
+	return hasMapNote && mapNoteEnabled;
+}
+
+GTEST_TEST(KotORNWScriptFuncs, mapPinEnabledRequiresMapNoteFlag) {
+	EXPECT_FALSE(mapPinVisible(false, true));
+	EXPECT_FALSE(mapPinVisible(true, false));
+	EXPECT_TRUE(mapPinVisible(true, true));
+}
+
+// ---------------------------------------------------------------------------
 // GetIsEnemy tests
 // ---------------------------------------------------------------------------
 

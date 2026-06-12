@@ -108,6 +108,11 @@ void MenuMap::refreshAreaMap() {
 		_areaMap->setPosition(x, y);
 	}
 
+	std::vector<MinimapMapPin> pins;
+	for (const auto &pin : _module->getMapPins())
+		pins.push_back({ pin.worldX, pin.worldY });
+	_areaMap->setMapPins(pins);
+
 	mapView->setSubScene(_areaMap.get());
 
 	GfxMan.unlockFrame();

@@ -78,6 +78,14 @@ void FadeQuad::fadeOut() {
 	show();
 }
 
+void FadeQuad::setHoldFadeIn(bool hold) {
+	_holdFadeIn = hold;
+}
+
+bool FadeQuad::isHoldFadeIn() const {
+	return _holdFadeIn;
+}
+
 void FadeQuad::calculateDistance() {
 }
 
@@ -107,6 +115,9 @@ void FadeQuad::render(Graphics::RenderPass pass) {
 				_opacity = MAX(0.0f, (_run - static_cast<float>(time)) / _run);
 		}
 	}
+
+	if (_holdFadeIn && _fadeType == kFadeIn)
+		_opacity = 1.0f;
 
 	GLint viewport[4];
 	glGetIntegerv(GL_VIEWPORT, viewport);

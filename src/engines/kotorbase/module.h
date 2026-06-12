@@ -126,6 +126,8 @@ public:
 	const std::vector<bool> &getWalkableSurfaces() const;
 	/** Return the fade quad. */
 	Graphics::Aurora::FadeQuad &getFadeQuad();
+	void holdWorldFadeInForDialog();
+	void releaseWorldFadeInForDialog();
 
 	void removeObject(Object &object);
 
@@ -186,6 +188,10 @@ public:
 	void removeJournalQuestEntry(const Common::UString &quest);
 	uint32_t getJournalQuestState(const Common::UString &quest) const;
 	const std::map<Common::UString, uint32_t> &getJournal() const { return _journal; }
+	void setJournalQuestEntryPicture(const Common::UString &quest, uint32_t state,
+	                                 const Common::UString &portrait, bool enabled);
+	Common::UString getJournalQuestEntryPicture(const Common::UString &quest, uint32_t state) const;
+	std::vector<MapPin> getMapPins() const;
 
 	void addJournalWorldEntry(const Common::UString &tag, const Common::UString &text);
 	void deleteJournalWorldEntry(const Common::UString &tag);
@@ -486,7 +492,9 @@ private:
 
 	// Journal: key = quest tag, value = entry ID
 	std::map<Common::UString, uint32_t> _journal;
+	std::map<std::pair<Common::UString, uint32_t>, Common::UString> _journalQuestPictures;
 	std::vector<JournalWorldEntry> _journalWorld;
+	bool _holdWorldFadeInForDialog { false };
 	std::vector<Common::UString> _messages;
 	Common::UString _returnDestinationModule { "m12aa" };
 
@@ -634,6 +642,7 @@ private:
 
 	void initMinimap();
 	void updateMinimap();
+	std::vector<MapPin> collectMapPins() const;
 
 
 	bool getEntryObjectLocation(float &entryX, float &entryY, float &entryZ, float &entryAngle);

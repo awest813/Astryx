@@ -55,6 +55,7 @@ public:
 	virtual void setPosition(float x, float y);
 	virtual void setRotation(float angle);
 	virtual void updateMinimapExplored(const std::vector<bool> &explored);
+	virtual void updateMinimapMapPins(const std::vector<MapPin> &pins);
 
 	// Return to hideout
 
