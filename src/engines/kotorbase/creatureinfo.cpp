@@ -140,6 +140,9 @@ void CreatureInfo::save(Aurora::GFF3WriterStruct &gff) const {
 	gff.addUint32("CurrentFP", _forcePointsCurrent);
 	gff.addUint32("MaxFP", _forcePointsMax);
 
+	if (_inventory.getGold() > 0)
+		gff.addUint32("Gold", _inventory.getGold());
+
 	Aurora::GFF3WriterListPtr itemList = gff.addList("ItemList");
 	_inventory.save(*itemList);
 
@@ -166,6 +169,8 @@ void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
 	if (gff.hasField("ItemList")) {
 		_inventory.read(gff.getList("ItemList"));
 	}
+
+	_inventory.setGold(gff.getUint("Gold", 0));
 }
 
 void CreatureInfo::saveAbilities(Aurora::GFF3WriterStruct &gff) const {

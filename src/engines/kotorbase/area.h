@@ -60,6 +60,7 @@ class Module;
 class Room;
 class Situated;
 class Creature;
+class Item;
 class Pathfinding;
 struct CreatureSearchCriteria;
 
@@ -152,6 +153,7 @@ public:
 	const std::vector<Creature *> &getCreatures() const;
 
 	void addCreature(Creature *creature);
+	Item *spawnDroppedItem(const Common::UString &tag, float x, float y, float z);
 	void addToObjectMap(Object *object);
 	void removeObject(Object *object);
 

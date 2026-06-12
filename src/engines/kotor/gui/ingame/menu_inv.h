@@ -51,6 +51,7 @@ private:
 	void showItemDescription(int index);
 	void setStatusMessage(const Common::UString &message);
 	void updateActionButtons();
+	void updateCreditsLabel();
 	bool performUseSelectedItem();
 	bool performEquipSelectedItem();
 	bool performDropSelectedItem();

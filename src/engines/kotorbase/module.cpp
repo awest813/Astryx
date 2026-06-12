@@ -612,9 +612,18 @@ void Module::clickObject(Object *object) {
 
 	bool attack = currentTarget->isEnemy() && !currentTarget->isDead();
 
-	KotORBase::Action action(attack ? kActionAttackObject : kActionUseObject);
+	KotORBase::Action action;
+	if (attack) {
+		action.type = kActionAttackObject;
+		action.range = 1.0f;
+	} else if (object->getType() & kObjectTypeItem) {
+		action.type = kActionPickUpItem;
+		action.range = 1.5f;
+	} else {
+		action.type = kActionUseObject;
+		action.range = 1.0f;
+	}
 	action.object = object;
-	action.range = 1.0f;
 
 	Creature *partyLeader = getPartyLeader();
 	if (!partyLeader) {

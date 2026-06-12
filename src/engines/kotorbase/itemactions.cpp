@@ -22,6 +22,8 @@
  *  Inventory item use, equip, and drop helpers for KotOR games.
  */
 
+#include <cfloat>
+
 #include "src/common/exception.h"
 
 #include "src/engines/kotorbase/actionexecutor.h"
@@ -303,12 +305,19 @@ ItemActionResult dropInventoryItem(Creature &inventoryOwner, const Common::UStri
 	if (module) {
 		module->playSound("gui_actuse");
 		Creature *leader = module->getPartyLeader();
-		if (leader) {
+		Area *area = module->getCurrentArea();
+		if (leader && area) {
 			float x, y, z;
 			leader->getPosition(x, y, z);
+			const float elevation = area->evaluateElevation(x, y);
+			if (elevation != FLT_MIN)
+				z = elevation;
+
+			area->spawnDroppedItem(tag, x, y, z);
 			module->setGlobalString("DROP_LAST_TAG", tag);
 			module->setGlobalNumber("DROP_LAST_X", static_cast<int>(x));
 			module->setGlobalNumber("DROP_LAST_Y", static_cast<int>(y));
+			module->setGlobalNumber("DROP_LAST_Z", static_cast<int>(z));
 		}
 	}
 

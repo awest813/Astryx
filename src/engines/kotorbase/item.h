@@ -25,7 +25,10 @@
 #ifndef ENGINES_KOTORBASE_ITEM_H
 #define ENGINES_KOTORBASE_ITEM_H
 
+#include <memory>
 #include <vector>
+
+#include "src/graphics/aurora/types.h"
 
 #include "src/engines/kotorbase/object.h"
 
@@ -73,6 +76,14 @@ public:
 	const Common::UString getIcon() const;
 	const Common::UString getModelName() const;
 
+	bool isVisible() const override;
+	void show() override;
+	void hide() override;
+	void setPosition(float x, float y, float z) override;
+
+	/** Load the world model and mark this item as a clickable ground pickup. */
+	void prepareWorldDrop(const Common::UString &templateResRef);
+
 private:
 	struct ItemPropertyData {
 		int type { 0 };
@@ -98,6 +109,7 @@ private:
 	int _cost;
 
 	std::vector<ItemPropertyData> _properties;
+	std::unique_ptr<Graphics::Aurora::Model> _model;
 
 	int getPropertyBonusSum(int propertyType) const;
 

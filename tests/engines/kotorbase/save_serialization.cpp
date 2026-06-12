@@ -77,6 +77,7 @@ GTEST_TEST(KotORSaveSerialization, creatureInfoRoundTrip) {
 	info.setSkillRank(kSkillSecurity, 4);
 	info.incrementClassLevel(kClassSoldier);
 	info.addInventoryItem("g_i_medpac01", 2);
+	info.getInventory().addGold(250);
 	info.equipItem("g_i_boots01", kInventorySlotBody);
 	info.setAlignment(55);
 	info.setForcePoints(3);
@@ -94,6 +95,7 @@ GTEST_TEST(KotORSaveSerialization, creatureInfoRoundTrip) {
 	EXPECT_EQ(loaded.getSkillRank(kSkillSecurity), 4);
 	EXPECT_EQ(loaded.getClassLevel(kClassSoldier), 1);
 	EXPECT_TRUE(loaded.getInventory().hasItem("g_i_medpac01"));
+	EXPECT_EQ(loaded.getInventory().getGold(), 250U);
 	EXPECT_TRUE(loaded.isInventorySlotEquipped(kInventorySlotBody));
 	EXPECT_EQ(loaded.getEquippedItem(kInventorySlotBody), Common::UString("g_i_boots01"));
 	EXPECT_EQ(loaded.getAlignment(), 55);

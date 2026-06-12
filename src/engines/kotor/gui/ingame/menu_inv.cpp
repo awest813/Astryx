@@ -26,6 +26,8 @@
 
 #include "src/graphics/graphics.h"
 
+#include "src/common/strutil.h"
+
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/listbox.h"
 #include "src/engines/odyssey/label.h"
@@ -65,11 +67,13 @@ MenuInventory::MenuInventory(KotORBase::Module &module, Console *console) :
 void MenuInventory::show() {
 	GUI::show();
 	fillItems();
+	updateCreditsLabel();
 }
 
 void MenuInventory::update() {
 	MenuBase::update();
 	updatePartyLeader("LBL_PORT");
+	updateCreditsLabel();
 
 	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
 	if (!lbItems)
@@ -169,6 +173,20 @@ void MenuInventory::showItemDescription(int index) {
 void MenuInventory::setStatusMessage(const Common::UString &message) {
 	if (!message.empty())
 		setWidgetText("LBL_DESC", message);
+}
+
+void MenuInventory::updateCreditsLabel() {
+	KotORBase::Creature *pc = _module->getPC();
+	if (!pc)
+		return;
+
+	const Common::UString credits = Common::composeString(pc->getInventory().getGold());
+	if (Odyssey::WidgetLabel *lbl = getLabel("LBL_CREDITS"))
+		lbl->setText(credits);
+	if (Odyssey::WidgetLabel *lbl = getLabel("LBL_PC_CREDITS"))
+		lbl->setText(credits);
+	if (Odyssey::WidgetLabel *lbl = getLabel("LBL_CREDITS_VALUE"))
+		lbl->setText(credits);
 }
 
 void MenuInventory::updateActionButtons() {

@@ -250,7 +250,11 @@ void ActionExecutor::executePickUpItem(Action &action, const ExecutionContext &c
 
 	ctx.creature->popAction();
 	if (!itemResRef.empty()) {
-		ctx.creature->getInventory().addItem(itemResRef);
+		Creature *pc = ctx.area->_module->getPC();
+		if (pc)
+			pc->getInventory().addItem(itemResRef);
+		else
+			ctx.creature->getInventory().addItem(itemResRef);
 	}
 	ctx.area->removeObject(itemObject);
 }

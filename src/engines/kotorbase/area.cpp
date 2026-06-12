@@ -56,6 +56,7 @@
 #include "src/engines/kotorbase/trigger.h"
 #include "src/engines/kotorbase/sound.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/actionexecutor.h"
 #include "src/engines/kotorbase/creaturesearch.h"
@@ -973,6 +974,25 @@ void Area::handleCreaturesDeath() {
 
 	if (_module->getPC() && _module->getPC()->isDead())
 		_module->showDeathGUI();
+}
+
+Item *Area::spawnDroppedItem(const Common::UString &tag, float x, float y, float z) {
+	try {
+		std::unique_ptr<Item> item = std::make_unique<Item>(tag);
+		item->prepareWorldDrop(tag);
+		item->setPosition(x, y, z);
+
+		Item *itemPtr = item.get();
+		loadObject(std::move(item));
+		itemPtr->show();
+		return itemPtr;
+	} catch (Common::Exception &e) {
+		warning("Area::spawnDroppedItem: %s", e.what());
+	} catch (...) {
+		warning("Area::spawnDroppedItem: failed to spawn \"%s\"", tag.c_str());
+	}
+
+	return nullptr;
 }
 
 void Area::addCreature(Creature *creature) {
