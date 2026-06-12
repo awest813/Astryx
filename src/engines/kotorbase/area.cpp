@@ -305,14 +305,72 @@ void Area::getWorldPoint2(float &x, float &y) {
 	y = _worldPt2Y;
 }
 
-size_t Area::getDefaultMapExploredTileCount() {
+static void getMapExploredGridSize(int &cols, int &rows) {
 	// KotOR minimap textures are 512x256; exploration tracks 32x32 cells (+1 row/col).
 	static const int kCellSize = 32;
 	static const int kMapWidth = 512;
 	static const int kMapHeight = 256;
-	const int cols = (kMapWidth / kCellSize) + 1;
-	const int rows = (kMapHeight / kCellSize) + 1;
+	cols = (kMapWidth / kCellSize) + 1;
+	rows = (kMapHeight / kCellSize) + 1;
+}
+
+size_t Area::getDefaultMapExploredTileCount() {
+	int cols = 0;
+	int rows = 0;
+	getMapExploredGridSize(cols, rows);
 	return static_cast<size_t>(cols * rows);
+}
+
+bool Area::revealMapNear(float worldX, float worldY, int radiusTiles) {
+	int cols = 0;
+	int rows = 0;
+	getMapExploredGridSize(cols, rows);
+	const size_t tileCount = static_cast<size_t>(cols * rows);
+	if (_mapExplored.size() != tileCount)
+		_mapExplored.assign(tileCount, false);
+
+	const float worldSpanX = _worldPt2X - _worldPt1X;
+	const float worldSpanY = _worldPt2Y - _worldPt1Y;
+	if (std::fabs(worldSpanX) < 0.0001f || std::fabs(worldSpanY) < 0.0001f)
+		return false;
+
+	float relX = 0.0f;
+	float relY = 0.0f;
+	switch (_northAxis) {
+		case 0:
+			relX = (worldX - _worldPt1X) * ((_mapPt1X - _mapPt2X) / worldSpanX) + _mapPt1X;
+			relY = (worldY - _worldPt1Y) * ((_mapPt1Y - _mapPt2Y) / worldSpanY) + _mapPt1Y;
+			break;
+
+		case 3:
+			relX = (worldY - _worldPt1Y) * ((_mapPt1X - _mapPt2X) / worldSpanY) + _mapPt1X;
+			relY = (worldX - _worldPt1X) * ((_mapPt1Y - _mapPt2Y) / worldSpanX) + _mapPt1Y;
+			break;
+
+		default:
+			return false;
+	}
+
+	const int col = std::clamp(static_cast<int>(relX * (cols - 1) + 0.5f), 0, cols - 1);
+	const int row = std::clamp(static_cast<int>(relY * (rows - 1) + 0.5f), 0, rows - 1);
+
+	bool changed = false;
+	for (int dr = -radiusTiles; dr <= radiusTiles; ++dr) {
+		for (int dc = -radiusTiles; dc <= radiusTiles; ++dc) {
+			const int c = col + dc;
+			const int r = row + dr;
+			if (c < 0 || c >= cols || r < 0 || r >= rows)
+				continue;
+
+			const size_t index = static_cast<size_t>(r * cols + c);
+			if (!_mapExplored[index]) {
+				_mapExplored[index] = true;
+				changed = true;
+			}
+		}
+	}
+
+	return changed;
 }
 
 void Area::exploreMapFully() {

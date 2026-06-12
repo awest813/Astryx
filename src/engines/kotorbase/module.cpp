@@ -520,8 +520,7 @@ void Module::replaceModule() {
 	try {
 		if (_area) {
 			_area->savePersistence();
-			// Save map exploration
-			setMapExplored(_module, _area->getMapExplored());
+			setMapExplored(_area->getResRef(), _area->getMapExplored());
 		}
 
 		unload(false);
@@ -886,10 +885,12 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 		throw Common::Exception("Module::saveGame(): empty save slot path");
 
 	if (_pc)
-		_pcInfo = _pc->getCreatureInfo();
+		_pcInfo = _pc->buildSavedState();
 
-	if (_area)
+	if (_area) {
+		setMapExplored(_area->getResRef(), _area->getMapExplored());
 		_area->savePersistence();
+	}
 
 	Common::FilePath::createDirectories(slot);
 
@@ -940,7 +941,7 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 			if (member.first != -1 && member.second) {
 				memberStruct->addResRef("TemplateResRef", member.second->getTemplateResRef());
 				Aurora::GFF3WriterStructPtr state = memberStruct->addStruct("CreatureState");
-				member.second->getCreatureInfo().save(*state);
+				member.second->buildSavedState().save(*state);
 			}
 		}
 		partyRoot->addUint32("PT_LEADER_INDEX", 0);
@@ -1118,8 +1119,15 @@ void Module::initMinimap() {
 }
 
 void Module::updateMinimap() {
+	Creature *leader = _partyController.getPartyLeader();
+	if (!leader)
+		return;
+
 	float x, y, _;
-	_partyController.getPartyLeader()->getPosition(x, y, _);
+	leader->getPosition(x, y, _);
+
+	if (_area && _area->revealMapNear(x, y))
+		setMapExplored(_area->getResRef(), _area->getMapExplored());
 
 	_ingame->setPosition(x, y);
 	_ingame->setRotation(Common::rad2deg(_cameraController.getYaw()));

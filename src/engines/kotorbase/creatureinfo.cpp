@@ -23,6 +23,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 
 #include "src/common/debug.h"
 #include "src/aurora/gff3file.h"
@@ -109,6 +110,9 @@ CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
 	_forcePointsCurrent = other._forcePointsCurrent;
 	_forcePointsMax     = other._forcePointsMax;
 	_alignment          = other._alignment;
+	_currentHitPoints   = other._currentHitPoints;
+	_maxHitPoints       = other._maxHitPoints;
+	_hasHitPoints       = other._hasHitPoints;
 
 	return *this;
 }
@@ -153,6 +157,11 @@ void CreatureInfo::save(Aurora::GFF3WriterStruct &gff) const {
 			entry->addResRef("EquippedRes", equipped.second);
 		}
 	}
+
+	if (_hasHitPoints) {
+		gff.addSint32("CurrentHitPoints", _currentHitPoints);
+		gff.addSint32("MaxHitPoints", _maxHitPoints);
+	}
 }
 
 void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
@@ -171,6 +180,25 @@ void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
 	}
 
 	_inventory.setGold(gff.getUint("Gold", 0));
+
+	if (gff.hasField("Equip_ItemList")) {
+		_equipment.clear();
+		for (const auto &entry : gff.getList("Equip_ItemList")) {
+			if (!entry)
+				continue;
+
+			const InventorySlot slot = InventorySlot(static_cast<int>(std::log2f(entry->getID())));
+			const Common::UString tag = entry->getString("EquippedRes");
+			if (!tag.empty())
+				_equipment.insert(std::make_pair(slot, tag));
+		}
+	}
+
+	if (gff.hasField("CurrentHitPoints") || gff.hasField("MaxHitPoints")) {
+		_currentHitPoints = gff.getSint("CurrentHitPoints", 0);
+		_maxHitPoints = gff.getSint("MaxHitPoints", _currentHitPoints);
+		_hasHitPoints = true;
+	}
 }
 
 void CreatureInfo::saveAbilities(Aurora::GFF3WriterStruct &gff) const {
@@ -655,6 +683,24 @@ void CreatureInfo::setAlignment(int alignment) {
 
 void CreatureInfo::adjustAlignment(int shift) {
 	setAlignment(_alignment + shift);
+}
+
+int CreatureInfo::getCurrentHitPoints() const {
+	return _currentHitPoints;
+}
+
+int CreatureInfo::getMaxHitPoints() const {
+	return _maxHitPoints;
+}
+
+bool CreatureInfo::hasHitPoints() const {
+	return _hasHitPoints;
+}
+
+void CreatureInfo::setHitPoints(int current, int max) {
+	_currentHitPoints = current;
+	_maxHitPoints = max;
+	_hasHitPoints = true;
 }
 
 int CreatureInfo::getFeatRank(uint32_t feat) const {

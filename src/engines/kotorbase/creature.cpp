@@ -487,20 +487,46 @@ namespace KotORBase {
 			_skin = chargenInfo.getSkin();
 			_face = chargenInfo.getFace();
 			_minOneHitPoint = true;
-			int hitDie = classHitDie(chargenInfo.getClass());
-			int conMod = _info.getAbilityModifier(kAbilityConstitution);
-			int hp = hitDie + conMod;
-			if (hp < 1)		hp = 1;
-			_currentHitPoints = _maxHitPoints = hp;
-			setMaxForcePoints(computeMaxForcePoints());
-			setForcePoints(getMaxForcePoints());
+			if (_info.hasHitPoints()) {
+				_currentHitPoints = _info.getCurrentHitPoints();
+				_maxHitPoints = _info.getMaxHitPoints();
+			} else {
+				int hitDie = classHitDie(chargenInfo.getClass());
+				int conMod = _info.getAbilityModifier(kAbilityConstitution);
+				int hp = hitDie + conMod;
+				if (hp < 1)		hp = 1;
+				_currentHitPoints = _maxHitPoints = hp;
+			}
+
+			if (_info.getMaxForcePoints() > 0) {
+				setMaxForcePoints(_info.getMaxForcePoints());
+				setForcePoints(_info.getForcePoints());
+			} else {
+				setMaxForcePoints(computeMaxForcePoints());
+				setForcePoints(getMaxForcePoints());
+			}
 			reloadEquipment();
 			loadEquippedModel();
 		}
 		void Creature::applyCreatureInfo(const CreatureInfo &info) {
 			_info = info;
+			if (info.hasHitPoints()) {
+				_currentHitPoints = info.getCurrentHitPoints();
+				_maxHitPoints = info.getMaxHitPoints();
+			}
+			if (info.getMaxForcePoints() > 0) {
+				setMaxForcePoints(info.getMaxForcePoints());
+				setForcePoints(info.getForcePoints());
+			}
 			reloadEquipment();
 			loadEquippedModel();
+		}
+		CreatureInfo Creature::buildSavedState() const {
+			CreatureInfo info = _info;
+			info.setHitPoints(getCurrentHitPoints(), getMaxHitPoints());
+			info.setForcePoints(getForcePoints());
+			info.setMaxForcePoints(getMaxForcePoints());
+			return info;
 		}
 		const Common::UString &Creature::getCursor()
 		const {

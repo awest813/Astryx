@@ -105,6 +105,8 @@ public:
 	/** Get abstract information of this creature. */
 	CreatureInfo &getCreatureInfo();
 	const CreatureInfo &getCreatureInfo() const;
+	/** Build a save snapshot including live HP and force points. */
+	CreatureInfo buildSavedState() const;
 	bool hasFeat(uint32_t feat) const;
 
 	/** Is the creature a player character? */

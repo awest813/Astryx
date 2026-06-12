@@ -168,6 +168,8 @@ public:
 
 	static size_t getDefaultMapExploredTileCount();
 	void exploreMapFully();
+	/** Reveal minimap tiles near a world position. Returns true if any tile changed. */
+	bool revealMapNear(float worldX, float worldY, int radiusTiles = 1);
 
 	// Camera style
 

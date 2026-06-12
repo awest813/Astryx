@@ -74,6 +74,24 @@ GTEST_TEST(KotORSaveSerialization, inventoryRoundTrip) {
 	EXPECT_EQ(loaded.getItems().at("g_i_boots01").count, 1);
 }
 
+GTEST_TEST(KotORSaveSerialization, creatureInfoHitPointsRoundTrip) {
+	CreatureInfo info;
+	info.setHitPoints(12, 20);
+	info.setAbilityScore(kAbilityStrength, 14);
+
+	Aurora::GFF3Writer writer(MKTAG('U', 'T', 'C', ' '));
+	info.save(*writer.getTopLevel());
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	CreatureInfo loaded;
+	loaded.read(gff.getTopLevel());
+
+	EXPECT_TRUE(loaded.hasHitPoints());
+	EXPECT_EQ(loaded.getCurrentHitPoints(), 12);
+	EXPECT_EQ(loaded.getMaxHitPoints(), 20);
+	EXPECT_EQ(loaded.getAbilityScore(kAbilityStrength), 14);
+}
+
 GTEST_TEST(KotORSaveSerialization, creatureInfoRoundTrip) {
 	CreatureInfo info;
 	info.setAbilityScore(kAbilityStrength, 14);
@@ -152,6 +170,7 @@ GTEST_TEST(KotORSaveSerialization, partyRosterRoundTrip) {
 	companionInfo.addInventoryItem("g_i_medpac01", 1);
 	companionInfo.equipItem("g_i_boots01", kInventorySlotBody);
 	companionInfo.setAbilityScore(kAbilityStrength, 13);
+	companionInfo.setHitPoints(18, 24);
 
 	Aurora::GFF3Writer writer(MKTAG('P', 'T', 'A', 'B'));
 	Aurora::GFF3WriterStructPtr partyRoot = writer.getTopLevel();
@@ -217,6 +236,9 @@ GTEST_TEST(KotORSaveSerialization, partyRosterRoundTrip) {
 	EXPECT_TRUE(members[1].info.getInventory().hasItem("g_i_medpac01"));
 	EXPECT_TRUE(members[1].info.isInventorySlotEquipped(kInventorySlotBody));
 	EXPECT_EQ(members[1].info.getAbilityScore(kAbilityStrength), 13);
+	EXPECT_TRUE(members[1].info.hasHitPoints());
+	EXPECT_EQ(members[1].info.getCurrentHitPoints(), 18);
+	EXPECT_EQ(members[1].info.getMaxHitPoints(), 24);
 	EXPECT_EQ(loadedRoot.getUint("PT_LEADER_INDEX", 0), 0U);
 }
 
