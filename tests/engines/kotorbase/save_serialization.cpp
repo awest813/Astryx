@@ -119,6 +119,30 @@ GTEST_TEST(KotORSaveSerialization, objectStateRoundTrip) {
 	EXPECT_FALSE(loaded.isUsable());
 }
 
+GTEST_TEST(KotORSaveSerialization, partyPCStateRoundTrip) {
+	CreatureInfo info;
+	info.addInventoryItem("g_i_medpac01", 3);
+	info.getInventory().addGold(500);
+	info.equipItem("g_i_boots01", kInventorySlotBody);
+	info.setAbilityScore(kAbilityStrength, 16);
+
+	Aurora::GFF3Writer writer(MKTAG('P', 'T', 'A', 'B'));
+	Aurora::GFF3WriterStructPtr partyRoot = writer.getTopLevel();
+	partyRoot->addUint32("PT_GOLD", info.getInventory().getGold());
+	Aurora::GFF3WriterStructPtr pcState = partyRoot->addStruct("PT_PC_STATE");
+	info.save(*pcState);
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	CreatureInfo loaded;
+	loaded.read(gff.getTopLevel().getStruct("PT_PC_STATE"));
+
+	EXPECT_EQ(loaded.getInventory().getGold(), 500U);
+	EXPECT_TRUE(loaded.getInventory().hasItem("g_i_medpac01"));
+	EXPECT_EQ(loaded.getInventory().getItems().at("g_i_medpac01").count, 3);
+	EXPECT_TRUE(loaded.isInventorySlotEquipped(kInventorySlotBody));
+	EXPECT_EQ(loaded.getAbilityScore(kAbilityStrength), 16);
+}
+
 GTEST_TEST(KotORSaveSerialization, defaultMapExploredTileCount) {
 	EXPECT_EQ(Engines::KotORBase::Area::getDefaultMapExploredTileCount(), 153U);
 }

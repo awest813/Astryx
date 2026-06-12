@@ -252,6 +252,13 @@ bool MenuInventory::performUseSelectedItem() {
 	const KotORBase::ItemActionResult result =
 		KotORBase::useInventoryItem(*leader, *pc, _visibleItems[_selectedIndex], _module);
 
+	if (result.needsTargeting) {
+		_module->beginGrenadeTargeting(_visibleItems[_selectedIndex]);
+		setStatusMessage(result.message);
+		_returnCode = 1;
+		return true;
+	}
+
 	setStatusMessage(result.message);
 	if (result.success && _module->getCurrentArea())
 		_module->getCurrentArea()->addToObjectMap(leader);

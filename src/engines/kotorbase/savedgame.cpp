@@ -29,6 +29,7 @@
 
 #include "src/engines/kotorbase/savedgame.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 
@@ -84,8 +85,13 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 
 		if (res.name.equalsIgnoreCase("partytable") && res.type == Aurora::kFileTypeRES) {
 			Aurora::GFF3File partyGff(erf.getResource(res.index));
-			_partyGold = partyGff.getTopLevel().getUint("PT_GOLD", 0);
+			const Aurora::GFF3Struct &partyRoot = partyGff.getTopLevel();
+			_partyGold = partyRoot.getUint("PT_GOLD", 0);
 			_hasPartyGold = true;
+			if (partyRoot.hasField("PT_PC_STATE")) {
+				_savedPCInfo.read(partyRoot.getStruct("PT_PC_STATE"));
+				_hasSavedPCInfo = true;
+			}
 			continue;
 		}
 
@@ -164,7 +170,9 @@ void SavedGame::applyPersistedState(Module &module) const {
 	if (_areaState)
 		module.loadAreaObjectSaves(_areaState->getTopLevel());
 
-	if (_hasPartyGold) {
+	if (_hasSavedPCInfo)
+		module.setSavedPCInfo(_savedPCInfo);
+	else if (_hasPartyGold) {
 		if (Creature *pc = module.getPC())
 			pc->getInventory().setGold(_partyGold);
 	}

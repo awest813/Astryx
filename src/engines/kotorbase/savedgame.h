@@ -31,6 +31,8 @@
 #include "src/aurora/erffile.h"
 #include "src/aurora/gff3file.h"
 
+#include "src/engines/kotorbase/creatureinfo.h"
+
 namespace Engines {
 
 namespace KotORBase {
@@ -67,6 +69,8 @@ protected:
 	bool _pcLoaded;
 	uint32_t _partyGold { 0 };
 	bool _hasPartyGold { false };
+	CreatureInfo _savedPCInfo;
+	bool _hasSavedPCInfo { false };
 
 	std::unique_ptr<Aurora::GFF3File> _globals;
 	std::unique_ptr<Aurora::GFF3File> _areaState;

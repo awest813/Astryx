@@ -23,6 +23,8 @@
  */
 
 #include <algorithm>
+#include <cmath>
+#include <cfloat>
 #include <memory>
 
 #include "src/common/util.h"
@@ -708,6 +710,43 @@ void Area::notifyCameraMoved() {
 
 float Area::evaluateElevation(float x, float y) {
 	return _pathfinding->getHeight(x, y, true);
+}
+
+bool Area::getGroundPointAtScreen(int screenX, int screenY, float &outX, float &outY, float &outZ) {
+	float x1, y1, z1, x2, y2, z2;
+	if (!GfxMan.unproject(screenX, screenY, x1, y1, z1, x2, y2, z2))
+		return false;
+
+	glm::vec3 intersect;
+	if (rayTest(glm::vec3(x1, y1, z1), glm::vec3(x2, y2, z2), intersect)) {
+		outX = intersect.x;
+		outY = intersect.y;
+		outZ = intersect.z;
+		return true;
+	}
+
+	float refZ = 0.0f;
+	if (Creature *leader = _module->getPartyLeader())
+		leader->getPosition(outX, outY, refZ);
+	else
+		refZ = z1;
+
+	const float dz = z2 - z1;
+	if (std::fabs(dz) < 0.0001f)
+		return false;
+
+	const float t = (refZ - z1) / dz;
+	if (t < 0.0f || t > 1.0f)
+		return false;
+
+	outX = x1 + t * (x2 - x1);
+	outY = y1 + t * (y2 - y1);
+	const float elevation = evaluateElevation(outX, outY);
+	if (elevation == FLT_MIN)
+		return false;
+
+	outZ = elevation;
+	return true;
 }
 
 bool Area::walkable(const glm::vec3 &orig, const glm::vec3 &dest) const {

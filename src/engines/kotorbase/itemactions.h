@@ -39,6 +39,7 @@ class Module;
 
 struct ItemActionResult {
 	bool success { false };
+	bool needsTargeting { false };
 	Common::UString message;
 };
 
@@ -47,6 +48,10 @@ bool isUsableConsumable(const Item &item);
 InventorySlot findEquipSlot(const Item &item, const Creature &creature);
 
 int grenadeDamageForItem(const Item &item);
+bool grenadeHasFriendlyFire(const Item &item);
+
+ItemActionResult throwGrenadeAt(Creature &inventoryOwner, const Common::UString &tag, Module &module,
+                                float x, float y, float z);
 
 ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, const Common::UString &tag,
                                   Module *module = nullptr);

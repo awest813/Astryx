@@ -384,10 +384,33 @@ void HUD::updateLevelUpIndicators() {
 	}
 }
 
+void HUD::updateGrenadeTargetingPrompt() {
+	const bool active = _module.isGrenadeTargeting();
+
+	if (Odyssey::WidgetLabel *bg = getLabel("LBL_CMBTMSGBG")) {
+		bg->setInvisible(!active);
+		if (active && _visible)
+			bg->show();
+		else
+			bg->hide();
+	}
+
+	if (Odyssey::WidgetLabel *msg = getLabel("LBL_CMBTMODEMSG")) {
+		if (active)
+			msg->setText("Select where to throw the grenade. Press Esc to cancel.");
+		msg->setInvisible(!active);
+		if (active && _visible)
+			msg->show();
+		else
+			msg->hide();
+	}
+}
+
 void HUD::update(float dt) {
 	KotORBase::HUD::update(dt);
 	updatePartyVitals();
 	updateLevelUpIndicators();
+	updateGrenadeTargetingPrompt();
 }
 
 void HUD::update(int width, int height) {

@@ -350,6 +350,16 @@ protected:
 	bool isLoadedFromSaveGame() const;
 	void saveGame(const Common::UString &slot, const Common::UString &name);
 
+	/** Restore PC inventory/equipment/stats from a save before loadPC(). */
+	void setSavedPCInfo(const CreatureInfo &info);
+
+	// Grenade targeting
+
+	bool isGrenadeTargeting() const;
+	void beginGrenadeTargeting(const Common::UString &itemTag);
+	void cancelGrenadeTargeting();
+	bool handleGrenadeTargetingClick(int screenX, int screenY);
+
 	// Conversation
 
 	bool isConversationActive() const;
@@ -547,6 +557,9 @@ private:
 	bool _inDialog;
 	int _runScriptVar;
 	bool _soloMode;
+
+	Common::UString _grenadeItemTag;
+	bool _grenadeTargetingActive { false };
 	bool _playerInputEnabled { true };
 	bool _cutsceneMode { false };
 	int _userDefinedEventNumber { 0 };

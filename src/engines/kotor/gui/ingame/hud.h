@@ -80,6 +80,7 @@ private:
 	void setPortrait(uint8_t n, KotORBase::Creature *creature);
 	void setLevelUpIndicator(uint8_t n, bool visible);
 	void updateLevelUpIndicators();
+	void updateGrenadeTargetingPrompt();
 	void updatePortraitVitals(uint8_t n, KotORBase::Creature *creature);
 	void updatePartyVitals();
 	void notifyResized(int oldWidth, int oldHeight, int newWidth, int newHeight);

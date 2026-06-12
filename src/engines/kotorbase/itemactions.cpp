@@ -22,6 +22,7 @@
  *  Inventory item use, equip, and drop helpers for KotOR games.
  */
 
+#include <cmath>
 #include <cfloat>
 
 #include "src/common/exception.h"
@@ -158,42 +159,95 @@ InventorySlot findEquipSlot(const Item &item, const Creature &creature) {
 	return kInventorySlotInvalid;
 }
 
-static ItemActionResult useGrenade(Creature &target, Creature &inventoryOwner,
-                                   const Item &item, const Common::UString &tag, Module *module) {
+bool grenadeHasFriendlyFire(const Item &item) {
+	const Common::UString &cls = item.getItemClass();
+	return cls.contains("gas") || cls.contains("poison") || cls.contains("flash");
+}
+
+static bool grenadeShouldDamageCreature(const Module &module, Creature *creature, bool friendlyFire) {
+	if (!creature || creature->isDead() || creature->isPC())
+		return false;
+
+	if (module.isObjectPartyMember(creature))
+		return friendlyFire;
+
+	return true;
+}
+
+static float distance2D(float ax, float ay, float bx, float by) {
+	const float dx = ax - bx;
+	const float dy = ay - by;
+	return std::sqrt(dx * dx + dy * dy);
+}
+
+ItemActionResult throwGrenadeAt(Creature &inventoryOwner, const Common::UString &tag, Module &module,
+                                float x, float y, float z) {
 	ItemActionResult result;
 
-	if (!module) {
-		result.message = "Grenades cannot be used here.";
+	if (!inventoryOwner.getInventory().hasItem(tag)) {
+		result.message = "Grenade is no longer in inventory.";
 		return result;
 	}
 
-	Area *area = module->getCurrentArea();
+	Area *area = module.getCurrentArea();
 	if (!area) {
 		result.message = "Grenades cannot be used here.";
 		return result;
 	}
 
-	const int damage = grenadeDamageForItem(item);
-	int targetsHit = 0;
+	try {
+		const Item item(tag);
+		if (!itemClassIs(item, "grenade")) {
+			result.message = "That item is not a grenade.";
+			return result;
+		}
 
-	for (Creature *creature : area->getCreatures()) {
-		if (!creature || creature->isDead() || creature->isPC())
-			continue;
-		if (module->isObjectPartyMember(creature))
-			continue;
-		if (target.getDistanceTo(creature) > 8.0f)
-			continue;
+		Creature *leader = module.getPartyLeader();
+		if (leader) {
+			float lx, ly, lz;
+			leader->getPosition(lx, ly, lz);
+			if (distance2D(x, y, lx, ly) > 15.0f) {
+				result.message = "That location is out of throwing range.";
+				return result;
+			}
+		}
 
-		creature->applyEffect(Effect(kKotOREffectDamage, damage));
-		++targetsHit;
+		const int damage = grenadeDamageForItem(item);
+		const bool friendlyFire = grenadeHasFriendlyFire(item);
+		int targetsHit = 0;
+
+		static const float kGrenadeRadius = 8.0f;
+		for (Creature *creature : area->getCreatures()) {
+			if (!grenadeShouldDamageCreature(module, creature, friendlyFire))
+				continue;
+
+			float cx, cy, cz;
+			creature->getPosition(cx, cy, cz);
+			if (distance2D(x, y, cx, cy) > kGrenadeRadius)
+				continue;
+
+			creature->applyEffect(Effect(kKotOREffectDamage, damage));
+			++targetsHit;
+		}
+
+		module.playSound("exp_generic");
+		inventoryOwner.getCreatureInfo().removeInventoryItem(tag, 1);
+		result.success = true;
+		result.message = targetsHit > 0 ?
+		                 "Grenade detonated." :
+		                 "Grenade detonated, but nothing was in range.";
+	} catch (Common::Exception &e) {
+		result.message = e.what();
 	}
 
-	module->playSound("exp_generic");
-	inventoryOwner.getCreatureInfo().removeInventoryItem(tag, 1);
+	return result;
+}
+
+static ItemActionResult beginGrenadeTargeting() {
+	ItemActionResult result;
 	result.success = true;
-	result.message = targetsHit > 0 ?
-	                 "Grenade detonated." :
-	                 "Grenade detonated, but nothing was in range.";
+	result.needsTargeting = true;
+	result.message = "Select where to throw the grenade.";
 	return result;
 }
 
@@ -209,8 +263,13 @@ ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, co
 	try {
 		Item item(tag);
 
-		if (itemClassIs(item, "grenade"))
-			return useGrenade(target, inventoryOwner, item, tag, module);
+		if (itemClassIs(item, "grenade")) {
+			if (!module) {
+				result.message = "Grenades cannot be used here.";
+				return result;
+			}
+			return beginGrenadeTargeting();
+		}
 
 		const int heal = healAmountForItem(item);
 		if (heal > 0) {

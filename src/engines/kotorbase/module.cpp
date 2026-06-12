@@ -67,6 +67,7 @@
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/itemupgrades.h"
+#include "src/engines/kotorbase/itemactions.h"
 #include "src/engines/kotorbase/area.h"
 
 #include "src/engines/kotorbase/gui/partyselection.h"
@@ -796,9 +797,55 @@ void Module::processEventQueue() {
 	handleDelayedInteractions();
 }
 
+void Module::setSavedPCInfo(const CreatureInfo &info) {
+	_pcInfo = info;
+}
+
+bool Module::isGrenadeTargeting() const {
+	return _grenadeTargetingActive;
+}
+
+void Module::beginGrenadeTargeting(const Common::UString &itemTag) {
+	_grenadeItemTag = itemTag;
+	_grenadeTargetingActive = !itemTag.empty();
+}
+
+void Module::cancelGrenadeTargeting() {
+	_grenadeTargetingActive = false;
+	_grenadeItemTag.clear();
+}
+
+bool Module::handleGrenadeTargetingClick(int screenX, int screenY) {
+	if (!_grenadeTargetingActive || _grenadeItemTag.empty() || !_area)
+		return false;
+
+	Creature *pc = getPC();
+	if (!pc || !pc->getInventory().hasItem(_grenadeItemTag)) {
+		cancelGrenadeTargeting();
+		return true;
+	}
+
+	float x, y, z;
+	if (!_area->getGroundPointAtScreen(screenX, screenY, x, y, z)) {
+		playSound("gui_actuse");
+		return true;
+	}
+
+	const ItemActionResult result = throwGrenadeAt(*pc, _grenadeItemTag, *this, x, y, z);
+	cancelGrenadeTargeting();
+
+	if (result.success)
+		_area->addToObjectMap(getPartyLeader());
+
+	return true;
+}
+
 void Module::saveGame(const Common::UString &slot, const Common::UString &name) {
 	if (slot.empty())
 		throw Common::Exception("Module::saveGame(): empty save slot path");
+
+	if (_pc)
+		_pcInfo = _pc->getCreatureInfo();
 
 	if (_area)
 		_area->savePersistence();
@@ -833,6 +880,8 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 		if (pc) {
 			partyRoot->addExoString("PT_PCNAME", pc->getTag());
 			partyRoot->addUint32("PT_GOLD", pc->getInventory().getGold());
+			Aurora::GFF3WriterStructPtr pcState = partyRoot->addStruct("PT_PC_STATE");
+			_pcInfo.save(*pcState);
 		}
 		partyWriter.write(partyMem);
 	}
@@ -919,6 +968,20 @@ void Module::handleEvents() {
 			if (event->type == Events::kEventKeyDown && event->key.keysym.sym == SDLK_ESCAPE)
 				showMenu();
 			continue;
+		}
+
+		if (_grenadeTargetingActive) {
+			if (event->type == Events::kEventMouseUp &&
+			    event->button.button == SDL_BUTTON_LMASK) {
+				if (handleGrenadeTargetingClick(event->button.x, event->button.y))
+					continue;
+			}
+
+			if (event->type == Events::kEventKeyDown &&
+			    event->key.keysym.sym == SDLK_ESCAPE) {
+				cancelGrenadeTargeting();
+				continue;
+			}
 		}
 
 		if (event->type == Events::kEventKeyDown) {
