@@ -1,5 +1,10 @@
 # KotOR Engine Parity Roadmap
 
+> **Status note (2026-07-29):** Many items below are marked complete as *systems
+> scaffolding*, not as verified full-campaign playability. For an honest audit,
+> stub counts, and the phased plan to Endar Spire → Star Forge parity, see
+> **[docs/FULL_PARITY_AUDIT_AND_PLAN.md](docs/FULL_PARITY_AUDIT_AND_PLAN.md)**.
+
 ## Core Engine Parity
 
 #### Combat System
