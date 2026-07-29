@@ -195,7 +195,9 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 | **P1** | `AddToParty` / `RemoveFromParty` (align with party member APIs) | Companion scripts — **wired 2026-07-29** |
 | **P1** | `GetIsDay` / `GetIsNight` (real time or module clock) | Time-gated content — **wired 2026-07-29** |
 | **P1** | `RevealMap`, `SetAILevel`, `ApplyEffectAtLocation` | Exploration / AI / AoE apply — **wired 2026-07-29** |
-| **P2** | Faction aggregate queries, listening API | Quality + secondary quests |
+| **P2** | Faction aggregate queries, listening API | Quality + secondary quests — **wired 2026-07-29** |
+| **P2** | `GetModuleFileName`, `GetReflexAdjustedDamage`, `GetIsPlayableRacialType`, `GetTargetLocation` | Misc campaign helpers — **wired 2026-07-29** |
+| **P3** | Remaining audio/item/event stubs, SWMG burn-down | Fidelity / minigames |
 
 **Method:** For each band, (1) grep game `.ncs`/decompiled usage where available, (2) implement minimal correct semantics, (3) add focused unit tests, (4) re-smoke Phase 1 path.
 

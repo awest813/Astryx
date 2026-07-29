@@ -1187,6 +1187,34 @@ protected:
 	void setAILevel(Aurora::NWScript::FunctionContext &ctx);
 	void getLastConversation(Aurora::NWScript::FunctionContext &ctx);
 
+	void getIsListening(Aurora::NWScript::FunctionContext &ctx);
+	void setListening(Aurora::NWScript::FunctionContext &ctx);
+	void setListenPattern(Aurora::NWScript::FunctionContext &ctx);
+	void testStringAgainstPattern(Aurora::NWScript::FunctionContext &ctx);
+	void getMatchedSubstring(Aurora::NWScript::FunctionContext &ctx);
+	void getMatchedSubstringsCount(Aurora::NWScript::FunctionContext &ctx);
+	void setAssociateListenPatterns(Aurora::NWScript::FunctionContext &ctx);
+
+	void getFactionWeakestMember(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionStrongestMember(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionMostDamagedMember(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionLeastDamagedMember(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionGold(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionAverageReputation(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionAverageGoodEvilAlignment(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionAverageLevel(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionAverageXP(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionMostFrequentClass(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionWorstAC(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionBestAC(Aurora::NWScript::FunctionContext &ctx);
+	void changeFactionByFaction(Aurora::NWScript::FunctionContext &ctx);
+
+	void getModuleFileName(Aurora::NWScript::FunctionContext &ctx);
+	void getReflexAdjustedDamage(Aurora::NWScript::FunctionContext &ctx);
+	void getIsPlayableRacialType(Aurora::NWScript::FunctionContext &ctx);
+	void getTargetLocation(Aurora::NWScript::FunctionContext &ctx);
+	void getIsLinkImmune(Aurora::NWScript::FunctionContext &ctx);
+
 
 	void getStealthMode(Aurora::NWScript::FunctionContext &ctx);
 
@@ -2315,6 +2343,9 @@ private:
 	// State for GetFirstInPersistentObject / GetNextInPersistentObject
 	std::vector<Object *> _persistentIterObjects;
 	size_t _persistentIterIndex { 0 };
+
+	// Matched substrings from TestStringAgainstPattern
+	std::vector<Common::UString> _matchedSubstrings;
 
 	// Context state for inventory-disturb and item-activation events
 	int _lastInventoryDisturbType { 0 };

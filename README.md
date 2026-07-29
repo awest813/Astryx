@@ -6,7 +6,7 @@ with shared KotOR II engine foundations.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Milestone%207%20In%20Progress-yellow?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/NWScript-~76%25%20behavioral-blue?style=for-the-badge" alt="Coverage">
+  <img src="https://img.shields.io/badge/NWScript-~79%25%20behavioral-blue?style=for-the-badge" alt="Coverage">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-orange?style=for-the-badge" alt="Platforms">
 </p>
 
@@ -19,8 +19,8 @@ at verified full-campaign parity.
 | Metric (KotOR I) | Value |
 |------------------|------:|
 | NWScript bindings | ~785 |
-| Behavioral handlers | ~596 |
-| Generic stubs | ~111 |
+| Behavioral handlers | ~621 |
+| Generic stubs | ~86 |
 | SWMG stubs | ~78 |
 
 “100% NWScript coverage” in older docs meant **every slot is registered** (no
@@ -42,6 +42,7 @@ safe defaults and can softlock quests silently.
 
 - [x] Phase 2 P0 combat/quest/spell/immunity natives
 - [x] Phase 2 P1 effects / AoE iterators / party / day-night / RevealMap
+- [x] Phase 2 P2 faction aggregates / listening API
 - [ ] Verified Endar Spire → Dantooine live smoke
 - [ ] SWMG / swoop / turret progression fidelity
 - [ ] GFF save/load campaign round-trips

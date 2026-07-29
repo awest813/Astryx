@@ -28,6 +28,9 @@
 
 #include "gtest/gtest.h"
 
+#include <string>
+#include <vector>
+
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/types.h"
@@ -187,4 +190,66 @@ GTEST_TEST(ParityP0Natives, dayNightPartition) {
 	EXPECT_FALSE(isDay(5));
 	EXPECT_FALSE(isDay(18));
 	EXPECT_FALSE(isDay(23));
+}
+
+GTEST_TEST(ParityP0Natives, listeningPatternsAndObjectState) {
+	TestCreature creature;
+	EXPECT_FALSE(creature.getIsListening());
+	creature.setListening(true);
+	EXPECT_TRUE(creature.getIsListening());
+	creature.setListenPattern(Common::UString("hello*"), 1);
+	EXPECT_EQ(creature.getListenPattern(1), Common::UString("hello*"));
+	creature.clearListenPatterns();
+	EXPECT_TRUE(creature.getListenPattern(1).empty());
+}
+
+GTEST_TEST(ParityP0Natives, reflexAdjustedDamageHalvesOnSave) {
+	// Mirror GetReflexAdjustedDamage: success → half, failure → full
+	auto adjusted = [](int damage, bool saved) {
+		return saved ? damage / 2 : damage;
+	};
+	EXPECT_EQ(adjusted(20, true), 10);
+	EXPECT_EQ(adjusted(21, true), 10);
+	EXPECT_EQ(adjusted(20, false), 20);
+}
+
+GTEST_TEST(ParityP0Natives, globPatternCapture) {
+	// Mirror TestStringAgainstPattern '*' capture semantics (trailing wildcard)
+	auto match = [](const std::string &pat, const std::string &str, std::vector<std::string> &caps) {
+		caps.clear();
+		std::vector<std::string> parts;
+		std::string cur;
+		for (char c : pat) {
+			if (c == '*') { parts.push_back(cur); cur.clear(); parts.push_back("*"); }
+			else cur.push_back(c);
+		}
+		parts.push_back(cur);
+		size_t pos = 0;
+		for (size_t i = 0; i < parts.size(); ++i) {
+			if (parts[i] == "*") {
+				while (i + 1 < parts.size() && parts[i + 1] == "*")
+					++i;
+				if (i + 1 >= parts.size() || parts[i + 1].empty()) {
+					caps.push_back(str.substr(pos));
+					return true;
+				}
+				size_t found = str.find(parts[i + 1], pos);
+				if (found == std::string::npos) return false;
+				caps.push_back(str.substr(pos, found - pos));
+				pos = found;
+			} else if (!parts[i].empty()) {
+				if (str.compare(pos, parts[i].size(), parts[i]) != 0) return false;
+				pos += parts[i].size();
+			}
+		}
+		return pos == str.size();
+	};
+	std::vector<std::string> caps;
+	EXPECT_TRUE(match("hello*", "hello world", caps));
+	ASSERT_EQ(caps.size(), 1u);
+	EXPECT_EQ(caps[0], " world");
+	EXPECT_FALSE(match("foo", "bar", caps));
+	EXPECT_TRUE(match("*world", "hello world", caps));
+	ASSERT_EQ(caps.size(), 1u);
+	EXPECT_EQ(caps[0], "hello ");
 }

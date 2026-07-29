@@ -418,6 +418,28 @@ void Object::setLocalString(const Common::UString &name, const Common::UString &
 	_localStrings[name] = value;
 }
 
+bool Object::getIsListening() const {
+	return _listening;
+}
+
+void Object::setListening(bool listening) {
+	_listening = listening;
+}
+
+void Object::setListenPattern(const Common::UString &pattern, int number) {
+	_listenPatterns[number] = pattern;
+}
+
+const Common::UString &Object::getListenPattern(int number) const {
+	static const Common::UString kEmpty;
+	std::map<int, Common::UString>::const_iterator it = _listenPatterns.find(number);
+	return it != _listenPatterns.end() ? it->second : kEmpty;
+}
+
+void Object::clearListenPatterns() {
+	_listenPatterns.clear();
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines
