@@ -1344,7 +1344,7 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 		for (const auto &s : swings) {
 			if (target->isDead())
 				break;
-			c->executeAttack(target, s.babPenalty, s.damageMod, activeFeat);
+			c->executeAttack(target, s.babPenalty, s.damageMod, activeFeat, _area.get());
 		}
 
 		c->setAttemptedAttackTarget(nullptr);

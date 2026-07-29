@@ -43,10 +43,12 @@ Endar→Star Forge playthrough. Live smoke still needs game data.
 - [x] Phase 2 P1 effects / AoE iterators / party / day-night / RevealMap
 - [x] Phase 2 P2 faction aggregates / listening API
 - [x] Phase 2 P3 remaining generic stubs + SWMG table burn-down (K1)
+- [x] Phase 3 flanking + Force-user AI + AddMultiClass
+- [x] Galaxy map Unknown World / Star Forge destinations
 - [ ] Verified Endar Spire → Dantooine live smoke
 - [ ] SWMG / swoop / turret live progression fidelity
 - [ ] GFF save/load campaign round-trips
-- [ ] Unknown World & Star Forge
+- [ ] Unknown World & Star Forge live modules
 
 ## Quick start
 

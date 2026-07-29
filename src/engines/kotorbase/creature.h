@@ -171,7 +171,12 @@ public:
 	void think(Area *area);
 	void updateCombatAI();
 	Object *findCombatTarget(Area *area);
-	bool isFlankedBy(Creature *attacker);
+	/** True if an ally of @p attacker threatens this creature from the opposite side. */
+	bool isFlankedBy(Creature *attacker, Area *area = nullptr);
+	/** Geometry helper used by flanking (dot product of defender→attacker and defender→ally < -0.5). */
+	static bool areOnOppositeSides(float defX, float defY,
+	                               float aX, float aY,
+	                               float bX, float bY);
 	virtual void update(float dt);
 
 	// Positioning
@@ -370,8 +375,9 @@ public:
 	 *                   primary attack, -5 for the second, -10 for the third…).
 	 * @param damageMod  Additional flat damage modifier (e.g. from caller-selected feats).
 	 * @param activeFeat Activated combat feat for this attack sequence, or -1.
+	 * @param area       Optional area used for flanking / LOS context.
 	 */
-	void executeAttack(Object *target, int babPenalty = 0, int damageMod = 0, int activeFeat = -1);
+	void executeAttack(Object *target, int babPenalty = 0, int damageMod = 0, int activeFeat = -1, Area *area = nullptr);
 	
 	/** Returns true if the creature has a lightsaber equipped in either hand. */
 	bool hasLightsaberEquipped() const;

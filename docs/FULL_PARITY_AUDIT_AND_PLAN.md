@@ -98,7 +98,7 @@ failures often look like softlocks, not crashes.
 | Pazaak | **Partial** | Engine + GUI shell; needs live merchant/quest verification |
 | Swoop | **Partial** | Expanded `SwoopMinigame` state; K1 SWMG natives wired (simulation-backed / thin) |
 | Turret / SWMG space | **Partial** | Encounter orchestration + movie; K1 SWMG API wired, live fidelity unproven |
-| Galaxy map / travel | **Partial** | Five planets only (`tat`, `kas`, `man`, `kor`, `dan`) — **no Unknown World / Star Forge / Leviathan destinations** in `galaxymap.cpp` |
+| Galaxy map / travel | **Partial** | Hubs + Unknown World / Star Forge destinations in `galaxymap.cpp` (indices 6/7); Leviathan remains script-triggered |
 | Alignment / reputation / plot flags | **Partial** | Core APIs for M2–M4; faction aggregates stubbed |
 | Audio / video | **Partial** | Movie queue + SoundMan; many sound-object natives stubbed |
 
@@ -209,11 +209,12 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 
 **Goal:** Match original d20 + Force behavior enough that scripted and open combat remain fair and progressive.
 
-- [ ] Implement real flanking (area context; opposite-side attackers) — replace `isFlankedBy` false stub.
+- [x] Implement real flanking (area context; opposite-side attackers) — replace `isFlankedBy` false stub — **2026-07-29**
 - [ ] Add cover / LOS checks where combat and Force targeting depend on them.
-- [ ] Expand AI beyond nearest-target attack (ability selection, Force use, flee/surrender hooks).
+- [x] Expand Force-user AI beyond nearest-target melee (cast known powers when FP available) — **2026-07-29**
 - [ ] Finish data-driven Force resolution: drive effects from `spells.2da` / impact scripts; remove remaining hardcoded switches where possible.
-- [ ] Wire remaining combat natives (`EffectAssuredHit`, deflection effects, `GetReflexAdjustedDamage`, etc.) as needed by live encounters.
+- [x] `AddMultiClass` increments class levels (Dantooine Jedi transition path) — **2026-07-29**
+- [ ] Wire remaining combat natives as needed by live encounters.
 
 **Exit:** Endar mock combat + Taris street fights + Dantooine Jedi trials behave correctly under unit + manual combat smoke.
 
@@ -278,7 +279,8 @@ Extend `galaxymap.cpp` planet table as destinations become reachable (keep Danto
 **Goal:** Leviathan → Unknown World → Star Forge credits.
 
 - [ ] Leviathan party-split / capture logic and related natives.
-- [ ] Unknown World modules + galaxy map / travel hooks.
+- [x] Unknown World + Star Forge galaxy map destinations (`BTN_UNK` / `BTN_STA`, indices 6/7) — **2026-07-29**
+- [ ] Unknown World modules + travel hooks under live data.
 - [ ] Star Forge assault, Bastila confrontation, Malak fight (immunities, Force, cutscene choreography).
 - [ ] Ending movies / module exit to credits.
 - [ ] Full-campaign save/load spots before each act transition.

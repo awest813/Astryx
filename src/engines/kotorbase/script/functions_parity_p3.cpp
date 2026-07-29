@@ -253,9 +253,12 @@ void Functions::versusTrapEffect(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::addMultiClass(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	(void)creature;
-	(void)ctx;
-	// Level-up multi-classing is handled by chargen/level-up UI; accept as no-op.
+	if (!creature)
+		return;
+
+	const int classId = ctx.getParams()[1].getInt();
+	creature->getCreatureInfo().incrementClassLevel(static_cast<Class>(classId));
+	creature->setMaxForcePoints(creature->computeMaxForcePoints());
 }
 
 void Functions::actionEquipMostEffectiveArmor(Aurora::NWScript::FunctionContext &ctx) {

@@ -4,6 +4,7 @@ either version 3 * of the License, or (at your option) any later version. * * xo
 without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the * GNU General Public License for more details. * * You should have received a copy of the GNU General Public License * along with xoreos. If not, see <http://www.gnu.org/licenses/>. */
 /** @file *  Creature within an area in KotOR games. */
 #include <cassert>
+#include <cmath>
 #include "external/glm/gtc/type_ptr.hpp"
 #include "src/common/util.h"
 #include "src/common/maths.h"
@@ -1041,10 +1042,55 @@ namespace KotORBase {
 			}
 		}
 
-		bool Creature::isFlankedBy(Creature *attacker) {
-			// Flanking requires 2 opponents on opposite sides - requires area context.
-			// Without it, return false (conservative).
-			(void)attacker;
+		bool Creature::areOnOppositeSides(float defX, float defY,
+		                                  float aX, float aY,
+		                                  float bX, float bY) {
+			const float ax = aX - defX;
+			const float ay = aY - defY;
+			const float bx = bX - defX;
+			const float by = bY - defY;
+			const float lenA = std::sqrt(ax * ax + ay * ay);
+			const float lenB = std::sqrt(bx * bx + by * by);
+			if (lenA < 0.01f || lenB < 0.01f)
+				return false;
+			const float dot = (ax / lenA) * (bx / lenB) + (ay / lenA) * (by / lenB);
+			// ~120° or more apart (classic flanking cone).
+			return dot < -0.5f;
+		}
+
+		bool Creature::isFlankedBy(Creature *attacker, Area *area) {
+			if (!attacker || attacker == this || isDead() || !area)
+				return false;
+
+			float dx, dy, dz;
+			getPosition(dx, dy, dz);
+			float ax, ay, az;
+			attacker->getPosition(ax, ay, az);
+
+			const float threatRange = 5.0f;
+			const bool attackerHostile = attacker->isEnemy();
+
+			for (Creature *other : area->getCreatures()) {
+				if (!other || other == this || other == attacker || other->isDead())
+					continue;
+
+				// Ally of the attacker: same hostility polarity toward the party.
+				if (other->isEnemy() != attackerHostile)
+					continue;
+
+				if (getDistanceTo(other) > threatRange)
+					continue;
+
+				// Prefer creatures already engaged with us, but allow nearby melee allies.
+				if (other->isInCombat() && other->getAttackTarget() != this)
+					continue;
+
+				float ox, oy, oz;
+				other->getPosition(ox, oy, oz);
+				if (areOnOppositeSides(dx, dy, ax, ay, ox, oy))
+					return true;
+			}
+
 			return false;
 		}
 		void Creature::startCombat(Object *target,
@@ -1241,7 +1287,8 @@ namespace KotORBase {
 		void Creature::executeAttack(Object *target,
 		int babPenalty,
 		int damageMod,
-		int activeFeat) {
+		int activeFeat,
+		Area *area) {
 			if (!target) {
 				cancelCombat();
 				return;
@@ -1269,7 +1316,7 @@ namespace KotORBase {
 
 			// Flanking bonus (+2)
 			int flankingMod = 0;
-			if (!ranged && targetCreature && targetCreature->isFlankedBy(this)) {
+			if (!ranged && targetCreature && targetCreature->isFlankedBy(this, area)) {
 				flankingMod = 2;
 				debugC(Common::kDebugEngineLogic, 1, "Attacker %s gains flanking bonus vs %s", getName().c_str(), target->getName().c_str());
 			}
@@ -1395,7 +1442,7 @@ namespace KotORBase {
 			// target is flat-footed (not currently in combat), flanked, or
 			// knocked down/stunned.
 			bool targetVulnerable = targetCreature && (!targetCreature->isInCombat() ||
-			                                            targetCreature->isFlankedBy(this) ||
+			                                            targetCreature->isFlankedBy(this, area) ||
 			                                            targetCreature->hasEffect(kEffectStun) ||
 			                                            targetCreature->hasEffect(kEffectKnockdown));
 			if (hit && targetVulnerable) {
@@ -1750,10 +1797,22 @@ namespace KotORBase {
 				_actions.add(Action(kActionAttackObject, target));
 				_aiCooldown = 2.0f;
 				break;
-				case kAIArchetypeForceUser:			// Advanced Force-using NPCs (Sith/Dark Jedi).			_actions.clear();
-				_actions.add(Action(kActionAttackObject, target));
-				_aiCooldown = 1.0f;
-				break;
+				case kAIArchetypeForceUser: {
+					_actions.clear();
+					const std::vector<uint32_t> &powers = getCreatureInfo().getForcePowers();
+					const bool canCast = !powers.empty() && getForcePoints() >= 10;
+					if (canCast && getDistanceTo(target) <= 12.0f) {
+						Action spell(kActionCastSpell, target);
+						spell.actionID = static_cast<int>(powers[static_cast<size_t>(RNG.getNext(0, static_cast<int>(powers.size())))]);
+						_actions.add(spell);
+						setForcePoints(std::max(0, getForcePoints() - 10));
+						_aiCooldown = 2.0f;
+					} else {
+						_actions.add(Action(kActionAttackObject, target));
+						_aiCooldown = 1.0f;
+					}
+					break;
+				}
 				default:			break;
 			}
 		}

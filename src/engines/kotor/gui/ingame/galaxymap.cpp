@@ -20,6 +20,9 @@ static const PlanetEntry kPlanets[] = {
 	{ "BTN_MAN", 3, "manm26aa"  },
 	{ "BTN_KOR", 4, "korr_m33aa" },
 	{ "BTN_DAN", 5, "danm13"    },
+	// Late-game destinations (buttons may be absent in GUI until scripts enable them).
+	{ "BTN_UNK", 6, "unk_m41aa" },
+	{ "BTN_STA", 7, "sta_m45aa" },
 };
 
 GalaxyMapMenu::GalaxyMapMenu(KotORBase::Module &module, ::Engines::Console *console) :
