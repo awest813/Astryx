@@ -225,6 +225,7 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 - [x] Persist galaxy-map planet availability / selectability / selected planet in module save state — **2026-07-29**
 - [x] GFF3 label round-trip: truncate/lookup at 16 chars so journal & return-dest fields load — **2026-07-29**
 - [x] Persist Force power list across `CreatureInfo` assignment + XP in party/PC saves — **2026-07-29**
+- [x] Persist area doors/placeables (incl. placeable `ItemList`) + object local vars — **2026-07-29**
 - [ ] Round-trip tests: save in module A → load → transition → save in module B.
 - [ ] Level-up GUI fidelity pass: attributes, skills, feats, Force powers vs `feat.2da` / class tables; keep autolevel as debug fallback only.
 - [x] Implement `AddMultiClass` / Jedi class transition path used on Dantooine — **2026-07-29**

@@ -384,11 +384,65 @@ void Object::setPersistent(bool persistent) {
 void Object::saveState(Aurora::GFF3WriterStruct &gff) const {
 	gff.addUint32("CurrentHP", static_cast<uint32_t>(_currentHitPoints));
 	gff.addByte("Usable", _usable ? 1 : 0);
+
+	if (!_localInts.empty()) {
+		Aurora::GFF3WriterListPtr list = gff.addList("LocalVarInts");
+		for (const auto &entry : _localInts) {
+			Aurora::GFF3WriterStructPtr item = list->addStruct();
+			item->addExoString("Name", entry.first);
+			item->addSint32("Value", entry.second);
+		}
+	}
+
+	if (!_localFloats.empty()) {
+		Aurora::GFF3WriterListPtr list = gff.addList("LocalVarFloats");
+		for (const auto &entry : _localFloats) {
+			Aurora::GFF3WriterStructPtr item = list->addStruct();
+			item->addExoString("Name", entry.first);
+			item->addDouble("Value", entry.second);
+		}
+	}
+
+	if (!_localStrings.empty()) {
+		Aurora::GFF3WriterListPtr list = gff.addList("LocalVarStrings");
+		for (const auto &entry : _localStrings) {
+			Aurora::GFF3WriterStructPtr item = list->addStruct();
+			item->addExoString("Name", entry.first);
+			item->addExoString("Value", entry.second);
+		}
+	}
 }
 
 void Object::loadState(const Aurora::GFF3Struct &gff) {
 	_currentHitPoints = gff.getUint("CurrentHP", _maxHitPoints);
 	_usable = gff.getBool("Usable", true);
+
+	_localInts.clear();
+	if (gff.hasField("LocalVarInts")) {
+		for (const auto &entry : gff.getList("LocalVarInts")) {
+			if (!entry)
+				continue;
+			_localInts[entry->getString("Name")] = entry->getSint("Value");
+		}
+	}
+
+	_localFloats.clear();
+	if (gff.hasField("LocalVarFloats")) {
+		for (const auto &entry : gff.getList("LocalVarFloats")) {
+			if (!entry)
+				continue;
+			_localFloats[entry->getString("Name")] = static_cast<float>(entry->getDouble("Value"));
+		}
+	}
+
+	_localStrings.clear();
+	if (gff.hasField("LocalVarStrings")) {
+		for (const auto &entry : gff.getList("LocalVarStrings")) {
+			if (!entry)
+				continue;
+			_localStrings[entry->getString("Name")] = entry->getString("Value");
+		}
+	}
 }
 
 int32_t Object::getLocalInt(const Common::UString &name) const {

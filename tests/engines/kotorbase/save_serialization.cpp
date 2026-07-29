@@ -360,6 +360,27 @@ GTEST_TEST(KotORSaveSerialization, journalQuestPictureRoundTrip) {
 	EXPECT_EQ(portrait, Common::UString("po_bastilla"));
 }
 
+GTEST_TEST(KotORSaveSerialization, objectLocalVarsRoundTrip) {
+	Object object(Engines::KotORBase::kObjectTypePlaceable);
+	object.setMaxHitPoints(10);
+	object.setCurrentHitPoints(10);
+	object.setLocalInt("QUEST_STAGE", 3);
+	object.setLocalFloat("TIMER", 1.5f);
+	object.setLocalString("OWNER", "end_trask");
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	object.saveState(*writer.getTopLevel());
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	Object loaded(Engines::KotORBase::kObjectTypePlaceable);
+	loaded.setMaxHitPoints(10);
+	loaded.loadState(gff.getTopLevel());
+
+	EXPECT_EQ(loaded.getLocalInt("QUEST_STAGE"), 3);
+	EXPECT_FLOAT_EQ(loaded.getLocalFloat("TIMER"), 1.5f);
+	EXPECT_EQ(loaded.getLocalString("OWNER"), Common::UString("end_trask"));
+}
+
 GTEST_TEST(KotORSaveSerialization, planetAvailabilityRoundTrip) {
 	Aurora::GFF3Writer writer(MKTAG('G', 'V', 'A', 'R'));
 	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();

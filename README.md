@@ -50,6 +50,7 @@ Endar→Star Forge playthrough. Live smoke still needs game data.
 - [x] GFF3 16-char label truncation round-trip (journal / return dest)
 - [x] Force impact-script-first + spell target/caster/level context natives
 - [x] CreatureInfo force-power assignment + XP persistence
+- [x] Area doors/placeables marked persistent; placeable inventory + object locals in saveState
 - [ ] Verified Endar Spire → Dantooine live smoke
 - [ ] SWMG / swoop / turret live progression fidelity
 - [ ] Full GFF save/load campaign round-trips

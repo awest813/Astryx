@@ -642,8 +642,10 @@ void Area::loadPlaceables(const Aurora::GFF3List &list) {
 		if (placeable) {
 			loadObject(std::make_unique<Placeable>(*placeable));
 
-			_situatedObjects.push_back(static_cast<Placeable *>(_objects.back().get()));
-			_localPathfinding->addStaticObjects(new ObjectWalkmesh(static_cast<Placeable *>(_objects.back().get())));
+			Placeable *obj = static_cast<Placeable *>(_objects.back().get());
+			obj->setPersistent(true);
+			_situatedObjects.push_back(obj);
+			_localPathfinding->addStaticObjects(new ObjectWalkmesh(obj));
 		}
 	}
 }
@@ -653,8 +655,10 @@ void Area::loadDoors(const Aurora::GFF3List &list) {
 		if (door) {
 			loadObject(std::make_unique<Door>(*_module, *door));
 
-			_situatedObjects.push_back(static_cast<Door *>(_objects.back().get()));
-			_localPathfinding->addStaticObjects(new DoorWalkmesh(static_cast<Door *>(_objects.back().get())));
+			Door *obj = static_cast<Door *>(_objects.back().get());
+			obj->setPersistent(true);
+			_situatedObjects.push_back(obj);
+			_localPathfinding->addStaticObjects(new DoorWalkmesh(obj));
 		}
 	}
 }

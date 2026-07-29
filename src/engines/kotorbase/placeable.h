@@ -91,6 +91,9 @@ public:
 	/** The placeable was clicked. */
 	bool click(Object *triggerer = 0);
 
+	void saveState(Aurora::GFF3WriterStruct &gff) const override;
+	void loadState(const Aurora::GFF3Struct &gff) override;
+
 protected:
 	/** Load placeable-specific properties. */
 	void loadObject(const Aurora::GFF3Struct &gff);
