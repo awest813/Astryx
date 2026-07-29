@@ -210,6 +210,7 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 - [x] Prefer `spells.2da` impact scripts over hardcoded C++ when present — **2026-07-29**
 - [x] `GetSpellTargetObject` / `GetLastSpellCaster` / `GetLastSpell` / `GetCasterLevel` use cast context — **2026-07-29**
 - [x] `ResistForce` (spell immunity + Force resistance check); `Effect` carries spell id; Force resistance tracking — **2026-07-29**
+- [x] `GetWasForcePowerSuccessful` reads unsuccessful flag; `ApplyEffectToObject` duration/spellId; effect list natives — **2026-07-29**
 - [ ] Finish remaining hardcoded Force switches → full data-driven only (retire C++ fallbacks)
 - [x] `AddMultiClass` increments class levels (Dantooine Jedi transition path) — **2026-07-29**
 - [ ] Wire remaining combat natives as needed by live encounters.
@@ -243,7 +244,8 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 |----------|------|
 | **Pazaak** | Verify `PlayPazaak` / result globals against Taris (and later) quest scripts; fix GUI/rules gaps |
 | **Swoop** | Expand simulation fidelity; obstacle/finish events must set plot globals correctly under live modules |
-| **Turret / Hawk combat** | Exercise SWMG bullet/follower/HP natives against encounter scripts; fix gaps found in coverage logs |
+| **Turret / Hawk combat** | SWMG named object getters + last-hit tracking wired; exercise vs encounter scripts + live coverage |
+| **Swoop racing** | Obstacle/enemy object resolution wired; deepen physics/scoring vs Taris scripts |
 
 Track SWMG stub burn-down (**done for KotOR I tables**). Remaining work is fidelity + KotOR II stubs + live coverage.
 

@@ -52,6 +52,8 @@ Endar→Star Forge playthrough. Live smoke still needs game data.
 - [x] CreatureInfo force-power assignment + XP persistence
 - [x] Area doors/placeables marked persistent; placeable inventory + object locals in saveState
 - [x] ResistForce + Effect spellId + Force resistance tracking
+- [x] GetWasForcePowerSuccessful, effect iterators/clear, poison/debilitate queries
+- [x] Door/placeable visual restore on load; SWMG named object getters
 - [ ] Verified Endar Spire → Dantooine live smoke
 - [ ] SWMG / swoop / turret live progression fidelity
 - [ ] Full GFF save/load campaign round-trips
