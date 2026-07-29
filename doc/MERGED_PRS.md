@@ -1,8 +1,13 @@
 # Merged Pull Requests — KotOR Endar Spire Milestone
 
-**Date:** 2026-06-10  
+**Date:** 2026-06-10 *(historical chronicle — stub counts below are from that date)*  
 **Base:** `master` @ `c286e3668`  
 **Merged tip:** `9b8d00932` (`cursor/endar-spire-perfect-7ac0`)
+
+> **Current NWScript status (2026-07-29):** KotOR I is **786/786** named handlers
+> (0 generic / 0 SWMG stubs). KotOR II still has **273** generic stubs. See
+> `scripts/verify_kotor_nwscript_stubs.py` and
+> [docs/FULL_PARITY_AUDIT_AND_PLAN.md](../docs/FULL_PARITY_AUDIT_AND_PLAN.md).
 
 This document records the consolidation of four related draft PRs into `master`. All branches were linear ancestors of `cursor/endar-spire-perfect-7ac0`, so a single fast-forward merge brought in the full stack (18 commits, +5,549 / −2,517 lines across 78 files).
 
@@ -50,7 +55,8 @@ This document records the consolidation of four related draft PRs into `master`.
 - Added `scripts/verify_kotor_nwscript_stubs.py` CI guard (null=0 for both games)
 - Implemented tier-1 functions: spatial queries, reputation, journal, party, module transitions
 - High-impact APIs: doors (`ActionOpenDoor`), item properties, situated objects, encounter hooks
-- KotOR I: 174 generic stubs + 82 SWMG stubs remain; KotOR II: 446 generic + 103 SWMG
+- KotOR I *(as of 2026-06-10)*: 174 generic stubs + 82 SWMG stubs remain; KotOR II: 446 generic + 103 SWMG
+  — **superseded:** see banner at top of this file for current counts.
 
 ### Cinematic & Camera (#37)
 
@@ -107,8 +113,12 @@ This document records the consolidation of four related draft PRs into `master`.
 
 ```bash
 python3 scripts/verify_kotor_nwscript_stubs.py
+# Historical (2026-06-10):
 # kotor: null=0 generic_stub=174 swmg_stub=82
 # kotor2: null=0 generic_stub=446 swmg_stub=103
+# Current (2026-07-29):
+# kotor: total=786 real=786 generic_stub=0 swmg_stub=0
+# kotor2: total=886 real=613 generic_stub=273 swmg_stub=0
 ```
 
 Manual smoke (requires KotOR game data):
@@ -121,12 +131,12 @@ Manual smoke (requires KotOR game data):
 
 ---
 
-## Known Remaining Gaps
+## Known Remaining Gaps *(as of 2026-06-10; see FULL_PARITY plan for current)*
 
 - Minimap fog-of-war visual (exploration data persists; reveal not rendered)
-- ~174 generic NWScript stubs in KotOR I still need real implementations for Taris+
+- Thin / simplified NWScript handlers on Taris+ critical path (K1 stubs later burned down; deepen semantics)
 - Dedicated death screen GUI (currently routes to options menu)
 - `Module::showGUIPanel()` still empty
 - Bink/movie fidelity depends on asset availability
 
-See [MILESTONE.md](../MILESTONE.md) and [endar_spire_functions.md](endar_spire_functions.md) for ongoing tracking.
+See [MILESTONE.md](../MILESTONE.md), [docs/FULL_PARITY_AUDIT_AND_PLAN.md](../docs/FULL_PARITY_AUDIT_AND_PLAN.md), and [endar_spire_functions.md](endar_spire_functions.md) for ongoing tracking.
