@@ -411,6 +411,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 	int saveDC = 10 + caster->getHitDice() + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 	bool harmful = spell ? spell->hostile : false;
 	ctx.area->_module->setSpellScriptContext(action.actionID, caster, action.object, saveDC, harmful);
+	ctx.area->_module->setGlobalNumber("__force_unsuccessful", 0);
 
 	// Hostile targeted powers need line of sight past closed doors.
 	if (harmful && action.object && ctx.area && !ctx.area->hasLineOfSight(caster, action.object)) {

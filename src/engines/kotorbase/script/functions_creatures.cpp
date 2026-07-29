@@ -542,22 +542,35 @@ void Functions::effectVisualEffect(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 	// int nDurationType, effect eEffect, object oTarget, float fDuration=0.0
+	const int durationType = ctx.getParams()[0].getInt();
 	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
 	Object *target = ObjectContainer::toObject(ctx.getParams()[2].getObject());
+	const float duration = (ctx.getParams().size() > 3) ? ctx.getParams()[3].getFloat() : 0.0f;
 
 	if (!effect || !target)
 		return;
 
+	int spellId = effect->getSpellId();
+	if (spellId < 0)
+		spellId = _game->getModule().getSpellScriptId();
+
+	Effect applied(effect->getType(), effect->getAmount(), effect->getDamageType(), spellId);
+
 	Creature *targetCreature = ObjectContainer::toCreature(target);
 	if (targetCreature) {
-		targetCreature->applyEffect(*effect);
+		float durationOverride = -1.0f;
+		if (durationType == 1) // DURATION_TYPE_TEMPORARY
+			durationOverride = duration > 0.0f ? duration : 6.0f;
+		else if (durationType == 2) // DURATION_TYPE_PERMANENT
+			durationOverride = 1.0e9f;
+		targetCreature->applyEffect(applied, durationOverride);
 	} else {
 		// Fallback for non-creature objects (e.g. placeable damage)
 		int current = target->getCurrentHitPoints();
-		if (effect->getType() == kKotOREffectDamage) {
-			target->setCurrentHitPoints(MAX(0, current - effect->getAmount()));
-		} else if (effect->getType() == kKotOREffectHeal) {
-			target->setCurrentHitPoints(MIN(target->getMaxHitPoints(), current + effect->getAmount()));
+		if (applied.getType() == kKotOREffectDamage) {
+			target->setCurrentHitPoints(MAX(0, current - applied.getAmount()));
+		} else if (applied.getType() == kKotOREffectHeal) {
+			target->setCurrentHitPoints(MIN(target->getMaxHitPoints(), current + applied.getAmount()));
 		}
 	}
 }
@@ -1328,7 +1341,19 @@ void Functions::getFactionLeader(Aurora::NWScript::FunctionContext &ctx) { ctx.g
 void Functions::setNPCAIStyle(Aurora::NWScript::FunctionContext &ctx) {}
 void Functions::setNPCSelectability(Aurora::NWScript::FunctionContext &ctx) {}
 void Functions::getNPCSelectability(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 1; }
-void Functions::getIsDebilitated(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
+void Functions::getIsDebilitated(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	if (!creature)
+		creature = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = 0;
+	if (!creature)
+		return;
+	if (creature->hasEffect(kEffectStun) ||
+	    creature->hasEffect(kEffectKnockdown) ||
+	    creature->hasEffect(kEffectConfusion) ||
+	    creature->hasEffect(kEffectDazed))
+		ctx.getReturn() = 1;
+}
 void Functions::getFirstAttacker(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 void Functions::getNextAttacker(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 void Functions::playRoomAnimation(Aurora::NWScript::FunctionContext &ctx) {}

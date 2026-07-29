@@ -22,6 +22,8 @@
  *  NWScript functions for KotOR minigames (Pazaak, SWMG).
  */
 
+#include <cstdlib>
+
 #include "src/common/debug.h"
 #include "src/common/ustring.h"
 #include "src/common/string.h"
@@ -135,12 +137,15 @@ void Functions::swmgSetPlayerTunnelNeg(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::swmgGetEnemyCount(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
-	ctx.getReturn() = _game->getModule().getGlobalNumber("__swmg_enemy_count");
+	int count = SwoopMinigame::get().getEnemyCount();
+	if (count <= 0)
+		count = _game->getModule().getGlobalNumber("__swmg_enemy_count");
+	ctx.getReturn() = count;
 }
 
 void Functions::swmgGetEnemy(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = (Aurora::NWScript::Object *) nullptr;
+	const Common::UString &name = SwoopMinigame::get().getEnemy(ctx.getParams()[0].getInt());
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(SwoopMinigame::get().getObjectByName(name));
 }
 
 
@@ -165,8 +170,8 @@ void Functions::swmgGetLastEventModelName(Aurora::NWScript::FunctionContext &ctx
 }
 
 void Functions::swmgGetObjectByName(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(
+		SwoopMinigame::get().getObjectByName(ctx.getParams()[0].getString()));
 }
 
 void Functions::swmgPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
@@ -185,7 +190,9 @@ void Functions::swmgGetLastBulletHitTarget(Aurora::NWScript::FunctionContext &ct
 }
 
 void Functions::swmgGetLastBulletHitShooter(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	(void)ctx;
+	const Common::UString &name = SwoopMinigame::get().getLastBulletHitShooter();
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(SwoopMinigame::get().getObjectByName(name));
 }
 
 void Functions::swmgAdjustFollowerHitPoints(Aurora::NWScript::FunctionContext &ctx) {
@@ -199,16 +206,23 @@ void Functions::swmgOnBulletHit(Aurora::NWScript::FunctionContext &ctx) {
 	float dmg = static_cast<float>(_game->getModule().getGlobalNumber("__swmg_bullet_damage"));
 	if (dmg <= 0.0f)
 		dmg = 10.0f;
+	const int shooterId = _game->getModule().getGlobalNumber("__swmg_bullet_hit_shooter");
+	if (shooterId != 0)
+		SwoopMinigame::get().setLastBulletHitShooter(Common::String::format("swmg_enemy_%d", shooterId));
 	SwoopMinigame::get().onBulletHit(dmg);
 	_game->getModule().setGlobalNumber("__swmg_last_event", SwoopMinigame::get().getLastEvent());
 }
 
 void Functions::swmgGetLastFollowerHit(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	(void)ctx;
+	const Common::UString &name = SwoopMinigame::get().getLastFollowerHit();
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(SwoopMinigame::get().getObjectByName(name));
 }
 
 void Functions::swmgGetLastObstacleHit(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	(void)ctx;
+	const Common::UString &name = SwoopMinigame::get().getLastObstacleHit();
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(SwoopMinigame::get().getObjectByName(name));
 }
 
 void Functions::swmgGetLastBulletFiredDamage(Aurora::NWScript::FunctionContext &ctx) {
@@ -302,8 +316,8 @@ void Functions::swmgGetObstacleCount(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::swmgGetObstacle(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	const Common::UString &name = SwoopMinigame::get().getObstacle(ctx.getParams()[0].getInt());
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(SwoopMinigame::get().getObjectByName(name));
 }
 
 void Functions::swmgGetHitPoints(Aurora::NWScript::FunctionContext &ctx) {
@@ -375,8 +389,8 @@ void Functions::swmgGetGunBankSpeed(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::swmgGetGunBankTarget(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	const Common::UString &target = SwoopMinigame::get().getGunBank(ctx.getParams()[1].getInt()).target;
+	ctx.getReturn() = static_cast<int32_t>(atoi(target.c_str()));
 }
 
 void Functions::swmgSetGunBankBulletModel(Aurora::NWScript::FunctionContext &ctx) {

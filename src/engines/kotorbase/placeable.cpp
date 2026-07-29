@@ -286,6 +286,16 @@ void Placeable::loadState(const Aurora::GFF3Struct &gff) {
 		_hasInventory = true;
 		_inventory.read(gff.getList("ItemList"));
 	}
+
+	if (!_model)
+		return;
+
+	if (_state == kStateOpen)
+		_model->playAnimation("opened");
+	else if (_state == kStateActivated)
+		_model->playAnimation("on");
+	else if (_state == kStateClosed || _state == kStateDeactivated || _state == kStateDefault)
+		_model->playAnimation("closed");
 }
 
 } // End of namespace KotORBase

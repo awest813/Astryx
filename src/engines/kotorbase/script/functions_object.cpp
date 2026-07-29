@@ -1368,11 +1368,11 @@ void Functions::getLockRequiredSkill(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::clearAllEffects(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
-	if (object) {
-		// Logic to clear effects
-		warning("ClearAllEffects on %s", object->getTag().c_str());
-	}
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature)
+		creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (creature)
+		creature->clearActiveEffects();
 }
 
 void Functions::getLastHostileTarget(Aurora::NWScript::FunctionContext &ctx) {
@@ -1384,20 +1384,96 @@ void Functions::getLastAttackAction(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getWasForcePowerSuccessful(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = 1; // Default to success
+	// SetForcePowerUnsuccessful stores a non-zero flag in module globals.
+	ctx.getReturn() = _game->getModule().getGlobalNumber("__force_unsuccessful") == 0 ? 1 : 0;
 }
 
+namespace {
 
-void Functions::getFirstEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
-void Functions::getNextEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
-void Functions::removeEffect(Aurora::NWScript::FunctionContext &ctx) {}
+KotOREffectType activeEffectToKotOR(EffectType type) {
+	switch (type) {
+		case kEffectPoison:     return kKotOREffectPoison;
+		case kEffectStun:       return kKotOREffectStunned;
+		case kEffectSpeed:      return kKotOREffectHaste;
+		case kEffectShield:     return kKotOREffectForceShield;
+		case kEffectHeal:       return kKotOREffectHeal;
+		case kEffectVFX:        return kKotOREffectVisual;
+		case kEffectKnockdown:  return kKotOREffectKnockdown;
+		case kEffectDamage:     return kKotOREffectDamage;
+		case kEffectConfusion:  return kKotOREffectStunned;
+		case kEffectDazed:      return kKotOREffectStunned;
+		default:                return kKotOREffectVisual;
+	}
+}
+
+Effect *wrapActiveEffect(const Creature::ActiveEffect &active) {
+	return new Effect(activeEffectToKotOR(active.type), active.value, 0, active.spellId);
+}
+
+} // End of anonymous namespace
+
+void Functions::getFirstEffect(Aurora::NWScript::FunctionContext &ctx) {
+	_effectIterCreature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!_effectIterCreature)
+		_effectIterCreature = ObjectContainer::toCreature(ctx.getCaller());
+	_effectIterIndex = 0;
+
+	ctx.getReturn() = static_cast<Aurora::NWScript::EngineType *>(nullptr);
+	if (!_effectIterCreature || _effectIterCreature->getActiveEffects().empty())
+		return;
+
+	ctx.getReturn() = wrapActiveEffect(_effectIterCreature->getActiveEffects()[0]);
+}
+
+void Functions::getNextEffect(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = static_cast<Aurora::NWScript::EngineType *>(nullptr);
+	if (!_effectIterCreature)
+		return;
+
+	++_effectIterIndex;
+	if (_effectIterIndex >= _effectIterCreature->getActiveEffects().size())
+		return;
+
+	ctx.getReturn() = wrapActiveEffect(_effectIterCreature->getActiveEffects()[_effectIterIndex]);
+}
+
+void Functions::removeEffect(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature)
+		creature = ObjectContainer::toCreature(ctx.getCaller());
+	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
+	if (!creature || !effect)
+		return;
+
+	const auto &effects = creature->getActiveEffects();
+	for (size_t i = 0; i < effects.size(); ++i) {
+		Effect wrapped(activeEffectToKotOR(effects[i].type), effects[i].value, 0, effects[i].spellId);
+		if (wrapped.getType() == effect->getType() &&
+		    wrapped.getAmount() == effect->getAmount() &&
+		    wrapped.getSpellId() == effect->getSpellId()) {
+			creature->removeActiveEffectAt(i);
+			return;
+		}
+	}
+}
+
 void Functions::getIsEffectValid(Aurora::NWScript::FunctionContext &ctx) {
 	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
 	ctx.getReturn() = effect ? 1 : 0;
 }
-void Functions::getEffectDurationType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
-void Functions::getEffectSubType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
-void Functions::getEffectCreator(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
+void Functions::getEffectDurationType(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	// 0 instant / 1 temporary / 2 permanent — ActiveEffects are temporary by default.
+	ctx.getReturn() = 1;
+}
+void Functions::getEffectSubType(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+void Functions::getEffectCreator(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getSpellScriptCaster());
+}
 
 void Functions::getFirstFactionMember(Aurora::NWScript::FunctionContext &ctx) {
 	_factionIterRef = nullptr;

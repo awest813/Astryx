@@ -270,6 +270,9 @@ public:
 	void updateEffects(float dt);
 	bool hasEffect(EffectType type) const;
 	bool hasSpellEffect(int spellId) const;
+	const std::vector<ActiveEffect> &getActiveEffects() const { return _effects; }
+	void clearActiveEffects();
+	bool removeActiveEffectAt(size_t index);
 
 	void performCutsceneAttack(Object *target, int flags);
 
@@ -368,8 +371,9 @@ public:
 	/** Reverse the persistent modifiers an active effect applied (called on expiry). */
 	void removeEffect(const ActiveEffect &effect);
 
-	/** Apply an engine/NWScript level Effect object to this creature. */
-	void applyEffect(const Effect &effect);
+	/** Apply an engine/NWScript level Effect object to this creature.
+	 *  If durationOverride >= 0, timed effects use that duration instead of defaults. */
+	void applyEffect(const Effect &effect, float durationOverride = -1.0f);
 
 	/**
 	 * Execute one attack iteration against target.

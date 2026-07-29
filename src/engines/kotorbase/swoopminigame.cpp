@@ -24,7 +24,9 @@
 
 #include <algorithm>
 
+#include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/swoopminigame.h"
+#include "src/engines/kotorbase/types.h"
 
 namespace Engines {
 
@@ -75,9 +77,14 @@ void SwoopMinigame::reset() {
 	_lastBulletHitDamage = 0.0f;
 	_lastBulletFiredDamage = 0.0f;
 	_lastEventModelName.clear();
+	_lastObstacleHit.clear();
+	_lastFollowerHit.clear();
+	_lastBulletHitShooter.clear();
 	_objectName.clear();
 	_obstacles.clear();
+	_enemies.clear();
 	_namedKinds.clear();
+	_namedObjects.clear();
 	for (size_t i = 0; i < _gunBanks.size(); ++i)
 		_gunBanks[i] = SWMGGunBank();
 }
@@ -236,6 +243,7 @@ void SwoopMinigame::onObstacleHit() {
 	_lastEvent = 1;
 	_speed = std::max(0.0f, _speed * 0.6f);
 	_lastEventModelName = _objectName;
+	_lastObstacleHit = _objectName;
 	if (!_objectName.empty()) {
 		_obstacles.push_back(_objectName);
 		registerNamedObject(_objectName, 4);
@@ -245,6 +253,9 @@ void SwoopMinigame::onObstacleHit() {
 void SwoopMinigame::onBulletHit(float damage) {
 	_lastEvent = 2;
 	_lastBulletHitDamage = damage;
+	_lastFollowerHit = _objectName;
+	if (!_objectName.empty())
+		registerNamedObject(_objectName, 1);
 	if (!isInvulnerable()) {
 		_lastHPChange = -damage;
 		_hitPoints = std::max(0.0f, _hitPoints - damage);
@@ -270,13 +281,54 @@ const Common::UString &SwoopMinigame::getObstacle(int index) const {
 	return _obstacles[static_cast<size_t>(index)];
 }
 
+const Common::UString &SwoopMinigame::getEnemy(int index) const {
+	if (index < 0 || index >= static_cast<int>(_enemies.size()))
+		return kEmptyString;
+	return _enemies[static_cast<size_t>(index)];
+}
+
 void SwoopMinigame::setObjectName(const Common::UString &name) {
 	_objectName = name;
 }
 
-void SwoopMinigame::registerNamedObject(const Common::UString &name, int kind) {
+void SwoopMinigame::setLastBulletHitShooter(const Common::UString &name) {
+	_lastBulletHitShooter = name;
 	if (!name.empty())
-		_namedKinds[name] = kind;
+		registerNamedObject(name, 2);
+}
+
+void SwoopMinigame::registerNamedObject(const Common::UString &name, int kind) {
+	if (name.empty())
+		return;
+
+	_namedKinds[name] = kind;
+	if (kind == 2) {
+		bool found = false;
+		for (const auto &enemy : _enemies) {
+			if (enemy == name) {
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			_enemies.push_back(name);
+	}
+	getObjectByName(name);
+}
+
+Object *SwoopMinigame::getObjectByName(const Common::UString &name) {
+	if (name.empty())
+		return nullptr;
+
+	auto it = _namedObjects.find(name);
+	if (it != _namedObjects.end())
+		return it->second.get();
+
+	std::unique_ptr<Object> proxy = std::make_unique<Object>(kObjectTypePlaceable);
+	proxy->setTag(name);
+	Object *raw = proxy.get();
+	_namedObjects[name] = std::move(proxy);
+	return raw;
 }
 
 int SwoopMinigame::getObjectKind(const Common::UString &name) const {

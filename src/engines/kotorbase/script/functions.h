@@ -144,6 +144,8 @@ class Area;
 
 class Object;
 
+class Creature;
+
 
 class Event;
 
@@ -2513,6 +2515,9 @@ private:
 	Aurora::NWScript::Object *_factionIterRef { nullptr };
 	std::vector<Object *> _factionIterObjects;
 	size_t _factionIterIndex { 0 };
+
+	Creature *_effectIterCreature { nullptr };
+	size_t _effectIterIndex { 0 };
 
 	// State for GetFirstInPersistentObject / GetNextInPersistentObject
 	std::vector<Object *> _persistentIterObjects;

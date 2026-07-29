@@ -24,6 +24,7 @@
 
 #include "gtest/gtest.h"
 
+#include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/swoopminigame.h"
 
 using Engines::KotORBase::SwoopMinigame;
@@ -91,6 +92,17 @@ TEST(SwoopMinigame, GunBankAndNamedKinds) {
 	EXPECT_EQ(swoop.getObjectKind("enemy1"), 2);
 	EXPECT_EQ(swoop.getObjectKind("follow1"), 1);
 	EXPECT_TRUE(swoop.hasNamedObject("enemy1"));
+	EXPECT_EQ(swoop.getEnemyCount(), 1);
+	EXPECT_EQ(swoop.getEnemy(0), Common::UString("enemy1"));
+	Object *enemyObj = swoop.getObjectByName("enemy1");
+	ASSERT_TRUE(enemyObj != nullptr);
+	EXPECT_EQ(enemyObj->getTag(), Common::UString("enemy1"));
+
+	swoop.setObjectName("rock_a");
+	swoop.onObstacleHit();
+	EXPECT_EQ(swoop.getLastObstacleHit(), Common::UString("rock_a"));
+	EXPECT_EQ(swoop.getObstacleCount(), 1);
+	EXPECT_TRUE(swoop.getObjectByName("rock_a") != nullptr);
 }
 
 TEST(SwoopMinigame, FollowerHitPoints) {

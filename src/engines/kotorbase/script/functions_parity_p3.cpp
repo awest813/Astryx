@@ -479,8 +479,7 @@ void Functions::getIsLiveContentAvailable(Aurora::NWScript::FunctionContext &ctx
 
 void Functions::getIsPoisoned(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	(void)creature;
-	ctx.getReturn() = 0;
+	ctx.getReturn() = (creature && creature->hasEffect(kEffectPoison)) ? 1 : 0;
 }
 
 void Functions::cancelPostDialogCharacterSwitch(Aurora::NWScript::FunctionContext &ctx) {

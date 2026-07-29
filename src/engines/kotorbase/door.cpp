@@ -239,6 +239,17 @@ void Door::saveState(Aurora::GFF3WriterStruct &gff) const {
 void Door::loadState(const Aurora::GFF3Struct &gff) {
 	Situated::loadState(gff);
 	_state = static_cast<State>(gff.getUint("AnimationState", static_cast<uint32_t>(_state)));
+
+	// Snap visuals / usability to the restored open/closed state.
+	if (isOpen()) {
+		setUsable(false);
+		if (_model)
+			_model->playAnimation("opened1");
+	} else if (_state == kStateClosed) {
+		setUsable(true);
+		if (_model)
+			_model->playAnimation("closed");
+	}
 }
 
 bool Door::unlock(Object *unlocker) {

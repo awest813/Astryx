@@ -27,10 +27,13 @@
 
 #include <array>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "src/common/ustring.h"
+
+#include "src/engines/kotorbase/object.h"
 
 namespace Engines {
 
@@ -132,14 +135,22 @@ public:
 	float getLastBulletHitDamage() const { return _lastBulletHitDamage; }
 	float getLastBulletFiredDamage() const { return _lastBulletFiredDamage; }
 	const Common::UString &getLastEventModelName() const { return _lastEventModelName; }
+	const Common::UString &getLastObstacleHit() const { return _lastObstacleHit; }
+	const Common::UString &getLastFollowerHit() const { return _lastFollowerHit; }
+	const Common::UString &getLastBulletHitShooter() const { return _lastBulletHitShooter; }
+	void setLastBulletHitShooter(const Common::UString &name);
 
 	int getObstacleCount() const { return static_cast<int>(_obstacles.size()); }
 	const Common::UString &getObstacle(int index) const;
+	int getEnemyCount() const { return static_cast<int>(_enemies.size()); }
+	const Common::UString &getEnemy(int index) const;
 	void setObjectName(const Common::UString &name);
 	const Common::UString &getObjectName() const { return _objectName; }
 	void registerNamedObject(const Common::UString &name, int kind); // 0 player 1 follower 2 enemy 3 trigger 4 obstacle
 	int getObjectKind(const Common::UString &name) const;
 	bool hasNamedObject(const Common::UString &name) const;
+	/** Return a stable NWScript object proxy for a registered SWMG name. */
+	Object *getObjectByName(const Common::UString &name);
 
 	int getGunBankCount() const { return static_cast<int>(_gunBanks.size()); }
 	SWMGGunBank &getGunBank(int index);
@@ -177,9 +188,14 @@ private:
 	float _lastBulletHitDamage { 0.0f };
 	float _lastBulletFiredDamage { 0.0f };
 	Common::UString _lastEventModelName;
+	Common::UString _lastObstacleHit;
+	Common::UString _lastFollowerHit;
+	Common::UString _lastBulletHitShooter;
 	Common::UString _objectName;
 	std::vector<Common::UString> _obstacles;
+	std::vector<Common::UString> _enemies;
 	std::map<Common::UString, int> _namedKinds;
+	std::map<Common::UString, std::unique_ptr<Object>> _namedObjects;
 	std::array<SWMGGunBank, 4> _gunBanks;
 };
 

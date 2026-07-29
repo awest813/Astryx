@@ -200,6 +200,22 @@ GTEST_TEST(ParityP0Natives, dayNightPartition) {
 	EXPECT_FALSE(isDay(23));
 }
 
+GTEST_TEST(ParityP0Natives, clearEffectsAndSpellIdTracking) {
+	TestCreature creature;
+	creature.applyEffect(kEffectStun, 6.0f, 0, 5);
+	creature.applyEffect(kEffectPoison, 6.0f, 2, 25);
+	EXPECT_TRUE(creature.hasEffect(kEffectStun));
+	EXPECT_TRUE(creature.hasEffect(kEffectPoison));
+	EXPECT_TRUE(creature.hasSpellEffect(5));
+	EXPECT_TRUE(creature.hasSpellEffect(25));
+	EXPECT_EQ(creature.getActiveEffects().size(), 2U);
+
+	creature.clearActiveEffects();
+	EXPECT_TRUE(creature.getActiveEffects().empty());
+	EXPECT_FALSE(creature.hasEffect(kEffectStun));
+	EXPECT_FALSE(creature.hasSpellEffect(5));
+}
+
 GTEST_TEST(ParityP0Natives, listeningPatternsAndObjectState) {
 	TestCreature creature;
 	EXPECT_FALSE(creature.getIsListening());

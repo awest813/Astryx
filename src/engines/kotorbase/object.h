@@ -82,6 +82,8 @@ public:
 	const Common::UString &getTemplateResRef() const;
 	/** Return the object's name. */
 	const Common::UString &getName() const;
+	/** Set the NWScript object tag. */
+	void setTag(const Common::UString &tag) { _tag = tag; }
 	/** Return the object's description. */
 	const Common::UString &getDescription() const;
 	/** Return the object's portrait. */

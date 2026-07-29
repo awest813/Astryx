@@ -1162,7 +1162,13 @@ namespace KotORBase {
 			}
 		}
 		void Creature::applyEffect(
-		const Engines::KotORBase::Effect &effect) {
+		const Engines::KotORBase::Effect &effect,
+		float durationOverride) {
+			auto timed = [&](EffectType type, float defaultDuration, int value = 0) {
+				const float duration = durationOverride >= 0.0f ? durationOverride : defaultDuration;
+				applyEffect(type, duration, value, effect.getSpellId());
+			};
+
 			int current = getCurrentHitPoints();
 			switch (effect.getType()) {
 				case kKotOREffectHeal: {
@@ -1205,19 +1211,20 @@ namespace KotORBase {
 					break;
 				}
 				case kKotOREffectKnockdown:
-					applyEffect(kEffectKnockdown, 3.0f, 0);
+					timed(kEffectKnockdown, 3.0f);
 					break;
 				case kKotOREffectStunned:
 				case kKotOREffectParalyze:
-					applyEffect(kEffectStun, 6.0f, 0);
+					timed(kEffectStun, 6.0f);
 					break;
 				case kKotOREffectHaste:
 				case kKotOREffectMovementSpeedIncrease:
-					applyEffect(kEffectSpeed, 0.0f, 50);
+					timed(kEffectSpeed, durationOverride >= 0.0f ? durationOverride : 30.0f, 50);
 					break;
 				case kKotOREffectPoison:
-					applyEffect(kEffectPoison, effect.getDamageType() > 0 ? static_cast<float>(effect.getDamageType()) : 6.0f,
-					            effect.getAmount());
+					timed(kEffectPoison,
+					      effect.getDamageType() > 0 ? static_cast<float>(effect.getDamageType()) : 6.0f,
+					      effect.getAmount());
 					break;
 				case kKotOREffectImmunity:
 					addImmunity(effect.getAmount());
@@ -1230,10 +1237,10 @@ namespace KotORBase {
 					break;
 				case kKotOREffectSleep:
 					if (!isImmune(kImmunityTypeSleep) && !isImmune(kImmunityTypeMindSpells))
-						applyEffect(kEffectStun, 12.0f, 0);
+						timed(kEffectStun, 12.0f);
 					break;
 				case kKotOREffectRegenerate:
-					applyEffect(kEffectHeal, 0.0f, effect.getAmount());
+					applyEffect(kEffectHeal, 0.0f, effect.getAmount(), effect.getSpellId());
 					break;
 				case kKotOREffectTemporaryForcePoints: {
 					int fp = getForcePoints() + effect.getAmount();
@@ -1256,10 +1263,10 @@ namespace KotORBase {
 					break;
 				case kKotOREffectEntangle:
 				case kKotOREffectDroidStun:
-					applyEffect(kEffectStun, 6.0f, 0);
+					timed(kEffectStun, 6.0f);
 					break;
 				case kKotOREffectBodyFuel:
-					applyEffect(kEffectHeal, 0.0f, effect.getAmount() > 0 ? effect.getAmount() : 5);
+					applyEffect(kEffectHeal, 0.0f, effect.getAmount() > 0 ? effect.getAmount() : 5, effect.getSpellId());
 					break;
 				case kKotOREffectDamageIncrease:
 					adjustAttackModifier(0); // damage tracked via effect amount on apply path
@@ -1277,7 +1284,7 @@ namespace KotORBase {
 					adjustBlasterDeflection(-effect.getAmount());
 					break;
 				case kKotOREffectDispelMagicAll:
-					_effects.clear();
+					clearActiveEffects();
 					break;
 				case kKotOREffectAreaOfEffect:
 				case kKotOREffectForceJump:
@@ -1290,6 +1297,21 @@ namespace KotORBase {
 				default:
 					break;
 			}
+		}
+
+		void Creature::clearActiveEffects() {
+			while (!_effects.empty()) {
+				removeEffect(_effects.back());
+				_effects.pop_back();
+			}
+		}
+
+		bool Creature::removeActiveEffectAt(size_t index) {
+			if (index >= _effects.size())
+				return false;
+			removeEffect(_effects[index]);
+			_effects.erase(_effects.begin() + static_cast<std::ptrdiff_t>(index));
+			return true;
 		}
 		void Creature::executeAttack(Object *target,
 		int babPenalty,

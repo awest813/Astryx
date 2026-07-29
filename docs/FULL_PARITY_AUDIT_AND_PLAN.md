@@ -209,6 +209,7 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 - [x] Unknown powers fall through to `spells.2da` impact scripts — **2026-07-29**
 - [x] Prefer `spells.2da` impact scripts over hardcoded C++ when present — **2026-07-29**
 - [x] `GetSpellTargetObject` / `GetLastSpellCaster` / `GetLastSpell` / `GetCasterLevel` use cast context — **2026-07-29**
+- [x] `ResistForce` (spell immunity + Force resistance check); `Effect` carries spell id; Force resistance tracking — **2026-07-29**
 - [ ] Finish remaining hardcoded Force switches → full data-driven only (retire C++ fallbacks)
 - [x] `AddMultiClass` increments class levels (Dantooine Jedi transition path) — **2026-07-29**
 - [ ] Wire remaining combat natives as needed by live encounters.
