@@ -190,12 +190,12 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 | **P0** | `SurrenderToEnemies`, `ActionSurrenderToEnemies`, `SurrenderByFaction`, `SurrenderRetainBuffs` | Stand-down sequences — **wired 2026-07-29** |
 | **P0** | `GetSpellId`, `GetSpellTarget`, `GetSpellSaveDC`, `GetLastSpellHarmful`, `EventSpellCastAt` (+ related) | Force/item impact scripts — **wired 2026-07-29** |
 | **P0** | `EffectImmunity`, `GetIsImmune`, `EffectDamageImmunityIncrease`, `EffectSpellImmunity` (+ Sleep/Regenerate/TempFP) | Boss / Jedi immunity — **wired 2026-07-29** |
-| **P1** | AoE + persistent-object iterators, remaining Effect* | Mid-game combat & areas |
-| **P1** | `SpeakOneLinerConversation`, `GetLastConversation` | Cutscene / bark flow |
-| **P1** | `AddToParty` / `RemoveFromParty` (align with party member APIs) | Companion scripts that use this pair |
-| **P1** | `GetIsDay` / `GetIsNight` (real time or module clock) | Time-gated content |
-| **P2** | Faction aggregate queries, `SetAILevel`, `RevealMap`, listening API | Quality + secondary quests |
-| **P2** | Remaining Effect* / Magical/Supernatural/Extraordinary wrappers | Fidelity |
+| **P1** | AoE + persistent-object iterators, remaining Effect*, Magical/Supernatural/Extraordinary | Mid-game combat & areas — **wired 2026-07-29** |
+| **P1** | `SpeakOneLinerConversation`, `GetLastConversation` | Cutscene / bark flow — **wired 2026-07-29** |
+| **P1** | `AddToParty` / `RemoveFromParty` (align with party member APIs) | Companion scripts — **wired 2026-07-29** |
+| **P1** | `GetIsDay` / `GetIsNight` (real time or module clock) | Time-gated content — **wired 2026-07-29** |
+| **P1** | `RevealMap`, `SetAILevel`, `ApplyEffectAtLocation` | Exploration / AI / AoE apply — **wired 2026-07-29** |
+| **P2** | Faction aggregate queries, listening API | Quality + secondary quests |
 
 **Method:** For each band, (1) grep game `.ncs`/decompiled usage where available, (2) implement minimal correct semantics, (3) add focused unit tests, (4) re-smoke Phase 1 path.
 
