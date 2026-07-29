@@ -32,7 +32,8 @@ namespace Engines {
 namespace KotORBase {
 
 enum EventType {
-	kEventUserDefined = 0
+	kEventUserDefined = 0,
+	kEventSpellCastAt = 1
 };
 
 class Event : public Aurora::NWScript::EngineType {
@@ -41,14 +42,20 @@ public:
 
 	EventType getType() const;
 	int getUserDefinedNumber() const;
+	int getSpellId() const;
+	bool getSpellHarmful() const;
 
 	void setUserDefinedNumber(int number);
+	void setSpellId(int spellId);
+	void setSpellHarmful(bool harmful);
 
 	Aurora::NWScript::EngineType *clone() const;
 
 private:
 	EventType _type;
 	int _userDefinedNumber;
+	int _spellId;
+	bool _spellHarmful;
 };
 
 } // End of namespace KotORBase

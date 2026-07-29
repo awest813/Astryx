@@ -1124,6 +1124,32 @@ protected:
 
 	void getSpellTargetLocation(Aurora::NWScript::FunctionContext &ctx);
 
+	void getSpellTarget(Aurora::NWScript::FunctionContext &ctx);
+	void getSpellSaveDC(Aurora::NWScript::FunctionContext &ctx);
+	void getSpellCastItem(Aurora::NWScript::FunctionContext &ctx);
+	void getMetaMagicFeat(Aurora::NWScript::FunctionContext &ctx);
+	void getEffectSpellId(Aurora::NWScript::FunctionContext &ctx);
+	void eventSpellCastAt(Aurora::NWScript::FunctionContext &ctx);
+
+	void getLastKiller(Aurora::NWScript::FunctionContext &ctx);
+	void getDamageDealtByType(Aurora::NWScript::FunctionContext &ctx);
+	void getTotalDamageDealt(Aurora::NWScript::FunctionContext &ctx);
+	void getLastAttackResult(Aurora::NWScript::FunctionContext &ctx);
+	void getLastWeaponUsed(Aurora::NWScript::FunctionContext &ctx);
+
+	void surrenderToEnemies(Aurora::NWScript::FunctionContext &ctx);
+	void actionSurrenderToEnemies(Aurora::NWScript::FunctionContext &ctx);
+	void surrenderByFaction(Aurora::NWScript::FunctionContext &ctx);
+	void surrenderRetainBuffs(Aurora::NWScript::FunctionContext &ctx);
+
+	void effectImmunity(Aurora::NWScript::FunctionContext &ctx);
+	void getIsImmune(Aurora::NWScript::FunctionContext &ctx);
+	void effectDamageImmunityIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectSpellImmunity(Aurora::NWScript::FunctionContext &ctx);
+	void effectSleep(Aurora::NWScript::FunctionContext &ctx);
+	void effectRegenerate(Aurora::NWScript::FunctionContext &ctx);
+	void effectTemporaryForcePoints(Aurora::NWScript::FunctionContext &ctx);
+
 
 	void getStealthMode(Aurora::NWScript::FunctionContext &ctx);
 

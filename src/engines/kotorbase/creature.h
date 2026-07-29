@@ -288,6 +288,32 @@ public:
 	void setLastForcePowerUsed(int spellID);
 	int getQueuedCombatFeat() const;
 
+	/** Record the last killer (set on death). */
+	Object *getLastKiller() const;
+	void setLastKiller(Object *killer);
+
+	/** Last damage event queries (GetDamageDealtByType / GetTotalDamageDealt). */
+	void recordDamageTaken(int amount, int damageType, Object *damager = nullptr);
+	int getDamageDealtByType(int damageType) const;
+	int getTotalDamageDealt() const;
+
+	/** Last attack result / weapon used (queried on the attacker). */
+	void recordAttackResult(int result, Object *weapon = nullptr);
+	int getLastAttackResult() const;
+	Object *getLastWeaponUsed() const;
+
+	/** Immunity tracking for EffectImmunity / GetIsImmune. */
+	void addImmunity(int immunityType);
+	void addSpellImmunity(int spellId);
+	bool isImmune(int immunityType) const;
+	bool isImmuneToSpell(int spellId) const;
+	void adjustDamageImmunity(int damageType, int percentDelta);
+	int getDamageImmunityPercent(int damageType) const;
+	void clearImmunities();
+
+	/** Cancel combat, clear actions, and optionally clear buffs; set surrender faction. */
+	void surrenderToEnemies(bool retainBuffs = false);
+
 	// Perception results (set by handleObjectSeen / handleObjectVanished).
 	Object *getLastPerceived() const;
 	bool getLastPerceptionSeen() const;
@@ -404,9 +430,17 @@ private:
 	int _attackRound { 0 };
 	Object *_attemptedAttackTarget { nullptr };
 	Object *_lastHostileActor { nullptr };
+	Object *_lastKiller { nullptr };
+	Object *_lastWeaponUsed { nullptr };
 	int _lastCombatFeatUsed { -1 };
 	int _lastForcePowerUsed { -1 };
 	int _queuedCombatFeat { -1 };
+	int _lastDamageTotal { 0 };
+	int _lastDamageType { 0 };
+	int _lastAttackResult { 0 };
+	std::set<int> _immunities;
+	std::set<int> _spellImmunities;
+	std::map<int, int> _damageImmunityPercent;
 	int _attackModifier { 0 };
 	int _armorClassModifier { 0 };
 	std::array<int, kSkillMAX> _skillModifiers {{}};

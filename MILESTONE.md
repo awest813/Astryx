@@ -616,6 +616,8 @@ Milestone 6 is **complete** when the Dantooine Star Map sequence plays with full
 
 This milestone marks the final phase of development for **Star Wars: Knights of the Old Republic** support. It encompasses the remaining planetary questlines (Tatooine, Kashyyyk, Manaan, Korriban), the Leviathan encounter, the Unknown World, and the ultimate assault on the **Star Forge**.
 
+**Working plan:** See **[docs/FULL_PARITY_AUDIT_AND_PLAN.md](docs/FULL_PARITY_AUDIT_AND_PLAN.md)** for the 2026-07-29 status audit (stub density, unverified smoke, subsystem matrix) and the phased execution order. Prefer that document over README/ROADMAP checkmarks when prioritizing work.
+
 **Goal:** Achieve 100% NWScript functional coverage, complete all high-fidelity cinematic choreography systems, and ensure the entire campaign is playable from start to finish with full fidelity and parity with the original game.
 
 ---

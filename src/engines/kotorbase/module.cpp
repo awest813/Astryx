@@ -2423,6 +2423,42 @@ void Module::setLastAcquiredItem(Object *item) {
 	_lastAcquiredItem = item;
 }
 
+void Module::setSpellScriptContext(int spellId, Object *target, int saveDC, bool harmful, Object *castItem) {
+	_spellScriptId = spellId;
+	_spellScriptTarget = target;
+	_spellScriptSaveDC = saveDC > 0 ? saveDC : 12;
+	_spellScriptHarmful = harmful;
+	_spellScriptCastItem = castItem;
+}
+
+void Module::clearSpellScriptContext() {
+	_spellScriptId = -1;
+	_spellScriptTarget = nullptr;
+	_spellScriptSaveDC = 12;
+	_spellScriptHarmful = false;
+	_spellScriptCastItem = nullptr;
+}
+
+int Module::getSpellScriptId() const {
+	return _spellScriptId;
+}
+
+Object *Module::getSpellScriptTarget() const {
+	return _spellScriptTarget;
+}
+
+int Module::getSpellScriptSaveDC() const {
+	return _spellScriptSaveDC;
+}
+
+bool Module::getSpellScriptHarmful() const {
+	return _spellScriptHarmful;
+}
+
+Object *Module::getSpellScriptCastItem() const {
+	return _spellScriptCastItem;
+}
+
 static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst) {
 	auto copyUint = [&](const char *field) {
 		if (src.hasField(field))

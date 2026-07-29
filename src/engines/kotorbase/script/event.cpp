@@ -30,11 +30,21 @@ namespace KotORBase {
 
 Event::Event(EventType type) :
 		_type(type),
-		_userDefinedNumber(0) {
+		_userDefinedNumber(0),
+		_spellId(-1),
+		_spellHarmful(false) {
 }
 
 void Event::setUserDefinedNumber(int number) {
 	_userDefinedNumber = number;
+}
+
+void Event::setSpellId(int spellId) {
+	_spellId = spellId;
+}
+
+void Event::setSpellHarmful(bool harmful) {
+	_spellHarmful = harmful;
 }
 
 EventType Event::getType() const {
@@ -45,9 +55,19 @@ int Event::getUserDefinedNumber() const {
 	return _userDefinedNumber;
 }
 
+int Event::getSpellId() const {
+	return _spellId;
+}
+
+bool Event::getSpellHarmful() const {
+	return _spellHarmful;
+}
+
 Aurora::NWScript::EngineType *Event::clone() const {
 	Event *e = new Event(_type);
 	e->_userDefinedNumber = _userDefinedNumber;
+	e->_spellId = _spellId;
+	e->_spellHarmful = _spellHarmful;
 	return e;
 }
 

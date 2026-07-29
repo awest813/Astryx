@@ -2,6 +2,11 @@
 
 This document defines the currently supported slices of content that are officially maintained and prioritized.
 
+## Full parity track
+Campaign-wide parity work (post–supported-slice) is planned in
+[FULL_PARITY_AUDIT_AND_PLAN.md](FULL_PARITY_AUDIT_AND_PLAN.md). Do not expand the
+supported slice until the current slice meets the playability definition.
+
 ## Current Supported Slice
 The official supported slice follows a strict milestone-based approach.
 

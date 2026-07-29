@@ -66,7 +66,13 @@ enum KotOREffectType {
 	kKotOREffectSkillDecrease            = 30, ///< Penalty to a skill rank.
 	kKotOREffectForceResistanceDecrease  = 31, ///< Reduce Force resistance.
 	kKotOREffectSeeInvisible             = 32, ///< Allow the target to see invisible creatures.
-	kKotOREffectPoison                   = 33  ///< Damage over time poison effect.
+	kKotOREffectPoison                   = 33, ///< Damage over time poison effect.
+	kKotOREffectImmunity                 = 34, ///< Grant immunity to an ImmunityType (amount).
+	kKotOREffectSpellImmunity            = 35, ///< Grant immunity to a specific spell id (amount).
+	kKotOREffectDamageImmunityIncrease   = 36, ///< Raise damage immunity % (amount) for a damage type.
+	kKotOREffectSleep                    = 37, ///< Put the target to sleep (stun-like).
+	kKotOREffectRegenerate               = 38, ///< Heal amount HP periodically (simplified).
+	kKotOREffectTemporaryForcePoints     = 39  ///< Temporary Force points (amount).
 };
 
 class Effect : public Aurora::NWScript::EngineType {

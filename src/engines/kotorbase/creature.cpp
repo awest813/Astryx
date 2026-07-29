@@ -812,6 +812,94 @@ namespace KotORBase {
 		const {
 			return _lastHostileActor;
 		}
+
+		Object *Creature::getLastKiller() const {
+			return _lastKiller;
+		}
+
+		void Creature::setLastKiller(Object *killer) {
+			_lastKiller = killer;
+		}
+
+		void Creature::recordDamageTaken(int amount, int damageType, Object *damager) {
+			_lastDamageTotal = amount;
+			_lastDamageType = damageType;
+			if (damager)
+				_lastHostileActor = damager;
+		}
+
+		int Creature::getDamageDealtByType(int damageType) const {
+			if (damageType == 0)
+				return _lastDamageTotal;
+			if ((_lastDamageType & damageType) == 0)
+				return -1;
+			return _lastDamageTotal;
+		}
+
+		int Creature::getTotalDamageDealt() const {
+			return _lastDamageTotal;
+		}
+
+		void Creature::recordAttackResult(int result, Object *weapon) {
+			_lastAttackResult = result;
+			if (weapon)
+				_lastWeaponUsed = weapon;
+		}
+
+		int Creature::getLastAttackResult() const {
+			return _lastAttackResult;
+		}
+
+		Object *Creature::getLastWeaponUsed() const {
+			return _lastWeaponUsed;
+		}
+
+		void Creature::addImmunity(int immunityType) {
+			_immunities.insert(immunityType);
+		}
+
+		void Creature::addSpellImmunity(int spellId) {
+			_spellImmunities.insert(spellId);
+		}
+
+		bool Creature::isImmune(int immunityType) const {
+			return _immunities.find(immunityType) != _immunities.end();
+		}
+
+		bool Creature::isImmuneToSpell(int spellId) const {
+			return _spellImmunities.find(spellId) != _spellImmunities.end();
+		}
+
+		void Creature::adjustDamageImmunity(int damageType, int percentDelta) {
+			int &value = _damageImmunityPercent[damageType];
+			value += percentDelta;
+			if (value < 0)
+				value = 0;
+			if (value > 100)
+				value = 100;
+		}
+
+		int Creature::getDamageImmunityPercent(int damageType) const {
+			std::map<int, int>::const_iterator it = _damageImmunityPercent.find(damageType);
+			return it != _damageImmunityPercent.end() ? it->second : 0;
+		}
+
+		void Creature::clearImmunities() {
+			_immunities.clear();
+			_spellImmunities.clear();
+			_damageImmunityPercent.clear();
+		}
+
+		void Creature::surrenderToEnemies(bool retainBuffs) {
+			cancelCombat();
+			clearActions();
+			setFaction(kFactionSurrender1);
+			if (!retainBuffs) {
+				_effects.clear();
+				clearImmunities();
+			}
+		}
+
 		int Creature::getLastCombatFeatUsed()
 		const {
 			return _lastCombatFeatUsed;
@@ -1029,13 +1117,23 @@ namespace KotORBase {
 					break;
 				}
 				case kKotOREffectDamage: {
+					int amount = effect.getAmount();
+					int damageType = effect.getDamageType();
+					int immunity = getDamageImmunityPercent(damageType);
+					if (immunity > 0)
+						amount = amount - (amount * immunity) / 100;
+					if (amount < 0)
+						amount = 0;
+					recordDamageTaken(amount, damageType);
 					int minHp = getMinOneHitPoints() ? 1 : 0;
-					int damaged = current - effect.getAmount();
+					int damaged = current - amount;
 					if (damaged < minHp)
 						damaged = minHp;
 					setCurrentHitPoints(damaged);
 					if (getCurrentHitPoints() <= 0) {
 						cancelCombat();
+						if (_lastHostileActor)
+							_lastKiller = _lastHostileActor;
 						handleDeath();
 					}
 					break;
@@ -1064,6 +1162,27 @@ namespace KotORBase {
 					applyEffect(kEffectPoison, effect.getDamageType() > 0 ? static_cast<float>(effect.getDamageType()) : 6.0f,
 					            effect.getAmount());
 					break;
+				case kKotOREffectImmunity:
+					addImmunity(effect.getAmount());
+					break;
+				case kKotOREffectSpellImmunity:
+					addSpellImmunity(effect.getAmount());
+					break;
+				case kKotOREffectDamageImmunityIncrease:
+					adjustDamageImmunity(effect.getDamageType(), effect.getAmount());
+					break;
+				case kKotOREffectSleep:
+					if (!isImmune(kImmunityTypeSleep) && !isImmune(kImmunityTypeMindSpells))
+						applyEffect(kEffectStun, 12.0f, 0);
+					break;
+				case kKotOREffectRegenerate:
+					applyEffect(kEffectHeal, 0.0f, effect.getAmount());
+					break;
+				case kKotOREffectTemporaryForcePoints: {
+					int fp = getForcePoints() + effect.getAmount();
+					setForcePoints(fp);
+					break;
+				}
 				default:
 					break;
 			}
@@ -1087,8 +1206,10 @@ namespace KotORBase {
 			}
 			// Track hostility for NWScript callers (GetLastHostileActor/GetLastAttacker).
 			if (targetCreature)		targetCreature->_lastHostileActor = this;
-			const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
-			const Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
+			Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
+			Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
+			Object *weaponUsed = rightWeapon ? static_cast<Object *>(rightWeapon)
+			                                 : static_cast<Object *>(leftWeapon);
 			// Determine attack stat: Dex for ranged, Str for melee.
 			bool ranged = (rightWeapon && rightWeapon->isRangedWeapon()) ||
 			              (leftWeapon  && leftWeapon->isRangedWeapon());
@@ -1160,6 +1281,7 @@ namespace KotORBase {
 				if (deflectTotal >= attackRoll) {
 					debugC(Common::kDebugEngineLogic, 1,			       "DEFLECTED: Blaster bolt from \"%s\" deflected by \"%s\" (Deflect %d vs Attack %d)",			       _tag.c_str(), targetCreature->getTag().c_str(), deflectTotal, attackRoll);
 					// Trigger a deflect animation if possible			targetCreature->playAnimation("g8g1", false, 0.4f);
+					recordAttackResult(kAttackResultMiss, weaponUsed);
 					// Quick block/deflect animation			return;
 				}
 			}
@@ -1168,6 +1290,7 @@ namespace KotORBase {
 			bool hit = (d20 == 20) || (d20 != 1 && attackRoll >= targetAC);
 			if (!hit) {
 				debugC(Common::kDebugEngineLogic, 1,		       "Object \"%s\" missed \"%s\" (d20=%d bab=%d abMod=%d feat=%d effect=%d total=%d vs AC %d)",		       _tag.c_str(), target->getTag().c_str(),		       d20, bab + babPenalty, abMod, featAttackMod, _attackModifier, attackRoll, targetAC);
+				recordAttackResult(kAttackResultMiss, weaponUsed);
 				return;
 			}
 			// --- Critical hit system ---	// Threat on natural 20 (weapons may lower this, but 20 is the universal minimum).	// Critical Strike feat: threat on 19-20;
@@ -1242,6 +1365,20 @@ namespace KotORBase {
 				}
 			}
 			if (damage < 1)		damage = 1;
+			int damageType = kDamageTypeBludgeoning;
+			if (rightWeapon && rightWeapon->isRangedWeapon())
+				damageType = kDamageTypeEnergy;
+			else if (rightWeapon)
+				damageType = kDamageTypeSlashing;
+			if (targetCreature) {
+				int immunity = targetCreature->getDamageImmunityPercent(damageType);
+				if (immunity > 0)
+					damage = damage - (damage * immunity) / 100;
+				if (damage < 1)
+					damage = 1;
+				targetCreature->recordDamageTaken(damage, damageType, this);
+			}
+			recordAttackResult(isCrit ? kAttackResultCriticalHitSuccessful : kAttackResultHitSuccessful, weaponUsed);
 			int hp    = target->getCurrentHitPoints() - damage;
 			int minHp = target->getMinOneHitPoints() ? 1 : 0;
 			if (hp < minHp)		hp = minHp;
@@ -1251,6 +1388,7 @@ namespace KotORBase {
 				cancelCombat();
 				if (targetCreature) {
 					targetCreature->cancelCombat();
+					targetCreature->setLastKiller(this);
 					if (targetCreature->handleDeath()) {
 						// Signal the module to award XP to the killer's party.				// We use userDefinedEvent 1007 (already fired by handleCreaturesDeath) — XP				// is awarded there via the module's updateXPOnKill() call.
 					}
@@ -1271,6 +1409,8 @@ namespace KotORBase {
 		bool Creature::handleDeath() {
 			if (!_dead && _currentHitPoints <= 0) {
 				_dead = true;
+				if (!_lastKiller && _lastHostileActor)
+					_lastKiller = _lastHostileActor;
 				if (_model) {
 					_model->clearDefaultAnimations();
 					_model->addDefaultAnimation("dead", 100);

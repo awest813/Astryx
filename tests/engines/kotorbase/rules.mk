@@ -117,3 +117,8 @@ check_PROGRAMS                                                 += tests/engines/
 tests_engines_kotorbase_test_dantooine_cinematic_SOURCES       = tests/engines/kotorbase/dantooine_cinematic.cpp
 tests_engines_kotorbase_test_dantooine_cinematic_LDADD         = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_dantooine_cinematic_CXXFLAGS      = $(test_CXXFLAGS)
+
+check_PROGRAMS                                                 += tests/engines/kotorbase/test_parity_p0_natives
+tests_engines_kotorbase_test_parity_p0_natives_SOURCES         = tests/engines/kotorbase/parity_p0_natives.cpp
+tests_engines_kotorbase_test_parity_p0_natives_LDADD           = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_parity_p0_natives_CXXFLAGS        = $(test_CXXFLAGS)

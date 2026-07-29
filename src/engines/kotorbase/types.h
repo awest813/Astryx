@@ -190,6 +190,36 @@ enum Faction {
 	kFactionPartyPuppet
 };
 
+/** Attack result codes returned by GetLastAttackResult (NWN/KotOR convention). */
+enum AttackResult {
+	kAttackResultInvalid               = 0,
+	kAttackResultHitSuccessful         = 1,
+	kAttackResultMiss                  = 2,
+	kAttackResultAttackTargetDestroyed = 3,
+	kAttackResultCriticalHitSuccessful = 4
+};
+
+/** Immunity type codes used by EffectImmunity / GetIsImmune. */
+enum ImmunityType {
+	kImmunityTypeNone              = 0,
+	kImmunityTypeMindSpells        = 1,
+	kImmunityTypePoison            = 2,
+	kImmunityTypeDisease           = 3,
+	kImmunityTypeCriticalHits      = 4,
+	kImmunityTypeDeath             = 5,
+	kImmunityTypeKnockdown         = 6,
+	kImmunityTypeParalysis         = 7,
+	kImmunityTypeFear              = 8,
+	kImmunityTypeStun              = 9,
+	kImmunityTypeSleep             = 10,
+	kImmunityTypeAbilityDecrease   = 11,
+	kImmunityTypeDazed             = 12,
+	kImmunityTypeConfusion         = 13,
+	kImmunityTypeMovementSpeedDecrease = 14,
+	kImmunityTypeBlindness         = 15,
+	kImmunityTypeDeafness          = 16
+};
+
 enum Skill {
 	kSkillComputerUse = 0,
 	kSkillDemolitions,

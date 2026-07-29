@@ -42,6 +42,7 @@
 #include "src/engines/kotorbase/talent.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
+#include "src/engines/kotorbase/area.h"
 
 #include "src/engines/kotorbase/script/functions.h"
 
@@ -1016,16 +1017,161 @@ void Functions::setAppearanceType(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getSpellId(Aurora::NWScript::FunctionContext &ctx) {
-	// Spell state is not fully tracked globally yet. Standard fallback is -1.
-	ctx.getReturn() = -1;
+	int spellId = _game->getModule().getSpellScriptId();
+	if (spellId < 0) {
+		Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+		if (caller)
+			spellId = caller->getLastForcePowerUsed();
+	}
+	ctx.getReturn() = spellId;
 }
 
 void Functions::getLastSpellHarmful(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = 0;
+	ctx.getReturn() = _game->getModule().getSpellScriptHarmful() ? 1 : 0;
 }
 
 void Functions::getSpellTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Location();
+	Location *loc = new Location();
+	Object *target = _game->getModule().getSpellScriptTarget();
+	if (target) {
+		float x, y, z;
+		target->getPosition(x, y, z);
+		loc->setPosition(x, y, z);
+	}
+	ctx.getReturn() = loc;
+}
+
+void Functions::getSpellTarget(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getSpellScriptTarget());
+}
+
+void Functions::getSpellSaveDC(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getSpellScriptSaveDC();
+}
+
+void Functions::getSpellCastItem(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getSpellScriptCastItem());
+}
+
+void Functions::getMetaMagicFeat(Aurora::NWScript::FunctionContext &ctx) {
+	// KotOR does not use NWN-style metamagic; return 0 (METAMAGIC_NONE).
+	ctx.getReturn() = 0;
+}
+
+void Functions::getEffectSpellId(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = -1;
+	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
+	if (effect)
+		ctx.getReturn() = effect->getDamageType(); // spell id packed when available
+}
+
+void Functions::getLastKiller(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature)
+		creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (!creature)
+		return;
+	Object *killer = creature->getLastKiller();
+	if (!killer)
+		killer = creature->getLastHostileActor();
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(killer);
+}
+
+void Functions::getDamageDealtByType(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = -1;
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (!creature)
+		return;
+	ctx.getReturn() = creature->getDamageDealtByType(ctx.getParams()[0].getInt());
+}
+
+void Functions::getTotalDamageDealt(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = creature ? creature->getTotalDamageDealt() : 0;
+}
+
+void Functions::getLastAttackResult(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = creature ? creature->getLastAttackResult() : 0;
+}
+
+void Functions::getLastWeaponUsed(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature)
+		creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (creature)
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(creature->getLastWeaponUsed());
+}
+
+void Functions::surrenderToEnemies(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (caller)
+		caller->surrenderToEnemies(false);
+}
+
+void Functions::actionSurrenderToEnemies(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (caller)
+		caller->surrenderToEnemies(false);
+}
+
+void Functions::surrenderByFaction(Aurora::NWScript::FunctionContext &ctx) {
+	int faction = ctx.getParams()[0].getInt();
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area)
+		return;
+	const std::vector<Creature *> &creatures = area->getCreatures();
+	for (size_t i = 0; i < creatures.size(); ++i) {
+		Creature *c = creatures[i];
+		if (c && !c->isDead() && static_cast<int>(c->getFaction()) == faction)
+			c->surrenderToEnemies(false);
+	}
+}
+
+void Functions::surrenderRetainBuffs(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (caller)
+		caller->surrenderToEnemies(true);
+}
+
+void Functions::effectImmunity(Aurora::NWScript::FunctionContext &ctx) {
+	int immunityType = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectImmunity, immunityType);
+}
+
+void Functions::getIsImmune(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = 0;
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	int immunityType = ctx.getParams()[1].getInt();
+	if (creature && creature->isImmune(immunityType))
+		ctx.getReturn() = 1;
+}
+
+void Functions::effectDamageImmunityIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	int damageType = ctx.getParams()[0].getInt();
+	int percent = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectDamageImmunityIncrease, percent, damageType);
+}
+
+void Functions::effectSpellImmunity(Aurora::NWScript::FunctionContext &ctx) {
+	int spellId = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectSpellImmunity, spellId);
+}
+
+void Functions::effectSleep(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectSleep, 0);
+}
+
+void Functions::effectRegenerate(Aurora::NWScript::FunctionContext &ctx) {
+	int amount = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectRegenerate, amount);
+}
+
+void Functions::effectTemporaryForcePoints(Aurora::NWScript::FunctionContext &ctx) {
+	int amount = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectTemporaryForcePoints, amount);
 }
 
 void Functions::grantFeat(Aurora::NWScript::FunctionContext &ctx) {

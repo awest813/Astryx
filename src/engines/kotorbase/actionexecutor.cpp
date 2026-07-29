@@ -406,6 +406,10 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->setLastForcePowerUsed(action.actionID);
 
+	int saveDC = 10 + caster->getHitDice() + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+	bool harmful = spell ? spell->hostile : false;
+	ctx.area->_module->setSpellScriptContext(action.actionID, action.object, saveDC, harmful);
+
 	// Apply power effects
 	switch (action.actionID) {
 		case 1: // Force Heal (Party heal)
