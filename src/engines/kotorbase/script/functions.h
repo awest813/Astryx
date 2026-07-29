@@ -1150,6 +1150,43 @@ protected:
 	void effectRegenerate(Aurora::NWScript::FunctionContext &ctx);
 	void effectTemporaryForcePoints(Aurora::NWScript::FunctionContext &ctx);
 
+	void effectAreaOfEffect(Aurora::NWScript::FunctionContext &ctx);
+	void getFirstInPersistentObject(Aurora::NWScript::FunctionContext &ctx);
+	void getNextInPersistentObject(Aurora::NWScript::FunctionContext &ctx);
+	void getAreaOfEffectCreator(Aurora::NWScript::FunctionContext &ctx);
+	void applyEffectAtLocation(Aurora::NWScript::FunctionContext &ctx);
+
+	void magicalEffect(Aurora::NWScript::FunctionContext &ctx);
+	void supernaturalEffect(Aurora::NWScript::FunctionContext &ctx);
+	void extraordinaryEffect(Aurora::NWScript::FunctionContext &ctx);
+
+	void effectDamageResistance(Aurora::NWScript::FunctionContext &ctx);
+	void effectConcealment(Aurora::NWScript::FunctionContext &ctx);
+	void effectAssuredHit(Aurora::NWScript::FunctionContext &ctx);
+	void effectAssuredDeflection(Aurora::NWScript::FunctionContext &ctx);
+	void effectEntangle(Aurora::NWScript::FunctionContext &ctx);
+	void effectForceJump(Aurora::NWScript::FunctionContext &ctx);
+	void effectBeam(Aurora::NWScript::FunctionContext &ctx);
+	void effectForceResistanceIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectBodyFuel(Aurora::NWScript::FunctionContext &ctx);
+	void effectDamageIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectHitPointChangeWhenDying(Aurora::NWScript::FunctionContext &ctx);
+	void effectDroidStun(Aurora::NWScript::FunctionContext &ctx);
+	void effectForceResisted(Aurora::NWScript::FunctionContext &ctx);
+	void effectForceFizzle(Aurora::NWScript::FunctionContext &ctx);
+	void effectDispelMagicAll(Aurora::NWScript::FunctionContext &ctx);
+	void effectBlasterDeflectionIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectBlasterDeflectionDecrease(Aurora::NWScript::FunctionContext &ctx);
+
+	void speakOneLinerConversation(Aurora::NWScript::FunctionContext &ctx);
+	void addToParty(Aurora::NWScript::FunctionContext &ctx);
+	void removeFromParty(Aurora::NWScript::FunctionContext &ctx);
+	void getIsDay(Aurora::NWScript::FunctionContext &ctx);
+	void getIsNight(Aurora::NWScript::FunctionContext &ctx);
+	void revealMap(Aurora::NWScript::FunctionContext &ctx);
+	void setAILevel(Aurora::NWScript::FunctionContext &ctx);
+	void getLastConversation(Aurora::NWScript::FunctionContext &ctx);
+
 
 	void getStealthMode(Aurora::NWScript::FunctionContext &ctx);
 
@@ -2274,6 +2311,10 @@ private:
 	Aurora::NWScript::Object *_factionIterRef { nullptr };
 	std::vector<Object *> _factionIterObjects;
 	size_t _factionIterIndex { 0 };
+
+	// State for GetFirstInPersistentObject / GetNextInPersistentObject
+	std::vector<Object *> _persistentIterObjects;
+	size_t _persistentIterIndex { 0 };
 
 	// Context state for inventory-disturb and item-activation events
 	int _lastInventoryDisturbType { 0 };

@@ -278,6 +278,8 @@ public:
 	void addPartyMember(int npc, Creature *creature);
 	/** Remove a creature from the active party by NPC slot. */
 	void removePartyMember(int npc);
+	/** Remove a creature from the active party by pointer (RemoveFromParty). */
+	void removeCreatureFromParty(Creature *creature);
 	/** Notify the module that the party leader has changed. */
 	void notifyPartyLeaderChanged();
 
@@ -466,6 +468,13 @@ protected:
 	bool getSpellScriptHarmful() const;
 	Object *getSpellScriptCastItem() const;
 
+	void setLastConversation(const Common::UString &name);
+	const Common::UString &getLastConversation() const;
+
+	/** Record the creator of the most recently applied area-of-effect. */
+	void setLastAoECreator(Object *creator);
+	Object *getLastAoECreator() const;
+
 protected:
 	std::unique_ptr<IngameGUI> _ingame; ///< The ingame GUI.
 	std::unique_ptr<DialogGUI> _dialog; ///< Conversation/cutscene GUI.
@@ -608,6 +617,8 @@ protected:
 	int _spellScriptSaveDC { 12 };
 	bool _spellScriptHarmful { false };
 	Object *_spellScriptCastItem { nullptr };
+	Common::UString _lastConversation;
+	Object *_lastAoECreator { nullptr };
 
 	bool _moviePlaying { false }; ///< Is a full-screen movie currently playing?
 	std::vector<Common::UString> _movieQueue; ///< Movies queued for PlayMovieQueue.

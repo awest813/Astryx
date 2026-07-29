@@ -773,6 +773,22 @@ void Functions::speakString(Aurora::NWScript::FunctionContext &ctx) {
 
 }
 
+void Functions::speakOneLinerConversation(Aurora::NWScript::FunctionContext &ctx) {
+	// SpeakOneLinerConversation(string sDialogResRef="", object oTokenTarget=OBJECT_SELF)
+	const Common::UString &dialog = ctx.getParams()[0].getString();
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!target)
+		target = ObjectContainer::toObject(ctx.getCaller());
+
+	if (!dialog.empty()) {
+		_game->getModule().delayConversation(dialog, target);
+		return;
+	}
+
+	if (target)
+		_game->getModule().showFloatingText(target, target->getName());
+}
+
 
 
 void Functions::actionSpeakStringByStrRef(Aurora::NWScript::FunctionContext &ctx) {

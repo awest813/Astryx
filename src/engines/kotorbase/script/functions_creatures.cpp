@@ -1174,6 +1174,102 @@ void Functions::effectTemporaryForcePoints(Aurora::NWScript::FunctionContext &ct
 	ctx.getReturn() = new Effect(kKotOREffectTemporaryForcePoints, amount);
 }
 
+void Functions::effectAreaOfEffect(Aurora::NWScript::FunctionContext &ctx) {
+	int aoeId = ctx.getParams()[0].getInt();
+	_game->getModule().setLastAoECreator(ObjectContainer::toObject(ctx.getCaller()));
+	ctx.getReturn() = new Effect(kKotOREffectAreaOfEffect, aoeId);
+}
+
+void Functions::magicalEffect(Aurora::NWScript::FunctionContext &ctx) {
+	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
+	ctx.getReturn() = effect ? effect->clone() : new Effect(kKotOREffectVisual, 0);
+}
+
+void Functions::supernaturalEffect(Aurora::NWScript::FunctionContext &ctx) {
+	magicalEffect(ctx);
+}
+
+void Functions::extraordinaryEffect(Aurora::NWScript::FunctionContext &ctx) {
+	magicalEffect(ctx);
+}
+
+void Functions::effectDamageResistance(Aurora::NWScript::FunctionContext &ctx) {
+	int damageType = ctx.getParams()[0].getInt();
+	int amount = ctx.getParams()[1].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectDamageResistance, amount, damageType);
+}
+
+void Functions::effectConcealment(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectConcealment, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectAssuredHit(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectAssuredHit, 1);
+}
+
+void Functions::effectAssuredDeflection(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectAssuredDeflection, 1);
+}
+
+void Functions::effectEntangle(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectEntangle, 0);
+}
+
+void Functions::effectForceJump(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectForceJump, 0);
+}
+
+void Functions::effectBeam(Aurora::NWScript::FunctionContext &ctx) {
+	int beamType = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectBeam, beamType);
+}
+
+void Functions::effectForceResistanceIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectForceResistanceIncrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectBodyFuel(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectBodyFuel, 5);
+}
+
+void Functions::effectDamageIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	int amount = ctx.getParams()[0].getInt();
+	int damageType = ctx.getParams().size() > 1 ? ctx.getParams()[1].getInt() : 0;
+	ctx.getReturn() = new Effect(kKotOREffectDamageIncrease, amount, damageType);
+}
+
+void Functions::effectHitPointChangeWhenDying(Aurora::NWScript::FunctionContext &ctx) {
+	int amount = 1;
+	if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeInt)
+		amount = ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectHitPointChangeWhenDying, amount);
+}
+
+void Functions::effectDroidStun(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectDroidStun, 0);
+}
+
+void Functions::effectForceResisted(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectForceResisted, 0);
+}
+
+void Functions::effectForceFizzle(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectForceFizzle, 0);
+}
+
+void Functions::effectDispelMagicAll(Aurora::NWScript::FunctionContext &ctx) {
+	int casterLevel = ctx.getParams().empty() ? 0 : ctx.getParams()[0].getInt();
+	ctx.getReturn() = new Effect(kKotOREffectDispelMagicAll, casterLevel);
+}
+
+void Functions::effectBlasterDeflectionIncrease(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectBlasterDeflectionIncrease, ctx.getParams()[0].getInt());
+}
+
+void Functions::effectBlasterDeflectionDecrease(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = new Effect(kKotOREffectBlasterDeflectionDecrease, ctx.getParams()[0].getInt());
+}
+
 void Functions::grantFeat(Aurora::NWScript::FunctionContext &ctx) {
 	int feat = ctx.getParams()[0].getInt();
 	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));

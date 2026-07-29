@@ -147,3 +147,44 @@ GTEST_TEST(ParityP0Natives, effectConstructors) {
 	EXPECT_EQ(tempFP.getType(), kKotOREffectTemporaryForcePoints);
 	EXPECT_EQ(tempFP.getAmount(), 10);
 }
+
+GTEST_TEST(ParityP0Natives, damageResistanceAndConcealment) {
+	TestCreature creature;
+	creature.setDamageResistance(kDamageTypeEnergy, 5);
+	EXPECT_EQ(creature.getDamageResistance(kDamageTypeEnergy), 5);
+
+	creature.setConcealment(40);
+	EXPECT_EQ(creature.getConcealment(), 40);
+
+	Effect resist(kKotOREffectDamageResistance, 8, kDamageTypeFire);
+	creature.applyEffect(resist);
+	EXPECT_EQ(creature.getDamageResistance(kDamageTypeFire), 8);
+
+	Effect conceal(kKotOREffectConcealment, 25);
+	creature.applyEffect(conceal);
+	EXPECT_EQ(creature.getConcealment(), 25);
+
+	Effect assured(kKotOREffectAssuredHit, 1);
+	creature.applyEffect(assured);
+	EXPECT_TRUE(creature.hasAssuredHit());
+}
+
+GTEST_TEST(ParityP0Natives, aiLevelAndEntangle) {
+	TestCreature creature;
+	creature.setAILevel(3);
+	EXPECT_EQ(creature.getAILevel(), 3);
+
+	Effect entangle(kKotOREffectEntangle, 0);
+	creature.applyEffect(entangle);
+	EXPECT_TRUE(creature.hasEffect(kEffectStun));
+}
+
+GTEST_TEST(ParityP0Natives, dayNightPartition) {
+	// Mirror GetIsDay / GetIsNight hour buckets used by functions_time.cpp
+	auto isDay = [](int hour) { return hour >= 6 && hour < 18; };
+	EXPECT_TRUE(isDay(6));
+	EXPECT_TRUE(isDay(12));
+	EXPECT_FALSE(isDay(5));
+	EXPECT_FALSE(isDay(18));
+	EXPECT_FALSE(isDay(23));
+}

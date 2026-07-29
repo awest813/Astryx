@@ -1766,6 +1766,26 @@ void Module::removePartyMember(int npc) {
 	updateCurrentPartyGUI();
 }
 
+void Module::removeCreatureFromParty(Creature *creature) {
+	if (!creature)
+		return;
+
+	size_t count = _partyController.getPartyMemberCount();
+	std::vector<std::pair<int, Creature *>> remaining;
+	remaining.reserve(count);
+	for (size_t i = 0; i < count; ++i) {
+		const auto &pair = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+		if (pair.second != creature)
+			remaining.push_back(pair);
+	}
+
+	_partyController.clearCurrentParty();
+	for (auto &pair : remaining)
+		_partyController.addPartyMember(pair.first, pair.second);
+
+	updateCurrentPartyGUI();
+}
+
 void Module::addAvailableNPCByObject(int npc, Creature *creature) {
 	if (!creature)
 		return;
@@ -2201,6 +2221,7 @@ void Module::startConversation(const Common::UString &name, Aurora::NWScript::Ob
 	if (finalName.empty())
 		return;
 
+	_lastConversation = finalName;
 	_dialog->startConversation(finalName, owner);
 
 	if (_dialog->isConversationActive()) {
@@ -2356,6 +2377,8 @@ void Module::playMusicStinger(const Common::UString &stinger) {
 }
 
 void Module::delayConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
+	if (!name.empty())
+		_lastConversation = name;
 	_delayedConversation = std::make_unique<DelayedConversation>(name, owner);
 }
 
@@ -2457,6 +2480,22 @@ bool Module::getSpellScriptHarmful() const {
 
 Object *Module::getSpellScriptCastItem() const {
 	return _spellScriptCastItem;
+}
+
+void Module::setLastConversation(const Common::UString &name) {
+	_lastConversation = name;
+}
+
+const Common::UString &Module::getLastConversation() const {
+	return _lastConversation;
+}
+
+void Module::setLastAoECreator(Object *creator) {
+	_lastAoECreator = creator;
+}
+
+Object *Module::getLastAoECreator() const {
+	return _lastAoECreator;
 }
 
 static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst) {

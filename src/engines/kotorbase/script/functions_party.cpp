@@ -141,6 +141,20 @@ void Functions::removePartyMember(Aurora::NWScript::FunctionContext &ctx) {
 	_game->getModule().removePartyMember(npc);
 }
 
+void Functions::addToParty(Aurora::NWScript::FunctionContext &ctx) {
+	// AddToParty(object oCreature, object oLeader) — KotOR companion add without NPC slot id.
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	if (!creature)
+		return;
+	_game->getModule().addPartyMember(-1, creature);
+}
+
+void Functions::removeFromParty(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	if (creature)
+		_game->getModule().removeCreatureFromParty(creature);
+}
+
 void Functions::addAvailableNPCByObject(Aurora::NWScript::FunctionContext &ctx) {
 	int npc = ctx.getParams()[0].getInt();
 	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());

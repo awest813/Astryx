@@ -314,6 +314,21 @@ public:
 	/** Cancel combat, clear actions, and optionally clear buffs; set surrender faction. */
 	void surrenderToEnemies(bool retainBuffs = false);
 
+	int getAILevel() const { return _aiLevel; }
+	void setAILevel(int level) { _aiLevel = level; }
+
+	int getConcealment() const { return _concealment; }
+	void setConcealment(int percent) { _concealment = percent; }
+
+	bool hasAssuredHit() const { return _assuredHit; }
+	void setAssuredHit(bool enabled) { _assuredHit = enabled; }
+
+	int getBlasterDeflectionBonus() const { return _blasterDeflectionBonus; }
+	void adjustBlasterDeflection(int delta) { _blasterDeflectionBonus += delta; }
+
+	int getDamageResistance(int damageType) const;
+	void setDamageResistance(int damageType, int amount);
+
 	// Perception results (set by handleObjectSeen / handleObjectVanished).
 	Object *getLastPerceived() const;
 	bool getLastPerceptionSeen() const;
@@ -441,6 +456,11 @@ private:
 	std::set<int> _immunities;
 	std::set<int> _spellImmunities;
 	std::map<int, int> _damageImmunityPercent;
+	std::map<int, int> _damageResistance;
+	int _aiLevel { 0 };
+	int _concealment { 0 };
+	bool _assuredHit { false };
+	int _blasterDeflectionBonus { 0 };
 	int _attackModifier { 0 };
 	int _armorClassModifier { 0 };
 	std::array<int, kSkillMAX> _skillModifiers {{}};

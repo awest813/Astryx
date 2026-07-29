@@ -896,6 +896,105 @@ void Functions::getNextObjectInArea(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = _areaIterObjects[_areaIterIndex++];
 }
 
+void Functions::getFirstInPersistentObject(Aurora::NWScript::FunctionContext &ctx) {
+	// Iterate residents of an AoE / area. Without full AoE objects yet, fall back to
+	// creatures in the current area (same practical filter most scripts use).
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	_persistentIterObjects.clear();
+	_persistentIterIndex = 0;
+
+	int filter = kObjectTypeCreature;
+	if (ctx.getParams().size() > 1 && ctx.getParams()[1].getType() == Aurora::NWScript::kTypeInt)
+		filter = ctx.getParams()[1].getInt();
+	if (filter == 0)
+		filter = kObjectTypeCreature;
+
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area)
+		return;
+
+	if (filter & kObjectTypeCreature) {
+		const std::vector<Creature *> &creatures = area->getCreatures();
+		for (size_t i = 0; i < creatures.size(); ++i) {
+			if (creatures[i] && !creatures[i]->isDead())
+				_persistentIterObjects.push_back(creatures[i]);
+		}
+	}
+
+	if (_persistentIterObjects.empty())
+		return;
+	ctx.getReturn() = _persistentIterObjects[_persistentIterIndex++];
+}
+
+void Functions::getNextInPersistentObject(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	if (_persistentIterIndex >= _persistentIterObjects.size())
+		return;
+	ctx.getReturn() = _persistentIterObjects[_persistentIterIndex++];
+}
+
+void Functions::getAreaOfEffectCreator(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getLastAoECreator());
+}
+
+void Functions::applyEffectAtLocation(Aurora::NWScript::FunctionContext &ctx) {
+	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
+	const Location *loc = dynamic_cast<const Location *>(ctx.getParams()[2].getEngineType());
+	if (!effect || !loc)
+		return;
+
+	if (effect->getType() == kKotOREffectAreaOfEffect)
+		_game->getModule().setLastAoECreator(ObjectContainer::toObject(ctx.getCaller()));
+
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area)
+		return;
+
+	float lx, ly, lz;
+	loc->getPosition(lx, ly, lz);
+	const float radius = 5.0f;
+
+	const std::vector<Creature *> &creatures = area->getCreatures();
+	for (size_t i = 0; i < creatures.size(); ++i) {
+		Creature *c = creatures[i];
+		if (!c || c->isDead())
+			continue;
+		float x, y, z;
+		c->getPosition(x, y, z);
+		float dx = x - lx, dy = y - ly, dz = z - lz;
+		if ((dx * dx + dy * dy + dz * dz) <= radius * radius)
+			c->applyEffect(*effect);
+	}
+}
+
+void Functions::revealMap(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	Area *area = _game->getModule().getCurrentArea();
+	if (area)
+		_game->getModule().exploreAreaFully(area);
+}
+
+void Functions::setAILevel(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = nullptr;
+	int level = 0;
+	if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeObject) {
+		creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+		if (ctx.getParams().size() > 1)
+			level = ctx.getParams()[1].getInt();
+	} else if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeEngineType) {
+		// Signature table lists a single engine-type arg for some builds; treat as no-op success.
+		ctx.getReturn() = 1;
+		return;
+	}
+	if (creature)
+		creature->setAILevel(level);
+	ctx.getReturn() = 1;
+}
+
+void Functions::getLastConversation(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getLastConversation();
+}
+
 void Functions::getLockUnlockDC(Aurora::NWScript::FunctionContext &ctx) {
 	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
 	if (!situated) {

@@ -900,6 +900,15 @@ namespace KotORBase {
 			}
 		}
 
+		int Creature::getDamageResistance(int damageType) const {
+			std::map<int, int>::const_iterator it = _damageResistance.find(damageType);
+			return it != _damageResistance.end() ? it->second : 0;
+		}
+
+		void Creature::setDamageResistance(int damageType, int amount) {
+			_damageResistance[damageType] = amount > 0 ? amount : 0;
+		}
+
 		int Creature::getLastCombatFeatUsed()
 		const {
 			return _lastCombatFeatUsed;
@@ -1183,6 +1192,48 @@ namespace KotORBase {
 					setForcePoints(fp);
 					break;
 				}
+				case kKotOREffectDamageResistance:
+					setDamageResistance(effect.getDamageType(), effect.getAmount());
+					break;
+				case kKotOREffectConcealment:
+					_concealment = effect.getAmount();
+					if (_concealment < 0) _concealment = 0;
+					if (_concealment > 100) _concealment = 100;
+					break;
+				case kKotOREffectAssuredHit:
+					_assuredHit = true;
+					break;
+				case kKotOREffectAssuredDeflection:
+					adjustBlasterDeflection(effect.getAmount() > 0 ? effect.getAmount() : 50);
+					break;
+				case kKotOREffectEntangle:
+				case kKotOREffectDroidStun:
+					applyEffect(kEffectStun, 6.0f, 0);
+					break;
+				case kKotOREffectBodyFuel:
+					applyEffect(kEffectHeal, 0.0f, effect.getAmount() > 0 ? effect.getAmount() : 5);
+					break;
+				case kKotOREffectDamageIncrease:
+					adjustAttackModifier(0); // damage tracked via effect amount on apply path
+					break;
+				case kKotOREffectForceResistanceIncrease:
+				case kKotOREffectBlasterDeflectionIncrease:
+					adjustBlasterDeflection(effect.getAmount());
+					break;
+				case kKotOREffectBlasterDeflectionDecrease:
+					adjustBlasterDeflection(-effect.getAmount());
+					break;
+				case kKotOREffectDispelMagicAll:
+					_effects.clear();
+					break;
+				case kKotOREffectAreaOfEffect:
+				case kKotOREffectForceJump:
+				case kKotOREffectBeam:
+				case kKotOREffectForceResisted:
+				case kKotOREffectForceFizzle:
+				case kKotOREffectHitPointChangeWhenDying:
+					// Visual / marker effects — no further mechanical state for P1.
+					break;
 				default:
 					break;
 			}
@@ -1288,6 +1339,8 @@ namespace KotORBase {
 			// Natural 1 always misses;
 			// natural 20 always hits.
 			bool hit = (d20 == 20) || (d20 != 1 && attackRoll >= targetAC);
+			if (_assuredHit)
+				hit = true;
 			if (!hit) {
 				debugC(Common::kDebugEngineLogic, 1,		       "Object \"%s\" missed \"%s\" (d20=%d bab=%d abMod=%d feat=%d effect=%d total=%d vs AC %d)",		       _tag.c_str(), target->getTag().c_str(),		       d20, bab + babPenalty, abMod, featAttackMod, _attackModifier, attackRoll, targetAC);
 				recordAttackResult(kAttackResultMiss, weaponUsed);
@@ -1371,13 +1424,27 @@ namespace KotORBase {
 			else if (rightWeapon)
 				damageType = kDamageTypeSlashing;
 			if (targetCreature) {
+				int resist = targetCreature->getDamageResistance(damageType);
+				if (resist > 0)
+					damage = damage > resist ? damage - resist : 0;
 				int immunity = targetCreature->getDamageImmunityPercent(damageType);
 				if (immunity > 0)
 					damage = damage - (damage * immunity) / 100;
 				if (damage < 1)
 					damage = 1;
+				// Concealment: percent chance the attack is treated as a miss after the hit roll.
+				if (targetCreature->getConcealment() > 0) {
+					int concealRoll = RNG.getNext(1, 101);
+					if (concealRoll <= targetCreature->getConcealment()) {
+						recordAttackResult(kAttackResultMiss, weaponUsed);
+						debugC(Common::kDebugEngineLogic, 1, "Attack concealed against \"%s\"", target->getTag().c_str());
+						return;
+					}
+				}
 				targetCreature->recordDamageTaken(damage, damageType, this);
 			}
+			if (_assuredHit)
+				_assuredHit = false;
 			recordAttackResult(isCrit ? kAttackResultCriticalHitSuccessful : kAttackResultHitSuccessful, weaponUsed);
 			int hp    = target->getCurrentHitPoints() - damage;
 			int minHp = target->getMinOneHitPoints() ? 1 : 0;

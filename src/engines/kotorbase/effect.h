@@ -72,7 +72,25 @@ enum KotOREffectType {
 	kKotOREffectDamageImmunityIncrease   = 36, ///< Raise damage immunity % (amount) for a damage type.
 	kKotOREffectSleep                    = 37, ///< Put the target to sleep (stun-like).
 	kKotOREffectRegenerate               = 38, ///< Heal amount HP periodically (simplified).
-	kKotOREffectTemporaryForcePoints     = 39  ///< Temporary Force points (amount).
+	kKotOREffectTemporaryForcePoints     = 39, ///< Temporary Force points (amount).
+	kKotOREffectAreaOfEffect             = 40, ///< Area-of-effect marker (amount = AOE id).
+	kKotOREffectDamageResistance         = 41, ///< Resist damage type (amount=limit, damageType=type).
+	kKotOREffectConcealment              = 42, ///< Miss-chance percent (amount).
+	kKotOREffectAssuredHit               = 43, ///< Next attack auto-hits.
+	kKotOREffectAssuredDeflection        = 44, ///< Next deflection auto-succeeds.
+	kKotOREffectEntangle                 = 45, ///< Entangle / immobilize (stun-like).
+	kKotOREffectForceJump                = 46, ///< Force Jump visual/movement marker.
+	kKotOREffectBeam                     = 47, ///< Beam VFX marker.
+	kKotOREffectForceResistanceIncrease  = 48, ///< Raise Force resistance (amount).
+	kKotOREffectBodyFuel                 = 49, ///< Body fuel (regen-like).
+	kKotOREffectDamageIncrease           = 50, ///< Bonus damage (amount).
+	kKotOREffectHitPointChangeWhenDying  = 51, ///< Dying HP change per tick (amount).
+	kKotOREffectDroidStun                = 52, ///< Droid-only stun.
+	kKotOREffectForceResisted            = 53, ///< Force resisted VFX marker.
+	kKotOREffectForceFizzle              = 54, ///< Force fizzle VFX marker.
+	kKotOREffectDispelMagicAll           = 55, ///< Dispel all magic effects.
+	kKotOREffectBlasterDeflectionIncrease = 56, ///< Raise blaster deflection (amount).
+	kKotOREffectBlasterDeflectionDecrease = 57  ///< Lower blaster deflection (amount).
 };
 
 class Effect : public Aurora::NWScript::EngineType {
