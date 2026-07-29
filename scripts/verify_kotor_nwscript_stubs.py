@@ -17,6 +17,51 @@ ENGINES = ("kotor", "kotor2")
 PTR_RE = re.compile(
     r'\{\s*(\d+)\s*,\s*"([^"]+)"\s*,\s*(0|&Functions::(\w+))\s*\}'
 )
+ID_RE = re.compile(r'\{\s*(\d+)\s*,')
+
+
+def parse_id_list(content: str, marker: str) -> list[int]:
+    start = content.find(marker)
+    if start < 0:
+        return []
+    # End at the next top-level array or EOF-ish close of this array.
+    chunk = content[start:]
+    end = chunk.find("\n};")
+    section = chunk[: end + 3] if end >= 0 else chunk
+    return [int(m.group(1)) for m in ID_RE.finditer(section)]
+
+
+def check_table_alignment(engine: str) -> list[str]:
+    """Pointers/signatures/defaults must share the same ID sequence (registerFunctions asserts this)."""
+    path = REPO_ROOT / f"src/engines/{engine}/script/function_tables.h"
+    content = path.read_text(encoding="utf-8")
+    errors: list[str] = []
+
+    pointers = parse_id_list(content, "kFunctionPointers[]")
+    signatures = parse_id_list(content, "kFunctionSignatures[]")
+    defaults = parse_id_list(content, "kFunctionDefaults[]")
+
+    if not pointers or not signatures or not defaults:
+        return [f"{engine}: failed to parse NWScript tables for alignment check"]
+
+    if not (len(pointers) == len(signatures) == len(defaults)):
+        errors.append(
+            f"{engine}: table length mismatch pointers={len(pointers)} "
+            f"signatures={len(signatures)} defaults={len(defaults)}"
+        )
+
+    for i, (p, s, d) in enumerate(zip(pointers, signatures, defaults)):
+        if not (p == s == d):
+            errors.append(
+                f"{engine}: ID misalignment at index {i}: "
+                f"pointer={p} signature={s} default={d}"
+            )
+            break
+
+    if engine == "kotor" and 220 not in pointers:
+        errors.append(f"{engine}: missing ApplyEffectToObject (id 220)")
+
+    return errors
 
 
 def check_engine(engine: str) -> list[str]:
@@ -55,6 +100,7 @@ def check_engine(engine: str) -> list[str]:
         f"swmg_stub={swmg} incomplete={incomplete} "
         f"behavioral={pct_real:.1f}% null={len(errors)}"
     )
+    errors.extend(check_table_alignment(engine))
     return errors
 
 

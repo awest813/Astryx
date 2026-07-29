@@ -240,8 +240,12 @@ void Door::loadState(const Aurora::GFF3Struct &gff) {
 	Situated::loadState(gff);
 	_state = static_cast<State>(gff.getUint("AnimationState", static_cast<uint32_t>(_state)));
 
-	// Snap visuals / usability to the restored open/closed state.
-	if (isOpen()) {
+	// Snap visuals / usability to the restored open/closed/destroyed state.
+	if (_state == kStateDestroyed) {
+		setUsable(false);
+		if (_model)
+			_model->playAnimation("dead");
+	} else if (isOpen()) {
 		setUsable(false);
 		if (_model)
 			_model->playAnimation("opened1");

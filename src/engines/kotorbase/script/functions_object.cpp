@@ -1368,9 +1368,8 @@ void Functions::getLockRequiredSkill(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::clearAllEffects(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
-	if (!creature)
-		creature = ObjectContainer::toCreature(ctx.getCaller());
+	// ClearAllEffects() — no parameters; operates on OBJECT_SELF.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
 	if (creature)
 		creature->clearActiveEffects();
 }
@@ -1426,9 +1425,12 @@ void Functions::getFirstEffect(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getNextEffect(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
 	ctx.getReturn() = static_cast<Aurora::NWScript::EngineType *>(nullptr);
-	if (!_effectIterCreature)
+
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature)
+		creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (!_effectIterCreature || creature != _effectIterCreature)
 		return;
 
 	++_effectIterIndex;

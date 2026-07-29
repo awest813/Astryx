@@ -559,7 +559,9 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *targetCreature = ObjectContainer::toCreature(target);
 	if (targetCreature) {
 		float durationOverride = -1.0f;
-		if (durationType == 1) // DURATION_TYPE_TEMPORARY
+		if (durationType == 0) // DURATION_TYPE_INSTANT
+			durationOverride = 0.0f;
+		else if (durationType == 1) // DURATION_TYPE_TEMPORARY
 			durationOverride = duration > 0.0f ? duration : 6.0f;
 		else if (durationType == 2) // DURATION_TYPE_PERMANENT
 			durationOverride = 1.0e9f;

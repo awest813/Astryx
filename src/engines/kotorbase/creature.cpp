@@ -1166,6 +1166,17 @@ namespace KotORBase {
 		float durationOverride) {
 			auto timed = [&](EffectType type, float defaultDuration, int value = 0) {
 				const float duration = durationOverride >= 0.0f ? durationOverride : defaultDuration;
+				if (duration <= 0.0f) {
+					// DURATION_TYPE_INSTANT: apply mechanical impact, do not linger.
+					ActiveEffect e;
+					e.type = type;
+					e.duration = 0.0f;
+					e.value = value;
+					e.spellId = effect.getSpellId();
+					applyEffect(e);
+					removeEffect(e);
+					return;
+				}
 				applyEffect(type, duration, value, effect.getSpellId());
 			};
 

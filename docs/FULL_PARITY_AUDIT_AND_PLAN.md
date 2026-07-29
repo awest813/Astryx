@@ -115,16 +115,16 @@ fail plot gates silently when semantics diverge from the original.
 
 Ordered by severity for an Endar → Star Forge run:
 
-1. **No verified contiguous play path** past early modules (manual smoke unchecked).
-2. **247 stubbed natives with silent wrong defaults** → quiet softlocks.
-3. **SWMG / turret / swoop incomplete** → Hawk travel combat sequences fail or fake-complete.
-4. **Effect / immunity / Force context stubs** → boss and Jedi content incorrect.
-5. **Surrender / last-killer / damage-dealt stubs** → common quest resolution patterns break.
-6. **Combat AI + flanking overclaimed** → tactical/scripted fights diverge from original.
-7. **Force resolution still partly hardcoded** vs full `spells.2da` behavior.
-8. **Save/load not campaign-proven** across modules, party, and world locals.
-9. **Galaxy map / late destinations incomplete** (no Star Forge / Unknown World / Leviathan entries).
-10. **`AddMultiClass` / class-transition foundation weak** → Jedi Enclave / prestige-adjacent paths risky.
+1. **No verified contiguous play path** past early modules (manual smoke unchecked; needs game data).
+2. **Thin / simplified natives** (K1 is 785/785 wired, 0 stubs) — audio, formation, late Force, and some SWMG handlers can still softlock if semantics diverge.
+3. **SWMG / turret / swoop live fidelity** — named object getters exist; physics/scoring/encounter scripts unproven live.
+4. **Force still partly hardcoded** when `spells.2da` impact scripts are missing; C++ fallbacks remain.
+5. **Save/load not campaign-proven** across modules, party, world locals, and creature area persistence.
+6. **Combat AI / LOS limited** — flanking + closed-door LOS exist; no full cover geometry or advanced AI.
+7. **Effect list / resistance depth** — iterators/clear exist for ActiveEffect list; Force resistance / immunities are not fully duration-tracked.
+8. **Level-up GUI fidelity** vs original feat/Force tables still needs an audit pass.
+9. **KotOR II** still has hundreds of generic stubs (out of K1 primary scope).
+10. **Late-game modules** (Leviathan / Unknown World / Star Forge) loadable via galaxy map flags but not live-smoke verified.
 
 ---
 
