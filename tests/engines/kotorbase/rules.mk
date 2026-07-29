@@ -127,3 +127,8 @@ check_PROGRAMS                                                 += tests/engines/
 tests_engines_kotorbase_test_flanking_SOURCES                  = tests/engines/kotorbase/flanking.cpp
 tests_engines_kotorbase_test_flanking_LDADD                    = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_flanking_CXXFLAGS                 = $(test_CXXFLAGS)
+
+check_PROGRAMS                                                 += tests/engines/kotorbase/test_lineofsight
+tests_engines_kotorbase_test_lineofsight_SOURCES               = tests/engines/kotorbase/lineofsight.cpp
+tests_engines_kotorbase_test_lineofsight_LDADD                 = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_lineofsight_CXXFLAGS              = $(test_CXXFLAGS)

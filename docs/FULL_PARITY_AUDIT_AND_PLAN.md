@@ -15,18 +15,18 @@ verified Endar Spire → Star Forge playthrough.
 **Astryx is not at full campaign parity.** Early systems engineering is substantial
 (chargen, d20 combat core, party/globals, dialog/journal, partial save, Dantooine-
 oriented cinematics, Pazaak shell). Mid/late campaign content is largely unproven.
-About **31% of KotOR I NWScript bindings are stubs** that return safe defaults and
-can fail plot gates silently.
+KotOR I NWScript is **100% wired** (785/785 named handlers, 0 generic/SWMG stubs);
+many handlers remain thin vs original semantics and can still softlock plot gates.
 
 | Claim (README / ROADMAP) | Reality |
 |--------------------------|---------|
 | “100% NWScript Coverage” | **100% registered** and **0 `stubFunction` / 0 `stubSWMGFunction` on KotOR I** (785/785 named handlers). Many handlers are still thin/simplified vs original; KotOR II still has stubs. |
-| Core systems all ✅ (flanking, LOS, full combat AI, stores, minigames) | Mixed / partial. `Creature::isFlankedBy` always returns `false`. Cover/LOS not found. AI often queues nearest-target attack only |
+| Core systems all ✅ (flanking, LOS, full combat AI, stores, minigames) | Partial. Flanking + closed-door LOS exist; Force uses spells.2da impact fallback; AI Force-casts when FP allows. Stores/minigames/live progression still incomplete |
 | “Capable of full experience prologue → Star Forge” | **Aspirational** — Milestone 7 goal, not demonstrated |
 | Milestone 6 complete / M7 active | Plausible as engineering intent; **manual smoke for Endar Spire → Dantooine is entirely unchecked** |
 | Supported-slice docs (Endar + Taris entry) | Still the **correct conservative** product stance |
 
-**One-liner:** Early-to-mid KotOR *systems* are real; full-campaign *playability* is not verified, and stub density will softlock mid/late quests unless replaced with behavioral implementations.
+**One-liner:** Early-to-mid KotOR *systems* are real; full-campaign *playability* is not verified; deepen thin natives and prove live smoke before claiming parity.
 
 ---
 
@@ -51,36 +51,30 @@ Source: `src/engines/kotor/script/function_tables.h`
 | Metric | Count |
 |--------|------:|
 | Total bindings | **785** |
-| Named real handlers | **538** |
-| `stubFunction` | **169** |
+| Named real handlers | **785** |
+| `stubFunction` | **0** (KotOR I) |
 | `stubSWMGFunction` | **0** (KotOR I); remaining on KotOR II only |
-| Incomplete total | **247 (31.5%)** |
+| Thin / simplified handlers | Many (SWMG depth, audio, formation, late Force) |
 
-Stub runtime (`src/engines/kotorbase/script/functions_stub.cpp`) logs at debug level and
-returns typed defaults (0 / empty / pass-through Effect). Scripts **continue**, so
-failures often look like softlocks, not crashes.
+KotOR II still routes many natives through generic stubs. Thin K1 handlers can still
+fail plot gates silently when semantics diverge from the original.
 
-**Stub density by domain (approx.):**
+**Thin-handler risk by domain (approx.; formerly stubbed, now named but simplified):**
 
-| Domain | Stubs | Campaign impact |
+| Domain | Risk | Campaign impact |
 |--------|------:|-----------------|
-| SWMG / minigame | 0 K1 stubs | K1 wired; deepen simulation + live smoke |
-| Effects (immunity, regen, sleep, AoE, temp FP, …) | ~35 | Boss fights, Force powers, scripted CC |
-| Other (AoE iterators, AI level, encounters, …) | ~64 | Broad quest/AI breakage |
-| Faction aggregates + surrender-by-faction | 14 | Gang wars, mass AI behavior |
-| Spell cast context (`GetSpellId`, DC, target, …) | 9 | Impact scripts / Force resolution |
-| Audio object fine control | 9 | Atmosphere / VO hooks |
-| Economy / item events | 9 | Activated items, cost modifiers |
-| Listening patterns | 7 | Bark / ambient NPC reactions |
-| Combat queries (last killer, damage dealt, …) | 5 | OnDeath rewards, quest triggers |
-| Surrender / formation | 4 | Scripted stand-downs |
-| Dialog one-liners / conversation events | 4 | Cutscene barks |
-| Party (`AddToParty` / `RemoveFromParty`) | 3 | Distinct from implemented `AddPartyMember` |
-| Force / multiclass | 3 | Jedi class transition risk |
-| Day/night | 2 | Time-gated content |
-| RevealMap | 1 | Exploration scripts |
+| SWMG / minigame | Live depth | K1 wired; deepen simulation + live smoke |
+| Effects (immunity, regen, sleep, AoE, temp FP, …) | Medium | Boss fights, Force powers, scripted CC |
+| AoE iterators / AI level / encounters | Medium | Broad quest/AI breakage |
+| Faction aggregates + surrender-by-faction | Medium | Gang wars, mass AI behavior |
+| Spell cast context (`GetSpellId`, DC, target, …) | Medium | Impact scripts / Force resolution |
+| Audio object fine control | Low–med | Atmosphere / VO hooks |
+| Economy / item events | Medium | Activated items, cost modifiers |
+| Listening patterns | Medium | Bark / ambient NPC reactions |
+| Combat queries (last killer, damage dealt, …) | Medium | OnDeath rewards, quest triggers |
+| Formation / dialog one-liners | Low–med | Cutscene barks / stand-downs |
 
-**KotOR II note (out of primary scope):** 886 bindings; **439 + 103 stubs** (~61% incomplete). Do not chase K2 until K1 campaign is verified.
+**KotOR II note (out of primary scope):** Still has hundreds of generic stubs. Do not chase K2 until K1 campaign is verified.
 
 ### 2.3 Subsystem matrix
 
@@ -88,13 +82,13 @@ failures often look like softlocks, not crashes.
 |-----------|--------|----------------|
 | Character creation | **Implemented** | `src/engines/kotor/gui/chargen/` |
 | Level-up GUI | **Partial → mostly present** | `levelup*.cpp` + `Game::showLevelUpGUI`; docs still list as M7 open — needs fidelity audit vs original |
-| Combat (d20 / saves / some feats) | **Partial** | Attack rolls, saves, deflection hooks exist; flanking stubbed false; Force effects still partly hardcoded |
-| Combat AI | **Partial** | Nearest-target attack archetypes; `SetAILevel` stubbed |
-| Party / companions | **Partial** | `AddPartyMember` path wired; `AddToParty`/`RemoveFromParty` stubbed |
-| Dialogue / journal | **Partial** | DLG + journal APIs; listening API stubbed; some speak/anim paths thin |
+| Combat (d20 / saves / some feats) | **Partial** | Attack rolls, saves, deflection; flanking + closed-door LOS; Force partly hardcoded + spells.2da impact fallback |
+| Combat AI | **Partial** | Nearest-target attack; Force cast when FP ≥ 10; `SetAILevel` thin |
+| Party / companions | **Partial** | `AddPartyMember` path wired; party add/remove named but needs live verification |
+| Dialogue / journal | **Partial** | DLG + journal APIs; listening named; some speak/anim paths thin |
 | Cutscenes / camera | **Partial** | CutsceneAttack/Move, smoothstep camera; many locks are no-ops |
-| Inventory / equipment / stores | **Partial** | Early-game looting/equip; `OpenStore` + Store GUI exist; `ChangeItemCost` stubbed |
-| Save / load | **Partial** | `Module::saveGame` / load path + unit round-trips; full world fidelity unverified |
+| Inventory / equipment / stores | **Partial** | Early-game looting/equip; `OpenStore` + Store GUI exist; cost modifiers thin |
+| Save / load | **Partial** | Module save/load + unit round-trips (incl. journal/planet flags); GFF 16-char labels fixed; full world fidelity unverified |
 | Pazaak | **Partial** | Engine + GUI shell; needs live merchant/quest verification |
 | Swoop | **Partial** | Expanded `SwoopMinigame` state; K1 SWMG natives wired (simulation-backed / thin) |
 | Turret / SWMG space | **Partial** | Encounter orchestration + movie; K1 SWMG API wired, live fidelity unproven |
@@ -210,9 +204,10 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 **Goal:** Match original d20 + Force behavior enough that scripted and open combat remain fair and progressive.
 
 - [x] Implement real flanking (area context; opposite-side attackers) — replace `isFlankedBy` false stub — **2026-07-29**
-- [ ] Add cover / LOS checks where combat and Force targeting depend on them.
+- [x] Add cover / LOS checks where combat and Force targeting depend on them — **2026-07-29** (closed doors block ranged + hostile Force)
 - [x] Expand Force-user AI beyond nearest-target melee (cast known powers when FP available) — **2026-07-29**
-- [ ] Finish data-driven Force resolution: drive effects from `spells.2da` / impact scripts; remove remaining hardcoded switches where possible.
+- [x] Unknown powers fall through to `spells.2da` impact scripts — **2026-07-29**
+- [ ] Finish remaining hardcoded Force switches → full data-driven resolution
 - [x] `AddMultiClass` increments class levels (Dantooine Jedi transition path) — **2026-07-29**
 - [ ] Wire remaining combat natives as needed by live encounters.
 
@@ -225,9 +220,11 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 **Goal:** Campaign-safe save/load and trustworthy level-up.
 
 - [ ] Audit GFF/ERF save contents vs original SAVEGAME expectations (PC, party, inventory, equipment, globals, locals, journal, explored map, module/area).
+- [x] Persist galaxy-map planet availability / selectability / selected planet in module save state — **2026-07-29**
+- [x] GFF3 label round-trip: truncate/lookup at 16 chars so journal & return-dest fields load — **2026-07-29**
 - [ ] Round-trip tests: save in module A → load → transition → save in module B.
 - [ ] Level-up GUI fidelity pass: attributes, skills, feats, Force powers vs `feat.2da` / class tables; keep autolevel as debug fallback only.
-- [ ] Implement `AddMultiClass` / Jedi class transition path used on Dantooine.
+- [x] Implement `AddMultiClass` / Jedi class transition path used on Dantooine — **2026-07-29**
 
 **Exit:** Save/load and level-up used successfully across at least Endar → Taris → Dantooine without state loss.
 
@@ -332,7 +329,8 @@ Only after Phase 7 exit:
 | Stub runtime | `src/engines/kotorbase/script/functions_stub.cpp` |
 | Stub verifier | `scripts/verify_kotor_nwscript_stubs.py` |
 | Galaxy map planets | `src/engines/kotor/gui/ingame/galaxymap.cpp` |
-| Flanking stub | `src/engines/kotorbase/creature.cpp` (`isFlankedBy`) |
+| Flanking / LOS | `src/engines/kotorbase/creature.cpp`, `area.cpp`, `actionexecutor.cpp` |
+| GFF3 labels (16-char) | `src/aurora/gff3writer.cpp`, `src/aurora/gff3file.cpp` |
 | Save write/load | `src/engines/kotorbase/module.cpp` |
 | Level-up GUI | `src/engines/kotor/gui/ingame/levelup*.cpp` |
 | Milestone claims | `MILESTONE.md`, `README.md`, `ROADMAP.md` |

@@ -2605,6 +2605,21 @@ void Module::saveState(Aurora::GFF3WriterStruct &gff) const {
 	}
 
 	gff.addExoString("ReturnDestinationModule", _returnDestinationModule);
+	gff.addSint32("SelectedPlanet", _selectedPlanet);
+
+	Aurora::GFF3WriterListPtr planetAvailList = gff.addList("PlanetAvailable");
+	for (const auto &entry : _planetAvailable) {
+		Aurora::GFF3WriterStructPtr item = planetAvailList->addStruct();
+		item->addSint32("Planet", entry.first);
+		item->addByte("Available", entry.second ? 1 : 0);
+	}
+
+	Aurora::GFF3WriterListPtr planetSelectList = gff.addList("PlanetSelectable");
+	for (const auto &entry : _planetSelectable) {
+		Aurora::GFF3WriterStructPtr item = planetSelectList->addStruct();
+		item->addSint32("Planet", entry.first);
+		item->addByte("Selectable", entry.second ? 1 : 0);
+	}
 
 	Aurora::GFF3WriterListPtr mapList = gff.addList("ExploredMaps");
 	for (const auto &entry : _exploredMaps) {
@@ -2692,6 +2707,27 @@ void Module::loadState(const Aurora::GFF3Struct &gff) {
 
 	if (gff.hasField("ReturnDestinationModule"))
 		_returnDestinationModule = gff.getString("ReturnDestinationModule");
+
+	if (gff.hasField("SelectedPlanet"))
+		_selectedPlanet = gff.getSint("SelectedPlanet");
+
+	_planetAvailable.clear();
+	if (gff.hasField("PlanetAvailable")) {
+		for (const auto &entry : gff.getList("PlanetAvailable")) {
+			if (!entry)
+				continue;
+			_planetAvailable[entry->getSint("Planet")] = entry->getUint("Available") != 0;
+		}
+	}
+
+	_planetSelectable.clear();
+	if (gff.hasField("PlanetSelectable")) {
+		for (const auto &entry : gff.getList("PlanetSelectable")) {
+			if (!entry)
+				continue;
+			_planetSelectable[entry->getSint("Planet")] = entry->getUint("Selectable") != 0;
+		}
+	}
 
 	_exploredMaps.clear();
 	if (gff.hasField("ExploredMaps")) {

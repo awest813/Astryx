@@ -209,6 +209,13 @@ public:
 
 	Creature *findNearestEnemy(Creature *origin);
 
+	/** True if no closed door blocks the XY segment between the two points. */
+	bool hasLineOfSight(float x0, float y0, float x1, float y1) const;
+	bool hasLineOfSight(const Object *from, const Object *to) const;
+	/** Geometry helper: does segment (x0,y0)-(x1,y1) intersect circle (cx,cy,r)? */
+	static bool segmentIntersectsCircle(float x0, float y0, float x1, float y1,
+	                                    float cx, float cy, float radius);
+
 	struct Camera {
 		uint32_t id;
 		float position[3];

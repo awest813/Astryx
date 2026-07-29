@@ -1321,6 +1321,14 @@ namespace KotORBase {
 				debugC(Common::kDebugEngineLogic, 1, "Attacker %s gains flanking bonus vs %s", getName().c_str(), target->getName().c_str());
 			}
 
+			// Ranged attacks require clear line of sight past closed doors.
+			if (ranged && area && !area->hasLineOfSight(this, target)) {
+				debugC(Common::kDebugEngineLogic, 1, "Object \"%s\" ranged attack blocked by cover vs \"%s\"",
+				       _tag.c_str(), target->getTag().c_str());
+				recordAttackResult(kAttackResultMiss, weaponUsed);
+				return;
+			}
+
 			// Feat modifiers: attack/damage bonuses from active combat feats.
 			int featAttackMod = flankingMod;
 			int featDamageMod = damageMod;

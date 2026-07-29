@@ -414,10 +414,20 @@ GFF3Struct::FieldType GFF3Struct::getFieldType(const Common::UString &field) con
 
 const GFF3Struct::Field *GFF3Struct::getField(const Common::UString &name) const {
 	FieldMap::const_iterator field = _fields.find(name);
-	if (field == _fields.end())
-		return 0;
+	if (field != _fields.end())
+		return &field->second;
 
-	return &field->second;
+	// Labels are fixed 16-byte ASCII fields on disk. Callers often use the
+	// full logical name; fall back to the truncated on-disk form.
+	if (name.size() > 16) {
+		Common::UString truncated = name;
+		truncated.truncate(16);
+		field = _fields.find(truncated);
+		if (field != _fields.end())
+			return &field->second;
+	}
+
+	return 0;
 }
 
 char GFF3Struct::getChar(const Common::UString &field, char def) const {

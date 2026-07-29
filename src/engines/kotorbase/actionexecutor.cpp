@@ -43,6 +43,8 @@
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/inventory.h"
+#include "src/engines/kotorbase/objectcontainer.h"
+#include "src/engines/kotorbase/script/container.h"
 #include "src/engines/kotorbase/animationnames.h"
 
 static const float kWalkDistance = 2.0f;
@@ -410,6 +412,21 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 	bool harmful = spell ? spell->hostile : false;
 	ctx.area->_module->setSpellScriptContext(action.actionID, action.object, saveDC, harmful);
 
+	// Hostile targeted powers need line of sight past closed doors.
+	if (harmful && action.object && ctx.area && !ctx.area->hasLineOfSight(caster, action.object)) {
+		debugC(Common::kDebugEngineLogic, 1, "Force power %d blocked by cover", action.actionID);
+		caster->popAction();
+		return;
+	}
+
+	auto runImpactScript = [&]() {
+		if (!spell || spell->impactScript.empty())
+			return;
+		Object *owner = caster;
+		Object *triggerer = action.object ? action.object : caster;
+		ScriptContainer::runScript(spell->impactScript, owner, triggerer);
+	};
+
 	// Apply power effects
 	switch (action.actionID) {
 		case 1: // Force Heal (Party heal)
@@ -518,7 +535,13 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 			break;
 
 		default:
-			warning("ActionExecutor::executeCastSpell(): Unknown power ID %d", action.actionID);
+			// Prefer data-driven impact scripts from spells.2da when available.
+			if (spell && !spell->impactScript.empty()) {
+				caster->playAnimation(harmful ? "castout" : "castself", false);
+				runImpactScript();
+			} else {
+				warning("ActionExecutor::executeCastSpell(): Unknown power ID %d", action.actionID);
+			}
 			break;
 	}
 
