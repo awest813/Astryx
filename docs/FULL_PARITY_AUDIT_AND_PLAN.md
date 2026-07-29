@@ -243,9 +243,8 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 | Minigame | Work |
 |----------|------|
 | **Pazaak** | Verify `PlayPazaak` / result globals against Taris (and later) quest scripts; fix GUI/rules gaps |
-| **Swoop** | Expand simulation fidelity; obstacle/finish events must set plot globals correctly under live modules |
+| **Swoop** | Obstacle/enemy object resolution wired; deepen physics/scoring vs Taris scripts + live modules |
 | **Turret / Hawk combat** | SWMG named object getters + last-hit tracking wired; exercise vs encounter scripts + live coverage |
-| **Swoop racing** | Obstacle/enemy object resolution wired; deepen physics/scoring vs Taris scripts |
 
 Track SWMG stub burn-down (**done for KotOR I tables**). Remaining work is fidelity + KotOR II stubs + live coverage.
 
