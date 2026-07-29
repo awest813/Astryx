@@ -6,7 +6,7 @@ with shared KotOR II engine foundations.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Milestone%207%20In%20Progress-yellow?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/NWScript-~79%25%20behavioral-blue?style=for-the-badge" alt="Coverage">
+  <img src="https://img.shields.io/badge/NWScript-100%25%20wired%20(K1)-blue?style=for-the-badge" alt="Coverage">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-orange?style=for-the-badge" alt="Platforms">
 </p>
 
@@ -18,14 +18,13 @@ at verified full-campaign parity.
 
 | Metric (KotOR I) | Value |
 |------------------|------:|
-| NWScript bindings | ~785 |
-| Behavioral handlers | ~621 |
-| Generic stubs | ~86 |
-| SWMG stubs | ~78 |
+| NWScript bindings | 785 |
+| Behavioral handlers | 785 (0 `stubFunction` / 0 `stubSWMGFunction`) |
+| Thin / simplified semantics | Many (esp. late SWMG, audio, formation) |
 
-“100% NWScript coverage” in older docs meant **every slot is registered** (no
-null pointers), not that every native has full original behavior. Stubs return
-safe defaults and can softlock quests silently.
+“100% wired” means every KotOR I native points at a named handler (no silent
+generic/SWMG stubs). It does **not** mean full original fidelity or a verified
+Endar→Star Forge playthrough. Live smoke still needs game data.
 
 **Working plan:** [docs/FULL_PARITY_AUDIT_AND_PLAN.md](docs/FULL_PARITY_AUDIT_AND_PLAN.md)
 
@@ -36,15 +35,16 @@ safe defaults and can softlock quests silently.
 
 - **M1–M4 systems:** Implemented with unit coverage; live smoke checklists still open
 - **M6 systems:** Force/spells.2da / cinematic polish present; not end-to-end proven
-- **M7 (active):** Planetary hubs → Star Forge; de-stub campaign blockers; save/load fidelity; minigames
+- **M7 (active):** Planetary hubs → Star Forge; deepen thin natives; save/load fidelity; minigames
 
 ### In progress (M7)
 
 - [x] Phase 2 P0 combat/quest/spell/immunity natives
 - [x] Phase 2 P1 effects / AoE iterators / party / day-night / RevealMap
 - [x] Phase 2 P2 faction aggregates / listening API
+- [x] Phase 2 P3 remaining generic stubs + SWMG table burn-down (K1)
 - [ ] Verified Endar Spire → Dantooine live smoke
-- [ ] SWMG / swoop / turret progression fidelity
+- [ ] SWMG / swoop / turret live progression fidelity
 - [ ] GFF save/load campaign round-trips
 - [ ] Unknown World & Star Forge
 

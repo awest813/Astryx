@@ -20,7 +20,7 @@ can fail plot gates silently.
 
 | Claim (README / ROADMAP) | Reality |
 |--------------------------|---------|
-| “100% NWScript Coverage” | **100% registered** (no null pointers). Behavior: **538/785 real**, **169 `stubFunction`**, **78 `stubSWMGFunction`** ≈ **31.5% incomplete** |
+| “100% NWScript Coverage” | **100% registered** and **0 `stubFunction` / 0 `stubSWMGFunction` on KotOR I** (785/785 named handlers). Many handlers are still thin/simplified vs original; KotOR II still has stubs. |
 | Core systems all ✅ (flanking, LOS, full combat AI, stores, minigames) | Mixed / partial. `Creature::isFlankedBy` always returns `false`. Cover/LOS not found. AI often queues nearest-target attack only |
 | “Capable of full experience prologue → Star Forge” | **Aspirational** — Milestone 7 goal, not demonstrated |
 | Milestone 6 complete / M7 active | Plausible as engineering intent; **manual smoke for Endar Spire → Dantooine is entirely unchecked** |
@@ -53,7 +53,7 @@ Source: `src/engines/kotor/script/function_tables.h`
 | Total bindings | **785** |
 | Named real handlers | **538** |
 | `stubFunction` | **169** |
-| `stubSWMGFunction` | **78** |
+| `stubSWMGFunction` | **0** (KotOR I); remaining on KotOR II only |
 | Incomplete total | **247 (31.5%)** |
 
 Stub runtime (`src/engines/kotorbase/script/functions_stub.cpp`) logs at debug level and
@@ -64,7 +64,7 @@ failures often look like softlocks, not crashes.
 
 | Domain | Stubs | Campaign impact |
 |--------|------:|-----------------|
-| SWMG / minigame | 78 | Blocks Hawk turret + swoop fidelity |
+| SWMG / minigame | 0 K1 stubs | K1 wired; deepen simulation + live smoke |
 | Effects (immunity, regen, sleep, AoE, temp FP, …) | ~35 | Boss fights, Force powers, scripted CC |
 | Other (AoE iterators, AI level, encounters, …) | ~64 | Broad quest/AI breakage |
 | Faction aggregates + surrender-by-faction | 14 | Gang wars, mass AI behavior |
@@ -96,8 +96,8 @@ failures often look like softlocks, not crashes.
 | Inventory / equipment / stores | **Partial** | Early-game looting/equip; `OpenStore` + Store GUI exist; `ChangeItemCost` stubbed |
 | Save / load | **Partial** | `Module::saveGame` / load path + unit round-trips; full world fidelity unverified |
 | Pazaak | **Partial** | Engine + GUI shell; needs live merchant/quest verification |
-| Swoop | **Partial** | Lightweight `SwoopMinigame` state; most SWMG natives stubbed |
-| Turret / SWMG space | **Stub-heavy** | Encounter orchestration + movie; ~80% SWMG API stubbed |
+| Swoop | **Partial** | Expanded `SwoopMinigame` state; K1 SWMG natives wired (simulation-backed / thin) |
+| Turret / SWMG space | **Partial** | Encounter orchestration + movie; K1 SWMG API wired, live fidelity unproven |
 | Galaxy map / travel | **Partial** | Five planets only (`tat`, `kas`, `man`, `kor`, `dan`) — **no Unknown World / Star Forge / Leviathan destinations** in `galaxymap.cpp` |
 | Alignment / reputation / plot flags | **Partial** | Core APIs for M2–M4; faction aggregates stubbed |
 | Audio / video | **Partial** | Movie queue + SoundMan; many sound-object natives stubbed |
@@ -197,7 +197,7 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 | **P1** | `RevealMap`, `SetAILevel`, `ApplyEffectAtLocation` | Exploration / AI / AoE apply — **wired 2026-07-29** |
 | **P2** | Faction aggregate queries, listening API | Quality + secondary quests — **wired 2026-07-29** |
 | **P2** | `GetModuleFileName`, `GetReflexAdjustedDamage`, `GetIsPlayableRacialType`, `GetTargetLocation` | Misc campaign helpers — **wired 2026-07-29** |
-| **P3** | Remaining audio/item/event stubs, SWMG burn-down | Fidelity / minigames |
+| **P3** | Remaining audio/item/event stubs, SWMG burn-down | Fidelity / minigames — **wired 2026-07-29** (K1: 0 generic / 0 SWMG stubs; many thin) |
 
 **Method:** For each band, (1) grep game `.ncs`/decompiled usage where available, (2) implement minimal correct semantics, (3) add focused unit tests, (4) re-smoke Phase 1 path.
 
@@ -239,10 +239,10 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 | Minigame | Work |
 |----------|------|
 | **Pazaak** | Verify `PlayPazaak` / result globals against Taris (and later) quest scripts; fix GUI/rules gaps |
-| **Swoop** | Flesh `SwoopMinigame` + SWMG natives needed for race modules; obstacle/finish events must set plot globals correctly |
-| **Turret / Hawk combat** | Replace movie-only orchestration with SWMG bullet/follower/HP natives required by encounter scripts |
+| **Swoop** | Expand simulation fidelity; obstacle/finish events must set plot globals correctly under live modules |
+| **Turret / Hawk combat** | Exercise SWMG bullet/follower/HP natives against encounter scripts; fix gaps found in coverage logs |
 
-Track SWMG stub burn-down (78 → near 0 for used natives). Unused SWMG entries may remain stubs if coverage logs prove they are never called.
+Track SWMG stub burn-down (**done for KotOR I tables**). Remaining work is fidelity + KotOR II stubs + live coverage.
 
 **Exit:** Taris swoop + at least one Hawk turret sequence completable without cheat skips.
 
