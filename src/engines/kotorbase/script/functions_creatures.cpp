@@ -1351,10 +1351,19 @@ void Functions::aurPostString(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::getLastItemEquipped(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 void Functions::getSubScreenID(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
-void Functions::getCasterLevel(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 1; }
+void Functions::getCasterLevel(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *caster = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caster)
+		caster = ObjectContainer::toCreature(_game->getModule().getSpellScriptCaster());
+	ctx.getReturn() = caster ? caster->getHitDice() : 0;
+}
 void Functions::resistForce(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
-void Functions::getLastSpellCaster(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
-void Functions::getLastSpell(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
+void Functions::getLastSpellCaster(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getSpellScriptCaster());
+}
+void Functions::getLastSpell(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getSpellScriptId();
+}
 void Functions::effectConfused(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectStunned, 0); }
 void Functions::effectFrightened(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectStunned, 0); }
 void Functions::effectChoke(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectStunned, 0); }

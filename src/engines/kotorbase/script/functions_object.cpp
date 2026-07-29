@@ -445,8 +445,7 @@ void Functions::getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getSpellTargetObject(Aurora::NWScript::FunctionContext &ctx) {
-	// Spell targeting context is not yet tracked globally.
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getSpellScriptTarget());
 }
 
 void Functions::getTag(Aurora::NWScript::FunctionContext &ctx) {

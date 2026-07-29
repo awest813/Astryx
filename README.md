@@ -48,6 +48,8 @@ Endar→Star Forge playthrough. Live smoke still needs game data.
 - [x] Galaxy map Unknown World / Star Forge destinations
 - [x] Galaxy map planet flags in save/load
 - [x] GFF3 16-char label truncation round-trip (journal / return dest)
+- [x] Force impact-script-first + spell target/caster/level context natives
+- [x] CreatureInfo force-power assignment + XP persistence
 - [ ] Verified Endar Spire → Dantooine live smoke
 - [ ] SWMG / swoop / turret live progression fidelity
 - [ ] Full GFF save/load campaign round-trips

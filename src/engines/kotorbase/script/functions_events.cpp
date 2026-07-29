@@ -57,7 +57,9 @@ void Functions::signalEvent(Aurora::NWScript::FunctionContext &ctx) {
 		case kEventSpellCastAt:
 			if (!object)
 				return;
-			_game->getModule().setSpellScriptContext(e->getSpellId(), object, 12, e->getSpellHarmful());
+			_game->getModule().setSpellScriptContext(e->getSpellId(),
+			                                        ObjectContainer::toObject(ctx.getCaller()),
+			                                        object, 12, e->getSpellHarmful());
 			object->runScript(kScriptSpellCastAt, object, ctx.getCaller());
 			break;
 		default:

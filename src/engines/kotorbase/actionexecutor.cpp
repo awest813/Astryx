@@ -410,7 +410,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 
 	int saveDC = 10 + caster->getHitDice() + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 	bool harmful = spell ? spell->hostile : false;
-	ctx.area->_module->setSpellScriptContext(action.actionID, action.object, saveDC, harmful);
+	ctx.area->_module->setSpellScriptContext(action.actionID, caster, action.object, saveDC, harmful);
 
 	// Hostile targeted powers need line of sight past closed doors.
 	if (harmful && action.object && ctx.area && !ctx.area->hasLineOfSight(caster, action.object)) {
@@ -419,13 +419,16 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 		return;
 	}
 
-	auto runImpactScript = [&]() {
-		if (!spell || spell->impactScript.empty())
-			return;
+	// Prefer data-driven impact scripts from spells.2da when available.
+	// Hardcoded cases below are fallbacks when retail scripts are missing.
+	if (spell && !spell->impactScript.empty()) {
+		caster->playAnimation(harmful ? "castout" : "castself", false);
 		Object *owner = caster;
 		Object *triggerer = action.object ? action.object : caster;
 		ScriptContainer::runScript(spell->impactScript, owner, triggerer);
-	};
+		caster->popAction();
+		return;
+	}
 
 	// Apply power effects
 	switch (action.actionID) {
@@ -535,13 +538,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 			break;
 
 		default:
-			// Prefer data-driven impact scripts from spells.2da when available.
-			if (spell && !spell->impactScript.empty()) {
-				caster->playAnimation(harmful ? "castout" : "castself", false);
-				runImpactScript();
-			} else {
-				warning("ActionExecutor::executeCastSpell(): Unknown power ID %d", action.actionID);
-			}
+			warning("ActionExecutor::executeCastSpell(): Unknown power ID %d", action.actionID);
 			break;
 	}
 

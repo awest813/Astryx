@@ -207,7 +207,9 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 - [x] Add cover / LOS checks where combat and Force targeting depend on them — **2026-07-29** (closed doors block ranged + hostile Force)
 - [x] Expand Force-user AI beyond nearest-target melee (cast known powers when FP available) — **2026-07-29**
 - [x] Unknown powers fall through to `spells.2da` impact scripts — **2026-07-29**
-- [ ] Finish remaining hardcoded Force switches → full data-driven resolution
+- [x] Prefer `spells.2da` impact scripts over hardcoded C++ when present — **2026-07-29**
+- [x] `GetSpellTargetObject` / `GetLastSpellCaster` / `GetLastSpell` / `GetCasterLevel` use cast context — **2026-07-29**
+- [ ] Finish remaining hardcoded Force switches → full data-driven only (retire C++ fallbacks)
 - [x] `AddMultiClass` increments class levels (Dantooine Jedi transition path) — **2026-07-29**
 - [ ] Wire remaining combat natives as needed by live encounters.
 
@@ -222,6 +224,7 @@ Work in priority bands (implement + unit test + wire kotor *and* kotor2 tables w
 - [ ] Audit GFF/ERF save contents vs original SAVEGAME expectations (PC, party, inventory, equipment, globals, locals, journal, explored map, module/area).
 - [x] Persist galaxy-map planet availability / selectability / selected planet in module save state — **2026-07-29**
 - [x] GFF3 label round-trip: truncate/lookup at 16 chars so journal & return-dest fields load — **2026-07-29**
+- [x] Persist Force power list across `CreatureInfo` assignment + XP in party/PC saves — **2026-07-29**
 - [ ] Round-trip tests: save in module A → load → transition → save in module B.
 - [ ] Level-up GUI fidelity pass: attributes, skills, feats, Force powers vs `feat.2da` / class tables; keep autolevel as debug fallback only.
 - [x] Implement `AddMultiClass` / Jedi class transition path used on Dantooine — **2026-07-29**

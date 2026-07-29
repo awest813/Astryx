@@ -111,6 +111,9 @@ GTEST_TEST(KotORSaveSerialization, creatureInfoRoundTrip) {
 	info.setAlignment(55);
 	info.setForcePoints(3);
 	info.setMaxForcePoints(5);
+	info.addForcePower(1);
+	info.addForcePower(5);
+	info.setExperience(1500);
 
 	Aurora::GFF3Writer writer(MKTAG('U', 'T', 'C', ' '));
 	info.save(*writer.getTopLevel());
@@ -130,6 +133,28 @@ GTEST_TEST(KotORSaveSerialization, creatureInfoRoundTrip) {
 	EXPECT_EQ(loaded.getAlignment(), 55);
 	EXPECT_EQ(loaded.getForcePoints(), 3U);
 	EXPECT_EQ(loaded.getMaxForcePoints(), 5U);
+	EXPECT_TRUE(loaded.hasForcePower(1));
+	EXPECT_TRUE(loaded.hasForcePower(5));
+	EXPECT_EQ(loaded.getExperience(), 1500);
+}
+
+GTEST_TEST(KotORSaveSerialization, creatureInfoAssignmentCopiesForcePowersAndXP) {
+	CreatureInfo source;
+	source.addForcePower(14);
+	source.addForcePower(15);
+	source.setExperience(4200);
+	source.setForcePoints(8);
+	source.setMaxForcePoints(12);
+
+	CreatureInfo dest;
+	dest = source;
+
+	EXPECT_TRUE(dest.hasForcePower(14));
+	EXPECT_TRUE(dest.hasForcePower(15));
+	EXPECT_EQ(dest.getForcePowers().size(), 2U);
+	EXPECT_EQ(dest.getExperience(), 4200);
+	EXPECT_EQ(dest.getForcePoints(), 8U);
+	EXPECT_EQ(dest.getMaxForcePoints(), 12U);
 }
 
 GTEST_TEST(KotORSaveSerialization, objectStateRoundTrip) {

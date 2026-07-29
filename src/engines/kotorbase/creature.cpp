@@ -520,6 +520,7 @@ namespace KotORBase {
 				setMaxForcePoints(info.getMaxForcePoints());
 				setForcePoints(info.getForcePoints());
 			}
+			setCurrentXP(info.getExperience());
 			reloadEquipment();
 			loadEquippedModel();
 		}
@@ -528,6 +529,7 @@ namespace KotORBase {
 			info.setHitPoints(_currentHitPoints, _maxHitPoints);
 			info.setForcePoints(getForcePoints());
 			info.setMaxForcePoints(getMaxForcePoints());
+			info.setExperience(getCurrentXP());
 			return info;
 		}
 		const Common::UString &Creature::getCursor()

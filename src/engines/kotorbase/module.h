@@ -460,9 +460,10 @@ protected:
 	void setLastAcquiredItem(Object *item);
 
 	/** Spell-script context for GetSpellId / GetSpellTarget / GetSpellSaveDC / etc. */
-	void setSpellScriptContext(int spellId, Object *target, int saveDC, bool harmful, Object *castItem = nullptr);
+	void setSpellScriptContext(int spellId, Object *caster, Object *target, int saveDC, bool harmful, Object *castItem = nullptr);
 	void clearSpellScriptContext();
 	int getSpellScriptId() const;
+	Object *getSpellScriptCaster() const;
 	Object *getSpellScriptTarget() const;
 	int getSpellScriptSaveDC() const;
 	bool getSpellScriptHarmful() const;
@@ -613,6 +614,7 @@ protected:
 	bool _inBattleMusic { false };  ///< Is the battle music track currently playing?
 	Object *_lastAcquiredItem { nullptr }; ///< Last item acquired via script events.
 	int _spellScriptId { -1 };
+	Object *_spellScriptCaster { nullptr };
 	Object *_spellScriptTarget { nullptr };
 	int _spellScriptSaveDC { 12 };
 	bool _spellScriptHarmful { false };

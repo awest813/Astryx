@@ -175,6 +175,10 @@ public:
 	bool hasHitPoints() const;
 	void setHitPoints(int current, int max);
 
+	// Experience (persisted in party/PC saves)
+	int getExperience() const;
+	void setExperience(int xp);
+
 private:
 	std::vector<ClassLevel> _levels;
 	Abilities _abilities;
@@ -190,6 +194,7 @@ private:
 	int      _currentHitPoints   { 0 };
 	int      _maxHitPoints       { 0 };
 	bool     _hasHitPoints       { false };
+	int      _experience         { 0 };
 
 	void saveAbilities(Aurora::GFF3WriterStruct &gff) const;
 	void loadAbilities(const Aurora::GFF3Struct &gff);

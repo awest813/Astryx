@@ -2446,8 +2446,9 @@ void Module::setLastAcquiredItem(Object *item) {
 	_lastAcquiredItem = item;
 }
 
-void Module::setSpellScriptContext(int spellId, Object *target, int saveDC, bool harmful, Object *castItem) {
+void Module::setSpellScriptContext(int spellId, Object *caster, Object *target, int saveDC, bool harmful, Object *castItem) {
 	_spellScriptId = spellId;
+	_spellScriptCaster = caster;
 	_spellScriptTarget = target;
 	_spellScriptSaveDC = saveDC > 0 ? saveDC : 12;
 	_spellScriptHarmful = harmful;
@@ -2456,6 +2457,7 @@ void Module::setSpellScriptContext(int spellId, Object *target, int saveDC, bool
 
 void Module::clearSpellScriptContext() {
 	_spellScriptId = -1;
+	_spellScriptCaster = nullptr;
 	_spellScriptTarget = nullptr;
 	_spellScriptSaveDC = 12;
 	_spellScriptHarmful = false;
@@ -2464,6 +2466,10 @@ void Module::clearSpellScriptContext() {
 
 int Module::getSpellScriptId() const {
 	return _spellScriptId;
+}
+
+Object *Module::getSpellScriptCaster() const {
+	return _spellScriptCaster;
 }
 
 Object *Module::getSpellScriptTarget() const {
