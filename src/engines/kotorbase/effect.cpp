@@ -28,10 +28,11 @@ namespace Engines {
 
 namespace KotORBase {
 
-Effect::Effect(KotOREffectType type, int amount, int damageType) :
+Effect::Effect(KotOREffectType type, int amount, int damageType, int spellId) :
 		_type(type),
 		_amount(amount),
-		_damageType(damageType) {
+		_damageType(damageType),
+		_spellId(spellId) {
 }
 
 KotOREffectType Effect::getType() const {
@@ -46,8 +47,16 @@ int Effect::getDamageType() const {
 	return _damageType;
 }
 
+int Effect::getSpellId() const {
+	return _spellId;
+}
+
+void Effect::setSpellId(int spellId) {
+	_spellId = spellId;
+}
+
 Aurora::NWScript::EngineType *Effect::clone() const {
-	return new Effect(_type, _amount, _damageType);
+	return new Effect(_type, _amount, _damageType, _spellId);
 }
 
 } // End of namespace KotORBase

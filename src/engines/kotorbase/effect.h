@@ -95,11 +95,13 @@ enum KotOREffectType {
 
 class Effect : public Aurora::NWScript::EngineType {
 public:
-	Effect(KotOREffectType type, int amount = 0, int damageType = 0);
+	Effect(KotOREffectType type, int amount = 0, int damageType = 0, int spellId = -1);
 
 	KotOREffectType getType() const;
 	int getAmount() const;
 	int getDamageType() const;
+	int getSpellId() const;
+	void setSpellId(int spellId);
 
 	Aurora::NWScript::EngineType *clone() const;
 
@@ -107,6 +109,7 @@ private:
 	KotOREffectType _type;
 	int _amount;
 	int _damageType;
+	int _spellId;
 };
 
 } // End of namespace KotORBase

@@ -170,6 +170,14 @@ GTEST_TEST(ParityP0Natives, damageResistanceAndConcealment) {
 	Effect assured(kKotOREffectAssuredHit, 1);
 	creature.applyEffect(assured);
 	EXPECT_TRUE(creature.hasAssuredHit());
+
+	Effect forceResist(kKotOREffectForceResistanceIncrease, 12);
+	creature.applyEffect(forceResist);
+	EXPECT_EQ(creature.getForceResistance(), 12);
+
+	Effect forceResistDown(kKotOREffectForceResistanceDecrease, 4);
+	creature.applyEffect(forceResistDown);
+	EXPECT_EQ(creature.getForceResistance(), 8);
 }
 
 GTEST_TEST(ParityP0Natives, aiLevelAndEntangle) {

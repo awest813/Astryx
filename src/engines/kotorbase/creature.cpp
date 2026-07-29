@@ -1265,6 +1265,11 @@ namespace KotORBase {
 					adjustAttackModifier(0); // damage tracked via effect amount on apply path
 					break;
 				case kKotOREffectForceResistanceIncrease:
+					adjustForceResistance(effect.getAmount());
+					break;
+				case kKotOREffectForceResistanceDecrease:
+					adjustForceResistance(-effect.getAmount());
+					break;
 				case kKotOREffectBlasterDeflectionIncrease:
 					adjustBlasterDeflection(effect.getAmount());
 					break;

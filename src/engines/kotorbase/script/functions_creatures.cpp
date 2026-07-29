@@ -1061,8 +1061,17 @@ void Functions::getMetaMagicFeat(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::getEffectSpellId(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = -1;
 	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
-	if (effect)
-		ctx.getReturn() = effect->getDamageType(); // spell id packed when available
+	if (!effect)
+		return;
+
+	if (effect->getSpellId() >= 0) {
+		ctx.getReturn() = effect->getSpellId();
+		return;
+	}
+
+	// Spell-immunity effects pack the spell id in amount.
+	if (effect->getType() == kKotOREffectSpellImmunity)
+		ctx.getReturn() = effect->getAmount();
 }
 
 void Functions::getLastKiller(Aurora::NWScript::FunctionContext &ctx) {
@@ -1357,7 +1366,29 @@ void Functions::getCasterLevel(Aurora::NWScript::FunctionContext &ctx) {
 		caster = ObjectContainer::toCreature(_game->getModule().getSpellScriptCaster());
 	ctx.getReturn() = caster ? caster->getHitDice() : 0;
 }
-void Functions::resistForce(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
+void Functions::resistForce(Aurora::NWScript::FunctionContext &ctx) {
+	// ResistForce(object oCaster, object oTarget) → TRUE if the Force power is resisted.
+	Creature *caster = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	Creature *target = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
+	ctx.getReturn() = 0;
+	if (!caster || !target)
+		return;
+
+	const int spellId = _game->getModule().getSpellScriptId();
+	if (spellId >= 0 && target->isImmuneToSpell(spellId)) {
+		ctx.getReturn() = 1;
+		return;
+	}
+
+	const int resistance = target->getForceResistance();
+	if (resistance <= 0)
+		return;
+
+	const int roll = RNG.getNext(1, 21);
+	const int check = roll + caster->getHitDice();
+	if (check < resistance)
+		ctx.getReturn() = 1;
+}
 void Functions::getLastSpellCaster(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getSpellScriptCaster());
 }

@@ -331,6 +331,10 @@ public:
 	int getBlasterDeflectionBonus() const { return _blasterDeflectionBonus; }
 	void adjustBlasterDeflection(int delta) { _blasterDeflectionBonus += delta; }
 
+	int getForceResistance() const { return _forceResistance; }
+	void adjustForceResistance(int delta) { _forceResistance += delta; }
+	void setForceResistance(int value) { _forceResistance = value; }
+
 	int getDamageResistance(int damageType) const;
 	void setDamageResistance(int damageType, int amount);
 
@@ -467,6 +471,7 @@ private:
 	int _concealment { 0 };
 	bool _assuredHit { false };
 	int _blasterDeflectionBonus { 0 };
+	int _forceResistance { 0 };
 	int _attackModifier { 0 };
 	int _armorClassModifier { 0 };
 	std::array<int, kSkillMAX> _skillModifiers {{}};
