@@ -30,6 +30,8 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 #include "src/engines/kotorbase/effect.h"
 
 using Engines::KotORBase::Effect;
@@ -181,4 +183,18 @@ GTEST_TEST(KotOREffect, zeroHealIsNoop) {
 
 GTEST_TEST(KotOREffect, zeroDamageIsNoop) {
 	EXPECT_EQ(applyDamage(20, 0), 20);
+}
+
+GTEST_TEST(KotOREffect, spellIdRoundTripsAndClones) {
+	Effect e(kKotOREffectDamage, 6, 1, 14);
+	EXPECT_EQ(e.getSpellId(), 14);
+
+	e.setSpellId(33);
+	EXPECT_EQ(e.getSpellId(), 33);
+
+	std::unique_ptr<Aurora::NWScript::EngineType> cloned(e.clone());
+	const Effect *copy = dynamic_cast<const Effect *>(cloned.get());
+	ASSERT_TRUE(copy != nullptr);
+	EXPECT_EQ(copy->getSpellId(), 33);
+	EXPECT_EQ(copy->getAmount(), 6);
 }

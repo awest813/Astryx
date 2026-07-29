@@ -22,12 +22,15 @@
  *  Star Wars: Knights of the Old Republic engine functions for handling events.
  */
 
+#include "src/common/util.h"
+
 #include "src/aurora/nwscript/functioncontext.h"
 
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/types.h"
 
 #include "src/engines/kotorbase/script/functions.h"
 #include "src/engines/kotorbase/script/event.h"
@@ -51,6 +54,14 @@ void Functions::signalEvent(Aurora::NWScript::FunctionContext &ctx) {
 		case kEventUserDefined:
 			_game->getModule().signalUserDefinedEvent(object, e->getUserDefinedNumber());
 			break;
+		case kEventSpellCastAt:
+			if (!object)
+				return;
+			_game->getModule().setSpellScriptContext(e->getSpellId(),
+			                                        ObjectContainer::toObject(ctx.getCaller()),
+			                                        object, 12, e->getSpellHarmful());
+			object->runScript(kScriptSpellCastAt, object, ctx.getCaller());
+			break;
 		default:
 			warning("Functions::signalEvent(): Event type \"%d\" not implemented", e->getType());
 			break;
@@ -60,6 +71,14 @@ void Functions::signalEvent(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::eventUserDefined(Aurora::NWScript::FunctionContext &ctx) {
 	Event e(kEventUserDefined);
 	e.setUserDefinedNumber(ctx.getParams()[0].getInt());
+	ctx.getReturn() = e;
+}
+
+void Functions::eventSpellCastAt(Aurora::NWScript::FunctionContext &ctx) {
+	// EventSpellCastAt(object oCaster, int nSpell, int bHarmful=TRUE)
+	Event e(kEventSpellCastAt);
+	e.setSpellId(ctx.getParams()[1].getInt());
+	e.setSpellHarmful(ctx.getParams()[2].getInt() != 0);
 	ctx.getReturn() = e;
 }
 

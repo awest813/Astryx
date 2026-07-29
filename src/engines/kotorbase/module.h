@@ -278,6 +278,8 @@ public:
 	void addPartyMember(int npc, Creature *creature);
 	/** Remove a creature from the active party by NPC slot. */
 	void removePartyMember(int npc);
+	/** Remove a creature from the active party by pointer (RemoveFromParty). */
+	void removeCreatureFromParty(Creature *creature);
 	/** Notify the module that the party leader has changed. */
 	void notifyPartyLeaderChanged();
 
@@ -457,6 +459,23 @@ protected:
 	/** Record the last item acquired (called from createItemOnObject etc.). */
 	void setLastAcquiredItem(Object *item);
 
+	/** Spell-script context for GetSpellId / GetSpellTarget / GetSpellSaveDC / etc. */
+	void setSpellScriptContext(int spellId, Object *caster, Object *target, int saveDC, bool harmful, Object *castItem = nullptr);
+	void clearSpellScriptContext();
+	int getSpellScriptId() const;
+	Object *getSpellScriptCaster() const;
+	Object *getSpellScriptTarget() const;
+	int getSpellScriptSaveDC() const;
+	bool getSpellScriptHarmful() const;
+	Object *getSpellScriptCastItem() const;
+
+	void setLastConversation(const Common::UString &name);
+	const Common::UString &getLastConversation() const;
+
+	/** Record the creator of the most recently applied area-of-effect. */
+	void setLastAoECreator(Object *creator);
+	Object *getLastAoECreator() const;
+
 protected:
 	std::unique_ptr<IngameGUI> _ingame; ///< The ingame GUI.
 	std::unique_ptr<DialogGUI> _dialog; ///< Conversation/cutscene GUI.
@@ -594,6 +613,14 @@ protected:
 	std::map<Common::UString, std::vector<bool>> _exploredMaps;
 	bool _inBattleMusic { false };  ///< Is the battle music track currently playing?
 	Object *_lastAcquiredItem { nullptr }; ///< Last item acquired via script events.
+	int _spellScriptId { -1 };
+	Object *_spellScriptCaster { nullptr };
+	Object *_spellScriptTarget { nullptr };
+	int _spellScriptSaveDC { 12 };
+	bool _spellScriptHarmful { false };
+	Object *_spellScriptCastItem { nullptr };
+	Common::UString _lastConversation;
+	Object *_lastAoECreator { nullptr };
 
 	bool _moviePlaying { false }; ///< Is a full-screen movie currently playing?
 	std::vector<Common::UString> _movieQueue; ///< Movies queued for PlayMovieQueue.

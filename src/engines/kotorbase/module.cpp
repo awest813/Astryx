@@ -1344,7 +1344,7 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 		for (const auto &s : swings) {
 			if (target->isDead())
 				break;
-			c->executeAttack(target, s.babPenalty, s.damageMod, activeFeat);
+			c->executeAttack(target, s.babPenalty, s.damageMod, activeFeat, _area.get());
 		}
 
 		c->setAttemptedAttackTarget(nullptr);
@@ -1757,6 +1757,26 @@ void Module::removePartyMember(int npc) {
 		} else if (pair.second && _area) {
 			_area->removeObject(pair.second);
 		}
+	}
+
+	_partyController.clearCurrentParty();
+	for (auto &pair : remaining)
+		_partyController.addPartyMember(pair.first, pair.second);
+
+	updateCurrentPartyGUI();
+}
+
+void Module::removeCreatureFromParty(Creature *creature) {
+	if (!creature)
+		return;
+
+	size_t count = _partyController.getPartyMemberCount();
+	std::vector<std::pair<int, Creature *>> remaining;
+	remaining.reserve(count);
+	for (size_t i = 0; i < count; ++i) {
+		const auto &pair = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+		if (pair.second != creature)
+			remaining.push_back(pair);
 	}
 
 	_partyController.clearCurrentParty();
@@ -2201,6 +2221,7 @@ void Module::startConversation(const Common::UString &name, Aurora::NWScript::Ob
 	if (finalName.empty())
 		return;
 
+	_lastConversation = finalName;
 	_dialog->startConversation(finalName, owner);
 
 	if (_dialog->isConversationActive()) {
@@ -2356,6 +2377,8 @@ void Module::playMusicStinger(const Common::UString &stinger) {
 }
 
 void Module::delayConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
+	if (!name.empty())
+		_lastConversation = name;
 	_delayedConversation = std::make_unique<DelayedConversation>(name, owner);
 }
 
@@ -2421,6 +2444,64 @@ Object *Module::getLastAcquiredItem() const {
 
 void Module::setLastAcquiredItem(Object *item) {
 	_lastAcquiredItem = item;
+}
+
+void Module::setSpellScriptContext(int spellId, Object *caster, Object *target, int saveDC, bool harmful, Object *castItem) {
+	_spellScriptId = spellId;
+	_spellScriptCaster = caster;
+	_spellScriptTarget = target;
+	_spellScriptSaveDC = saveDC > 0 ? saveDC : 12;
+	_spellScriptHarmful = harmful;
+	_spellScriptCastItem = castItem;
+}
+
+void Module::clearSpellScriptContext() {
+	_spellScriptId = -1;
+	_spellScriptCaster = nullptr;
+	_spellScriptTarget = nullptr;
+	_spellScriptSaveDC = 12;
+	_spellScriptHarmful = false;
+	_spellScriptCastItem = nullptr;
+}
+
+int Module::getSpellScriptId() const {
+	return _spellScriptId;
+}
+
+Object *Module::getSpellScriptCaster() const {
+	return _spellScriptCaster;
+}
+
+Object *Module::getSpellScriptTarget() const {
+	return _spellScriptTarget;
+}
+
+int Module::getSpellScriptSaveDC() const {
+	return _spellScriptSaveDC;
+}
+
+bool Module::getSpellScriptHarmful() const {
+	return _spellScriptHarmful;
+}
+
+Object *Module::getSpellScriptCastItem() const {
+	return _spellScriptCastItem;
+}
+
+void Module::setLastConversation(const Common::UString &name) {
+	_lastConversation = name;
+}
+
+const Common::UString &Module::getLastConversation() const {
+	return _lastConversation;
+}
+
+void Module::setLastAoECreator(Object *creator) {
+	_lastAoECreator = creator;
+}
+
+Object *Module::getLastAoECreator() const {
+	return _lastAoECreator;
 }
 
 static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst) {
@@ -2530,6 +2611,21 @@ void Module::saveState(Aurora::GFF3WriterStruct &gff) const {
 	}
 
 	gff.addExoString("ReturnDestinationModule", _returnDestinationModule);
+	gff.addSint32("SelectedPlanet", _selectedPlanet);
+
+	Aurora::GFF3WriterListPtr planetAvailList = gff.addList("PlanetAvailable");
+	for (const auto &entry : _planetAvailable) {
+		Aurora::GFF3WriterStructPtr item = planetAvailList->addStruct();
+		item->addSint32("Planet", entry.first);
+		item->addByte("Available", entry.second ? 1 : 0);
+	}
+
+	Aurora::GFF3WriterListPtr planetSelectList = gff.addList("PlanetSelectable");
+	for (const auto &entry : _planetSelectable) {
+		Aurora::GFF3WriterStructPtr item = planetSelectList->addStruct();
+		item->addSint32("Planet", entry.first);
+		item->addByte("Selectable", entry.second ? 1 : 0);
+	}
 
 	Aurora::GFF3WriterListPtr mapList = gff.addList("ExploredMaps");
 	for (const auto &entry : _exploredMaps) {
@@ -2617,6 +2713,27 @@ void Module::loadState(const Aurora::GFF3Struct &gff) {
 
 	if (gff.hasField("ReturnDestinationModule"))
 		_returnDestinationModule = gff.getString("ReturnDestinationModule");
+
+	if (gff.hasField("SelectedPlanet"))
+		_selectedPlanet = gff.getSint("SelectedPlanet");
+
+	_planetAvailable.clear();
+	if (gff.hasField("PlanetAvailable")) {
+		for (const auto &entry : gff.getList("PlanetAvailable")) {
+			if (!entry)
+				continue;
+			_planetAvailable[entry->getSint("Planet")] = entry->getUint("Available") != 0;
+		}
+	}
+
+	_planetSelectable.clear();
+	if (gff.hasField("PlanetSelectable")) {
+		for (const auto &entry : gff.getList("PlanetSelectable")) {
+			if (!entry)
+				continue;
+			_planetSelectable[entry->getSint("Planet")] = entry->getUint("Selectable") != 0;
+		}
+	}
 
 	_exploredMaps.clear();
 	if (gff.hasField("ExploredMaps")) {

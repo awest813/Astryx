@@ -66,6 +66,10 @@ CreatureInfo::Skills &CreatureInfo::Skills::operator=(const Skills &other) {
 	return *this;
 }
 
+CreatureInfo::Skills::Skills(const Skills &other) {
+	operator=(other);
+}
+
 CreatureInfo::Abilities &CreatureInfo::Abilities::operator=(const Abilities &other) {
 	strength = other.strength;
 	dexterity = other.dexterity;
@@ -75,6 +79,10 @@ CreatureInfo::Abilities &CreatureInfo::Abilities::operator=(const Abilities &oth
 	charisma = other.charisma;
 
 	return *this;
+}
+
+CreatureInfo::Abilities::Abilities(const Abilities &other) {
+	operator=(other);
 }
 
 CreatureInfo::CreatureInfo() {
@@ -107,14 +115,20 @@ CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
 	_inventory = other._inventory;
 	_equipment = other._equipment;
 	_feats = other._feats;
+	_forcePowers = other._forcePowers;
 	_forcePointsCurrent = other._forcePointsCurrent;
 	_forcePointsMax     = other._forcePointsMax;
 	_alignment          = other._alignment;
 	_currentHitPoints   = other._currentHitPoints;
 	_maxHitPoints       = other._maxHitPoints;
 	_hasHitPoints       = other._hasHitPoints;
+	_experience         = other._experience;
 
 	return *this;
+}
+
+CreatureInfo::CreatureInfo(const CreatureInfo &other) {
+	operator=(other);
 }
 
 void CreatureInfo::save(Aurora::GFF3WriterStruct &gff) const {
@@ -143,6 +157,7 @@ void CreatureInfo::save(Aurora::GFF3WriterStruct &gff) const {
 	gff.addSint32("GoodEvil", _alignment);
 	gff.addUint32("CurrentFP", _forcePointsCurrent);
 	gff.addUint32("MaxFP", _forcePointsMax);
+	gff.addSint32("Experience", _experience);
 
 	if (_inventory.getGold() > 0)
 		gff.addUint32("Gold", _inventory.getGold());
@@ -174,6 +189,7 @@ void CreatureInfo::read(const Aurora::GFF3Struct &gff) {
 	_alignment = gff.getSint("GoodEvil", 50);
 	_forcePointsCurrent = gff.getUint("CurrentFP");
 	_forcePointsMax = gff.getUint("MaxFP");
+	_experience = gff.getSint("Experience", 0);
 
 	if (gff.hasField("ItemList")) {
 		_inventory.read(gff.getList("ItemList"));
@@ -701,6 +717,14 @@ void CreatureInfo::setHitPoints(int current, int max) {
 	_currentHitPoints = current;
 	_maxHitPoints = max;
 	_hasHitPoints = true;
+}
+
+int CreatureInfo::getExperience() const {
+	return _experience;
+}
+
+void CreatureInfo::setExperience(int xp) {
+	_experience = xp < 0 ? 0 : xp;
 }
 
 int CreatureInfo::getFeatRank(uint32_t feat) const {

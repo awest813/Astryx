@@ -26,7 +26,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "src/common/maths.h"
 
@@ -442,8 +445,7 @@ void Functions::getNearestObjectByTag(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getSpellTargetObject(Aurora::NWScript::FunctionContext &ctx) {
-	// Spell targeting context is not yet tracked globally.
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getSpellScriptTarget());
 }
 
 void Functions::getTag(Aurora::NWScript::FunctionContext &ctx) {
@@ -896,6 +898,105 @@ void Functions::getNextObjectInArea(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = _areaIterObjects[_areaIterIndex++];
 }
 
+void Functions::getFirstInPersistentObject(Aurora::NWScript::FunctionContext &ctx) {
+	// Iterate residents of an AoE / area. Without full AoE objects yet, fall back to
+	// creatures in the current area (same practical filter most scripts use).
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	_persistentIterObjects.clear();
+	_persistentIterIndex = 0;
+
+	int filter = kObjectTypeCreature;
+	if (ctx.getParams().size() > 1 && ctx.getParams()[1].getType() == Aurora::NWScript::kTypeInt)
+		filter = ctx.getParams()[1].getInt();
+	if (filter == 0)
+		filter = kObjectTypeCreature;
+
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area)
+		return;
+
+	if (filter & kObjectTypeCreature) {
+		const std::vector<Creature *> &creatures = area->getCreatures();
+		for (size_t i = 0; i < creatures.size(); ++i) {
+			if (creatures[i] && !creatures[i]->isDead())
+				_persistentIterObjects.push_back(creatures[i]);
+		}
+	}
+
+	if (_persistentIterObjects.empty())
+		return;
+	ctx.getReturn() = _persistentIterObjects[_persistentIterIndex++];
+}
+
+void Functions::getNextInPersistentObject(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	if (_persistentIterIndex >= _persistentIterObjects.size())
+		return;
+	ctx.getReturn() = _persistentIterObjects[_persistentIterIndex++];
+}
+
+void Functions::getAreaOfEffectCreator(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getLastAoECreator());
+}
+
+void Functions::applyEffectAtLocation(Aurora::NWScript::FunctionContext &ctx) {
+	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
+	const Location *loc = dynamic_cast<const Location *>(ctx.getParams()[2].getEngineType());
+	if (!effect || !loc)
+		return;
+
+	if (effect->getType() == kKotOREffectAreaOfEffect)
+		_game->getModule().setLastAoECreator(ObjectContainer::toObject(ctx.getCaller()));
+
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area)
+		return;
+
+	float lx, ly, lz;
+	loc->getPosition(lx, ly, lz);
+	const float radius = 5.0f;
+
+	const std::vector<Creature *> &creatures = area->getCreatures();
+	for (size_t i = 0; i < creatures.size(); ++i) {
+		Creature *c = creatures[i];
+		if (!c || c->isDead())
+			continue;
+		float x, y, z;
+		c->getPosition(x, y, z);
+		float dx = x - lx, dy = y - ly, dz = z - lz;
+		if ((dx * dx + dy * dy + dz * dz) <= radius * radius)
+			c->applyEffect(*effect);
+	}
+}
+
+void Functions::revealMap(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	Area *area = _game->getModule().getCurrentArea();
+	if (area)
+		_game->getModule().exploreAreaFully(area);
+}
+
+void Functions::setAILevel(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = nullptr;
+	int level = 0;
+	if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeObject) {
+		creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+		if (ctx.getParams().size() > 1)
+			level = ctx.getParams()[1].getInt();
+	} else if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeEngineType) {
+		// Signature table lists a single engine-type arg for some builds; treat as no-op success.
+		ctx.getReturn() = 1;
+		return;
+	}
+	if (creature)
+		creature->setAILevel(level);
+	ctx.getReturn() = 1;
+}
+
+void Functions::getLastConversation(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getLastConversation();
+}
+
 void Functions::getLockUnlockDC(Aurora::NWScript::FunctionContext &ctx) {
 	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
 	if (!situated) {
@@ -1267,11 +1368,10 @@ void Functions::getLockRequiredSkill(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::clearAllEffects(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
-	if (object) {
-		// Logic to clear effects
-		warning("ClearAllEffects on %s", object->getTag().c_str());
-	}
+	// ClearAllEffects() — no parameters; operates on OBJECT_SELF.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (creature)
+		creature->clearActiveEffects();
 }
 
 void Functions::getLastHostileTarget(Aurora::NWScript::FunctionContext &ctx) {
@@ -1283,20 +1383,99 @@ void Functions::getLastAttackAction(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getWasForcePowerSuccessful(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = 1; // Default to success
+	// SetForcePowerUnsuccessful stores a non-zero flag in module globals.
+	ctx.getReturn() = _game->getModule().getGlobalNumber("__force_unsuccessful") == 0 ? 1 : 0;
 }
 
+namespace {
 
-void Functions::getFirstEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
-void Functions::getNextEffect(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
-void Functions::removeEffect(Aurora::NWScript::FunctionContext &ctx) {}
+KotOREffectType activeEffectToKotOR(EffectType type) {
+	switch (type) {
+		case kEffectPoison:     return kKotOREffectPoison;
+		case kEffectStun:       return kKotOREffectStunned;
+		case kEffectSpeed:      return kKotOREffectHaste;
+		case kEffectShield:     return kKotOREffectForceShield;
+		case kEffectHeal:       return kKotOREffectHeal;
+		case kEffectVFX:        return kKotOREffectVisual;
+		case kEffectKnockdown:  return kKotOREffectKnockdown;
+		case kEffectDamage:     return kKotOREffectDamage;
+		case kEffectConfusion:  return kKotOREffectStunned;
+		case kEffectDazed:      return kKotOREffectStunned;
+		default:                return kKotOREffectVisual;
+	}
+}
+
+Effect *wrapActiveEffect(const Creature::ActiveEffect &active) {
+	return new Effect(activeEffectToKotOR(active.type), active.value, 0, active.spellId);
+}
+
+} // End of anonymous namespace
+
+void Functions::getFirstEffect(Aurora::NWScript::FunctionContext &ctx) {
+	_effectIterCreature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!_effectIterCreature)
+		_effectIterCreature = ObjectContainer::toCreature(ctx.getCaller());
+	_effectIterIndex = 0;
+
+	ctx.getReturn() = static_cast<Aurora::NWScript::EngineType *>(nullptr);
+	if (!_effectIterCreature || _effectIterCreature->getActiveEffects().empty())
+		return;
+
+	ctx.getReturn() = wrapActiveEffect(_effectIterCreature->getActiveEffects()[0]);
+}
+
+void Functions::getNextEffect(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::EngineType *>(nullptr);
+
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature)
+		creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (!_effectIterCreature || creature != _effectIterCreature)
+		return;
+
+	++_effectIterIndex;
+	if (_effectIterIndex >= _effectIterCreature->getActiveEffects().size())
+		return;
+
+	ctx.getReturn() = wrapActiveEffect(_effectIterCreature->getActiveEffects()[_effectIterIndex]);
+}
+
+void Functions::removeEffect(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature)
+		creature = ObjectContainer::toCreature(ctx.getCaller());
+	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
+	if (!creature || !effect)
+		return;
+
+	const auto &effects = creature->getActiveEffects();
+	for (size_t i = 0; i < effects.size(); ++i) {
+		Effect wrapped(activeEffectToKotOR(effects[i].type), effects[i].value, 0, effects[i].spellId);
+		if (wrapped.getType() == effect->getType() &&
+		    wrapped.getAmount() == effect->getAmount() &&
+		    wrapped.getSpellId() == effect->getSpellId()) {
+			creature->removeActiveEffectAt(i);
+			return;
+		}
+	}
+}
+
 void Functions::getIsEffectValid(Aurora::NWScript::FunctionContext &ctx) {
 	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
 	ctx.getReturn() = effect ? 1 : 0;
 }
-void Functions::getEffectDurationType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
-void Functions::getEffectSubType(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
-void Functions::getEffectCreator(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
+void Functions::getEffectDurationType(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	// 0 instant / 1 temporary / 2 permanent — ActiveEffects are temporary by default.
+	ctx.getReturn() = 1;
+}
+void Functions::getEffectSubType(Aurora::NWScript::FunctionContext &ctx) {
+	(void)ctx;
+	ctx.getReturn() = 0;
+}
+void Functions::getEffectCreator(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(_game->getModule().getSpellScriptCaster());
+}
 
 void Functions::getFirstFactionMember(Aurora::NWScript::FunctionContext &ctx) {
 	_factionIterRef = nullptr;
@@ -1373,5 +1552,376 @@ void Functions::getItemActivator(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = _lastItemActivator;
 }
 
+namespace {
+
+std::vector<Creature *> collectFactionCreatures(Module &module, Object *ref, bool includePC) {
+	std::vector<Creature *> members;
+	if (!ref)
+		return members;
+
+	const int faction = static_cast<int>(ref->getFaction());
+	Area *area = module.getCurrentArea();
+	if (!area)
+		return members;
+
+	const std::vector<Creature *> &creatures = area->getCreatures();
+	for (size_t i = 0; i < creatures.size(); ++i) {
+		Creature *c = creatures[i];
+		if (!c || c->isDead())
+			continue;
+		if (static_cast<int>(c->getFaction()) != faction)
+			continue;
+		if (!includePC && c->isPC())
+			continue;
+		members.push_back(c);
+	}
+	return members;
+}
+
+bool matchGlob(const Common::UString &pattern, const Common::UString &text,
+               std::vector<Common::UString> &captures) {
+	captures.clear();
+	const std::string pat = pattern.toString();
+	const std::string str = text.toString();
+
+	// Split pattern on '*' while keeping wildcards as tokens.
+	std::vector<std::string> parts;
+	std::string cur;
+	for (size_t i = 0; i < pat.size(); ++i) {
+		if (pat[i] == '*') {
+			parts.push_back(cur);
+			cur.clear();
+			parts.push_back("*");
+		} else {
+			cur.push_back(pat[i]);
+		}
+	}
+	parts.push_back(cur);
+
+	size_t pos = 0;
+	for (size_t i = 0; i < parts.size(); ++i) {
+		if (parts[i] == "*") {
+			// Consume consecutive wildcards.
+			while (i + 1 < parts.size() && parts[i + 1] == "*")
+				++i;
+
+			if (i + 1 >= parts.size() || parts[i + 1].empty()) {
+				// Trailing wildcard: capture the remainder.
+				captures.push_back(Common::UString(str.substr(pos)));
+				return true;
+			}
+
+			const std::string &next = parts[i + 1];
+			size_t found = str.find(next, pos);
+			if (found == std::string::npos)
+				return false;
+			captures.push_back(Common::UString(str.substr(pos, found - pos)));
+			pos = found;
+		} else if (!parts[i].empty()) {
+			if (str.compare(pos, parts[i].size(), parts[i]) != 0)
+				return false;
+			pos += parts[i].size();
+		}
+	}
+	return pos == str.size();
+}
+
+} // End of anonymous namespace
+
+void Functions::getIsListening(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
+	ctx.getReturn() = (object && object->getIsListening()) ? 1 : 0;
+}
+
+void Functions::setListening(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
+	bool listening = ctx.getParams()[1].getInt() != 0;
+	if (object)
+		object->setListening(listening);
+}
+
+void Functions::setListenPattern(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const Common::UString &pattern = ctx.getParams()[1].getString();
+	int number = ctx.getParams()[2].getInt();
+	if (object)
+		object->setListenPattern(pattern, number);
+}
+
+void Functions::testStringAgainstPattern(Aurora::NWScript::FunctionContext &ctx) {
+	const Common::UString &pattern = ctx.getParams()[0].getString();
+	const Common::UString &text = ctx.getParams()[1].getString();
+	_matchedSubstrings.clear();
+	ctx.getReturn() = matchGlob(pattern, text, _matchedSubstrings) ? 1 : 0;
+}
+
+void Functions::getMatchedSubstring(Aurora::NWScript::FunctionContext &ctx) {
+	int index = ctx.getParams()[0].getInt();
+	if (index < 0 || static_cast<size_t>(index) >= _matchedSubstrings.size()) {
+		ctx.getReturn() = Common::UString("");
+		return;
+	}
+	ctx.getReturn() = _matchedSubstrings[static_cast<size_t>(index)];
+}
+
+void Functions::getMatchedSubstringsCount(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<int>(_matchedSubstrings.size());
+}
+
+void Functions::setAssociateListenPatterns(Aurora::NWScript::FunctionContext &ctx) {
+	Object *object = ObjectContainer::toObject(ctx.getCaller());
+	if (object) {
+		object->setListening(true);
+		object->setListenPattern(Common::UString("**"), 0);
+	}
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(object);
+}
+
+void Functions::getFactionWeakestMember(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	bool includePC = ctx.getParams().size() < 2 || ctx.getParams()[1].getInt() != 0;
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, includePC);
+	Creature *best = nullptr;
+	int bestHP = 0;
+	for (size_t i = 0; i < members.size(); ++i) {
+		int hp = members[i]->getCurrentHitPoints();
+		if (!best || hp < bestHP) {
+			best = members[i];
+			bestHP = hp;
+		}
+	}
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(best);
+}
+
+void Functions::getFactionStrongestMember(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	bool includePC = ctx.getParams().size() < 2 || ctx.getParams()[1].getInt() != 0;
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, includePC);
+	Creature *best = nullptr;
+	int bestHP = 0;
+	for (size_t i = 0; i < members.size(); ++i) {
+		int hp = members[i]->getCurrentHitPoints();
+		if (!best || hp > bestHP) {
+			best = members[i];
+			bestHP = hp;
+		}
+	}
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(best);
+}
+
+void Functions::getFactionMostDamagedMember(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	bool includePC = ctx.getParams().size() < 2 || ctx.getParams()[1].getInt() != 0;
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, includePC);
+	Creature *best = nullptr;
+	int bestMissing = -1;
+	for (size_t i = 0; i < members.size(); ++i) {
+		int missing = members[i]->getMaxHitPoints() - members[i]->getCurrentHitPoints();
+		if (!best || missing > bestMissing) {
+			best = members[i];
+			bestMissing = missing;
+		}
+	}
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(best);
+}
+
+void Functions::getFactionLeastDamagedMember(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	bool includePC = ctx.getParams().size() < 2 || ctx.getParams()[1].getInt() != 0;
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, includePC);
+	Creature *best = nullptr;
+	int bestMissing = 0;
+	for (size_t i = 0; i < members.size(); ++i) {
+		int missing = members[i]->getMaxHitPoints() - members[i]->getCurrentHitPoints();
+		if (!best || missing < bestMissing) {
+			best = members[i];
+			bestMissing = missing;
+		}
+	}
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(best);
+}
+
+void Functions::getFactionGold(Aurora::NWScript::FunctionContext &ctx) {
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, true);
+	int gold = 0;
+	for (size_t i = 0; i < members.size(); ++i)
+		gold += static_cast<int>(members[i]->getInventory().getGold());
+	ctx.getReturn() = gold;
+}
+
+void Functions::getFactionAverageReputation(Aurora::NWScript::FunctionContext &ctx) {
+	Object *source = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!source || !target) {
+		ctx.getReturn() = 50;
+		return;
+	}
+	ctx.getReturn() = _game->getModule().getReputation(
+		static_cast<int>(source->getFaction()), static_cast<int>(target->getFaction()));
+}
+
+void Functions::getFactionAverageGoodEvilAlignment(Aurora::NWScript::FunctionContext &ctx) {
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, true);
+	if (members.empty()) {
+		ctx.getReturn() = 50;
+		return;
+	}
+	int sum = 0;
+	for (size_t i = 0; i < members.size(); ++i)
+		sum += members[i]->getGoodEvilValue();
+	ctx.getReturn() = sum / static_cast<int>(members.size());
+}
+
+void Functions::getFactionAverageLevel(Aurora::NWScript::FunctionContext &ctx) {
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, true);
+	if (members.empty()) {
+		ctx.getReturn() = 0;
+		return;
+	}
+	int sum = 0;
+	for (size_t i = 0; i < members.size(); ++i)
+		sum += members[i]->getHitDice();
+	ctx.getReturn() = sum / static_cast<int>(members.size());
+}
+
+void Functions::getFactionAverageXP(Aurora::NWScript::FunctionContext &ctx) {
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, true);
+	if (members.empty()) {
+		ctx.getReturn() = 0;
+		return;
+	}
+	int sum = 0;
+	for (size_t i = 0; i < members.size(); ++i)
+		sum += members[i]->getCurrentXP();
+	ctx.getReturn() = sum / static_cast<int>(members.size());
+}
+
+void Functions::getFactionMostFrequentClass(Aurora::NWScript::FunctionContext &ctx) {
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, true);
+	std::map<int, int> counts;
+	for (size_t i = 0; i < members.size(); ++i) {
+		int cls = static_cast<int>(members[i]->getClassByPosition(0));
+		counts[cls]++;
+	}
+	int bestClass = 0;
+	int bestCount = -1;
+	for (std::map<int, int>::const_iterator it = counts.begin(); it != counts.end(); ++it) {
+		if (it->second > bestCount) {
+			bestCount = it->second;
+			bestClass = it->first;
+		}
+	}
+	ctx.getReturn() = bestClass;
+}
+
+void Functions::getFactionWorstAC(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	bool includePC = ctx.getParams().size() < 2 || ctx.getParams()[1].getInt() != 0;
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, includePC);
+	Creature *best = nullptr;
+	int bestAC = 0;
+	for (size_t i = 0; i < members.size(); ++i) {
+		int ac = members[i]->getAC();
+		if (!best || ac < bestAC) {
+			best = members[i];
+			bestAC = ac;
+		}
+	}
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(best);
+}
+
+void Functions::getFactionBestAC(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	Object *ref = ObjectContainer::toObject(getParamObject(ctx, 0));
+	bool includePC = ctx.getParams().size() < 2 || ctx.getParams()[1].getInt() != 0;
+	std::vector<Creature *> members = collectFactionCreatures(_game->getModule(), ref, includePC);
+	Creature *best = nullptr;
+	int bestAC = 0;
+	for (size_t i = 0; i < members.size(); ++i) {
+		int ac = members[i]->getAC();
+		if (!best || ac > bestAC) {
+			best = members[i];
+			bestAC = ac;
+		}
+	}
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(best);
+}
+
+void Functions::changeFactionByFaction(Aurora::NWScript::FunctionContext &ctx) {
+	int sourceFaction = ctx.getParams()[0].getInt();
+	int targetFaction = ctx.getParams()[1].getInt();
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area)
+		return;
+	const std::vector<Creature *> &creatures = area->getCreatures();
+	for (size_t i = 0; i < creatures.size(); ++i) {
+		Creature *c = creatures[i];
+		if (c && static_cast<int>(c->getFaction()) == sourceFaction)
+			c->setFaction(static_cast<Faction>(targetFaction));
+	}
+}
+
+void Functions::getModuleFileName(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().getName();
+}
+
+void Functions::getReflexAdjustedDamage(Aurora::NWScript::FunctionContext &ctx) {
+	// GetReflexAdjustedDamage(int nDamage, object oTarget, int nDC, ...)
+	int damage = ctx.getParams()[0].getInt();
+	Creature *target = ObjectContainer::toCreature(getParamObject(ctx, 1));
+	int dc = ctx.getParams().size() > 2 ? ctx.getParams()[2].getInt() : 10;
+	if (!target) {
+		ctx.getReturn() = damage;
+		return;
+	}
+	if (target->rollSavingThrow(kSavingThrowReflex, dc))
+		ctx.getReturn() = damage / 2;
+	else
+		ctx.getReturn() = damage;
+}
+
+void Functions::getIsPlayableRacialType(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature) {
+		ctx.getReturn() = 0;
+		return;
+	}
+	// KotOR playable racial types — return TRUE for any valid creature (scripts use this as a soft gate).
+	ctx.getReturn() = 1;
+}
+
+void Functions::getTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
+	Location *loc = new Location();
+	Object *target = _game->getModule().getSpellScriptTarget();
+	if (target) {
+		float x, y, z;
+		target->getPosition(x, y, z);
+		loc->setPosition(x, y, z);
+	}
+	ctx.getReturn() = loc;
+}
+
+void Functions::getIsLinkImmune(Aurora::NWScript::FunctionContext &ctx) {
+	// Table lists an odd void signature; still evaluate immunity for scripts that call it.
+	int immunityType = ctx.getParams().empty() ? 0 : ctx.getParams()[0].getInt();
+	Creature *creature = nullptr;
+	if (ctx.getParams().size() > 1)
+		creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
+	if (!creature)
+		creature = ObjectContainer::toCreature(ctx.getCaller());
+	ctx.getReturn() = (creature && creature->isImmune(immunityType)) ? 1 : 0;
+}
+
 } // End of namespace KotORBase
+
 } // End of namespace Engines

@@ -48,6 +48,12 @@
 #include "src/engines/kotorbase/types.h"
 
 using Engines::KotORBase::Effect;
+using Engines::KotORBase::getAnimationNameById;
+using Engines::KotORBase::kActionPlayAnimation;
+using Engines::KotORBase::kCutsceneAttackForceHit;
+using Engines::KotORBase::kCutsceneAttackForceMiss;
+using Engines::KotORBase::kCutsceneAttackKnockback;
+using Engines::KotORBase::kCutsceneAttackNoDamage;
 using Engines::KotORBase::kKotOREffectStunned;
 using Engines::KotORBase::kKotOREffectParalyze;
 using Engines::KotORBase::kKotOREffectDamage;
@@ -354,14 +360,14 @@ TEST(DantooinecinematicFunctions, SetLockOrientationToggle) {
 }
 
 TEST(DantooinecinematicFunctions, cutsceneAttackFlagsAreDistinct) {
-	EXPECT_NE(kCutsceneAttackForceHit, kCutsceneAttackForceMiss);
-	EXPECT_NE(kCutsceneAttackKnockback, kCutsceneAttackNoDamage);
-	EXPECT_EQ(kActionPlayAnimation, 41);
+	EXPECT_NE(Engines::KotORBase::kCutsceneAttackForceHit, Engines::KotORBase::kCutsceneAttackForceMiss);
+	EXPECT_NE(Engines::KotORBase::kCutsceneAttackKnockback, Engines::KotORBase::kCutsceneAttackNoDamage);
+	EXPECT_EQ(Engines::KotORBase::kActionPlayAnimation, 41);
 }
 
 TEST(DantooinecinematicFunctions, animationIdMapsAttack1) {
-	EXPECT_EQ(getAnimationNameById(38), Common::UString("attack1"));
-	EXPECT_TRUE(getAnimationNameById(999).empty());
+	EXPECT_EQ(Engines::KotORBase::getAnimationNameById(38), Common::UString("attack1"));
+	EXPECT_TRUE(Engines::KotORBase::getAnimationNameById(999).empty());
 }
 
 // ---------------------------------------------------------------------------

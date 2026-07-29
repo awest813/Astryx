@@ -171,7 +171,12 @@ public:
 	void think(Area *area);
 	void updateCombatAI();
 	Object *findCombatTarget(Area *area);
-	bool isFlankedBy(Creature *attacker);
+	/** True if an ally of @p attacker threatens this creature from the opposite side. */
+	bool isFlankedBy(Creature *attacker, Area *area = nullptr);
+	/** Geometry helper used by flanking (dot product of defender→attacker and defender→ally < -0.5). */
+	static bool areOnOppositeSides(float defX, float defY,
+	                               float aX, float aY,
+	                               float bX, float bY);
 	virtual void update(float dt);
 
 	// Positioning
@@ -265,6 +270,9 @@ public:
 	void updateEffects(float dt);
 	bool hasEffect(EffectType type) const;
 	bool hasSpellEffect(int spellId) const;
+	const std::vector<ActiveEffect> &getActiveEffects() const { return _effects; }
+	void clearActiveEffects();
+	bool removeActiveEffectAt(size_t index);
 
 	void performCutsceneAttack(Object *target, int flags);
 
@@ -287,6 +295,51 @@ public:
 	int getLastForcePowerUsed() const;
 	void setLastForcePowerUsed(int spellID);
 	int getQueuedCombatFeat() const;
+
+	/** Record the last killer (set on death). */
+	Object *getLastKiller() const;
+	void setLastKiller(Object *killer);
+
+	/** Last damage event queries (GetDamageDealtByType / GetTotalDamageDealt). */
+	void recordDamageTaken(int amount, int damageType, Object *damager = nullptr);
+	int getDamageDealtByType(int damageType) const;
+	int getTotalDamageDealt() const;
+
+	/** Last attack result / weapon used (queried on the attacker). */
+	void recordAttackResult(int result, Object *weapon = nullptr);
+	int getLastAttackResult() const;
+	Object *getLastWeaponUsed() const;
+
+	/** Immunity tracking for EffectImmunity / GetIsImmune. */
+	void addImmunity(int immunityType);
+	void addSpellImmunity(int spellId);
+	bool isImmune(int immunityType) const;
+	bool isImmuneToSpell(int spellId) const;
+	void adjustDamageImmunity(int damageType, int percentDelta);
+	int getDamageImmunityPercent(int damageType) const;
+	void clearImmunities();
+
+	/** Cancel combat, clear actions, and optionally clear buffs; set surrender faction. */
+	void surrenderToEnemies(bool retainBuffs = false);
+
+	int getAILevel() const { return _aiLevel; }
+	void setAILevel(int level) { _aiLevel = level; }
+
+	int getConcealment() const { return _concealment; }
+	void setConcealment(int percent) { _concealment = percent; }
+
+	bool hasAssuredHit() const { return _assuredHit; }
+	void setAssuredHit(bool enabled) { _assuredHit = enabled; }
+
+	int getBlasterDeflectionBonus() const { return _blasterDeflectionBonus; }
+	void adjustBlasterDeflection(int delta) { _blasterDeflectionBonus += delta; }
+
+	int getForceResistance() const { return _forceResistance; }
+	void adjustForceResistance(int delta) { _forceResistance += delta; }
+	void setForceResistance(int value) { _forceResistance = value; }
+
+	int getDamageResistance(int damageType) const;
+	void setDamageResistance(int damageType, int amount);
 
 	// Perception results (set by handleObjectSeen / handleObjectVanished).
 	Object *getLastPerceived() const;
@@ -318,8 +371,9 @@ public:
 	/** Reverse the persistent modifiers an active effect applied (called on expiry). */
 	void removeEffect(const ActiveEffect &effect);
 
-	/** Apply an engine/NWScript level Effect object to this creature. */
-	void applyEffect(const Effect &effect);
+	/** Apply an engine/NWScript level Effect object to this creature.
+	 *  If durationOverride >= 0, timed effects use that duration instead of defaults. */
+	void applyEffect(const Effect &effect, float durationOverride = -1.0f);
 
 	/**
 	 * Execute one attack iteration against target.
@@ -329,8 +383,9 @@ public:
 	 *                   primary attack, -5 for the second, -10 for the third…).
 	 * @param damageMod  Additional flat damage modifier (e.g. from caller-selected feats).
 	 * @param activeFeat Activated combat feat for this attack sequence, or -1.
+	 * @param area       Optional area used for flanking / LOS context.
 	 */
-	void executeAttack(Object *target, int babPenalty = 0, int damageMod = 0, int activeFeat = -1);
+	void executeAttack(Object *target, int babPenalty = 0, int damageMod = 0, int activeFeat = -1, Area *area = nullptr);
 	
 	/** Returns true if the creature has a lightsaber equipped in either hand. */
 	bool hasLightsaberEquipped() const;
@@ -404,9 +459,23 @@ private:
 	int _attackRound { 0 };
 	Object *_attemptedAttackTarget { nullptr };
 	Object *_lastHostileActor { nullptr };
+	Object *_lastKiller { nullptr };
+	Object *_lastWeaponUsed { nullptr };
 	int _lastCombatFeatUsed { -1 };
 	int _lastForcePowerUsed { -1 };
 	int _queuedCombatFeat { -1 };
+	int _lastDamageTotal { 0 };
+	int _lastDamageType { 0 };
+	int _lastAttackResult { 0 };
+	std::set<int> _immunities;
+	std::set<int> _spellImmunities;
+	std::map<int, int> _damageImmunityPercent;
+	std::map<int, int> _damageResistance;
+	int _aiLevel { 0 };
+	int _concealment { 0 };
+	bool _assuredHit { false };
+	int _blasterDeflectionBonus { 0 };
+	int _forceResistance { 0 };
 	int _attackModifier { 0 };
 	int _armorClassModifier { 0 };
 	std::array<int, kSkillMAX> _skillModifiers {{}};

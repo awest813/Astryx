@@ -24,6 +24,7 @@
 
 #include <map>
 #include <vector>
+#include <cstring>
 
 #include "gtest/gtest.h"
 
@@ -52,7 +53,13 @@ using Engines::KotORBase::kSkillSecurity;
 static Aurora::GFF3File roundTrip(Aurora::GFF3Writer &writer) {
 	Common::MemoryWriteStreamDynamic out(true);
 	writer.write(out);
-	return Aurora::GFF3File(new Common::MemoryReadStream(out.getData(), out.size(), true));
+
+	// Copy the buffer: MemoryWriteStreamDynamic frees its storage on destroy,
+	// while GFF3File/MemoryReadStream need an independently owned block.
+	const size_t size = out.size();
+	byte *copy = new byte[size];
+	std::memcpy(copy, out.getData(), size);
+	return Aurora::GFF3File(new Common::MemoryReadStream(copy, size, true));
 }
 
 GTEST_TEST(KotORSaveSerialization, inventoryRoundTrip) {
@@ -104,6 +111,9 @@ GTEST_TEST(KotORSaveSerialization, creatureInfoRoundTrip) {
 	info.setAlignment(55);
 	info.setForcePoints(3);
 	info.setMaxForcePoints(5);
+	info.addForcePower(1);
+	info.addForcePower(5);
+	info.setExperience(1500);
 
 	Aurora::GFF3Writer writer(MKTAG('U', 'T', 'C', ' '));
 	info.save(*writer.getTopLevel());
@@ -123,10 +133,33 @@ GTEST_TEST(KotORSaveSerialization, creatureInfoRoundTrip) {
 	EXPECT_EQ(loaded.getAlignment(), 55);
 	EXPECT_EQ(loaded.getForcePoints(), 3U);
 	EXPECT_EQ(loaded.getMaxForcePoints(), 5U);
+	EXPECT_TRUE(loaded.hasForcePower(1));
+	EXPECT_TRUE(loaded.hasForcePower(5));
+	EXPECT_EQ(loaded.getExperience(), 1500);
+}
+
+GTEST_TEST(KotORSaveSerialization, creatureInfoAssignmentCopiesForcePowersAndXP) {
+	CreatureInfo source;
+	source.addForcePower(14);
+	source.addForcePower(15);
+	source.setExperience(4200);
+	source.setForcePoints(8);
+	source.setMaxForcePoints(12);
+
+	CreatureInfo dest;
+	dest = source;
+
+	EXPECT_TRUE(dest.hasForcePower(14));
+	EXPECT_TRUE(dest.hasForcePower(15));
+	EXPECT_EQ(dest.getForcePowers().size(), 2U);
+	EXPECT_EQ(dest.getExperience(), 4200);
+	EXPECT_EQ(dest.getForcePoints(), 8U);
+	EXPECT_EQ(dest.getMaxForcePoints(), 12U);
 }
 
 GTEST_TEST(KotORSaveSerialization, objectStateRoundTrip) {
 	Object object(Engines::KotORBase::kObjectTypePlaceable);
+	object.setMaxHitPoints(20);
 	object.setCurrentHitPoints(7);
 	object.setUsable(false);
 
@@ -135,6 +168,7 @@ GTEST_TEST(KotORSaveSerialization, objectStateRoundTrip) {
 
 	Aurora::GFF3File gff = roundTrip(writer);
 	Object loaded(Engines::KotORBase::kObjectTypePlaceable);
+	loaded.setMaxHitPoints(20);
 	loaded.loadState(gff.getTopLevel());
 
 	EXPECT_EQ(loaded.getCurrentHitPoints(), 7);
@@ -245,6 +279,7 @@ GTEST_TEST(KotORSaveSerialization, partyRosterRoundTrip) {
 GTEST_TEST(KotORSaveSerialization, journalStateRoundTrip) {
 	Aurora::GFF3Writer writer(MKTAG('G', 'V', 'A', 'R'));
 	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();
+	root->addExoString("ReturnDestinationModule", "ebo_m12aa");
 
 	Aurora::GFF3WriterListPtr journalList = root->addList("JournalEntries");
 	{
@@ -262,6 +297,11 @@ GTEST_TEST(KotORSaveSerialization, journalStateRoundTrip) {
 
 	Aurora::GFF3File gff = roundTrip(writer);
 	const Aurora::GFF3Struct &loadedRoot = gff.getTopLevel();
+
+	ASSERT_TRUE(loadedRoot.hasField("ReturnDestinationModule"));
+	ASSERT_TRUE(loadedRoot.hasField("JournalEntries"));
+	ASSERT_TRUE(loadedRoot.hasField("WorldJournalEntries"));
+	EXPECT_EQ(loadedRoot.getString("ReturnDestinationModule"), Common::UString("ebo_m12aa"));
 
 	std::map<Common::UString, uint32_t> journal;
 	const Aurora::GFF3List &journalLoaded = loadedRoot.getList("JournalEntries");
@@ -293,6 +333,7 @@ GTEST_TEST(KotORSaveSerialization, defaultMapExploredTileCount) {
 GTEST_TEST(KotORSaveSerialization, journalQuestPictureRoundTrip) {
 	Aurora::GFF3Writer writer(MKTAG('G', 'V', 'A', 'R'));
 	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();
+	root->addExoString("ReturnDestinationModule", "ebo_m12aa");
 
 	Aurora::GFF3WriterListPtr pictureList = root->addList("JournalQuestPictures");
 	{
@@ -304,6 +345,7 @@ GTEST_TEST(KotORSaveSerialization, journalQuestPictureRoundTrip) {
 
 	Aurora::GFF3File gff = roundTrip(writer);
 	const Aurora::GFF3Struct &loadedRoot = gff.getTopLevel();
+	ASSERT_TRUE(loadedRoot.hasField("JournalQuestPictures"));
 
 	std::map<std::pair<Common::UString, uint32_t>, Common::UString> pictures;
 	const Aurora::GFF3List &loaded = loadedRoot.getList("JournalQuestPictures");
@@ -314,5 +356,74 @@ GTEST_TEST(KotORSaveSerialization, journalQuestPictureRoundTrip) {
 	}
 
 	EXPECT_EQ(pictures.size(), 1U);
-	EXPECT_EQ(pictures[{ Common::UString("k_main_quest"), 3U }], Common::UString("po_bastilla"));
+	const Common::UString portrait = pictures[{ Common::UString("k_main_quest"), 3U }];
+	EXPECT_EQ(portrait, Common::UString("po_bastilla"));
+}
+
+GTEST_TEST(KotORSaveSerialization, objectLocalVarsRoundTrip) {
+	Object object(Engines::KotORBase::kObjectTypePlaceable);
+	object.setMaxHitPoints(10);
+	object.setCurrentHitPoints(10);
+	object.setLocalInt("QUEST_STAGE", 3);
+	object.setLocalFloat("TIMER", 1.5f);
+	object.setLocalString("OWNER", "end_trask");
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	object.saveState(*writer.getTopLevel());
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	Object loaded(Engines::KotORBase::kObjectTypePlaceable);
+	loaded.setMaxHitPoints(10);
+	loaded.loadState(gff.getTopLevel());
+
+	EXPECT_EQ(loaded.getLocalInt("QUEST_STAGE"), 3);
+	EXPECT_FLOAT_EQ(loaded.getLocalFloat("TIMER"), 1.5f);
+	EXPECT_EQ(loaded.getLocalString("OWNER"), Common::UString("end_trask"));
+}
+
+GTEST_TEST(KotORSaveSerialization, planetAvailabilityRoundTrip) {
+	Aurora::GFF3Writer writer(MKTAG('G', 'V', 'A', 'R'));
+	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();
+	root->addSint32("SelectedPlanet", 6);
+
+	Aurora::GFF3WriterListPtr avail = root->addList("PlanetAvailable");
+	{
+		Aurora::GFF3WriterStructPtr item = avail->addStruct();
+		item->addSint32("Planet", 5);
+		item->addByte("Available", 1);
+	}
+	{
+		Aurora::GFF3WriterStructPtr item = avail->addStruct();
+		item->addSint32("Planet", 6);
+		item->addByte("Available", 1);
+	}
+
+	Aurora::GFF3WriterListPtr selectable = root->addList("PlanetSelectable");
+	{
+		Aurora::GFF3WriterStructPtr item = selectable->addStruct();
+		item->addSint32("Planet", 6);
+		item->addByte("Selectable", 1);
+	}
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	const Aurora::GFF3Struct &loaded = gff.getTopLevel();
+
+	EXPECT_EQ(loaded.getSint("SelectedPlanet"), 6);
+
+	std::map<int, bool> available;
+	for (const auto &entry : loaded.getList("PlanetAvailable")) {
+		if (!entry)
+			continue;
+		available[entry->getSint("Planet")] = entry->getUint("Available") != 0;
+	}
+	EXPECT_TRUE(available[5]);
+	EXPECT_TRUE(available[6]);
+
+	std::map<int, bool> select;
+	for (const auto &entry : loaded.getList("PlanetSelectable")) {
+		if (!entry)
+			continue;
+		select[entry->getSint("Planet")] = entry->getUint("Selectable") != 0;
+	}
+	EXPECT_TRUE(select[6]);
 }

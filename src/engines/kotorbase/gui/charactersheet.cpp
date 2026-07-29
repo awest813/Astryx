@@ -123,8 +123,10 @@ void GUI::populateAbilitiesSheet(Creature &creature) {
 		const Common::UString score = Common::composeString(info.getAbilityScore(kAbilityTags[i].ability));
 		const Common::UString mod = formatAbilityModifier(info.getAbilityModifier(kAbilityTags[i].ability));
 
-		setStatPairMany((const char *const[]){ kAbilityTags[i].pointTag, kAbilityTags[i].valTag, kAbilityTags[i].legacyPointTag },
-			3, score);
+		const char *const scoreTags[] = {
+			kAbilityTags[i].pointTag, kAbilityTags[i].valTag, kAbilityTags[i].legacyPointTag
+		};
+		setStatPairMany(scoreTags, 3, score);
 		setWidgetText(kAbilityTags[i].modTag, mod);
 	}
 

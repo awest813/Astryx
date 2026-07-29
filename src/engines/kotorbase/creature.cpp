@@ -4,6 +4,7 @@ either version 3 * of the License, or (at your option) any later version. * * xo
 without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the * GNU General Public License for more details. * * You should have received a copy of the GNU General Public License * along with xoreos. If not, see <http://www.gnu.org/licenses/>. */
 /** @file *  Creature within an area in KotOR games. */
 #include <cassert>
+#include <cmath>
 #include "external/glm/gtc/type_ptr.hpp"
 #include "src/common/util.h"
 #include "src/common/maths.h"
@@ -273,13 +274,23 @@ namespace KotORBase {
 		const Aurora::GFF3Struct &instance,
 		const Aurora::GFF3Struct *blueprint) {
 			_info = CreatureInfo(instance);
+
 			// General properties
-			if (blueprint)		loadProperties(*blueprint);
-			// Blueprint	loadProperties(instance, false);
-			// Instance	// Appearance
-			if (_appearance == Aurora::kFieldIDInvalid)		throw Common::Exception("Creature without an appearance");
+			if (blueprint)
+				loadProperties(*blueprint); // Blueprint
+			loadProperties(instance, false); // Instance
+
+			// Appearance
+			if (_appearance == Aurora::kFieldIDInvalid)
+				throw Common::Exception("Creature without an appearance");
+
 			loadEquippedModel();
-			// Position	setPosition(instance.getDouble("XPosition"),	            instance.getDouble("YPosition"),	            instance.getDouble("ZPosition"));
+
+			// Position
+			setPosition(instance.getDouble("XPosition"),
+			            instance.getDouble("YPosition"),
+			            instance.getDouble("ZPosition"));
+
 			// Orientation
 			float bearingX = instance.getDouble("XOrientation");
 			float bearingY = instance.getDouble("YOrientation");
@@ -288,7 +299,9 @@ namespace KotORBase {
 		void Creature::loadProperties(
 		const Aurora::GFF3Struct &gff,
 		bool clearScripts) {
-			// Tag	_tag = gff.getString("Tag", _tag);
+			// Tag
+			_tag = gff.getString("Tag", _tag);
+
 			// Name
 			Aurora::LocString firstName;
 			gff.getLocString("FirstName", firstName);
@@ -296,24 +309,52 @@ namespace KotORBase {
 			gff.getLocString("LastName", lastName);
 			if (!firstName.empty()) {
 				_name = firstName.getString();
-				if (!lastName.empty())			_name += " " + lastName.getString();
+				if (!lastName.empty())
+					_name += " " + lastName.getString();
 			}
-			// Description	_description = gff.getString("Description", _description);
-			// Portrait	loadPortrait(gff);
-			// Equipment	loadEquipment(gff);
-			// Abilities	loadAbilities(gff);
-			// Appearance	_appearance = gff.getUint("Appearance_Type", _appearance);
-			// Static	_static = gff.getBool("Static", _static);
-			// Usable	_usable = gff.getBool("Useable", _usable);
-			// PC	_isPC = gff.getBool("IsPC", _isPC);
-			// Gender	_gender = Gender(gff.getUint("Gender"));
-			// Race	_race = Race(gff.getSint("Race", _race));
+
+			// Description
+			_description = gff.getString("Description", _description);
+
+			// Portrait
+			loadPortrait(gff);
+
+			// Equipment
+			loadEquipment(gff);
+
+			// Abilities
+			loadAbilities(gff);
+
+			// Appearance
+			_appearance = gff.getUint("Appearance_Type", _appearance);
+
+			// Static
+			_static = gff.getBool("Static", _static);
+
+			// Usable
+			_usable = gff.getBool("Useable", _usable);
+
+			// PC
+			_isPC = gff.getBool("IsPC", _isPC);
+
+			// Gender
+			_gender = Gender(gff.getUint("Gender"));
+
+			// Race
+			_race = Race(gff.getSint("Race", _race));
 			_subRace = SubRace(gff.getSint("SubraceIndex", _subRace));
-			// Hit Points	_currentHitPoints = gff.getSint("CurrentHitPoints", _maxHitPoints);
+
+			// Hit Points
+			_currentHitPoints = gff.getSint("CurrentHitPoints", _maxHitPoints);
 			_maxHitPoints = gff.getSint("MaxHitPoints", _currentHitPoints);
 			_minOneHitPoint = gff.getBool("Min1HP", _minOneHitPoint);
-			// Faction	_faction = Faction(gff.getUint("FactionID", _faction));
-			// Scripts	readScripts(gff, clearScripts);
+
+			// Faction
+			_faction = Faction(gff.getUint("FactionID", _faction));
+
+			// Scripts
+			readScripts(gff, clearScripts);
+
 			_conversation = gff.getString("Conversation", _conversation);
 			setSoundSet(gff.getUint("SoundSetFile", Aurora::kFieldIDInvalid));
 		}
@@ -519,6 +560,7 @@ namespace KotORBase {
 				setMaxForcePoints(info.getMaxForcePoints());
 				setForcePoints(info.getForcePoints());
 			}
+			setCurrentXP(info.getExperience());
 			reloadEquipment();
 			loadEquippedModel();
 		}
@@ -527,6 +569,7 @@ namespace KotORBase {
 			info.setHitPoints(_currentHitPoints, _maxHitPoints);
 			info.setForcePoints(getForcePoints());
 			info.setMaxForcePoints(getMaxForcePoints());
+			info.setExperience(getCurrentXP());
 			return info;
 		}
 		const Common::UString &Creature::getCursor()
@@ -812,6 +855,103 @@ namespace KotORBase {
 		const {
 			return _lastHostileActor;
 		}
+
+		Object *Creature::getLastKiller() const {
+			return _lastKiller;
+		}
+
+		void Creature::setLastKiller(Object *killer) {
+			_lastKiller = killer;
+		}
+
+		void Creature::recordDamageTaken(int amount, int damageType, Object *damager) {
+			_lastDamageTotal = amount;
+			_lastDamageType = damageType;
+			if (damager)
+				_lastHostileActor = damager;
+		}
+
+		int Creature::getDamageDealtByType(int damageType) const {
+			if (damageType == 0)
+				return _lastDamageTotal;
+			if ((_lastDamageType & damageType) == 0)
+				return -1;
+			return _lastDamageTotal;
+		}
+
+		int Creature::getTotalDamageDealt() const {
+			return _lastDamageTotal;
+		}
+
+		void Creature::recordAttackResult(int result, Object *weapon) {
+			_lastAttackResult = result;
+			if (weapon)
+				_lastWeaponUsed = weapon;
+		}
+
+		int Creature::getLastAttackResult() const {
+			return _lastAttackResult;
+		}
+
+		Object *Creature::getLastWeaponUsed() const {
+			return _lastWeaponUsed;
+		}
+
+		void Creature::addImmunity(int immunityType) {
+			_immunities.insert(immunityType);
+		}
+
+		void Creature::addSpellImmunity(int spellId) {
+			_spellImmunities.insert(spellId);
+		}
+
+		bool Creature::isImmune(int immunityType) const {
+			return _immunities.find(immunityType) != _immunities.end();
+		}
+
+		bool Creature::isImmuneToSpell(int spellId) const {
+			return _spellImmunities.find(spellId) != _spellImmunities.end();
+		}
+
+		void Creature::adjustDamageImmunity(int damageType, int percentDelta) {
+			int &value = _damageImmunityPercent[damageType];
+			value += percentDelta;
+			if (value < 0)
+				value = 0;
+			if (value > 100)
+				value = 100;
+		}
+
+		int Creature::getDamageImmunityPercent(int damageType) const {
+			std::map<int, int>::const_iterator it = _damageImmunityPercent.find(damageType);
+			return it != _damageImmunityPercent.end() ? it->second : 0;
+		}
+
+		void Creature::clearImmunities() {
+			_immunities.clear();
+			_spellImmunities.clear();
+			_damageImmunityPercent.clear();
+		}
+
+		void Creature::surrenderToEnemies(bool retainBuffs) {
+			cancelCombat();
+			clearActions();
+			setFaction(kFactionSurrender1);
+			if (!retainBuffs) {
+				_effects.clear();
+				clearImmunities();
+			}
+		}
+
+		int Creature::getDamageResistance(int damageType) const {
+			std::map<int, int>::const_iterator it = _damageResistance.find(damageType);
+			return it != _damageResistance.end() ? it->second : 0;
+		}
+
+		void Creature::setDamageResistance(int damageType, int amount) {
+			_damageResistance[damageType] = amount > 0 ? amount : 0;
+		}
+
 		int Creature::getLastCombatFeatUsed()
 		const {
 			return _lastCombatFeatUsed;
@@ -944,10 +1084,55 @@ namespace KotORBase {
 			}
 		}
 
-		bool Creature::isFlankedBy(Creature *attacker) {
-			// Flanking requires 2 opponents on opposite sides - requires area context.
-			// Without it, return false (conservative).
-			(void)attacker;
+		bool Creature::areOnOppositeSides(float defX, float defY,
+		                                  float aX, float aY,
+		                                  float bX, float bY) {
+			const float ax = aX - defX;
+			const float ay = aY - defY;
+			const float bx = bX - defX;
+			const float by = bY - defY;
+			const float lenA = std::sqrt(ax * ax + ay * ay);
+			const float lenB = std::sqrt(bx * bx + by * by);
+			if (lenA < 0.01f || lenB < 0.01f)
+				return false;
+			const float dot = (ax / lenA) * (bx / lenB) + (ay / lenA) * (by / lenB);
+			// ~120° or more apart (classic flanking cone).
+			return dot < -0.5f;
+		}
+
+		bool Creature::isFlankedBy(Creature *attacker, Area *area) {
+			if (!attacker || attacker == this || isDead() || !area)
+				return false;
+
+			float dx, dy, dz;
+			getPosition(dx, dy, dz);
+			float ax, ay, az;
+			attacker->getPosition(ax, ay, az);
+
+			const float threatRange = 5.0f;
+			const bool attackerHostile = attacker->isEnemy();
+
+			for (Creature *other : area->getCreatures()) {
+				if (!other || other == this || other == attacker || other->isDead())
+					continue;
+
+				// Ally of the attacker: same hostility polarity toward the party.
+				if (other->isEnemy() != attackerHostile)
+					continue;
+
+				if (getDistanceTo(other) > threatRange)
+					continue;
+
+				// Prefer creatures already engaged with us, but allow nearby melee allies.
+				if (other->isInCombat() && other->getAttackTarget() != this)
+					continue;
+
+				float ox, oy, oz;
+				other->getPosition(ox, oy, oz);
+				if (areOnOppositeSides(dx, dy, ax, ay, ox, oy))
+					return true;
+			}
+
 			return false;
 		}
 		void Creature::startCombat(Object *target,
@@ -1017,7 +1202,24 @@ namespace KotORBase {
 			}
 		}
 		void Creature::applyEffect(
-		const Engines::KotORBase::Effect &effect) {
+		const Engines::KotORBase::Effect &effect,
+		float durationOverride) {
+			auto timed = [&](EffectType type, float defaultDuration, int value = 0) {
+				const float duration = durationOverride >= 0.0f ? durationOverride : defaultDuration;
+				if (duration <= 0.0f) {
+					// DURATION_TYPE_INSTANT: apply mechanical impact, do not linger.
+					ActiveEffect e;
+					e.type = type;
+					e.duration = 0.0f;
+					e.value = value;
+					e.spellId = effect.getSpellId();
+					applyEffect(e);
+					removeEffect(e);
+					return;
+				}
+				applyEffect(type, duration, value, effect.getSpellId());
+			};
+
 			int current = getCurrentHitPoints();
 			switch (effect.getType()) {
 				case kKotOREffectHeal: {
@@ -1029,13 +1231,23 @@ namespace KotORBase {
 					break;
 				}
 				case kKotOREffectDamage: {
+					int amount = effect.getAmount();
+					int damageType = effect.getDamageType();
+					int immunity = getDamageImmunityPercent(damageType);
+					if (immunity > 0)
+						amount = amount - (amount * immunity) / 100;
+					if (amount < 0)
+						amount = 0;
+					recordDamageTaken(amount, damageType);
 					int minHp = getMinOneHitPoints() ? 1 : 0;
-					int damaged = current - effect.getAmount();
+					int damaged = current - amount;
 					if (damaged < minHp)
 						damaged = minHp;
 					setCurrentHitPoints(damaged);
 					if (getCurrentHitPoints() <= 0) {
 						cancelCombat();
+						if (_lastHostileActor)
+							_lastKiller = _lastHostileActor;
 						handleDeath();
 					}
 					break;
@@ -1050,28 +1262,113 @@ namespace KotORBase {
 					break;
 				}
 				case kKotOREffectKnockdown:
-					applyEffect(kEffectKnockdown, 3.0f, 0);
+					timed(kEffectKnockdown, 3.0f);
 					break;
 				case kKotOREffectStunned:
 				case kKotOREffectParalyze:
-					applyEffect(kEffectStun, 6.0f, 0);
+					timed(kEffectStun, 6.0f);
 					break;
 				case kKotOREffectHaste:
 				case kKotOREffectMovementSpeedIncrease:
-					applyEffect(kEffectSpeed, 0.0f, 50);
+					timed(kEffectSpeed, durationOverride >= 0.0f ? durationOverride : 30.0f, 50);
 					break;
 				case kKotOREffectPoison:
-					applyEffect(kEffectPoison, effect.getDamageType() > 0 ? static_cast<float>(effect.getDamageType()) : 6.0f,
-					            effect.getAmount());
+					timed(kEffectPoison,
+					      effect.getDamageType() > 0 ? static_cast<float>(effect.getDamageType()) : 6.0f,
+					      effect.getAmount());
+					break;
+				case kKotOREffectImmunity:
+					addImmunity(effect.getAmount());
+					break;
+				case kKotOREffectSpellImmunity:
+					addSpellImmunity(effect.getAmount());
+					break;
+				case kKotOREffectDamageImmunityIncrease:
+					adjustDamageImmunity(effect.getDamageType(), effect.getAmount());
+					break;
+				case kKotOREffectSleep:
+					if (!isImmune(kImmunityTypeSleep) && !isImmune(kImmunityTypeMindSpells))
+						timed(kEffectStun, 12.0f);
+					break;
+				case kKotOREffectRegenerate:
+					applyEffect(kEffectHeal, 0.0f, effect.getAmount(), effect.getSpellId());
+					break;
+				case kKotOREffectTemporaryForcePoints: {
+					int fp = getForcePoints() + effect.getAmount();
+					setForcePoints(fp);
+					break;
+				}
+				case kKotOREffectDamageResistance:
+					setDamageResistance(effect.getDamageType(), effect.getAmount());
+					break;
+				case kKotOREffectConcealment:
+					_concealment = effect.getAmount();
+					if (_concealment < 0) _concealment = 0;
+					if (_concealment > 100) _concealment = 100;
+					break;
+				case kKotOREffectAssuredHit:
+					_assuredHit = true;
+					break;
+				case kKotOREffectAssuredDeflection:
+					adjustBlasterDeflection(effect.getAmount() > 0 ? effect.getAmount() : 50);
+					break;
+				case kKotOREffectEntangle:
+				case kKotOREffectDroidStun:
+					timed(kEffectStun, 6.0f);
+					break;
+				case kKotOREffectBodyFuel:
+					applyEffect(kEffectHeal, 0.0f, effect.getAmount() > 0 ? effect.getAmount() : 5, effect.getSpellId());
+					break;
+				case kKotOREffectDamageIncrease:
+					adjustAttackModifier(0); // damage tracked via effect amount on apply path
+					break;
+				case kKotOREffectForceResistanceIncrease:
+					adjustForceResistance(effect.getAmount());
+					break;
+				case kKotOREffectForceResistanceDecrease:
+					adjustForceResistance(-effect.getAmount());
+					break;
+				case kKotOREffectBlasterDeflectionIncrease:
+					adjustBlasterDeflection(effect.getAmount());
+					break;
+				case kKotOREffectBlasterDeflectionDecrease:
+					adjustBlasterDeflection(-effect.getAmount());
+					break;
+				case kKotOREffectDispelMagicAll:
+					clearActiveEffects();
+					break;
+				case kKotOREffectAreaOfEffect:
+				case kKotOREffectForceJump:
+				case kKotOREffectBeam:
+				case kKotOREffectForceResisted:
+				case kKotOREffectForceFizzle:
+				case kKotOREffectHitPointChangeWhenDying:
+					// Visual / marker effects — no further mechanical state for P1.
 					break;
 				default:
 					break;
 			}
 		}
+
+		void Creature::clearActiveEffects() {
+			while (!_effects.empty()) {
+				removeEffect(_effects.back());
+				_effects.pop_back();
+			}
+		}
+
+		bool Creature::removeActiveEffectAt(size_t index) {
+			if (index >= _effects.size())
+				return false;
+			removeEffect(_effects[index]);
+			_effects.erase(_effects.begin() + static_cast<std::ptrdiff_t>(index));
+			return true;
+		}
 		void Creature::executeAttack(Object *target,
 		int babPenalty,
 		int damageMod,
-		int activeFeat) {
+		int activeFeat,
+		Area *area) {
 			if (!target) {
 				cancelCombat();
 				return;
@@ -1087,8 +1384,10 @@ namespace KotORBase {
 			}
 			// Track hostility for NWScript callers (GetLastHostileActor/GetLastAttacker).
 			if (targetCreature)		targetCreature->_lastHostileActor = this;
-			const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
-			const Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
+			Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
+			Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
+			Object *weaponUsed = rightWeapon ? static_cast<Object *>(rightWeapon)
+			                                 : static_cast<Object *>(leftWeapon);
 			// Determine attack stat: Dex for ranged, Str for melee.
 			bool ranged = (rightWeapon && rightWeapon->isRangedWeapon()) ||
 			              (leftWeapon  && leftWeapon->isRangedWeapon());
@@ -1097,9 +1396,17 @@ namespace KotORBase {
 
 			// Flanking bonus (+2)
 			int flankingMod = 0;
-			if (!ranged && targetCreature && targetCreature->isFlankedBy(this)) {
+			if (!ranged && targetCreature && targetCreature->isFlankedBy(this, area)) {
 				flankingMod = 2;
 				debugC(Common::kDebugEngineLogic, 1, "Attacker %s gains flanking bonus vs %s", getName().c_str(), target->getName().c_str());
+			}
+
+			// Ranged attacks require clear line of sight past closed doors.
+			if (ranged && area && !area->hasLineOfSight(this, target)) {
+				debugC(Common::kDebugEngineLogic, 1, "Object \"%s\" ranged attack blocked by cover vs \"%s\"",
+				       _tag.c_str(), target->getTag().c_str());
+				recordAttackResult(kAttackResultMiss, weaponUsed);
+				return;
 			}
 
 			// Feat modifiers: attack/damage bonuses from active combat feats.
@@ -1159,15 +1466,21 @@ namespace KotORBase {
 				int deflectTotal = deflectD20 + deflectBonus;
 				if (deflectTotal >= attackRoll) {
 					debugC(Common::kDebugEngineLogic, 1,			       "DEFLECTED: Blaster bolt from \"%s\" deflected by \"%s\" (Deflect %d vs Attack %d)",			       _tag.c_str(), targetCreature->getTag().c_str(), deflectTotal, attackRoll);
-					// Trigger a deflect animation if possible			targetCreature->playAnimation("g8g1", false, 0.4f);
-					// Quick block/deflect animation			return;
+					// Trigger a deflect animation if possible
+					targetCreature->playAnimation("g8g1", false, 0.4f);
+					recordAttackResult(kAttackResultMiss, weaponUsed);
+					// Quick block/deflect animation
+					return;
 				}
 			}
 			// Natural 1 always misses;
 			// natural 20 always hits.
 			bool hit = (d20 == 20) || (d20 != 1 && attackRoll >= targetAC);
+			if (_assuredHit)
+				hit = true;
 			if (!hit) {
 				debugC(Common::kDebugEngineLogic, 1,		       "Object \"%s\" missed \"%s\" (d20=%d bab=%d abMod=%d feat=%d effect=%d total=%d vs AC %d)",		       _tag.c_str(), target->getTag().c_str(),		       d20, bab + babPenalty, abMod, featAttackMod, _attackModifier, attackRoll, targetAC);
+				recordAttackResult(kAttackResultMiss, weaponUsed);
 				return;
 			}
 			// --- Critical hit system ---	// Threat on natural 20 (weapons may lower this, but 20 is the universal minimum).	// Critical Strike feat: threat on 19-20;
@@ -1189,7 +1502,9 @@ namespace KotORBase {
 			if (rightWeapon && leftWeapon)		damage = computeWeaponDamage(leftWeapon) + computeWeaponDamage(rightWeapon);
 			else
 			if (rightWeapon)		damage = computeWeaponDamage(rightWeapon);
-			else		// Unarmed: 1 + Str modifier (minimum 1 die).		damage = 1 + _info.getAbilityModifier(kAbilityStrength);
+			else
+				// Unarmed: 1 + Str modifier (minimum 1 die).
+				damage = 1 + _info.getAbilityModifier(kAbilityStrength);
 			// On a confirmed critical, double the weapon dice (not the fixed modifiers).
 			if (isCrit) {
 				int dieDamage;
@@ -1212,14 +1527,16 @@ namespace KotORBase {
 					dieDamage = damage - mod;
 					modDamage  = mod;
 				}
-				// Double the dice portion only.		damage = dieDamage * 2 + modDamage;
+				// Double the dice portion only.
+					damage = dieDamage * 2 + modDamage;
 			}
-			// Apply feat damage bonus.	damage += featDamageMod;
+			// Apply feat damage bonus.
+			damage += featDamageMod;
 			// Sneak Attack (Scoundrel class feature): roll +1d6 per rank when the
 			// target is flat-footed (not currently in combat), flanked, or
 			// knocked down/stunned.
 			bool targetVulnerable = targetCreature && (!targetCreature->isInCombat() ||
-			                                            targetCreature->isFlankedBy(this) ||
+			                                            targetCreature->isFlankedBy(this, area) ||
 			                                            targetCreature->hasEffect(kEffectStun) ||
 			                                            targetCreature->hasEffect(kEffectKnockdown));
 			if (hit && targetVulnerable) {
@@ -1237,11 +1554,40 @@ namespace KotORBase {
 					int i = 0;
 					i < sneakRanks;
 					++i)				sneakDamage += RNG.getNext(1, 7);
-					// 1d6 per rank			damage += sneakDamage;
+					// 1d6 per rank
+					damage += sneakDamage;
 					debugC(Common::kDebugEngineLogic, 1,			       "Sneak Attack x%d: +%d damage on \"%s\"",			       sneakRanks, sneakDamage, target->getTag().c_str());
 				}
 			}
 			if (damage < 1)		damage = 1;
+			int damageType = kDamageTypeBludgeoning;
+			if (rightWeapon && rightWeapon->isRangedWeapon())
+				damageType = kDamageTypeEnergy;
+			else if (rightWeapon)
+				damageType = kDamageTypeSlashing;
+			if (targetCreature) {
+				int resist = targetCreature->getDamageResistance(damageType);
+				if (resist > 0)
+					damage = damage > resist ? damage - resist : 0;
+				int immunity = targetCreature->getDamageImmunityPercent(damageType);
+				if (immunity > 0)
+					damage = damage - (damage * immunity) / 100;
+				if (damage < 1)
+					damage = 1;
+				// Concealment: percent chance the attack is treated as a miss after the hit roll.
+				if (targetCreature->getConcealment() > 0) {
+					int concealRoll = RNG.getNext(1, 101);
+					if (concealRoll <= targetCreature->getConcealment()) {
+						recordAttackResult(kAttackResultMiss, weaponUsed);
+						debugC(Common::kDebugEngineLogic, 1, "Attack concealed against \"%s\"", target->getTag().c_str());
+						return;
+					}
+				}
+				targetCreature->recordDamageTaken(damage, damageType, this);
+			}
+			if (_assuredHit)
+				_assuredHit = false;
+			recordAttackResult(isCrit ? kAttackResultCriticalHitSuccessful : kAttackResultHitSuccessful, weaponUsed);
 			int hp    = target->getCurrentHitPoints() - damage;
 			int minHp = target->getMinOneHitPoints() ? 1 : 0;
 			if (hp < minHp)		hp = minHp;
@@ -1251,6 +1597,7 @@ namespace KotORBase {
 				cancelCombat();
 				if (targetCreature) {
 					targetCreature->cancelCombat();
+					targetCreature->setLastKiller(this);
 					if (targetCreature->handleDeath()) {
 						// Signal the module to award XP to the killer's party.				// We use userDefinedEvent 1007 (already fired by handleCreaturesDeath) — XP				// is awarded there via the module's updateXPOnKill() call.
 					}
@@ -1271,6 +1618,8 @@ namespace KotORBase {
 		bool Creature::handleDeath() {
 			if (!_dead && _currentHitPoints <= 0) {
 				_dead = true;
+				if (!_lastKiller && _lastHostileActor)
+					_lastKiller = _lastHostileActor;
 				if (_model) {
 					_model->clearDefaultAnimations();
 					_model->addDefaultAnimation("dead", 100);
@@ -1531,22 +1880,41 @@ namespace KotORBase {
 			Creature *target = area->findNearestEnemy(this);
 			if (!target)		return;
 			switch (_aiArchetype) {
-				case kAIArchetypeBeastMelee:			// Aggressive rush towards the nearest hostile.			_actions.clear();
+				case kAIArchetypeBeastMelee:
+					// Aggressive rush towards the nearest hostile.
+					_actions.clear();
 				_actions.add(Action(kActionAttackObject, target));
 				_aiCooldown = 2.0f;
 				break;
-				case kAIArchetypeBeastPoison:			// Beasts that prioritize applying poison status effects (e.g., Kinrath).			_actions.clear();
-				_actions.add(Action(kActionAttackObject, target));
-				// TODO: Add Poison Effect chance			_aiCooldown = 1.5f;
+				case kAIArchetypeBeastPoison:
+					// Beasts that prioritize applying poison status effects (e.g., Kinrath).
+					_actions.clear();
+					_actions.add(Action(kActionAttackObject, target));
+					// TODO: Add Poison Effect chance
+					_aiCooldown = 1.5f;
 				break;
-				case kAIArchetypeTacticalHumanoid:			// Standard Mandalorian or mercenary AI.			_actions.clear();
+				case kAIArchetypeTacticalHumanoid:
+					// Standard Mandalorian or mercenary AI.
+					_actions.clear();
 				_actions.add(Action(kActionAttackObject, target));
 				_aiCooldown = 2.0f;
 				break;
-				case kAIArchetypeForceUser:			// Advanced Force-using NPCs (Sith/Dark Jedi).			_actions.clear();
-				_actions.add(Action(kActionAttackObject, target));
-				_aiCooldown = 1.0f;
-				break;
+				case kAIArchetypeForceUser: {
+					_actions.clear();
+					const std::vector<uint32_t> &powers = getCreatureInfo().getForcePowers();
+					const bool canCast = !powers.empty() && getForcePoints() >= 10;
+					if (canCast && getDistanceTo(target) <= 12.0f) {
+						Action spell(kActionCastSpell, target);
+						spell.actionID = static_cast<int>(powers[static_cast<size_t>(RNG.getNext(0, static_cast<int>(powers.size())))]);
+						_actions.add(spell);
+						setForcePoints(std::max(0, getForcePoints() - 10));
+						_aiCooldown = 2.0f;
+					} else {
+						_actions.add(Action(kActionAttackObject, target));
+						_aiCooldown = 1.0f;
+					}
+					break;
+				}
 				default:			break;
 			}
 		}

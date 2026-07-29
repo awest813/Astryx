@@ -312,11 +312,17 @@ void GFF3Writer::write(Common::WriteStream &stream) {
 }
 
 uint32_t GFF3Writer::addLabel(const Common::UString &label) {
-	std::vector<Common::UString>::iterator iter = std::find(_labels.begin(), _labels.end(), label);
+	// GFF3 stores labels in fixed 16-byte slots; keep the in-memory label
+	// table matched to what will actually be written so look-ups round-trip.
+	Common::UString truncated = label;
+	if (truncated.size() > 16)
+		truncated.truncate(16);
+
+	std::vector<Common::UString>::iterator iter = std::find(_labels.begin(), _labels.end(), truncated);
 	if (iter != _labels.end()) {
 		return static_cast<uint32_t>(std::distance(_labels.begin(), iter));
 	} else {
-		_labels.push_back(label);
+		_labels.push_back(truncated);
 		return static_cast<uint32_t>(_labels.size() - 1);
 	}
 }

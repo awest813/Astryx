@@ -54,6 +54,7 @@ public:
 	CreatureInfo();
 	CreatureInfo(const Aurora::GFF3Struct &gff);
 	CreatureInfo(const CharacterGenerationInfo &info);
+	CreatureInfo(const CreatureInfo &other);
 
 	CreatureInfo &operator=(const CreatureInfo &other);
 
@@ -101,6 +102,9 @@ public:
 		uint32_t wisdom { 0 };
 		uint32_t charisma { 0 };
 
+		Abilities() = default;
+		Abilities(const Abilities &other);
+
 		Abilities &operator=(const Abilities &other);
 	};
 
@@ -120,6 +124,9 @@ public:
 		uint32_t repair { 0 };
 		uint32_t security { 0 };
 		uint32_t treatInjury { 0 };
+
+		Skills() = default;
+		Skills(const Skills &other);
 
 		Skills &operator=(const Skills &other);
 	};
@@ -175,6 +182,10 @@ public:
 	bool hasHitPoints() const;
 	void setHitPoints(int current, int max);
 
+	// Experience (persisted in party/PC saves)
+	int getExperience() const;
+	void setExperience(int xp);
+
 private:
 	std::vector<ClassLevel> _levels;
 	Abilities _abilities;
@@ -190,6 +201,7 @@ private:
 	int      _currentHitPoints   { 0 };
 	int      _maxHitPoints       { 0 };
 	bool     _hasHitPoints       { false };
+	int      _experience         { 0 };
 
 	void saveAbilities(Aurora::GFF3WriterStruct &gff) const;
 	void loadAbilities(const Aurora::GFF3Struct &gff);

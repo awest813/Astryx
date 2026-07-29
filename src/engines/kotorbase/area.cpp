@@ -642,8 +642,10 @@ void Area::loadPlaceables(const Aurora::GFF3List &list) {
 		if (placeable) {
 			loadObject(std::make_unique<Placeable>(*placeable));
 
-			_situatedObjects.push_back(static_cast<Placeable *>(_objects.back().get()));
-			_localPathfinding->addStaticObjects(new ObjectWalkmesh(static_cast<Placeable *>(_objects.back().get())));
+			Placeable *obj = static_cast<Placeable *>(_objects.back().get());
+			obj->setPersistent(true);
+			_situatedObjects.push_back(obj);
+			_localPathfinding->addStaticObjects(new ObjectWalkmesh(obj));
 		}
 	}
 }
@@ -653,8 +655,10 @@ void Area::loadDoors(const Aurora::GFF3List &list) {
 		if (door) {
 			loadObject(std::make_unique<Door>(*_module, *door));
 
-			_situatedObjects.push_back(static_cast<Door *>(_objects.back().get()));
-			_localPathfinding->addStaticObjects(new DoorWalkmesh(static_cast<Door *>(_objects.back().get())));
+			Door *obj = static_cast<Door *>(_objects.back().get());
+			obj->setPersistent(true);
+			_situatedObjects.push_back(obj);
+			_localPathfinding->addStaticObjects(new DoorWalkmesh(obj));
 		}
 	}
 }
@@ -1081,6 +1085,62 @@ Creature *Area::findNearestEnemy(Creature *origin) {
 	}
 
 	return nearest;
+}
+
+bool Area::segmentIntersectsCircle(float x0, float y0, float x1, float y1,
+                                   float cx, float cy, float radius) {
+	const float dx = x1 - x0;
+	const float dy = y1 - y0;
+	const float lenSq = dx * dx + dy * dy;
+	if (lenSq < 0.0001f) {
+		const float ddx = cx - x0;
+		const float ddy = cy - y0;
+		return (ddx * ddx + ddy * ddy) <= (radius * radius);
+	}
+
+	float t = ((cx - x0) * dx + (cy - y0) * dy) / lenSq;
+	if (t < 0.0f)
+		t = 0.0f;
+	else if (t > 1.0f)
+		t = 1.0f;
+
+	const float px = x0 + t * dx;
+	const float py = y0 + t * dy;
+	const float ex = cx - px;
+	const float ey = cy - py;
+	return (ex * ex + ey * ey) <= (radius * radius);
+}
+
+bool Area::hasLineOfSight(float x0, float y0, float x1, float y1) const {
+	for (Situated *situated : _situatedObjects) {
+		Door *door = dynamic_cast<Door *>(situated);
+		if (!door || door->isOpen())
+			continue;
+
+		float dx, dy, dz;
+		door->getPosition(dx, dy, dz);
+
+		const float distStart = std::sqrt((dx - x0) * (dx - x0) + (dy - y0) * (dy - y0));
+		const float distEnd   = std::sqrt((dx - x1) * (dx - x1) + (dy - y1) * (dy - y1));
+		// Standing in a doorway does not count as blocked.
+		if (distStart <= 0.6f || distEnd <= 0.6f)
+			continue;
+
+		if (segmentIntersectsCircle(x0, y0, x1, y1, dx, dy, 1.0f))
+			return false;
+	}
+
+	return true;
+}
+
+bool Area::hasLineOfSight(const Object *from, const Object *to) const {
+	if (!from || !to)
+		return false;
+
+	float x0, y0, z0, x1, y1, z1;
+	from->getPosition(x0, y0, z0);
+	to->getPosition(x1, y1, z1);
+	return hasLineOfSight(x0, y0, x1, y1);
 }
 
 void Area::handleCreaturesDeath() {

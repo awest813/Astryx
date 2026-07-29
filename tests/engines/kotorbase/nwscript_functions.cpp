@@ -34,6 +34,7 @@
 
 #include "src/common/maths.h"
 #include "src/common/strutil.h"
+#include "src/common/string.h"
 #include "src/common/ustring.h"
 
 #include "src/engines/kotorbase/creatureinfo.h"
@@ -353,7 +354,7 @@ GTEST_TEST(KotORNWScriptFuncs, seeInvisibleEffectTypeDistinctFromInvisibility) {
 }
 
 GTEST_TEST(KotORNWScriptFuncs, saveSlotDirectoryFormat) {
-	const Common::UString slot = Common::composeString("%06d - Game%d", 3, 3);
+	const Common::UString slot = Common::UString(Common::String::format("%06d - Game%d", 3, 3));
 	EXPECT_EQ(slot, "000003 - Game3");
 }
 

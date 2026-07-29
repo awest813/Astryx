@@ -19,46 +19,25 @@
  */
 
 /** @file
- *  Effect engine type for KotOR games.
+ *  Unit tests for Area line-of-sight geometry helpers.
  */
 
-#include "src/engines/kotorbase/effect.h"
+#include "gtest/gtest.h"
 
-namespace Engines {
+#include "src/engines/kotorbase/area.h"
 
-namespace KotORBase {
+using Engines::KotORBase::Area;
 
-Effect::Effect(KotOREffectType type, int amount, int damageType, int spellId) :
-		_type(type),
-		_amount(amount),
-		_damageType(damageType),
-		_spellId(spellId) {
+GTEST_TEST(LineOfSight, segmentIntersectsCircle) {
+	// Horizontal segment through origin circle.
+	EXPECT_TRUE(Area::segmentIntersectsCircle(-2.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.5f));
+
+	// Segment misses the circle.
+	EXPECT_FALSE(Area::segmentIntersectsCircle(-2.0f, 2.0f, 2.0f, 2.0f, 0.0f, 0.0f, 0.5f));
+
+	// Endpoint inside circle.
+	EXPECT_TRUE(Area::segmentIntersectsCircle(0.0f, 0.0f, 5.0f, 0.0f, 0.2f, 0.0f, 0.5f));
+
+	// Degenerate segment at center.
+	EXPECT_TRUE(Area::segmentIntersectsCircle(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.25f));
 }
-
-KotOREffectType Effect::getType() const {
-	return _type;
-}
-
-int Effect::getAmount() const {
-	return _amount;
-}
-
-int Effect::getDamageType() const {
-	return _damageType;
-}
-
-int Effect::getSpellId() const {
-	return _spellId;
-}
-
-void Effect::setSpellId(int spellId) {
-	_spellId = spellId;
-}
-
-Aurora::NWScript::EngineType *Effect::clone() const {
-	return new Effect(_type, _amount, _damageType, _spellId);
-}
-
-} // End of namespace KotORBase
-
-} // End of namespace Engines

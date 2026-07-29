@@ -47,6 +47,17 @@ void Functions::getTimeMillisecond(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = static_cast<int32_t>(EventMan.getTimestamp());
 }
 
+void Functions::getIsDay(Aurora::NWScript::FunctionContext &ctx) {
+	// Approximate day cycle from wall-clock hours; 6:00–17:59 is day.
+	int hour = static_cast<int32_t>(((EventMan.getTimestamp() / 1000) / 60) / 60) % 24;
+	ctx.getReturn() = (hour >= 6 && hour < 18) ? 1 : 0;
+}
+
+void Functions::getIsNight(Aurora::NWScript::FunctionContext &ctx) {
+	int hour = static_cast<int32_t>(((EventMan.getTimestamp() / 1000) / 60) / 60) % 24;
+	ctx.getReturn() = (hour < 6 || hour >= 18) ? 1 : 0;
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

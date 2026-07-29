@@ -144,6 +144,8 @@ class Area;
 
 class Object;
 
+class Creature;
+
 
 class Event;
 
@@ -1124,6 +1126,97 @@ protected:
 
 	void getSpellTargetLocation(Aurora::NWScript::FunctionContext &ctx);
 
+	void getSpellTarget(Aurora::NWScript::FunctionContext &ctx);
+	void getSpellSaveDC(Aurora::NWScript::FunctionContext &ctx);
+	void getSpellCastItem(Aurora::NWScript::FunctionContext &ctx);
+	void getMetaMagicFeat(Aurora::NWScript::FunctionContext &ctx);
+	void getEffectSpellId(Aurora::NWScript::FunctionContext &ctx);
+	void eventSpellCastAt(Aurora::NWScript::FunctionContext &ctx);
+
+	void getLastKiller(Aurora::NWScript::FunctionContext &ctx);
+	void getDamageDealtByType(Aurora::NWScript::FunctionContext &ctx);
+	void getTotalDamageDealt(Aurora::NWScript::FunctionContext &ctx);
+	void getLastAttackResult(Aurora::NWScript::FunctionContext &ctx);
+	void getLastWeaponUsed(Aurora::NWScript::FunctionContext &ctx);
+
+	void surrenderToEnemies(Aurora::NWScript::FunctionContext &ctx);
+	void actionSurrenderToEnemies(Aurora::NWScript::FunctionContext &ctx);
+	void surrenderByFaction(Aurora::NWScript::FunctionContext &ctx);
+	void surrenderRetainBuffs(Aurora::NWScript::FunctionContext &ctx);
+
+	void effectImmunity(Aurora::NWScript::FunctionContext &ctx);
+	void getIsImmune(Aurora::NWScript::FunctionContext &ctx);
+	void effectDamageImmunityIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectSpellImmunity(Aurora::NWScript::FunctionContext &ctx);
+	void effectSleep(Aurora::NWScript::FunctionContext &ctx);
+	void effectRegenerate(Aurora::NWScript::FunctionContext &ctx);
+	void effectTemporaryForcePoints(Aurora::NWScript::FunctionContext &ctx);
+
+	void effectAreaOfEffect(Aurora::NWScript::FunctionContext &ctx);
+	void getFirstInPersistentObject(Aurora::NWScript::FunctionContext &ctx);
+	void getNextInPersistentObject(Aurora::NWScript::FunctionContext &ctx);
+	void getAreaOfEffectCreator(Aurora::NWScript::FunctionContext &ctx);
+	void applyEffectAtLocation(Aurora::NWScript::FunctionContext &ctx);
+
+	void magicalEffect(Aurora::NWScript::FunctionContext &ctx);
+	void supernaturalEffect(Aurora::NWScript::FunctionContext &ctx);
+	void extraordinaryEffect(Aurora::NWScript::FunctionContext &ctx);
+
+	void effectDamageResistance(Aurora::NWScript::FunctionContext &ctx);
+	void effectConcealment(Aurora::NWScript::FunctionContext &ctx);
+	void effectAssuredHit(Aurora::NWScript::FunctionContext &ctx);
+	void effectAssuredDeflection(Aurora::NWScript::FunctionContext &ctx);
+	void effectEntangle(Aurora::NWScript::FunctionContext &ctx);
+	void effectForceJump(Aurora::NWScript::FunctionContext &ctx);
+	void effectBeam(Aurora::NWScript::FunctionContext &ctx);
+	void effectForceResistanceIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectBodyFuel(Aurora::NWScript::FunctionContext &ctx);
+	void effectDamageIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectHitPointChangeWhenDying(Aurora::NWScript::FunctionContext &ctx);
+	void effectDroidStun(Aurora::NWScript::FunctionContext &ctx);
+	void effectForceResisted(Aurora::NWScript::FunctionContext &ctx);
+	void effectForceFizzle(Aurora::NWScript::FunctionContext &ctx);
+	void effectDispelMagicAll(Aurora::NWScript::FunctionContext &ctx);
+	void effectBlasterDeflectionIncrease(Aurora::NWScript::FunctionContext &ctx);
+	void effectBlasterDeflectionDecrease(Aurora::NWScript::FunctionContext &ctx);
+
+	void speakOneLinerConversation(Aurora::NWScript::FunctionContext &ctx);
+	void addToParty(Aurora::NWScript::FunctionContext &ctx);
+	void removeFromParty(Aurora::NWScript::FunctionContext &ctx);
+	void getIsDay(Aurora::NWScript::FunctionContext &ctx);
+	void getIsNight(Aurora::NWScript::FunctionContext &ctx);
+	void revealMap(Aurora::NWScript::FunctionContext &ctx);
+	void setAILevel(Aurora::NWScript::FunctionContext &ctx);
+	void getLastConversation(Aurora::NWScript::FunctionContext &ctx);
+
+	void getIsListening(Aurora::NWScript::FunctionContext &ctx);
+	void setListening(Aurora::NWScript::FunctionContext &ctx);
+	void setListenPattern(Aurora::NWScript::FunctionContext &ctx);
+	void testStringAgainstPattern(Aurora::NWScript::FunctionContext &ctx);
+	void getMatchedSubstring(Aurora::NWScript::FunctionContext &ctx);
+	void getMatchedSubstringsCount(Aurora::NWScript::FunctionContext &ctx);
+	void setAssociateListenPatterns(Aurora::NWScript::FunctionContext &ctx);
+
+	void getFactionWeakestMember(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionStrongestMember(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionMostDamagedMember(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionLeastDamagedMember(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionGold(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionAverageReputation(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionAverageGoodEvilAlignment(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionAverageLevel(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionAverageXP(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionMostFrequentClass(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionWorstAC(Aurora::NWScript::FunctionContext &ctx);
+	void getFactionBestAC(Aurora::NWScript::FunctionContext &ctx);
+	void changeFactionByFaction(Aurora::NWScript::FunctionContext &ctx);
+
+	void getModuleFileName(Aurora::NWScript::FunctionContext &ctx);
+	void getReflexAdjustedDamage(Aurora::NWScript::FunctionContext &ctx);
+	void getIsPlayableRacialType(Aurora::NWScript::FunctionContext &ctx);
+	void getTargetLocation(Aurora::NWScript::FunctionContext &ctx);
+	void getIsLinkImmune(Aurora::NWScript::FunctionContext &ctx);
+
 
 	void getStealthMode(Aurora::NWScript::FunctionContext &ctx);
 
@@ -1489,6 +1582,7 @@ protected:
 	void getIsInCombat(Aurora::NWScript::FunctionContext &ctx);
 
 	void getLastAttackMode(Aurora::NWScript::FunctionContext &ctx);
+	void getLastAttackType(Aurora::NWScript::FunctionContext &ctx);
 
 	void getLastHostileActor(Aurora::NWScript::FunctionContext &ctx);
 
@@ -2195,6 +2289,180 @@ protected:
 
 	void swmgGetEnemy(Aurora::NWScript::FunctionContext &ctx);
 
+	// Phase 3 SWMG de-stubbing
+	void swmgGetLastEventModelName(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetObjectByName(Aurora::NWScript::FunctionContext &ctx);
+	void swmgPlayAnimation(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetLastBulletHitDamage(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetLastBulletHitTarget(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetLastBulletHitShooter(Aurora::NWScript::FunctionContext &ctx);
+	void swmgAdjustFollowerHitPoints(Aurora::NWScript::FunctionContext &ctx);
+	void swmgOnBulletHit(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetLastFollowerHit(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetLastObstacleHit(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetLastBulletFiredDamage(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetLastBulletFiredTarget(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetObjectName(Aurora::NWScript::FunctionContext &ctx);
+	void swmgOnDeath(Aurora::NWScript::FunctionContext &ctx);
+	void swmgIsFollower(Aurora::NWScript::FunctionContext &ctx);
+	void swmgIsPlayer(Aurora::NWScript::FunctionContext &ctx);
+	void swmgIsEnemy(Aurora::NWScript::FunctionContext &ctx);
+	void swmgIsTrigger(Aurora::NWScript::FunctionContext &ctx);
+	void swmgIsObstacle(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetFollowerHitPoints(Aurora::NWScript::FunctionContext &ctx);
+	void swmgOnDamage(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetLastHPChange(Aurora::NWScript::FunctionContext &ctx);
+	void swmgRemoveAnimation(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetCameraNearClip(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetCameraFarClip(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetCameraClip(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetPlayer(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetObstacleCount(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetObstacle(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetHitPoints(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetMaxHitPoints(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetMaxHitPoints(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetSphereRadius(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetSphereRadius(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetNumLoops(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetNumLoops(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetPosition(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankCount(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankBulletModel(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankGunModel(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankDamage(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankTimeBetweenShots(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankLifespan(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankSpeed(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankTarget(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankBulletModel(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankGunModel(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankDamage(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankTimeBetweenShots(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankLifespan(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankSpeed(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankTarget(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetPlayerInvincibility(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetPlayerMinSpeed(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetPlayerAccelerationPerSecond(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetPlayerInvincibility(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetPlayerMinSpeed(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetPlayerAccelerationPerSecond(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetPlayerOrigin(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetPlayerOrigin(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankHorizontalSpread(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankVerticalSpread(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankSensingRadius(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetGunBankInaccuracy(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankHorizontalSpread(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankVerticalSpread(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankSensingRadius(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetGunBankInaccuracy(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetIsInvulnerable(Aurora::NWScript::FunctionContext &ctx);
+	void swmgStartInvulnerability(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetSoundFrequency(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetSoundFrequency(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetSoundFrequencyIsRandom(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetSoundFrequencyIsRandom(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetSoundVolume(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetSoundVolume(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetPlayerTunnelInfinite(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetPlayerTunnelInfinite(Aurora::NWScript::FunctionContext &ctx);
+
+	// KotOR II SWMG extras
+	void swmgGetSwoopUpgrade(Aurora::NWScript::FunctionContext &ctx);
+	void swmgGetTrackPosition(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetFollowerPosition(Aurora::NWScript::FunctionContext &ctx);
+	void swmgDestroyMiniGameObject(Aurora::NWScript::FunctionContext &ctx);
+	void swmgSetJumpSpeed(Aurora::NWScript::FunctionContext &ctx);
+	void swmgPlayerApplyForce(Aurora::NWScript::FunctionContext &ctx);
+
+	// Phase 3 remaining generic natives
+	void soundObjectSetFixedVariance(Aurora::NWScript::FunctionContext &ctx);
+	void actionForceFollowObject(Aurora::NWScript::FunctionContext &ctx);
+	void soundObjectGetFixedVariance(Aurora::NWScript::FunctionContext &ctx);
+	void randomName(Aurora::NWScript::FunctionContext &ctx);
+	void setItemNonEquippable(Aurora::NWScript::FunctionContext &ctx);
+	void getButtonMashCheck(Aurora::NWScript::FunctionContext &ctx);
+	void setButtonMashCheck(Aurora::NWScript::FunctionContext &ctx);
+	void getLastPlayerDied(Aurora::NWScript::FunctionContext &ctx);
+	void getModuleItemLost(Aurora::NWScript::FunctionContext &ctx);
+	void getModuleItemLostBy(Aurora::NWScript::FunctionContext &ctx);
+	void eventConversation(Aurora::NWScript::FunctionContext &ctx);
+	void setEncounterDifficulty(Aurora::NWScript::FunctionContext &ctx);
+	void getEncounterDifficulty(Aurora::NWScript::FunctionContext &ctx);
+	void actionExamine(Aurora::NWScript::FunctionContext &ctx);
+	void getLastCommand(Aurora::NWScript::FunctionContext &ctx);
+	void getLastAssociateCommand(Aurora::NWScript::FunctionContext &ctx);
+	void getLastDisarmed(Aurora::NWScript::FunctionContext &ctx);
+	void getLastDisturbed(Aurora::NWScript::FunctionContext &ctx);
+	void getLastLocked(Aurora::NWScript::FunctionContext &ctx);
+	void getLastUnlocked(Aurora::NWScript::FunctionContext &ctx);
+	void versusAlignmentEffect(Aurora::NWScript::FunctionContext &ctx);
+	void versusRacialTypeEffect(Aurora::NWScript::FunctionContext &ctx);
+	void versusTrapEffect(Aurora::NWScript::FunctionContext &ctx);
+	void addMultiClass(Aurora::NWScript::FunctionContext &ctx);
+	void actionEquipMostEffectiveArmor(Aurora::NWScript::FunctionContext &ctx);
+	void getIsDawn(Aurora::NWScript::FunctionContext &ctx);
+	void getIsDusk(Aurora::NWScript::FunctionContext &ctx);
+	void getIsEncounterCreature(Aurora::NWScript::FunctionContext &ctx);
+	void getLastPlayerDying(Aurora::NWScript::FunctionContext &ctx);
+	void getStartingLocation(Aurora::NWScript::FunctionContext &ctx);
+	void soundObjectSetVolume(Aurora::NWScript::FunctionContext &ctx);
+	void soundObjectSetPosition(Aurora::NWScript::FunctionContext &ctx);
+	void getLastRespawnButtonPresser(Aurora::NWScript::FunctionContext &ctx);
+	void getIsWeaponEffective(Aurora::NWScript::FunctionContext &ctx);
+	void eventActivateItem(Aurora::NWScript::FunctionContext &ctx);
+	void musicBackgroundSetDelay(Aurora::NWScript::FunctionContext &ctx);
+	void getItemActivatedTargetLocation(Aurora::NWScript::FunctionContext &ctx);
+	void getItemActivatedTarget(Aurora::NWScript::FunctionContext &ctx);
+	void effectDisguise(Aurora::NWScript::FunctionContext &ctx);
+	void getMaxStealthXP(Aurora::NWScript::FunctionContext &ctx);
+	void effectTrueSeeing(Aurora::NWScript::FunctionContext &ctx);
+	void effectTimeStop(Aurora::NWScript::FunctionContext &ctx);
+	void setMaxStealthXP(Aurora::NWScript::FunctionContext &ctx);
+	void effectHorrified(Aurora::NWScript::FunctionContext &ctx);
+	void effectSpellLevelAbsorption(Aurora::NWScript::FunctionContext &ctx);
+	void effectDispelMagicBest(Aurora::NWScript::FunctionContext &ctx);
+	void getCurrentStealthXP(Aurora::NWScript::FunctionContext &ctx);
+	void getNumStackedItems(Aurora::NWScript::FunctionContext &ctx);
+	void effectMissChance(Aurora::NWScript::FunctionContext &ctx);
+	void setCurrentStealthXP(Aurora::NWScript::FunctionContext &ctx);
+	void getCreatureSize(Aurora::NWScript::FunctionContext &ctx);
+	void getLastTrapDetected(Aurora::NWScript::FunctionContext &ctx);
+	void effectDamageShield(Aurora::NWScript::FunctionContext &ctx);
+	void getNearestTrapToObject(Aurora::NWScript::FunctionContext &ctx);
+	void getAttemptedMovementTarget(Aurora::NWScript::FunctionContext &ctx);
+	void getBlockingCreature(Aurora::NWScript::FunctionContext &ctx);
+	void getChallengeRating(Aurora::NWScript::FunctionContext &ctx);
+	void getFoundEnemyCreature(Aurora::NWScript::FunctionContext &ctx);
+	void getMovementRate(Aurora::NWScript::FunctionContext &ctx);
+	void duplicateHeadAppearance(Aurora::NWScript::FunctionContext &ctx);
+	void getIsPlaceableObjectActionPossible(Aurora::NWScript::FunctionContext &ctx);
+	void doPlaceableObjectAction(Aurora::NWScript::FunctionContext &ctx);
+	void exportAllCharacters(Aurora::NWScript::FunctionContext &ctx);
+	void getCreatureMovmentType(Aurora::NWScript::FunctionContext &ctx);
+	void musicBackgroundGetBattleTrack(Aurora::NWScript::FunctionContext &ctx);
+	void getHasInventory(Aurora::NWScript::FunctionContext &ctx);
+	void getStrRefSoundDuration(Aurora::NWScript::FunctionContext &ctx);
+	void soundObjectGetPitchVariance(Aurora::NWScript::FunctionContext &ctx);
+	void soundObjectSetPitchVariance(Aurora::NWScript::FunctionContext &ctx);
+	void soundObjectGetVolume(Aurora::NWScript::FunctionContext &ctx);
+	void setFormation(Aurora::NWScript::FunctionContext &ctx);
+	void setForcePowerUnsuccessful(Aurora::NWScript::FunctionContext &ctx);
+	void setAreaFogColor(Aurora::NWScript::FunctionContext &ctx);
+	void changeItemCost(Aurora::NWScript::FunctionContext &ctx);
+	void getIsLiveContentAvailable(Aurora::NWScript::FunctionContext &ctx);
+	void getIsPoisoned(Aurora::NWScript::FunctionContext &ctx);
+	void cancelPostDialogCharacterSwitch(Aurora::NWScript::FunctionContext &ctx);
+	void suppressStatusSummaryEntry(Aurora::NWScript::FunctionContext &ctx);
+	void getCheatCode(Aurora::NWScript::FunctionContext &ctx);
+	void setMusicVolume(Aurora::NWScript::FunctionContext &ctx);
+	void createItemOnFloor(Aurora::NWScript::FunctionContext &ctx);
+	void setAvailableNPCId(Aurora::NWScript::FunctionContext &ctx);
+	void yavinHackCloseDoor(Aurora::NWScript::FunctionContext &ctx);
+
+
 
 
 	void getLastItemEquipped(Aurora::NWScript::FunctionContext &ctx);
@@ -2248,6 +2516,16 @@ private:
 	Aurora::NWScript::Object *_factionIterRef { nullptr };
 	std::vector<Object *> _factionIterObjects;
 	size_t _factionIterIndex { 0 };
+
+	Creature *_effectIterCreature { nullptr };
+	size_t _effectIterIndex { 0 };
+
+	// State for GetFirstInPersistentObject / GetNextInPersistentObject
+	std::vector<Object *> _persistentIterObjects;
+	size_t _persistentIterIndex { 0 };
+
+	// Matched substrings from TestStringAgainstPattern
+	std::vector<Common::UString> _matchedSubstrings;
 
 	// Context state for inventory-disturb and item-activation events
 	int _lastInventoryDisturbType { 0 };

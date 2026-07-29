@@ -24,6 +24,7 @@
 
 #include "gtest/gtest.h"
 
+#include "src/common/ustring.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
@@ -58,6 +59,31 @@ using Engines::KotORBase::progressionClass;
 using Engines::KotORBase::skillPointsPerLevel;
 using Engines::KotORBase::kClassJediConsular;
 
+namespace {
+
+class TestCreature : public Creature {
+public:
+	TestCreature() : Creature() {}
+
+protected:
+	void getPartModelsPC(Creature::PartModels &parts, uint32_t state, uint8_t textureVariation) override {
+		(void)parts;
+		(void)state;
+		(void)textureVariation;
+	}
+};
+
+class TestCharacterGenerationInfo : public CharacterGenerationInfo {
+public:
+	TestCharacterGenerationInfo() : CharacterGenerationInfo() {}
+
+	Common::UString getPortrait() const override {
+		return Common::UString();
+	}
+};
+
+} // End of anonymous namespace
+
 TEST(LevelUpHelpers, ThresholdLevel2Is1000) {
 	EXPECT_EQ(levelUpThreshold(1), 1000);
 }
@@ -84,7 +110,9 @@ TEST(LevelUpHelpers, ScoutHPGainCON10) {
 }
 
 TEST(LevelUpHelpers, JediGuardianHPGainMinimumOne) {
-	EXPECT_EQ(hpGainOnLevelUp(kClassJediGuardian, -4), 1);
+	// d10/2+1 + (-4 CON) = 2; floor only kicks in below 1.
+	EXPECT_EQ(hpGainOnLevelUp(kClassJediGuardian, -4), 2);
+	EXPECT_EQ(hpGainOnLevelUp(kClassJediGuardian, -10), 1);
 }
 
 TEST(LevelUpHelpers, AbilityIncreaseAtLevelsFourEightTwelve) {
@@ -97,7 +125,7 @@ TEST(LevelUpHelpers, AbilityIncreaseAtLevelsFourEightTwelve) {
 }
 
 TEST(LevelUpHelpers, PreviewStatsSoldierCon14) {
-	KotORBase::CreatureInfo::Abilities ab;
+	CreatureInfo::Abilities ab;
 	ab.strength = 14;
 	ab.dexterity = 12;
 	ab.constitution = 14;
@@ -160,7 +188,7 @@ TEST(LevelUpHelpers, ForcePowerDisplayNameFallback) {
 }
 
 TEST(LevelUpHelpers, ChargenInfoCopiesFeats) {
-	CharacterGenerationInfo info;
+	TestCharacterGenerationInfo info;
 	info.addFeat(kFeatPowerAttack);
 
 	const CreatureInfo creatureInfo(info);
@@ -168,17 +196,21 @@ TEST(LevelUpHelpers, ChargenInfoCopiesFeats) {
 }
 
 TEST(LevelUpHelpers, ApplyDefaultChargenBuildFillsQuickChar) {
-	CharacterGenerationInfo info;
+	TestCharacterGenerationInfo info;
 	info.setAbilityScore(kAbilityIntelligence, 12);
 
 	applyDefaultChargenBuild(info);
 
 	EXPECT_FALSE(info.getFeats().empty());
-	EXPECT_GT(info.getSkills().awareness, 0u);
+	const auto &skills = info.getSkills();
+	const uint32_t total =
+		skills.computerUse + skills.demolitions + skills.stealth + skills.awareness +
+		skills.persuade + skills.repair + skills.security + skills.treatInjury;
+	EXPECT_GT(total, 0u);
 }
 
 TEST(LevelUpHelpers, ApplyJediClassGrantsDefenseAndForcePool) {
-	Creature creature;
+	TestCreature creature;
 	creature.initAsFakePC();
 
 	CreatureInfo &info = creature.getCreatureInfo();

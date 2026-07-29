@@ -43,6 +43,8 @@
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/inventory.h"
+#include "src/engines/kotorbase/objectcontainer.h"
+#include "src/engines/kotorbase/script/container.h"
 #include "src/engines/kotorbase/animationnames.h"
 
 static const float kWalkDistance = 2.0f;
@@ -403,8 +405,31 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 		return;
 	}
 
+	int saveDC = 10 + caster->getHitDice() + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+	bool harmful = spell ? spell->hostile : false;
+
+	// Hostile targeted powers need line of sight past closed doors (before spending FP).
+	if (harmful && action.object && ctx.area && !ctx.area->hasLineOfSight(caster, action.object)) {
+		debugC(Common::kDebugEngineLogic, 1, "Force power %d blocked by cover", action.actionID);
+		caster->popAction();
+		return;
+	}
+
 	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->setLastForcePowerUsed(action.actionID);
+	ctx.area->_module->setSpellScriptContext(action.actionID, caster, action.object, saveDC, harmful);
+	ctx.area->_module->setGlobalNumber("__force_unsuccessful", 0);
+
+	// Prefer data-driven impact scripts from spells.2da when available.
+	// Hardcoded cases below are fallbacks when retail scripts are missing.
+	if (spell && !spell->impactScript.empty()) {
+		caster->playAnimation(harmful ? "castout" : "castself", false);
+		Object *owner = caster;
+		Object *triggerer = action.object ? action.object : caster;
+		ScriptContainer::runScript(spell->impactScript, owner, triggerer);
+		caster->popAction();
+		return;
+	}
 
 	// Apply power effects
 	switch (action.actionID) {
@@ -427,6 +452,8 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					if (!target->rollSavingThrow(kSavingThrowWill, dc)) {
 						target->applyEffect(kEffectStun, 9.0f, 0, action.actionID);
 						debugC(Common::kDebugEngineLogic, 1, "Force Stun SUCCESS on %s", target->getTag().c_str());
+					} else {
+						ctx.area->_module->setGlobalNumber("__force_unsuccessful", 1);
 					}
 				}
 			}
@@ -444,8 +471,9 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 						target->applyEffect(kEffectDamage, 0.0f, level, action.actionID);
 						debugC(Common::kDebugEngineLogic, 1, "Force Push SUCCESS on %s", target->getTag().c_str());
 					} else {
-						// Half damage on save
+						// Half damage on save — still counts as resisted for script queries.
 						target->applyEffect(kEffectDamage, 0.0f, level / 2, action.actionID);
+						ctx.area->_module->setGlobalNumber("__force_unsuccessful", 1);
 					}
 				}
 			}
@@ -467,7 +495,10 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					
 					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
 					bool saved = target->rollSavingThrow(kSavingThrowWill, dc);
-					if (saved) damage /= 2;
+					if (saved) {
+						damage /= 2;
+						ctx.area->_module->setGlobalNumber("__force_unsuccessful", 1);
+					}
 
 					target->applyEffect(kEffectDamage, 0.0f, damage, action.actionID);
 					// Visual effect hook would go here
@@ -499,6 +530,8 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
 						target->applyEffect(kEffectStun, 6.0f, 0, action.actionID);
 						target->applyEffect(kEffectDamage, 0.0f, level * 2, action.actionID);
+					} else {
+						ctx.area->_module->setGlobalNumber("__force_unsuccessful", 1);
 					}
 				}
 			}

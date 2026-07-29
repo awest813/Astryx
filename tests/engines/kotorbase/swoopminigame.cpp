@@ -24,6 +24,7 @@
 
 #include "gtest/gtest.h"
 
+#include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/swoopminigame.h"
 
 using Engines::KotORBase::SwoopMinigame;
@@ -58,4 +59,57 @@ TEST(SwoopMinigame, ActiveUpdateIncreasesSpeed) {
 	swoop.update(1.0f);
 
 	EXPECT_GT(swoop.getSpeed(), 0.0f);
+}
+
+TEST(SwoopMinigame, HitPointsAndInvulnerability) {
+	SwoopMinigame &swoop = SwoopMinigame::get();
+	swoop.reset();
+	swoop.setHitPoints(50.0f);
+	swoop.setMaxHitPoints(100.0f);
+	swoop.startInvulnerability(2.0f);
+	EXPECT_TRUE(swoop.isInvulnerable());
+
+	swoop.onBulletHit(20.0f);
+	EXPECT_FLOAT_EQ(swoop.getHitPoints(), 50.0f);
+
+	swoop.update(3.0f);
+	EXPECT_FALSE(swoop.isInvulnerable());
+	swoop.onDamage(15.0f);
+	EXPECT_FLOAT_EQ(swoop.getHitPoints(), 35.0f);
+	EXPECT_EQ(swoop.getLastEvent(), 4);
+}
+
+TEST(SwoopMinigame, GunBankAndNamedKinds) {
+	SwoopMinigame &swoop = SwoopMinigame::get();
+	swoop.reset();
+	swoop.getGunBank(0).damage = 25.0f;
+	swoop.getGunBank(0).bulletModel = "w_blaster";
+	EXPECT_EQ(swoop.getGunBankCount(), 4);
+	EXPECT_FLOAT_EQ(swoop.getGunBank(0).damage, 25.0f);
+
+	swoop.registerNamedObject("enemy1", 2);
+	swoop.registerNamedObject("follow1", 1);
+	EXPECT_EQ(swoop.getObjectKind("enemy1"), 2);
+	EXPECT_EQ(swoop.getObjectKind("follow1"), 1);
+	EXPECT_TRUE(swoop.hasNamedObject("enemy1"));
+	EXPECT_EQ(swoop.getEnemyCount(), 1);
+	EXPECT_EQ(swoop.getEnemy(0), Common::UString("enemy1"));
+	Object *enemyObj = swoop.getObjectByName("enemy1");
+	ASSERT_TRUE(enemyObj != nullptr);
+	EXPECT_EQ(enemyObj->getTag(), Common::UString("enemy1"));
+
+	swoop.setObjectName("rock_a");
+	swoop.onObstacleHit();
+	EXPECT_EQ(swoop.getLastObstacleHit(), Common::UString("rock_a"));
+	EXPECT_EQ(swoop.getObstacleCount(), 1);
+	EXPECT_TRUE(swoop.getObjectByName("rock_a") != nullptr);
+}
+
+TEST(SwoopMinigame, FollowerHitPoints) {
+	SwoopMinigame &swoop = SwoopMinigame::get();
+	swoop.reset();
+	swoop.setFollowerHitPoints(80.0f);
+	swoop.adjustFollowerHitPoints(-30.0f);
+	EXPECT_FLOAT_EQ(swoop.getFollowerHitPoints(), 50.0f);
+	EXPECT_FLOAT_EQ(swoop.getLastHPChange(), -30.0f);
 }

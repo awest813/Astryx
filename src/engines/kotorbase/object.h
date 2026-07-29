@@ -82,6 +82,8 @@ public:
 	const Common::UString &getTemplateResRef() const;
 	/** Return the object's name. */
 	const Common::UString &getName() const;
+	/** Set the NWScript object tag. */
+	void setTag(const Common::UString &tag) { _tag = tag; }
 	/** Return the object's description. */
 	const Common::UString &getDescription() const;
 	/** Return the object's portrait. */
@@ -239,6 +241,14 @@ public:
 	Common::UString getLocalString(const Common::UString &name) const;
 	void setLocalString(const Common::UString &name, const Common::UString &value);
 
+	// Listening (NWScript bark / pattern matching)
+
+	bool getIsListening() const;
+	void setListening(bool listening);
+	void setListenPattern(const Common::UString &pattern, int number);
+	const Common::UString &getListenPattern(int number) const;
+	void clearListenPatterns();
+
 protected:
 	Common::UString _templateResRef;
 	ObjectType _type; ///< The object's type.
@@ -277,6 +287,9 @@ protected:
 	std::map<Common::UString, int32_t> _localInts;
 	std::map<Common::UString, float>   _localFloats;
 	std::map<Common::UString, Common::UString> _localStrings;
+
+	bool _listening { false };
+	std::map<int, Common::UString> _listenPatterns;
 };
 
 } // End of namespace KotORBase
