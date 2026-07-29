@@ -41,6 +41,9 @@ namespace KotORBase {
 
 class Inventory {
 public:
+	Inventory() = default;
+	Inventory(const Inventory &other);
+
 	Inventory &operator=(const Inventory &other);
 
 	void save(Aurora::GFF3WriterList &list) const;

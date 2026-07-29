@@ -74,10 +74,10 @@ public:
 	void addFeat(uint32_t feat);
 
 protected:
-	Class _class;
-	Gender _gender;
-	Skin _skin;
-	uint8_t _face;
+	Class _class { kClassSoldier };
+	Gender _gender { kGenderMale };
+	Skin _skin { kSkinA };
+	uint8_t _face { 0 };
 	CreatureInfo::Abilities _abilities;
 	CreatureInfo::Skills _skills;
 	std::vector<uint32_t> _feats;

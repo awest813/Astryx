@@ -66,6 +66,10 @@ CreatureInfo::Skills &CreatureInfo::Skills::operator=(const Skills &other) {
 	return *this;
 }
 
+CreatureInfo::Skills::Skills(const Skills &other) {
+	operator=(other);
+}
+
 CreatureInfo::Abilities &CreatureInfo::Abilities::operator=(const Abilities &other) {
 	strength = other.strength;
 	dexterity = other.dexterity;
@@ -75,6 +79,10 @@ CreatureInfo::Abilities &CreatureInfo::Abilities::operator=(const Abilities &oth
 	charisma = other.charisma;
 
 	return *this;
+}
+
+CreatureInfo::Abilities::Abilities(const Abilities &other) {
+	operator=(other);
 }
 
 CreatureInfo::CreatureInfo() {
@@ -117,6 +125,10 @@ CreatureInfo &CreatureInfo::operator=(const CreatureInfo &other) {
 	_experience         = other._experience;
 
 	return *this;
+}
+
+CreatureInfo::CreatureInfo(const CreatureInfo &other) {
+	operator=(other);
 }
 
 void CreatureInfo::save(Aurora::GFF3WriterStruct &gff) const {

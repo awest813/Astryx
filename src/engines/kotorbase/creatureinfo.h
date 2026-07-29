@@ -54,6 +54,7 @@ public:
 	CreatureInfo();
 	CreatureInfo(const Aurora::GFF3Struct &gff);
 	CreatureInfo(const CharacterGenerationInfo &info);
+	CreatureInfo(const CreatureInfo &other);
 
 	CreatureInfo &operator=(const CreatureInfo &other);
 
@@ -101,6 +102,9 @@ public:
 		uint32_t wisdom { 0 };
 		uint32_t charisma { 0 };
 
+		Abilities() = default;
+		Abilities(const Abilities &other);
+
 		Abilities &operator=(const Abilities &other);
 	};
 
@@ -120,6 +124,9 @@ public:
 		uint32_t repair { 0 };
 		uint32_t security { 0 };
 		uint32_t treatInjury { 0 };
+
+		Skills() = default;
+		Skills(const Skills &other);
 
 		Skills &operator=(const Skills &other);
 	};

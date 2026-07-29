@@ -365,6 +365,7 @@ TEST(CinematicScripting, HoldFadeInKeepsScreenBlack) {
 	EXPECT_FLOAT_EQ(opacity, 1.0f);
 
 	holdFadeIn = false;
+	opacity = 0.25f; // resume the in-progress fade once hold is released
 	if (holdFadeIn && fadingIn)
 		opacity = 1.0f;
 

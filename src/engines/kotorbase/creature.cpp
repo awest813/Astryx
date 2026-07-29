@@ -274,13 +274,23 @@ namespace KotORBase {
 		const Aurora::GFF3Struct &instance,
 		const Aurora::GFF3Struct *blueprint) {
 			_info = CreatureInfo(instance);
+
 			// General properties
-			if (blueprint)		loadProperties(*blueprint);
-			// Blueprint	loadProperties(instance, false);
-			// Instance	// Appearance
-			if (_appearance == Aurora::kFieldIDInvalid)		throw Common::Exception("Creature without an appearance");
+			if (blueprint)
+				loadProperties(*blueprint); // Blueprint
+			loadProperties(instance, false); // Instance
+
+			// Appearance
+			if (_appearance == Aurora::kFieldIDInvalid)
+				throw Common::Exception("Creature without an appearance");
+
 			loadEquippedModel();
-			// Position	setPosition(instance.getDouble("XPosition"),	            instance.getDouble("YPosition"),	            instance.getDouble("ZPosition"));
+
+			// Position
+			setPosition(instance.getDouble("XPosition"),
+			            instance.getDouble("YPosition"),
+			            instance.getDouble("ZPosition"));
+
 			// Orientation
 			float bearingX = instance.getDouble("XOrientation");
 			float bearingY = instance.getDouble("YOrientation");
@@ -289,7 +299,9 @@ namespace KotORBase {
 		void Creature::loadProperties(
 		const Aurora::GFF3Struct &gff,
 		bool clearScripts) {
-			// Tag	_tag = gff.getString("Tag", _tag);
+			// Tag
+			_tag = gff.getString("Tag", _tag);
+
 			// Name
 			Aurora::LocString firstName;
 			gff.getLocString("FirstName", firstName);
@@ -297,24 +309,52 @@ namespace KotORBase {
 			gff.getLocString("LastName", lastName);
 			if (!firstName.empty()) {
 				_name = firstName.getString();
-				if (!lastName.empty())			_name += " " + lastName.getString();
+				if (!lastName.empty())
+					_name += " " + lastName.getString();
 			}
-			// Description	_description = gff.getString("Description", _description);
-			// Portrait	loadPortrait(gff);
-			// Equipment	loadEquipment(gff);
-			// Abilities	loadAbilities(gff);
-			// Appearance	_appearance = gff.getUint("Appearance_Type", _appearance);
-			// Static	_static = gff.getBool("Static", _static);
-			// Usable	_usable = gff.getBool("Useable", _usable);
-			// PC	_isPC = gff.getBool("IsPC", _isPC);
-			// Gender	_gender = Gender(gff.getUint("Gender"));
-			// Race	_race = Race(gff.getSint("Race", _race));
+
+			// Description
+			_description = gff.getString("Description", _description);
+
+			// Portrait
+			loadPortrait(gff);
+
+			// Equipment
+			loadEquipment(gff);
+
+			// Abilities
+			loadAbilities(gff);
+
+			// Appearance
+			_appearance = gff.getUint("Appearance_Type", _appearance);
+
+			// Static
+			_static = gff.getBool("Static", _static);
+
+			// Usable
+			_usable = gff.getBool("Useable", _usable);
+
+			// PC
+			_isPC = gff.getBool("IsPC", _isPC);
+
+			// Gender
+			_gender = Gender(gff.getUint("Gender"));
+
+			// Race
+			_race = Race(gff.getSint("Race", _race));
 			_subRace = SubRace(gff.getSint("SubraceIndex", _subRace));
-			// Hit Points	_currentHitPoints = gff.getSint("CurrentHitPoints", _maxHitPoints);
+
+			// Hit Points
+			_currentHitPoints = gff.getSint("CurrentHitPoints", _maxHitPoints);
 			_maxHitPoints = gff.getSint("MaxHitPoints", _currentHitPoints);
 			_minOneHitPoint = gff.getBool("Min1HP", _minOneHitPoint);
-			// Faction	_faction = Faction(gff.getUint("FactionID", _faction));
-			// Scripts	readScripts(gff, clearScripts);
+
+			// Faction
+			_faction = Faction(gff.getUint("FactionID", _faction));
+
+			// Scripts
+			readScripts(gff, clearScripts);
+
 			_conversation = gff.getString("Conversation", _conversation);
 			setSoundSet(gff.getUint("SoundSetFile", Aurora::kFieldIDInvalid));
 		}
@@ -1426,9 +1466,11 @@ namespace KotORBase {
 				int deflectTotal = deflectD20 + deflectBonus;
 				if (deflectTotal >= attackRoll) {
 					debugC(Common::kDebugEngineLogic, 1,			       "DEFLECTED: Blaster bolt from \"%s\" deflected by \"%s\" (Deflect %d vs Attack %d)",			       _tag.c_str(), targetCreature->getTag().c_str(), deflectTotal, attackRoll);
-					// Trigger a deflect animation if possible			targetCreature->playAnimation("g8g1", false, 0.4f);
+					// Trigger a deflect animation if possible
+					targetCreature->playAnimation("g8g1", false, 0.4f);
 					recordAttackResult(kAttackResultMiss, weaponUsed);
-					// Quick block/deflect animation			return;
+					// Quick block/deflect animation
+					return;
 				}
 			}
 			// Natural 1 always misses;
@@ -1460,7 +1502,9 @@ namespace KotORBase {
 			if (rightWeapon && leftWeapon)		damage = computeWeaponDamage(leftWeapon) + computeWeaponDamage(rightWeapon);
 			else
 			if (rightWeapon)		damage = computeWeaponDamage(rightWeapon);
-			else		// Unarmed: 1 + Str modifier (minimum 1 die).		damage = 1 + _info.getAbilityModifier(kAbilityStrength);
+			else
+				// Unarmed: 1 + Str modifier (minimum 1 die).
+				damage = 1 + _info.getAbilityModifier(kAbilityStrength);
 			// On a confirmed critical, double the weapon dice (not the fixed modifiers).
 			if (isCrit) {
 				int dieDamage;
@@ -1483,9 +1527,11 @@ namespace KotORBase {
 					dieDamage = damage - mod;
 					modDamage  = mod;
 				}
-				// Double the dice portion only.		damage = dieDamage * 2 + modDamage;
+				// Double the dice portion only.
+					damage = dieDamage * 2 + modDamage;
 			}
-			// Apply feat damage bonus.	damage += featDamageMod;
+			// Apply feat damage bonus.
+			damage += featDamageMod;
 			// Sneak Attack (Scoundrel class feature): roll +1d6 per rank when the
 			// target is flat-footed (not currently in combat), flanked, or
 			// knocked down/stunned.
@@ -1508,7 +1554,8 @@ namespace KotORBase {
 					int i = 0;
 					i < sneakRanks;
 					++i)				sneakDamage += RNG.getNext(1, 7);
-					// 1d6 per rank			damage += sneakDamage;
+					// 1d6 per rank
+					damage += sneakDamage;
 					debugC(Common::kDebugEngineLogic, 1,			       "Sneak Attack x%d: +%d damage on \"%s\"",			       sneakRanks, sneakDamage, target->getTag().c_str());
 				}
 			}
@@ -1833,15 +1880,22 @@ namespace KotORBase {
 			Creature *target = area->findNearestEnemy(this);
 			if (!target)		return;
 			switch (_aiArchetype) {
-				case kAIArchetypeBeastMelee:			// Aggressive rush towards the nearest hostile.			_actions.clear();
+				case kAIArchetypeBeastMelee:
+					// Aggressive rush towards the nearest hostile.
+					_actions.clear();
 				_actions.add(Action(kActionAttackObject, target));
 				_aiCooldown = 2.0f;
 				break;
-				case kAIArchetypeBeastPoison:			// Beasts that prioritize applying poison status effects (e.g., Kinrath).			_actions.clear();
-				_actions.add(Action(kActionAttackObject, target));
-				// TODO: Add Poison Effect chance			_aiCooldown = 1.5f;
+				case kAIArchetypeBeastPoison:
+					// Beasts that prioritize applying poison status effects (e.g., Kinrath).
+					_actions.clear();
+					_actions.add(Action(kActionAttackObject, target));
+					// TODO: Add Poison Effect chance
+					_aiCooldown = 1.5f;
 				break;
-				case kAIArchetypeTacticalHumanoid:			// Standard Mandalorian or mercenary AI.			_actions.clear();
+				case kAIArchetypeTacticalHumanoid:
+					// Standard Mandalorian or mercenary AI.
+					_actions.clear();
 				_actions.add(Action(kActionAttackObject, target));
 				_aiCooldown = 2.0f;
 				break;

@@ -496,6 +496,18 @@ void Functions::getLastAttackMode(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = feat >= 0 ? feat : 0;
 }
 
+void Functions::getLastAttackType(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (!creature) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	// KotOR attack-type constants are not fully modeled yet; expose the last
+	// recorded attack result so scripts that only check hit/miss still work.
+	ctx.getReturn() = creature->getLastAttackResult();
+}
+
 void Functions::getAttemptedSpellTarget(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));

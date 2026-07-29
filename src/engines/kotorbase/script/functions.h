@@ -1582,6 +1582,7 @@ protected:
 	void getIsInCombat(Aurora::NWScript::FunctionContext &ctx);
 
 	void getLastAttackMode(Aurora::NWScript::FunctionContext &ctx);
+	void getLastAttackType(Aurora::NWScript::FunctionContext &ctx);
 
 	void getLastHostileActor(Aurora::NWScript::FunctionContext &ctx);
 

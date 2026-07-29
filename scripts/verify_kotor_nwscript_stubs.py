@@ -61,6 +61,25 @@ def check_table_alignment(engine: str) -> list[str]:
     if engine == "kotor" and 220 not in pointers:
         errors.append(f"{engine}: missing ApplyEffectToObject (id 220)")
 
+    if engine == "kotor":
+        # Retail KotOR I IDs from xoreos-tools game_kotor.h
+        required = {
+            315: "GetSkillRank",
+            317: "GetLastAttackType",
+            320: "GetIsInCombat",
+            324: "SetLocked",
+        }
+        names = {}
+        for match in PTR_RE.finditer(
+            content[content.find("kFunctionPointers[]") : content.find("kFunctionSignatures[]")]
+        ):
+            names[int(match.group(1))] = match.group(2)
+        for func_id, name in required.items():
+            if names.get(func_id) != name:
+                errors.append(
+                    f"{engine}: id {func_id} expected {name}, got {names.get(func_id)!r}"
+                )
+
     return errors
 
 

@@ -37,6 +37,22 @@ using Engines::KotORBase::Creature;
 using Engines::KotORBase::Inventory;
 using Engines::KotORBase::dropInventoryItem;
 
+namespace {
+
+class TestCreature : public Creature {
+public:
+	TestCreature() : Creature() {}
+
+protected:
+	void getPartModelsPC(Creature::PartModels &parts, uint32_t state, uint8_t textureVariation) override {
+		(void)parts;
+		(void)state;
+		(void)textureVariation;
+	}
+};
+
+} // End of anonymous namespace
+
 // ---------------------------------------------------------------------------
 // Initial state
 // ---------------------------------------------------------------------------
@@ -202,7 +218,7 @@ GTEST_TEST(KotORInventory, assignmentCopiesItems) {
 }
 
 GTEST_TEST(KotORItemActions, dropInventoryItemRemovesStack) {
-	Creature creature;
+	TestCreature creature;
 	creature.getCreatureInfo().addInventoryItem("medpac", 2);
 
 	const auto result = dropInventoryItem(creature, "medpac", 1);
@@ -211,7 +227,7 @@ GTEST_TEST(KotORItemActions, dropInventoryItemRemovesStack) {
 }
 
 GTEST_TEST(KotORItemActions, dropAbsentItemFails) {
-	Creature creature;
+	TestCreature creature;
 	const auto result = dropInventoryItem(creature, "missing_item", 1);
 	EXPECT_FALSE(result.success);
 }

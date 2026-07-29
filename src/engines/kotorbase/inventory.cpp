@@ -53,6 +53,10 @@ Inventory &Inventory::operator=(const Inventory &other) {
 	return *this;
 }
 
+Inventory::Inventory(const Inventory &other) {
+	operator=(other);
+}
+
 void Inventory::save(Aurora::GFF3WriterList &list) const {
 	for (const auto &entry : _items) {
 		const ItemGroup &group = entry.second;

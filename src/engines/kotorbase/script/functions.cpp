@@ -148,8 +148,9 @@ void Functions::getJournalQuestExperience(Aurora::NWScript::FunctionContext &ctx
 }
 
 void Functions::giveGoldToCreature(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
-	int amount = ctx.getParams()[0].getInt();
+	// GiveGoldToCreature(object oTarget, int nAmount)
+	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	int amount = ctx.getParams()[1].getInt();
 
 	if (creature && amount > 0) {
 		creature->getInventory().addGold(amount);
