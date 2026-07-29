@@ -34,4 +34,4 @@ For this smoke pass, triage only:
 - `crash`
 - `progression blocker`
 
-for the supported Taris entry path (`tar_m02aa`). Defer logic/visual/parity/QoL issues unless they block progression.
+for the supported Endar Spire path (`end_m01aa`). Defer logic/visual/parity/QoL issues unless they block progression.

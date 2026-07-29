@@ -27,6 +27,7 @@
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/swoopminigame.h"
 
+using Engines::KotORBase::Object;
 using Engines::KotORBase::SwoopMinigame;
 
 TEST(SwoopMinigame, ObstacleHitSlowsSpeed) {

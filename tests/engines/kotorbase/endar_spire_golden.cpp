@@ -129,7 +129,9 @@ TEST(EndarSpireGoldenPath, OpeningCutsceneStateMachine) {
 	openingPlayed = true;
 	openingPending = true;
 	moduleLoaded = true;
+	EXPECT_TRUE(openingPlayed);
 	EXPECT_TRUE(openingPending);
+	EXPECT_TRUE(moduleLoaded);
 	EXPECT_FALSE(moduleRunning);
 
 	// First enter(): defer HUD, run the in-module beat, then show HUD.

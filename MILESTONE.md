@@ -566,15 +566,15 @@ The bridge from the Endar Spire to the end of the Dantooine module (`danm13` thr
 
 ## Acceptance Criteria
 
-1.  **Data-Driven Spells** — Force Power costs and properties are loaded from `spells.2da`; hardcoded switch-cases in `ActionExecutor` are removed. ✅
-2.  **Alignment Scaling** — Force Power costs scale based on the caster's alignment (opposite side penalty, same side discount); verified for Heal, Shock, and Plague. ✅
+1.  **Data-Driven Spells** — Force Power costs and properties are loaded from `spells.2da`; hardcoded switch-cases in `ActionExecutor` are reduced (C++ fallbacks remain when impact scripts are missing). ✅
+2.  **Alignment Scaling** — Force Power costs scale based on the caster's alignment (opposite side penalty, same side discount); unit-covered for Heal, Shock, and Plague. ✅
 3.  **Lightsaber Deflection** — Implementation of opposed d20 + modifiers vs incoming blaster fire; natural-1 and natural-20 rules apply to the deflection roll. ✅
 4.  **Skill Modifier Parity** — All skill checks (Computer Use, Repair, etc.) now correctly add Ability Modifiers (Int, Wis, etc.) to the base rank. ✅
 5.  **Dynamic Cutscene Reactions** — `performCutsceneAttack` uses RNG-based flinching, dodging, and blocking animations to create fluid, non-repetitive duels. ✅
 6.  **Smoothstep Camera** — Cinematic camera paths use a smoothstep (3t² - 2t³) interpolation instead of linear, providing professional, non-robotic movement. ✅
-7.  **Dantooine Milestones** — 
-    *   Mandalorian Ambush (Grove): Scripted entry and music stingers verified. ✅
-    *   Star Map Reveal: Cinematic sweep and quest state update confirmed. ✅
+7.  **Dantooine Milestones** —
+    *   Mandalorian Ambush (Grove): Scripted entry and music stinger hooks present; **live smoke pending**. 🔶
+    *   Star Map Reveal: Cinematic/quest hooks present; **live smoke pending**. 🔶
 
 ---
 
@@ -608,7 +608,11 @@ The bridge from the Endar Spire to the end of the Dantooine module (`danm13` thr
 
 ## Success Metric
 
-Milestone 6 is **complete** when the Dantooine Star Map sequence plays with full cinematic fluidity, Force Power resource management correctly reflects character alignment, and all planetary encounters through the Jedi Trials are verified stable.
+Milestone 6 **engineering work** is largely landed when Force resource/alignment hooks,
+deflection, and cinematic camera paths exist in-tree. Milestone 6 is **verified** only
+when the Dantooine Star Map sequence and planetary encounters through the Jedi Trials
+pass live smoke (`docs/KOTOR_PROGRESS_TO_DANTOOINE_SMOKE.md`) — that checklist is still
+unchecked.
 
 ---
 
@@ -630,12 +634,14 @@ The complete Star Wars: Knights of the Old Republic I campaign.
 
 ## Acceptance Criteria
 
-1.  **Full NWScript Parity** — All ~850 engine functions are implemented or safely stubbed; the engine no longer logs "unimplemented function" warnings for any KotOR I script.
+1.  **Full NWScript Parity** — All KotOR I engine functions (**786** bindings) are
+    named handlers or explicitly documented no-ops; deepen thin semantics until the
+    campaign critical path no longer softlocks.
 2.  **Planetary Completion** — All major planetary hubs (Tatooine, Manaan, Kashyyyk, Korriban) load and resolve their primary quest arcs correctly.
 3.  **Space Combat & Minigames** — Full implementation of SWMG (Turret) and Swoop Racing physics and logic systems.
 4.  **The Leviathan & Unknown World** — Specialized cutscene and party-split logic for the mid-game and end-game transitions.
 5.  **Star Forge Finale** — The final battle sequence, including the Bastila showdown and the Malak encounter, resolves with full mechanical and cinematic fidelity.
-6.  **Persistence & Saving** — Full support for writing and reloading saved games to disk.
+6.  **Persistence & Saving** — Campaign-proven GFF save/load across act boundaries (writers exist; live round-trips pending).
 
 ---
 
@@ -643,15 +649,15 @@ The complete Star Wars: Knights of the Old Republic I campaign.
 
 ### NWScript & Engine
 - [x] **Function Implementation Batch 1 & 2**: Completed ~50 critical functions for Taris/Dantooine. ✅
-- [x] **Systematic Stubbing**: Register the remaining ~300 unimplemented functions as safe stubs to ensure script stability. ✅
-- [x] **SWMG Minigame Hooks**: Implementation of speed, acceleration, and bullet tracking for space combat sequences. ✅
+- [x] **Systematic Stubbing (historical)**: Remaining slots were once registered as safe stubs for script stability. ✅ — **superseded 2026-07-29:** KotOR I is 786/786 named handlers (0 stubs); deepen thin semantics next.
+- [x] **SWMG Minigame Hooks**: Speed, acceleration, bullet tracking, and named object getters for space combat sequences. ✅ (live fidelity pending)
 
 ### Level-up & Character
-- [ ] **Full Level-up GUI**: Replace the auto-assign path with a manual interface for feat and attribute selection.
+- [ ] **Level-up GUI fidelity**: Manual feat/attribute/Force selection exists; audit vs original tables and keep autolevel as debug fallback only.
 - [ ] **Prestige & Influence**: (KotOR II focus) Prepare the engine foundation for secondary class transitions.
 
 ### Persistence
-- [ ] **Serialization**: Implement the GFF-based save game format for player and world state.
+- [ ] **Serialization fidelity**: GFF save writers/loaders exist; prove campaign round-trips (party, world locals, area state) across modules.
 
 ---
 

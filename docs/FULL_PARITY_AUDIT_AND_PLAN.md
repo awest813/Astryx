@@ -15,12 +15,12 @@ verified Endar Spire → Star Forge playthrough.
 **Astryx is not at full campaign parity.** Early systems engineering is substantial
 (chargen, d20 combat core, party/globals, dialog/journal, partial save, Dantooine-
 oriented cinematics, Pazaak shell). Mid/late campaign content is largely unproven.
-KotOR I NWScript is **100% wired** (785/785 named handlers, 0 generic/SWMG stubs);
+KotOR I NWScript is **100% registered** (786/786 named handlers, 0 generic/SWMG stubs);
 many handlers remain thin vs original semantics and can still softlock plot gates.
 
 | Claim (README / ROADMAP) | Reality |
 |--------------------------|---------|
-| “100% NWScript Coverage” | **100% registered** and **0 `stubFunction` / 0 `stubSWMGFunction` on KotOR I** (785/785 named handlers). Many handlers are still thin/simplified vs original; KotOR II still has stubs. |
+| “100% NWScript Coverage” | **100% registered** and **0 `stubFunction` / 0 `stubSWMGFunction` on KotOR I** (786/786 named handlers). Many handlers are still thin/simplified vs original; KotOR II still has stubs. |
 | Core systems all ✅ (flanking, LOS, full combat AI, stores, minigames) | Partial. Flanking + closed-door LOS exist; Force uses spells.2da impact fallback; AI Force-casts when FP allows. Stores/minigames/live progression still incomplete |
 | “Capable of full experience prologue → Star Forge” | **Aspirational** — Milestone 7 goal, not demonstrated |
 | Milestone 6 complete / M7 active | Plausible as engineering intent; **manual smoke for Endar Spire → Dantooine is entirely unchecked** |
@@ -40,7 +40,7 @@ many handlers remain thin vs original semantics and can still softlock plot gate
 | M2 | Taris beginnings (party, XP, alignment) | ✅ | Unit tests; **manual smoke unchecked** |
 | M3 | Taris Upper City depth | ✅ | Unit tests; area not live-smoke verified |
 | M4 | Dantooine arrival / cinematic natives | ✅ | Unit tests; **manual path unchecked** |
-| M5 | *(missing section in `MILESTONE.md`)* | README claims swoop/Brejik/Hawk | No dedicated milestone section |
+| M5 | *(missing section in `MILESTONE.md`)* | Swoop/Brejik/Hawk claims live in M6/M7 engineering notes | No dedicated milestone section |
 | M6 | Dantooine polish / Force / Star Map | Marked complete | Not end-to-end proven in smoke docs |
 | M7 | Planetary hubs → Star Forge / total parity | Active; level-up + save still listed open | Save writers + level-up GUI exist but **campaign-unproven** |
 
@@ -50,14 +50,14 @@ Source: `src/engines/kotor/script/function_tables.h`
 
 | Metric | Count |
 |--------|------:|
-| Total bindings | **785** |
-| Named real handlers | **785** |
+| Total bindings | **786** |
+| Named real handlers | **786** |
 | `stubFunction` | **0** (KotOR I) |
-| `stubSWMGFunction` | **0** (KotOR I); remaining on KotOR II only |
+| `stubSWMGFunction` | **0** (KotOR I and KotOR II) |
 | Thin / simplified handlers | Many (SWMG depth, audio, formation, late Force) |
 
-KotOR II still routes many natives through generic stubs. Thin K1 handlers can still
-fail plot gates silently when semantics diverge from the original.
+KotOR II still routes **273** natives through generic `stubFunction` (886 total bindings).
+Thin K1 handlers can still fail plot gates silently when semantics diverge from the original.
 
 **Thin-handler risk by domain (approx.; formerly stubbed, now named but simplified):**
 
@@ -93,12 +93,12 @@ fail plot gates silently when semantics diverge from the original.
 | Swoop | **Partial** | Expanded `SwoopMinigame` state; K1 SWMG natives wired (simulation-backed / thin) |
 | Turret / SWMG space | **Partial** | Encounter orchestration + movie; K1 SWMG API wired, live fidelity unproven |
 | Galaxy map / travel | **Partial** | Hubs + Unknown World / Star Forge destinations in `galaxymap.cpp` (indices 6/7); Leviathan remains script-triggered |
-| Alignment / reputation / plot flags | **Partial** | Core APIs for M2–M4; faction aggregates stubbed |
-| Audio / video | **Partial** | Movie queue + SoundMan; many sound-object natives stubbed |
+| Alignment / reputation / plot flags | **Partial** | Core APIs for M2–M4; faction aggregates named but thin |
+| Audio / video | **Partial** | Movie queue + SoundMan; many sound-object natives named but thin |
 
 ### 2.4 Verification reality
 
-**Automated (unit / model):** `tests/engines/kotorbase/` — 17 suites covering formulas, party/globals models, cinematic stubs, swoop kinematics, save serialization writers. Most **do not require live game archives** and therefore cannot prove module playthroughs.
+**Automated (unit / model):** `tests/engines/kotorbase/` — **20** suites covering formulas, party/globals models, cinematic stubs, swoop kinematics, save serialization, flanking/LOS, and Phase-0 natives. Most **do not require live game archives** and therefore cannot prove module playthroughs.
 
 **Scripted smoke:** `tests/smoke/*.ps1` runs unit binaries only.
 
@@ -116,7 +116,7 @@ fail plot gates silently when semantics diverge from the original.
 Ordered by severity for an Endar → Star Forge run:
 
 1. **No verified contiguous play path** past early modules (manual smoke unchecked; needs game data).
-2. **Thin / simplified natives** (K1 is 785/785 wired, 0 stubs) — audio, formation, late Force, and some SWMG handlers can still softlock if semantics diverge.
+2. **Thin / simplified natives** (K1 is 786/786 registered, 0 stubs) — audio, formation, late Force, and some SWMG handlers can still softlock if semantics diverge.
 3. **SWMG / turret / swoop live fidelity** — named object getters exist; physics/scoring/encounter scripts unproven live.
 4. **Force still partly hardcoded** when `spells.2da` impact scripts are missing; C++ fallbacks remain.
 5. **Save/load not campaign-proven** across modules, party, world locals, and creature area persistence.
@@ -152,6 +152,8 @@ Non-goals for this plan (track separately): KotOR II campaign parity, mobile/con
 - [x] Treat this document as the working M7 plan; update `README.md` / `ROADMAP.md` badges and ✅ lists to match stub counts and unverified smoke.
 - [ ] Fill `docs/SCRIPT_COVERAGE.log` usage: enable coverage logging in playtests; publish per-module stub hit lists.
 - [x] Add CI job (or extend `scripts/verify_kotor_nwscript_stubs.py`) that reports **stub vs real counts** and fails on regressions that *increase* stubs for previously-real functions.
+- [x] Retail K1 native IDs restored after table repair (`GetSkillRank`@315, `GetLastAttackType`@317, `GetIsInCombat`@320, `SetLocked`@324); do not re-remap those slots.
+- [x] Creature GFF load / combat / AI statements un-swallowed from comment corruption (2026-07-29).
 - [ ] Reconcile `MILESTONE.md`: add missing M5 section or fold its claims into M6/M7 with honest checkboxes.
 
 **Exit:** Docs match code; every agent works from one parity definition.
@@ -317,13 +319,14 @@ Only after Phase 7 exit:
 
 | Order | Task | Deliverable |
 |------:|------|-------------|
-| 1 | Phase 0 doc honesty pass | README/ROADMAP aligned with stub counts |
-| 2 | Phase 1 Endar Spire live smoke | Checked `MILESTONE_A_SMOKE.md` + bugfix PRs |
-| 3 | Phase 1 Taris → Dantooine smoke | Checked progression smoke + fixes |
-| 4 | Phase 2 P0 combat/quest natives | Stub burn-down PR + tests |
-| 5 | Phase 4 save round-trip on early path | Serialization fidelity PR |
-| 6 | Phase 5 swoop/turret critical natives | Minigame progression PR |
-| 7 | Then Phases 3 → 6 → 7 in order | Planet/finale milestones |
+| 1 | Phase 1 Endar Spire live smoke | Checked `MILESTONE_A_SMOKE.md` + bugfix PRs |
+| 2 | Phase 1 Taris → Dantooine smoke | Checked progression smoke + fixes |
+| 3 | Phase 4 save round-trip on early path | Serialization fidelity PR |
+| 4 | Phase 5 swoop/turret live fidelity | Minigame progression PR |
+| 5 | Phase 3 remaining Force data-driven cleanup | Retire C++ Force fallbacks |
+| 6 | Then Phases 6 → 7 in order | Planet/finale milestones |
+
+*(Phase 0 doc honesty + Phase 2 K1 stub burn-down + Phase 3 flanking/LOS/Force wiring landed 2026-07-29; remaining work is live proof + depth.)*
 
 ---
 

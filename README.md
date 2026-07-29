@@ -6,7 +6,7 @@ with shared KotOR II engine foundations.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Milestone%207%20In%20Progress-yellow?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/NWScript-100%25%20wired%20(K1)-blue?style=for-the-badge" alt="Coverage">
+  <img src="https://img.shields.io/badge/NWScript-100%25%20registered%20(K1)-blue?style=for-the-badge" alt="Coverage">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-orange?style=for-the-badge" alt="Platforms">
 </p>
 
@@ -18,13 +18,14 @@ at verified full-campaign parity.
 
 | Metric (KotOR I) | Value |
 |------------------|------:|
-| NWScript bindings | 785 |
-| Behavioral handlers | 785 (0 `stubFunction` / 0 `stubSWMGFunction`) |
+| NWScript bindings | 786 |
+| Named handlers | 786 (0 `stubFunction` / 0 `stubSWMGFunction`) |
 | Thin / simplified semantics | Many (esp. late SWMG, audio, formation) |
 
-“100% wired” means every KotOR I native points at a named handler (no silent
+“100% registered” means every KotOR I native points at a named handler (no silent
 generic/SWMG stubs). It does **not** mean full original fidelity or a verified
-Endar→Star Forge playthrough. Live smoke still needs game data.
+Endar→Star Forge playthrough. Live smoke still needs game data. Supported slice
+(Endar → Taris entry) is narrower than the M6/M7 engineering track.
 
 **Working plan:** [docs/FULL_PARITY_AUDIT_AND_PLAN.md](docs/FULL_PARITY_AUDIT_AND_PLAN.md)
 
@@ -55,6 +56,7 @@ Endar→Star Forge playthrough. Live smoke still needs game data.
 - [x] GetWasForcePowerSuccessful, effect iterators/clear, poison/debilitate queries
 - [x] Door/placeable visual restore on load; SWMG named object getters
 - [x] Audit polish: K1 NWScript signature table repair; Force LOS/FP order; effect instant duration
+- [x] Retail K1 IDs restored (`GetSkillRank` 315, `GetLastAttackType` 317, `GetIsInCombat` 320, `SetLocked` 324); creature GFF load/combat statements un-swallowed
 - [ ] Verified Endar Spire → Dantooine live smoke
 - [ ] SWMG / swoop / turret live progression fidelity
 - [ ] Full GFF save/load campaign round-trips
