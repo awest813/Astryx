@@ -719,6 +719,46 @@ void Area::loadObject(std::unique_ptr<Object> &&object) {
 		addToObjectMap(_objects.back().get());
 
 	notifyObjectMoved(*_objects.back());
+
+	// Objects added after the area went visible (scripts spawning things)
+	// would otherwise stay hidden until the leader changes rooms.
+	if (_visible) {
+		Object &object = *_objects.back();
+		const Room *room = object.getRoom();
+		if (ObjectContainer::toDoor(&object) || (room && room->isVisible()))
+			object.show();
+	}
+}
+
+Placeable *Area::spawnPlaceable(const Common::UString &templateResRef, float x, float y, float z, float facing) {
+	// Build a minimal GIT-style instance for the blueprint.
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	Aurora::GFF3WriterStructPtr instance = writer.getTopLevel();
+	instance->addResRef("TemplateResRef", templateResRef);
+	instance->addFloat("X", x);
+	instance->addFloat("Y", y);
+	instance->addFloat("Z", z);
+	instance->addFloat("Bearing", Common::deg2rad(facing));
+
+	try {
+		std::shared_ptr<Aurora::GFF3File> gff = finishStateGFF(writer);
+
+		loadObject(std::make_unique<Placeable>(gff->getTopLevel()));
+
+		Placeable *placeable = static_cast<Placeable *>(_objects.back().get());
+		_situatedObjects.push_back(placeable);
+
+		ObjectWalkmesh *walkmesh = new ObjectWalkmesh(placeable);
+		_localPathfinding->addStaticObjects(walkmesh);
+		_staticWalkmeshes[placeable] = walkmesh;
+
+		return placeable;
+	} catch (Common::Exception &e) {
+		e.add("Failed to spawn placeable \"%s\"", templateResRef.c_str());
+		printException(e, "WARNING: ");
+	}
+
+	return nullptr;
 }
 
 void Area::loadWaypoints(const Aurora::GFF3List &list) {
@@ -1338,7 +1378,8 @@ Item *Area::spawnDroppedItem(const Common::UString &tag, float x, float y, float
 
 		Item *itemPtr = item.get();
 		loadObject(std::move(item));
-		itemPtr->show();
+		if (!itemPtr->isVisible())
+			itemPtr->show();
 		return itemPtr;
 	} catch (Common::Exception &e) {
 		warning("Area::spawnDroppedItem: %s", e.what());

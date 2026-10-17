@@ -62,6 +62,7 @@ class Room;
 class Situated;
 class Creature;
 class Item;
+class Placeable;
 class Pathfinding;
 struct CreatureSearchCriteria;
 
@@ -158,6 +159,8 @@ public:
 
 	void addCreature(Creature *creature);
 	Item *spawnDroppedItem(const Common::UString &tag, float x, float y, float z);
+	/** Create a placeable from its blueprint (CreateObject). */
+	Placeable *spawnPlaceable(const Common::UString &templateResRef, float x, float y, float z, float facing);
 	void addToObjectMap(Object *object);
 	void removeObject(Object *object);
 	/** Destroy an object at the end of the frame (DestroyObject), after an optional delay. */

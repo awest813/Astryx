@@ -1133,6 +1133,21 @@ void Functions::createObject(Aurora::NWScript::FunctionContext &ctx) {
 
 	float x, y, z;
 	loc->getPosition(x, y, z);
+	const float facing = loc->getFacing();
+
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area)
+		return;
+
+	if (objectType & kObjectTypePlaceable) {
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(area->spawnPlaceable(tmpl, x, y, z, facing));
+		return;
+	}
+
+	if (objectType & kObjectTypeItem) {
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(area->spawnDroppedItem(tmpl, x, y, z));
+		return;
+	}
 
 	if (objectType & kObjectTypeCreature) {
 		// Create a creature from its blueprint template.
@@ -1147,11 +1162,10 @@ void Functions::createObject(Aurora::NWScript::FunctionContext &ctx) {
 			return;
 
 		creature->setPosition(x, y, z);
-		_game->getModule().getCurrentArea()->addCreature(creature);
+		creature->setOrientation(0.0f, 0.0f, 1.0f, facing);
+		area->addCreature(creature);
 		ctx.getReturn() = creature;
 	}
-	// Item creation via CreateObject is rare in the progression path;
-	// CreateItemOnObject covers most use-cases and is already implemented.
 }
 
 // ---------------------------------------------------------------------------

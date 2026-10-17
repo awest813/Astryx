@@ -88,12 +88,20 @@ void LevelUpGUI::callbackRun() {
 
 	const int totalLevel = _pc.getHitDice();
 
+	// The steps write straight into the character; backing out of any of
+	// them must undo the earlier ones (no free skill points on cancel).
+	const KotORBase::CreatureInfo before = _pc.getCreatureInfo();
+	auto cancel = [&]() {
+		_pc.getCreatureInfo() = before;
+		_step = 0;
+	};
+
 	switch (_step) {
 	case 1:
 		_step++;
 		if (KotORBase::grantsAbilityIncrease(totalLevel)) {
 			if (!showAbilities()) {
-				_step = 0;
+				cancel();
 				return;
 			}
 		}
@@ -101,7 +109,7 @@ void LevelUpGUI::callbackRun() {
 	case 2:
 		_step++;
 		if (!showSkills()) {
-			_step = 0;
+			cancel();
 			return;
 		}
 		// Fall through
@@ -109,7 +117,7 @@ void LevelUpGUI::callbackRun() {
 		_step++;
 		if (!KotORBase::getSelectableFeats(_pc.getCreatureInfo()).empty()) {
 			if (!showFeats()) {
-				_step = 0;
+				cancel();
 				return;
 			}
 		}
@@ -119,7 +127,7 @@ void LevelUpGUI::callbackRun() {
 		if (_pc.getCreatureInfo().isJedi() &&
 		    !KotORBase::getSelectableForcePowers(_pc.getCreatureInfo()).empty()) {
 			if (!showForcePowers()) {
-				_step = 0;
+				cancel();
 				return;
 			}
 		}
