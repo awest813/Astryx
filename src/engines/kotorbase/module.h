@@ -276,7 +276,8 @@ public:
 	/** Remove a NPC from the available party roster. */
 	void removeAvailableNPC(int npc);
 	/** Spawn an available NPC into the current area and add them to the active party. */
-	void spawnAvailableNPC(int npc, const Common::UString &waypointTag);
+	/** Spawn an available companion into the area (not into the party). */
+	Creature *spawnAvailableNPC(int npc, float x, float y, float z, float angle);
 	/** Add a creature directly to the active party. */
 	void addPartyMember(int npc, Creature *creature);
 	/** Remove a creature from the active party by NPC slot. */

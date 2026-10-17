@@ -169,6 +169,8 @@ public:
 	// Persistence
 	void loadPersistence();
 	void savePersistence();
+	/** Save-state key of an object; tagCounts tracks repeated tags. */
+	Common::UString getPersistenceKey(const Object &object, std::map<Common::UString, int> &tagCounts) const;
 	void writePersistence(Aurora::GFF3WriterStruct &gff) const;
 
 	const std::vector<bool> &getMapExplored() const { return _mapExplored; }

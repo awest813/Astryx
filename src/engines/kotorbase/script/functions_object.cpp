@@ -372,11 +372,14 @@ void Functions::getItemInSlot(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getNearestCreature(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
 	CreatureSearchCriteria criteria;
 	criteria.firstCriteriaType = static_cast<CreatureType>(ctx.getParams()[0].getInt());
 	criteria.firstCriteriaValue = ctx.getParams()[1].getInt();
 
-	Object *target = ObjectContainer::toCreature(ctx.getParams()[2].getObject());
+	// oTarget defaults to OBJECT_SELF and may be any object (e.g. a placeable).
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 2));
 	int nth = ctx.getParams()[3].getInt();
 
 	criteria.secondCriteriaType = static_cast<CreatureType>(ctx.getParams()[4].getInt());
@@ -461,8 +464,14 @@ void Functions::getTag(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::destroyObject(Aurora::NWScript::FunctionContext &ctx) {
 	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
-	if (object)
-		_game->getModule().getCurrentArea()->removeObject(object);
+	Area *area = _game->getModule().getCurrentArea();
+	if (!object || !area)
+		return;
+
+	// Like the original, destruction is deferred: the caller (often the object
+	// itself) and any loop over the area's objects keep running safely.
+	const float delay = (ctx.getParams().size() > 1) ? ctx.getParams()[1].getFloat() : 0.0f;
+	area->destroyObjectDeferred(object, delay);
 }
 
 void Functions::getPosition(Aurora::NWScript::FunctionContext &ctx) {
@@ -977,20 +986,17 @@ void Functions::revealMap(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setAILevel(Aurora::NWScript::FunctionContext &ctx) {
+	// KotOR II: SetCreatureAILevel(object oTarget, int nPriority) (834) and
+	// ResetCreatureAILevel(object oTarget) (835). Both are void natives.
 	Creature *creature = nullptr;
 	int level = 0;
 	if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeObject) {
-		creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+		creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
 		if (ctx.getParams().size() > 1)
 			level = ctx.getParams()[1].getInt();
-	} else if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeEngineType) {
-		// Signature table lists a single engine-type arg for some builds; treat as no-op success.
-		ctx.getReturn() = 1;
-		return;
 	}
 	if (creature)
 		creature->setAILevel(level);
-	ctx.getReturn() = 1;
 }
 
 void Functions::getLastConversation(Aurora::NWScript::FunctionContext &ctx) {
@@ -1328,11 +1334,10 @@ void Functions::getEffectType(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getLastDamager(Aurora::NWScript::FunctionContext &ctx) {
-	// GetLastDamager(object oCreature=OBJECT_SELF) → object
-	// Returns the last creature that inflicted damage on oCreature.
+	// GetLastDamager() → object (no parameters in KotOR I/II)
+	// Returns the last creature that inflicted damage on the caller.
 	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
-	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
-	Creature *c = dynamic_cast<Creature *>(target);
+	Creature *c = ObjectContainer::toCreature(ctx.getCaller());
 	if (c)
 		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(c->getLastHostileActor());
 }
@@ -1478,9 +1483,14 @@ void Functions::getEffectCreator(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getFirstFactionMember(Aurora::NWScript::FunctionContext &ctx) {
+	// GetFirstFactionMember(object oMemberOfFaction, int bPCOnly=TRUE) → object
+	// Reset the iteration so getNextFactionMember() rebuilds the member list
+	// for this reference object, then return its first entry.
 	_factionIterRef = nullptr;
 	_factionIterObjects.clear();
 	_factionIterIndex = 0;
+
+	getNextFactionMember(ctx);
 }
 
 void Functions::getNextFactionMember(Aurora::NWScript::FunctionContext &ctx) {
@@ -1669,12 +1679,12 @@ void Functions::getMatchedSubstringsCount(Aurora::NWScript::FunctionContext &ctx
 }
 
 void Functions::setAssociateListenPatterns(Aurora::NWScript::FunctionContext &ctx) {
-	Object *object = ObjectContainer::toObject(ctx.getCaller());
+	// SetAssociateListenPatterns(object oTarget=OBJECT_SELF) -- void
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
 	if (object) {
 		object->setListening(true);
 		object->setListenPattern(Common::UString("**"), 0);
 	}
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(object);
 }
 
 void Functions::getFactionWeakestMember(Aurora::NWScript::FunctionContext &ctx) {
@@ -1900,6 +1910,25 @@ void Functions::getIsPlayableRacialType(Aurora::NWScript::FunctionContext &ctx) 
 	ctx.getReturn() = 1;
 }
 
+void Functions::effectLinkEffects(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectLinkEffects(effect eChildEffect, effect eParentEffect) → effect
+	// Linked effects are not modelled; return a copy of the first usable
+	// (non-null, non-visual) effect, preferring the child (param 0) so that
+	// scripts linking a gameplay effect with a VFX still get the gameplay part.
+	const Effect *child  = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
+	const Effect *parent = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
+
+	const Effect *result = nullptr;
+	if (child && (child->getType() != kKotOREffectVisual))
+		result = child;
+	else if (parent && (parent->getType() != kKotOREffectVisual))
+		result = parent;
+	else
+		result = child ? child : parent;
+
+	ctx.getReturn() = static_cast<const Aurora::NWScript::EngineType *>(result);
+}
+
 void Functions::getTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
 	Location *loc = new Location();
 	Object *target = _game->getModule().getSpellScriptTarget();
@@ -1911,15 +1940,40 @@ void Functions::getTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = loc;
 }
 
+namespace {
+
+/** Immunity type that blocks a given effect, or kImmunityTypeNone. */
+int immunityForEffect(KotOREffectType type) {
+	switch (type) {
+		case kKotOREffectPoison:                return kImmunityTypePoison;
+		case kKotOREffectKnockdown:             return kImmunityTypeKnockdown;
+		case kKotOREffectParalyze:              return kImmunityTypeParalysis;
+		case kKotOREffectStunned:
+		case kKotOREffectDroidStun:             return kImmunityTypeStun;
+		case kKotOREffectDeath:                 return kImmunityTypeDeath;
+		case kKotOREffectSleep:                 return kImmunityTypeSleep;
+		case kKotOREffectAbilityDecrease:       return kImmunityTypeAbilityDecrease;
+		case kKotOREffectMovementSpeedDecrease: return kImmunityTypeMovementSpeedDecrease;
+		default:                                return kImmunityTypeNone;
+	}
+}
+
+} // End of anonymous namespace
+
 void Functions::getIsLinkImmune(Aurora::NWScript::FunctionContext &ctx) {
-	// Table lists an odd void signature; still evaluate immunity for scripts that call it.
-	int immunityType = ctx.getParams().empty() ? 0 : ctx.getParams()[0].getInt();
-	Creature *creature = nullptr;
-	if (ctx.getParams().size() > 1)
-		creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
-	if (!creature)
-		creature = ObjectContainer::toCreature(ctx.getCaller());
-	ctx.getReturn() = (creature && creature->isImmune(immunityType)) ? 1 : 0;
+	// GetIsLinkImmune(object oTarget, effect eEffect) → int
+	// Linked effects are not modelled, so only the effect itself is checked.
+	ctx.getReturn() = 0;
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
+	if (!creature || !effect)
+		return;
+
+	const int immunityType = immunityForEffect(effect->getType());
+	if (immunityType == kImmunityTypeNone)
+		return;
+
+	ctx.getReturn() = creature->isImmune(immunityType) ? 1 : 0;
 }
 
 } // End of namespace KotORBase

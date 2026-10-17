@@ -1087,6 +1087,7 @@ protected:
 
 
 	void actionMoveAwayFromObject(Aurora::NWScript::FunctionContext &ctx);
+	void actionMoveAwayFromLocation(Aurora::NWScript::FunctionContext &ctx);
 
 
 	void actionForceMoveToObject(Aurora::NWScript::FunctionContext &ctx);
@@ -1215,6 +1216,7 @@ protected:
 	void getReflexAdjustedDamage(Aurora::NWScript::FunctionContext &ctx);
 	void getIsPlayableRacialType(Aurora::NWScript::FunctionContext &ctx);
 	void getTargetLocation(Aurora::NWScript::FunctionContext &ctx);
+	void effectLinkEffects(Aurora::NWScript::FunctionContext &ctx);
 	void getIsLinkImmune(Aurora::NWScript::FunctionContext &ctx);
 
 

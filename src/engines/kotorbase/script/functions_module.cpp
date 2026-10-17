@@ -268,19 +268,12 @@ void Functions::setLockHeadFollowInDialog(Aurora::NWScript::FunctionContext &ctx
 }
 
 void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {
-	// void SetCameraFacing(float fDirection, float fDistance = -1.0f, float fPitch = -1.0f, int nTransitionType = CAMERA_TRANSITION_TYPE_SNAP)
+	// void SetCameraFacing(float fDirection) -- KotOR I and II take only the
+	// direction; distance/pitch/transition are NWN-only parameters.
 	float direction = ctx.getParams()[0].getFloat();
-	float distance = ctx.getParams()[1].getFloat();
-	float pitch = ctx.getParams()[2].getFloat();
 
 	if (direction >= 0.0f)
 		_game->getModule().setCameraYaw(Common::deg2rad(direction));
-	
-	if (distance >= 0.0f)
-		_game->getModule().setCameraDistance(distance);
-
-	if (pitch >= 0.0f)
-		_game->getModule().setCameraPitch(pitch);
 }
 
 void Functions::getListenPatternNumber(Aurora::NWScript::FunctionContext &ctx) {
@@ -365,7 +358,8 @@ void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &) {
 }
 
 void Functions::popUpGUIPanel(Aurora::NWScript::FunctionContext &ctx) {
-	int panel = ctx.getParams()[0].getInt();
+	// PopUpGUIPanel(object oPC, int nGUIPanel) -- single-player: oPC is the PC.
+	int panel = ctx.getParams()[1].getInt();
 	debugC(Common::kDebugEngineLogic, 1, "PopUpGUIPanel: %d", panel);
 	_game->getModule().showGUIPanel(panel);
 }
@@ -429,9 +423,15 @@ void Functions::setJournalQuestEntryPicture(Aurora::NWScript::FunctionContext &c
 
 void Functions::openStore(Aurora::NWScript::FunctionContext &ctx) {
 	// OpenStore(object oStore, object oPC, int nBonusMarkUp=0, int nMarkDown=0)
-	// Presents the store GUI to the player.
-	Common::UString tag = ctx.getParams()[0].getString();
-	_game->openStoreGUI(tag);
+	// Presents the store GUI to the player. The store is addressed by object;
+	// the GUI path looks stores up by tag. Mark-up/mark-down are not modelled.
+	Object *store = ObjectContainer::toObject(getParamObject(ctx, 0));
+	if (!store) {
+		warning("Functions::openStore(): invalid store object");
+		return;
+	}
+
+	_game->openStoreGUI(store->getTag());
 }
 
 void Functions::setReturnStrref(Aurora::NWScript::FunctionContext &ctx) {
@@ -464,9 +464,10 @@ void Functions::getModuleName(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setAreaTransitionBMP(Aurora::NWScript::FunctionContext &ctx) {
+	// SetAreaTransitionBMP(int nPredefinedAreaTransition, string sCustomAreaTransitionBMP="")
 	int bmp = ctx.getParams()[0].getInt();
-	int strref = ctx.getParams()[1].getInt();
-	info("Transition BMP set: %d (strref %d)", bmp, strref);
+	const Common::UString &custom = ctx.getParams()[1].getString();
+	info("Transition BMP set: %d (custom \"%s\")", bmp, custom.c_str());
 }
 
 void Functions::endGame(Aurora::NWScript::FunctionContext &ctx) {
@@ -534,27 +535,40 @@ void Functions::floatingTextStrRefOnCreature(Aurora::NWScript::FunctionContext &
 }
 
 void Functions::addJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) {
-	const Common::UString &tag = ctx.getParams()[0].getString();
-	const Common::UString &text = ctx.getParams()[1].getString();
+	// AddJournalWorldEntry(int nIndex, string szEntry, string szTitle="World Entry")
+	// World entries are keyed by their index; the journal GUI uses the first
+	// line of the text as the list label, so prepend the title there.
+	const Common::UString tag = Common::String::format("%d", ctx.getParams()[0].getInt());
+	const Common::UString &entry = ctx.getParams()[1].getString();
+	const Common::UString &title = ctx.getParams()[2].getString();
+	const Common::UString text = title.empty() ? entry : (title + "\n" + entry);
 
 	_game->getModule().addJournalWorldEntry(tag, text);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Added [%s]: %s", tag.c_str(), text.c_str());
 }
 
 void Functions::addJournalWorldEntryStrref(Aurora::NWScript::FunctionContext &ctx) {
-	const Common::UString &tag = ctx.getParams()[0].getString();
-	const int strRef = ctx.getParams()[1].getInt();
+	// AddJournalWorldEntryStrref(int strref, int strrefTitle)
+	// Keyed by the entry strref so DeleteJournalWorldEntryStrref() finds it.
+	const int strRef = ctx.getParams()[0].getInt();
+	const int titleStrRef = ctx.getParams()[1].getInt();
+	const Common::UString tag = Common::String::format("<strref:%d>", strRef);
 
 	Common::UString text = TalkMan.getString(strRef);
 	if (text.empty())
-		text = Common::String::format("<strref:%d>", strRef);
+		text = tag;
+
+	const Common::UString title = TalkMan.getString(titleStrRef);
+	if (!title.empty())
+		text = title + "\n" + text;
 
 	_game->getModule().addJournalWorldEntry(tag, text);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Added [%s]: %s", tag.c_str(), text.c_str());
 }
 
 void Functions::deleteJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) {
-	const Common::UString &tag = ctx.getParams()[0].getString();
+	// DeleteJournalWorldEntry(int nIndex)
+	const Common::UString tag = Common::String::format("%d", ctx.getParams()[0].getInt());
 	_game->getModule().deleteJournalWorldEntry(tag);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Deleted [%s]", tag.c_str());
 }

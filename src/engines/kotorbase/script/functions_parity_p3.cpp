@@ -252,11 +252,12 @@ void Functions::versusTrapEffect(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::addMultiClass(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	// AddMultiClass(int nClassType, object oSource)
+	const int classId = ctx.getParams()[0].getInt();
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
 	if (!creature)
 		return;
 
-	const int classId = ctx.getParams()[1].getInt();
 	creature->getCreatureInfo().incrementClassLevel(static_cast<Class>(classId));
 	creature->setMaxForcePoints(creature->computeMaxForcePoints());
 }

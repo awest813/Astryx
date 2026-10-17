@@ -86,6 +86,7 @@
 #include "src/engines/kotorbase/action.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/area.h"
 
 #include "src/engines/kotorbase/talent.h"
@@ -394,6 +395,31 @@ void Functions::actionMoveAwayFromObject(Aurora::NWScript::FunctionContext &ctx)
 
 
 
+void Functions::actionMoveAwayFromLocation(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionMoveAwayFromLocation(location lMoveAwayFrom, int bRun=FALSE,
+	//                            float fMoveAwayRange=40.0f)
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Location *from = ObjectContainer::toLocation(ctx.getParams()[0].getEngineType());
+	if (!caller || !from)
+		return;
+
+	float callerX, callerY, callerZ;
+	float fromX, fromY, fromZ;
+	caller->getPosition(callerX, callerY, callerZ);
+	from->getPosition(fromX, fromY, fromZ);
+
+	const float distance = MAX<float>(1.0f, ctx.getParams()[2].getFloat());
+	glm::vec3 away(callerX - fromX, callerY - fromY, callerZ - fromZ);
+	if (glm::length(away) < 0.001f)
+		away = glm::vec3(1.0f, 0.0f, 0.0f);
+	away = glm::normalize(away) * distance;
+
+	Action action(kActionMoveToPoint);
+	action.range = 0.1f;
+	action.location = glm::vec3(callerX, callerY, callerZ) + away;
+	caller->addAction(action);
+}
+
 void Functions::actionForceMoveToObject(Aurora::NWScript::FunctionContext &ctx) {
 
 	// Alias of ActionMoveToObject for our simple pathfinding
@@ -454,7 +480,8 @@ void Functions::cancelCombat(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::getAttemptedAttackTarget(Aurora::NWScript::FunctionContext &ctx) {
 
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	// GetAttemptedAttackTarget() takes no parameters: it queries the caller.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
 
 	if (creature)
 
@@ -510,7 +537,8 @@ void Functions::getLastAttackType(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::getAttemptedSpellTarget(Aurora::NWScript::FunctionContext &ctx) {
 
-	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	// GetAttemptedSpellTarget() takes no parameters: it queries the caller.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
 
 	if (creature)
 
@@ -681,45 +709,53 @@ void Functions::actionAttack(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::cutsceneAttack(Aurora::NWScript::FunctionContext &ctx) {
+	// CutsceneAttack(object oTarget, int nAnimation, int nAttackResult, int nDamage)
+	//
+	// nAttackResult uses the retail ATTACK_RESULT_* script constants:
+	// 1 hit, 2 critical hit, 3 automatic hit, 4 miss, 5 resisted, 6 failed,
+	// 8 parried, 9 deflected. nAnimation is not modelled (the attacker plays
+	// its generic attack animation).
+	static const int kScriptAttackResultMiss      = 4;
+	static const int kScriptAttackResultResisted  = 5;
+	static const int kScriptAttackResultFailed    = 6;
+	static const int kScriptAttackResultParried   = 8;
+	static const int kScriptAttackResultDeflected = 9;
 
-	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
-
-	int modifier = ctx.getParams()[2].getInt();
-
-	int miss = ctx.getParams()[3].getInt();
-
-
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const int attackResult = ctx.getParams()[2].getInt();
+	const int damage = ctx.getParams()[3].getInt();
 
 	Creature *attacker = ObjectContainer::toCreature(ctx.getCaller());
-
 	if (!attacker || !target)
-
 		return;
 
+	const bool miss = (attackResult == kScriptAttackResultMiss)     ||
+	                  (attackResult == kScriptAttackResultResisted) ||
+	                  (attackResult == kScriptAttackResultFailed)   ||
+	                  (attackResult == kScriptAttackResultParried)  ||
+	                  (attackResult == kScriptAttackResultDeflected);
 
-
-	int point = ctx.getParams()[1].getInt();
 	int flags = 0;
+	if (miss) {
+		flags |= kCutsceneAttackForceMiss | kCutsceneAttackNoDamage;
+	} else {
+		flags |= kCutsceneAttackForceHit | kCutsceneAttackPlayReaction;
 
-	if (miss)
-		flags |= kCutsceneAttackForceMiss;
-	else
-		flags |= kCutsceneAttackForceHit;
+		Creature *victim = ObjectContainer::toCreature(target);
+		if (damage <= 0 || !victim) {
+			flags |= kCutsceneAttackNoDamage;
+		} else {
+			if ((damage >= victim->getCurrentHitPoints()) && !victim->getMinOneHitPoints())
+				flags |= kCutsceneAttackFinishingBlow;
 
-	if (modifier == 1)
-		flags |= kCutsceneAttackKnockback | kCutsceneAttackFinishingBlow;
-	else if (modifier == 2)
-		flags |= kCutsceneAttackNoDamage;
-
-	if (point != 0)
-		flags |= kCutsceneAttackPlayReaction;
-
-
+			// The queued action has no damage payload, so apply the scripted
+			// damage now; scripts that wait for the target to die rely on it.
+			victim->applyEffect(Effect(kKotOREffectDamage, damage));
+		}
+	}
 
 	Action action(kActionCutsceneAttack, target, flags);
-
 	attacker->addAction(action);
-
 }
 
 

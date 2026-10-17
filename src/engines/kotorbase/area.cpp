@@ -130,19 +130,38 @@ void Area::load() {
 	loadPersistence();
 }
 
+Common::UString Area::getPersistenceKey(const Object &object, std::map<Common::UString, int> &tagCounts) const {
+	// Several doors/containers often share a tag; number the repeats (in GIT
+	// order) so they don't overwrite each other's state. The first keeps the
+	// plain key, which older saves used.
+	Common::UString key = _resRef + ":" + object.getTag();
+
+	const int count = tagCounts[object.getTag()]++;
+	if (count > 0)
+		key += Common::String::format("#%d", count);
+
+	return key;
+}
+
 void Area::loadPersistence() {
+	std::map<Common::UString, int> tagCounts;
 	for (auto &o : _objects) {
-		Common::UString key = _resRef + ":" + o->getTag();
-		if (_module->getAreaObjectSave(key)) {
-			o->loadState(_module->getAreaObjectSave(key)->getTopLevel());
-		}
+		if (!o->isPersistent())
+			continue;
+
+		const Common::UString key = getPersistenceKey(*o, tagCounts);
+		if (std::shared_ptr<Aurora::GFF3File> state = _module->getAreaObjectSave(key))
+			o->loadState(state->getTopLevel());
 	}
 }
 
 void Area::savePersistence() {
+	std::map<Common::UString, int> tagCounts;
 	for (auto &object : _objects) {
 		if (!object->isPersistent())
 			continue;
+
+		const Common::UString key = getPersistenceKey(*object, tagCounts);
 
 		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
 		object->saveState(*writer.getTopLevel());
@@ -153,19 +172,19 @@ void Area::savePersistence() {
 		auto gff = std::make_shared<Aurora::GFF3File>(
 			new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
 
-		Common::UString key = _resRef + ":" + object->getTag();
 		_module->setAreaObjectSave(key, gff);
 	}
 }
 
 void Area::writePersistence(Aurora::GFF3WriterStruct &gff) const {
+	std::map<Common::UString, int> tagCounts;
 	Aurora::GFF3WriterListPtr list = gff.addList("AreaObjectList");
 	for (const auto &object : _objects) {
 		if (!object->isPersistent())
 			continue;
 
 		Aurora::GFF3WriterStructPtr entry = list->addStruct();
-		entry->addExoString("Key", _resRef + ":" + object->getTag());
+		entry->addExoString("Key", getPersistenceKey(*object, tagCounts));
 		object->saveState(*entry);
 	}
 }

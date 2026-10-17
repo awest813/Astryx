@@ -167,9 +167,15 @@ void Functions::getStringRight(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &str = ctx.getParams()[0].getString();
 
 	const int32_t n = ctx.getParams()[1].getInt();
-	if ((n <= 0) || ((size_t)n > str.size())) {
+	if (n <= 0) {
 		debugC(Common::kDebugEngineScripts, 1, "Functions::%s: \"%s\", %d",
 		       ctx.getName().c_str(), str.c_str(), n);
+		return;
+	}
+
+	// Retail returns the whole string when n exceeds its length.
+	if ((size_t)n >= str.size()) {
+		ctx.getReturn() = str;
 		return;
 	}
 
@@ -182,9 +188,15 @@ void Functions::getStringLeft(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &str = ctx.getParams()[0].getString();
 
 	const int32_t n = ctx.getParams()[1].getInt();
-	if ((n < 0) || ((size_t)n >= str.size())) {
+	if (n <= 0) {
 		debugC(Common::kDebugEngineScripts, 1, "Functions::%s: \"%s\", %d",
 		       ctx.getName().c_str(), str.c_str(), n);
+		return;
+	}
+
+	// Retail returns the whole string when n reaches or exceeds its length.
+	if ((size_t)n >= str.size()) {
+		ctx.getReturn() = str;
 		return;
 	}
 

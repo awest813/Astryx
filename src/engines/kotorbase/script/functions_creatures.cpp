@@ -432,10 +432,9 @@ void Functions::getLastCombatFeatUsed(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getAbilityScore(Aurora::NWScript::FunctionContext &ctx) {
-	int nAbilityType = ctx.getParams()[0].getInt();
-	Aurora::NWScript::Object *object = ctx.getParams()[1].getObject();
-
-	Creature *creature = ObjectContainer::toCreature(object);
+	// GetAbilityScore(object oCreature, int nAbilityType) → int
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	int nAbilityType = ctx.getParams()[1].getInt();
 
 	if (!creature) {
 		warning("Functions::getAbilityScore(): invalid creature");
@@ -1090,10 +1089,9 @@ void Functions::getEffectSpellId(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getLastKiller(Aurora::NWScript::FunctionContext &ctx) {
+	// GetLastKiller() takes no parameters: it queries the caller.
 	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
-	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
-	if (!creature)
-		creature = ObjectContainer::toCreature(ctx.getCaller());
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
 	if (!creature)
 		return;
 	Object *killer = creature->getLastKiller();
@@ -1338,7 +1336,11 @@ void Functions::effectWhirlWind(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 
-void Functions::setEffectIcon(Aurora::NWScript::FunctionContext &ctx) {}
+void Functions::setEffectIcon(Aurora::NWScript::FunctionContext &ctx) {
+	// SetEffectIcon(effect eEffect, int nIcon) → effect
+	// Effect icons are not modelled; hand the effect back unchanged.
+	ctx.getReturn() = ctx.getParams()[0].getEngineType();
+}
 void Functions::getFactionLeader(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 void Functions::setNPCAIStyle(Aurora::NWScript::FunctionContext &ctx) {}
 void Functions::setNPCSelectability(Aurora::NWScript::FunctionContext &ctx) {}
@@ -1442,14 +1444,18 @@ void Functions::effectInvisibility(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::effectPoison(Aurora::NWScript::FunctionContext &ctx) {
-	int damage = ctx.getParams()[0].getInt();
-	int duration = ctx.getParams()[1].getInt();
-	(void)ctx.getParams()[2].getInt(); // save DC — applied when the effect is resolved
-	ctx.getReturn() = new Effect(kKotOREffectPoison, damage, duration);
+	// EffectPoison(int nPoisonType) → effect
+	// Retail poison types come in groups of four (mild, average, virulent,
+	// deadly). Without poison.2da data, scale the damage per second by that
+	// severity and use the creature's default poison duration (damageType 0).
+	const int poisonType = ctx.getParams()[0].getInt();
+	const int severity   = (poisonType >= 0) ? ((poisonType % 4) + 1) : 1;
+	ctx.getReturn() = new Effect(kKotOREffectPoison, severity, 0);
 }
 
 void Functions::effectSeeInvisible(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectSeeInvisible, ctx.getParams()[0].getInt());
+	// EffectSeeInvisible() → effect (no parameters)
+	ctx.getReturn() = new Effect(kKotOREffectSeeInvisible);
 }
 
 void Functions::effectAbilityDecrease(Aurora::NWScript::FunctionContext &ctx) {

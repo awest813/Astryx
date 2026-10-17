@@ -37,6 +37,7 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/swoopminigame.h"
 
+#include "src/engines/kotorbase/script/container.h"
 #include "src/engines/kotorbase/script/functions.h"
 
 namespace Engines {
@@ -44,17 +45,31 @@ namespace Engines {
 namespace KotORBase {
 
 void Functions::playPazaak(Aurora::NWScript::FunctionContext &ctx) {
-	int maxWager = ctx.getParams()[0].getInt();
-	int wagerSide = ctx.getParams()[1].getInt();
-	Object *opponent = ObjectContainer::toObject(ctx.getParams()[2].getObject());
+	// PlayPazaak(int nOpponentPazaakDeck, string sEndScript, int nMaxWager,
+	//            int bShowTutorial=FALSE, object oOpponent=OBJECT_INVALID)
+	const int opponentDeck = ctx.getParams()[0].getInt();
+	const Common::UString endScript = ctx.getParams()[1].getString();
+	const int maxWager = ctx.getParams()[2].getInt();
+	const bool showTutorial = ctx.getParams()[3].getInt() != 0;
+	Object *opponent = ObjectContainer::toObject(getParamObject(ctx, 4));
 
-	debugC(Common::kDebugEngineLogic, 1, "PlayPazaak: MaxWager %d, Side %d, Opponent %s",
-	       maxWager, wagerSide, opponent ? opponent->getTag().c_str() : "INVALID");
+	debugC(Common::kDebugEngineLogic, 1, "PlayPazaak: Deck %d, EndScript \"%s\", MaxWager %d, Tutorial %d, Opponent %s",
+	       opponentDeck, endScript.c_str(), maxWager, showTutorial ? 1 : 0,
+	       opponent ? opponent->getTag().c_str() : "INVALID");
 
 	_game->getModule().setGlobalNumber("__pazaak_wager", maxWager);
-	_game->getModule().setGlobalNumber("__pazaak_side", wagerSide);
+	_game->getModule().setGlobalNumber("__pazaak_side", opponentDeck);
 
+	// The match runs modally inside the encounter handler.
 	_game->getModule().signalEncounter("pazaak_start");
+
+	// Retail runs sEndScript once the match is over; GetLastPazaakResult()
+	// is valid at that point.
+	if (!endScript.empty()) {
+		Aurora::NWScript::Object *owner = ctx.getCaller();
+		ScriptContainer::runScript(endScript, owner,
+		                           opponent ? static_cast<Aurora::NWScript::Object *>(opponent) : owner);
+	}
 }
 
 void Functions::getLastPazaakResult(Aurora::NWScript::FunctionContext &ctx) {
@@ -93,8 +108,21 @@ void Functions::swmgOnObstacleHit(Aurora::NWScript::FunctionContext &ctx) {
 	_game->getModule().signalEncounter("swmg_obstacle_hit");
 }
 
+/** Map SwoopMinigame's internal event id to the retail SWMG event string. */
+static Common::UString swmgEventName(int event) {
+	switch (event) {
+		case 1:  return "Obstacle";
+		case 2:  return "Bullet";
+		case 3:  return "HitPoints";
+		case 4:  return "Damage";
+		case 5:  return "Death";
+		default: return "";
+	}
+}
+
 void Functions::swmgGetLastEvent(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = SwoopMinigame::get().getLastEvent();
+	// SWMG_GetLastEvent() → string
+	ctx.getReturn() = swmgEventName(SwoopMinigame::get().getLastEvent());
 }
 
 void Functions::swmgSetSpeedBlurEffect(Aurora::NWScript::FunctionContext &ctx) {
@@ -103,7 +131,9 @@ void Functions::swmgSetSpeedBlurEffect(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::swmgGetLastBulletHitPart(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _game->getModule().getGlobalNumber("__swmg_bullet_hit_part");
+	// SWMG_GetLastBulletHitPart() → string (model part name). Hit parts are
+	// not tracked by the minigame simulation yet.
+	ctx.getReturn() = Common::UString();
 }
 
 void Functions::swmgIsGunBankTargetting(Aurora::NWScript::FunctionContext &ctx) {
@@ -111,28 +141,37 @@ void Functions::swmgIsGunBankTargetting(Aurora::NWScript::FunctionContext &ctx) 
 	ctx.getReturn() = _game->getModule().getGlobalBoolean("__swmg_gunbank_targeting") ? 1 : 0;
 }
 
+// The player offset and tunnel bounds are vectors in retail; the simulation
+// only models the lateral (x) axis, so y/z read back as 0 and are ignored.
+
 void Functions::swmgGetPlayerOffset(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = SwoopMinigame::get().getPlayerOffset();
+	ctx.getReturn().setVector(SwoopMinigame::get().getPlayerOffset(), 0.0f, 0.0f);
 }
 
 void Functions::swmgSetPlayerOffset(Aurora::NWScript::FunctionContext &ctx) {
-	SwoopMinigame::get().setPlayerOffset(ctx.getParams()[0].getFloat());
+	float x = 0.0f, y = 0.0f, z = 0.0f;
+	ctx.getParams()[0].getVector(x, y, z);
+	SwoopMinigame::get().setPlayerOffset(x);
 }
 
 void Functions::swmgGetPlayerTunnelPos(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = SwoopMinigame::get().getTunnelPos();
+	ctx.getReturn().setVector(SwoopMinigame::get().getTunnelPos(), 0.0f, 0.0f);
 }
 
 void Functions::swmgSetPlayerTunnelPos(Aurora::NWScript::FunctionContext &ctx) {
-	SwoopMinigame::get().setTunnelPos(ctx.getParams()[0].getFloat());
+	float x = 0.0f, y = 0.0f, z = 0.0f;
+	ctx.getParams()[0].getVector(x, y, z);
+	SwoopMinigame::get().setTunnelPos(x);
 }
 
 void Functions::swmgGetPlayerTunnelNeg(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = SwoopMinigame::get().getTunnelNeg();
+	ctx.getReturn().setVector(SwoopMinigame::get().getTunnelNeg(), 0.0f, 0.0f);
 }
 
 void Functions::swmgSetPlayerTunnelNeg(Aurora::NWScript::FunctionContext &ctx) {
-	SwoopMinigame::get().setTunnelNeg(ctx.getParams()[0].getFloat());
+	float x = 0.0f, y = 0.0f, z = 0.0f;
+	ctx.getParams()[0].getVector(x, y, z);
+	SwoopMinigame::get().setTunnelNeg(x);
 }
 
 void Functions::swmgGetEnemyCount(Aurora::NWScript::FunctionContext &ctx) {

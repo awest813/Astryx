@@ -98,8 +98,11 @@ void Functions::getTrapDetectable(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getTrapDetectedBy(Aurora::NWScript::FunctionContext &ctx) {
+	// GetTrapDetectedBy(object oTrapObject, object oCreature) -> int
 	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated ? situated->getTrapDetectedBy() : static_cast<Aurora::NWScript::Object *>(nullptr);
+	Aurora::NWScript::Object *creature = getParamObject(ctx, 1);
+	ctx.getReturn() = (situated && creature &&
+	                   (static_cast<Aurora::NWScript::Object *>(situated->getTrapDetectedBy()) == creature)) ? 1 : 0;
 }
 
 void Functions::getTrapFlagged(Aurora::NWScript::FunctionContext &ctx) {

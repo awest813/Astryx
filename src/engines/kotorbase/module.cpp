@@ -88,6 +88,8 @@ namespace KotORBase {
 
 static std::map<int, Common::UString> sCustomDialogTokens;
 
+static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst);
+
 const std::map<int, Common::UString> &Module::getCustomDialogTokens() {
 	return sCustomDialogTokens;
 }
@@ -1153,9 +1155,19 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 		moduleErf.add("Module", Aurora::kFileTypeIFO, ifoStream);
 
 		if (_area) {
+			// Every visited area's object state (the current one was refreshed
+			// above), so containers, doors and object locals elsewhere survive.
 			Common::MemoryWriteStreamDynamic areaMem(true);
 			Aurora::GFF3Writer areaWriter(MKTAG('G', 'F', 'F', ' '));
-			_area->writePersistence(*areaWriter.getTopLevel());
+			Aurora::GFF3WriterListPtr areaList = areaWriter.getTopLevel()->addList("AreaObjectList");
+			for (const auto &entry : _areaObjectSaves) {
+				if (!entry.second)
+					continue;
+
+				Aurora::GFF3WriterStructPtr areaEntry = areaList->addStruct();
+				areaEntry->addExoString("Key", entry.first);
+				copyObjectSaveFields(entry.second->getTopLevel(), *areaEntry);
+			}
 			areaWriter.write(areaMem);
 
 			Common::MemoryReadStream areaStream(areaMem.getData(), areaMem.size(), true);
@@ -1982,26 +1994,27 @@ void Module::removeAvailableNPC(int npc) {
 	_partyController.removeAvailableNPC(npc);
 }
 
-void Module::spawnAvailableNPC(int npc, const Common::UString &waypointTag) {
-	if (!_partyController.isAvailableCreature(npc))
-		return;
+Creature *Module::spawnAvailableNPC(int npc, float x, float y, float z, float angle) {
+	// Like the original, this only puts the companion into the area (e.g. the
+	// crew standing around the Ebon Hawk); it does not join the party.
+	if (!_area || !_partyController.isAvailableCreature(npc))
+		return nullptr;
 
-	const Common::UString &templ = _partyController.getAvailableNPCTemplate(npc);
-	Creature *creature = createCreature(templ);
-	if (!creature)
-		return;
-
-	float x = 0.0f, y = 0.0f, z = 0.0f, angle = 0.0f;
-	if (!waypointTag.empty())
-		getObjectLocation(waypointTag, kObjectTypeWaypoint, x, y, z, angle);
+	Creature *creature = nullptr;
+	try {
+		creature = createPartyNPC(npc, _partyController.getAvailableNPCTemplate(npc));
+	} catch (Common::Exception &e) {
+		e.add("Failed to spawn available NPC %d", npc);
+		printException(e, "WARNING: ");
+		return nullptr;
+	}
 
 	creature->setPosition(x, y, z);
 	creature->setOrientation(0.0f, 0.0f, 1.0f, angle);
-	if (_area)
-		_area->addCreature(creature);
+	_area->addCreature(creature);
+	creature->show();
 
-	_partyController.addPartyMember(npc, creature);
-	updateCurrentPartyGUI();
+	return creature;
 }
 
 void Module::showGalaxyMap() {
@@ -2700,35 +2713,83 @@ Object *Module::getLastAoECreator() const {
 	return _lastAoECreator;
 }
 
+/** Copy every field of a GFF3 struct (recursively) into a writer struct. */
 static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst) {
-	auto copyUint = [&](const char *field) {
-		if (src.hasField(field))
-			dst.addUint32(field, src.getUint(field));
-	};
-	auto copyByte = [&](const char *field) {
-		if (src.hasField(field))
-			dst.addByte(field, src.getUint(field) ? 1 : 0);
-	};
-	auto copyString = [&](const char *field) {
-		if (src.hasField(field))
-			dst.addExoString(field, src.getString(field));
-	};
-
-	copyUint("CurrentHP");
-	copyByte("Usable");
-	copyByte("Locked");
-	copyByte("TrapFlag");
-	copyByte("TrapDetectable");
-	copyByte("TrapDisarmable");
-	copyByte("TrapRecoverable");
-	copyByte("TrapOneShot");
-	copyByte("TrapActive");
-	copyByte("TrapFlagged");
-	copyUint("TrapType");
-	copyUint("TrapDetectDC");
-	copyUint("DisarmDC");
-	copyString("KeyName");
-	copyUint("AnimationState");
+	for (const Common::UString &name : src.getFieldNames()) {
+		switch (src.getFieldType(name)) {
+			case Aurora::GFF3Struct::kFieldTypeByte:
+				dst.addByte(name, static_cast<uint8_t>(src.getUint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeChar:
+				dst.addChar(name, static_cast<int8_t>(src.getSint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeUint16:
+				dst.addUint16(name, static_cast<uint16_t>(src.getUint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeSint16:
+				dst.addSint16(name, static_cast<int16_t>(src.getSint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeUint32:
+				dst.addUint32(name, static_cast<uint32_t>(src.getUint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeSint32:
+				dst.addSint32(name, static_cast<int32_t>(src.getSint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeUint64:
+				dst.addUint64(name, src.getUint(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeSint64:
+				dst.addSint64(name, src.getSint(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeFloat:
+				dst.addFloat(name, static_cast<float>(src.getDouble(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeDouble:
+				dst.addDouble(name, src.getDouble(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeExoString:
+				dst.addExoString(name, src.getString(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeResRef:
+				dst.addResRef(name, src.getString(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeLocString: {
+				Aurora::LocString locString;
+				if (src.getLocString(name, locString))
+					dst.addLocString(name, locString);
+				break;
+			}
+			case Aurora::GFF3Struct::kFieldTypeVoid:
+				dst.addVoid(name, src.getData(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeVector: {
+				float x, y, z;
+				src.getVector(name, x, y, z);
+				dst.addVector(name, glm::vec3(x, y, z));
+				break;
+			}
+			case Aurora::GFF3Struct::kFieldTypeOrientation: {
+				float a, b, c, d;
+				src.getOrientation(name, a, b, c, d);
+				dst.addOrientation(name, glm::vec4(a, b, c, d));
+				break;
+			}
+			case Aurora::GFF3Struct::kFieldTypeStruct: {
+				const Aurora::GFF3Struct &child = src.getStruct(name);
+				copyObjectSaveFields(child, *dst.addStruct(name, child.getID()));
+				break;
+			}
+			case Aurora::GFF3Struct::kFieldTypeList: {
+				Aurora::GFF3WriterListPtr list = dst.addList(name);
+				for (const Aurora::GFF3Struct *child : src.getList(name))
+					if (child)
+						copyObjectSaveFields(*child, *list->addStruct(child->getID()));
+				break;
+			}
+			default:
+				break;
+		}
+	}
 }
 
 void Module::loadAreaObjectSaves(const Aurora::GFF3Struct &gff) {
