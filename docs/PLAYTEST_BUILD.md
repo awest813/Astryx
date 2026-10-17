@@ -71,26 +71,22 @@ new way:
 
 - **No live playthrough has been verified yet.** Everything below comes from
   code review and unit tests without game data.
-- **Creatures are not persisted per area.** Re-entering a module reloads its
-  creatures from the GIT, so killed enemies return and OnSpawn runs again.
-  Doors, placeables, container contents and object locals *are* persisted.
-- **Benched companions' progression** (companions not in the active party)
-  is kept for the session but is not written to save files.
-- **The PC cannot drop below 1 HP** (`initAsPC` sets min-one-HP), so the
-  death screen never appears for the PC.
-- **Script timing approximations:** `ActionDoCommand` runs immediately
-  instead of after earlier queued actions; `SignalEvent` runs user-defined
-  events synchronously; `CreateObject` only creates creatures.
-- **Companions added via `AddToParty`** use slot -1 and are treated like the
-  PC when the party is rebuilt after a transition.
-- **Level-up:** ability and skill choices are applied before the final step,
-  so backing out of a level-up keeps them. The feat/Force-power steps fall
-  back to the first eligible choice when the retail panel has no matching
-  button.
-- **Minigames:** swoop SWMG offsets model only the x axis and bullet hit
-  parts aren't tracked; Pazaak uses a simplified turn model;
-  `CutsceneAttack` applies its damage when queued, not on impact.
+- **Minigames are not playable.** Swoop racing (Taris, Tatooine, Manaan) and
+  the Ebon Hawk turret only exist as script-facing state: no track or
+  turret view, steering, collisions or finish. The Taris swoop race is a
+  likely **progression blocker**. Pazaak uses a simplified turn model.
+- **Galaxy map:** destinations use the retail `planetary.2da` rows; the
+  arrival modules (e.g. `tat_m17aa`, `danm13`) and the planet button tags
+  are unverified against the retail GUI. Leviathan is script-driven only.
 - **Ending:** `StartCreditSequence` is a no-op; `EndGame` returns to the
   main menu.
+- **Script approximations:** `CutsceneAttack` applies its damage when
+  queued, not on impact; swoop SWMG offsets model only the x axis and
+  bullet hit parts aren't tracked; many natives are simplified (see
+  [FULL_PARITY_AUDIT_AND_PLAN.md](FULL_PARITY_AUDIT_AND_PLAN.md)).
+- **Level-up:** the feat/Force-power steps fall back to the first eligible
+  choice when the retail panel has no matching button.
 - Movement is straight-line; a creature that is stuck for 3 s abandons the
   move and carries on with its next action.
+- Area state from before this build: creatures in areas visited with an
+  older build respawn once (older saves have no creature state).
