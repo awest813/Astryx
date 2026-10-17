@@ -572,9 +572,9 @@ void Functions::deleteJournalWorldAllEntries(Aurora::NWScript::FunctionContext &
 }
 
 
-void Functions::doSinglePlayerAutoSave(Aurora::NWScript::FunctionContext &ctx) {
+void Functions::doSinglePlayerAutoSave(Aurora::NWScript::FunctionContext &UNUSED(ctx)) {
 	debugC(Common::kDebugEngineLogic, 1, "DoSinglePlayerAutoSave triggered");
-	// Trigger autosave logic
+	_game->getModule().requestAutoSave();
 }
 
 void Functions::setTutorialWindowsEnabled(Aurora::NWScript::FunctionContext &ctx) {

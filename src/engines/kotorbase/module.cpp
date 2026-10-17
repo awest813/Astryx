@@ -465,6 +465,7 @@ void Module::unload(bool completeUnload) {
 		_globalBooleans.clear();
 		_globalStrings.clear();
 		_loadedFromSaveGame = false;
+		_autoSavePending = false;
 
 		_partyController.clearCurrentParty();
 		_partyController.clearAvailableParty();
@@ -847,6 +848,33 @@ void Module::processEventQueue() {
 	onFrameUpdate(_frameTime);
 
 	handleDelayedInteractions();
+	processAutoSave();
+}
+
+void Module::requestAutoSave() {
+	if (!ConfigMan.getBool("autosave", true))
+		return;
+
+	_autoSavePending = true;
+}
+
+void Module::processAutoSave() {
+	// Scripts request autosaves while a transition, dialog or cutscene may
+	// still be in progress; wait until the world is in a stable state.
+	if (!_autoSavePending || !_area || !_pc || _inDialog || _cutsceneMode || isMoviePlaying())
+		return;
+
+	_autoSavePending = false;
+
+	const Common::UString slot = Common::FilePath::normalize(
+		ConfigMan.getString("path") + "/saves/000001 - AUTOSAVE");
+
+	try {
+		saveGame(slot, "Auto Save");
+	} catch (Common::Exception &e) {
+		e.add("Autosave failed");
+		printException(e, "WARNING: ");
+	}
 }
 
 void Module::setSavedPCInfo(const CreatureInfo &info) {

@@ -351,6 +351,8 @@ public:
 
 	void loadSavedGame(SavedGame *save);
 	void saveGame(const Common::UString &slot, const Common::UString &name);
+	/** Request an autosave (DoSinglePlayerAutoSave); performed at the next safe frame. */
+	void requestAutoSave();
 
 	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
 	void setCameraMode(CameraMode mode, Object *target = nullptr);
@@ -574,6 +576,7 @@ protected:
 
 	bool _exit;              ///< Should we exit the module?
 	bool _loadedFromSaveGame { false }; ///< Was this module entered via a save-game load?
+	bool _autoSavePending { false };    ///< DoSinglePlayerAutoSave requested, not yet written.
 
 	Common::UString _module;    ///< The current module's name.
 	Common::UString _newModule; ///< The module we should change to.
@@ -692,6 +695,7 @@ private:
 	void updateSelection();
 
 	void handleDelayedInteractions();
+	void processAutoSave();
 	void openContainer(Placeable *placeable);
 
 	void notifyCombatRoundBegan(int round);
