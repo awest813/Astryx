@@ -95,11 +95,11 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 
 			if (partyRoot.hasField("PT_AVAIL_NPCS")) {
 				const Aurora::GFF3List &availList = partyRoot.getList("PT_AVAIL_NPCS");
-				for (Aurora::GFF3List::const_iterator it = availList.begin(); it != availList.end(); ++it) {
-					if (!*it)
+				for (Aurora::GFF3List::const_iterator npc = availList.begin(); npc != availList.end(); ++npc) {
+					if (!*npc)
 						continue;
-					const int index = (*it)->getSint("Index");
-					const Common::UString resRef = (*it)->getString("NPCResRef");
+					const int index = (*npc)->getSint("Index");
+					const Common::UString resRef = (*npc)->getString("NPCResRef");
 					if (!resRef.empty())
 						_savedAvailableNPCs[index] = resRef;
 				}
@@ -107,15 +107,15 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 
 			if (partyRoot.hasField("PT_MEMBERS")) {
 				const Aurora::GFF3List &membersList = partyRoot.getList("PT_MEMBERS");
-				for (Aurora::GFF3List::const_iterator it = membersList.begin(); it != membersList.end(); ++it) {
-					if (!*it)
+				for (Aurora::GFF3List::const_iterator npc = membersList.begin(); npc != membersList.end(); ++npc) {
+					if (!*npc)
 						continue;
 
 					SavedPartyMemberState member;
-					member.npcSlot = (*it)->getSint("NPCSlot", -1);
-					member.templateResRef = (*it)->getString("TemplateResRef");
-					if ((*it)->hasField("CreatureState"))
-						member.info.read((*it)->getStruct("CreatureState"));
+					member.npcSlot = (*npc)->getSint("NPCSlot", -1);
+					member.templateResRef = (*npc)->getString("TemplateResRef");
+					if ((*npc)->hasField("CreatureState"))
+						member.info.read((*npc)->getStruct("CreatureState"));
 					_savedPartyMembers.push_back(member);
 				}
 				_savedPartyLeaderIndex = partyRoot.getUint("PT_LEADER_INDEX", 0);

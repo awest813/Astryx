@@ -728,7 +728,6 @@ void CreatureInfo::setExperience(int xp) {
 }
 
 int CreatureInfo::getFeatRank(uint32_t feat) const {
-	int rank = 0;
 	if (feat == kFeatSneakAttack1) {
 		if (hasFeat(kFeatSneakAttack9)) return 9;
 		if (hasFeat(kFeatSneakAttack8)) return 8;
