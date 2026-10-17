@@ -110,20 +110,21 @@ read_config_targets() {
 		{
 			line=$0
 			gsub(/\r$/, "", line)
-			if (match(line, /^\[(.+)\]$/, m)) {
+			# Portable (POSIX/mawk) parsing: no gawk-only match(..., array).
+			if (line ~ /^\[.+\]$/) {
 				emit()
-				name=m[1]
+				name=substr(line, 2, length(line) - 2)
 				path=""
 				desc=""
 				next
 			}
 			if (name == "") next
-			if (match(line, /^path=(.+)$/, m)) {
-				path=m[1]
+			if (line ~ /^path=./) {
+				path=substr(line, 6)
 				next
 			}
-			if (match(line, /^description=(.+)$/, m)) {
-				desc=m[1]
+			if (line ~ /^description=./) {
+				desc=substr(line, 13)
 			}
 		}
 		END { emit() }
