@@ -68,6 +68,14 @@ void performEndarSpireOpening(KotORBase::Module &module) {
 void performEndarSpireOpeningBeat(KotORBase::Module &module) {
 	status("Endar Spire: attack on the Republic cruiser...");
 
+	// The module's own OnEnter scripts may already have started the opening
+	// conversation or a cutscene; don't take over (and later release) the
+	// camera and input underneath them. The HUD is shown when they end.
+	if (module.isInConversation() || module.isCutsceneMode()) {
+		module.playMusicStinger("mus_bat_ship");
+		return;
+	}
+
 	module.setCutsceneMode(true);
 	module.setPlayerInputEnabled(false);
 	module.resetToOrbit();

@@ -358,6 +358,9 @@ public:
 
 	void loadSavedGame(SavedGame *save);
 	void saveGame(const Common::UString &slot, const Common::UString &name);
+	bool isCutsceneMode() const { return _cutsceneMode; }
+	/** Is a conversation running (encounter helpers must not take over the camera)? */
+	bool isInConversation() const { return _inDialog; }
 	/** Request an autosave (DoSinglePlayerAutoSave); performed at the next safe frame. */
 	void requestAutoSave();
 
