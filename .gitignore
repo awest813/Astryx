@@ -110,3 +110,17 @@ Makefile.in
 /build-vcpkg-portable/
 /build-vcpkg-release/
 build-linux/
+
+# Out-of-tree build directories (CMake presets / helper scripts)
+/build/
+/build-*/
+/builds/
+/.deps/
+
+# Local logs and caches
+/logs/
+__pycache__/
+*.pyc
+
+# Per-user Claude Code settings
+/.claude/settings.local.json
