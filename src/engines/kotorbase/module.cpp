@@ -180,6 +180,7 @@ void Module::resetSessionState() {
 	_soloMode = false;
 	_movieQueue.clear();
 	_npcStates.clear();
+	_temporaryPartyMembers.clear();
 	_autoSavePending = false;
 	_hasSavedPCPosition = false;
 }
@@ -450,10 +451,13 @@ void Module::loadParty() {
 		_partyController.clearCurrentParty();
 
 		for (auto npc : partyMembers) {
-			if (npc == -1) {
-				_partyController.addPartyMember(-1, _pc);
+			if (npc == PartyController::kPCSlot) {
+				_partyController.addPartyMember(PartyController::kPCSlot, _pc);
 				continue;
 			}
+
+			if (npc == PartyController::kTemporarySlot)
+				continue; // Rebuilt below from their templates.
 
 			// One broken companion must not abort the whole module load.
 			try {
@@ -470,6 +474,21 @@ void Module::loadParty() {
 			}
 		}
 	}
+
+	for (const auto &member : _temporaryPartyMembers) {
+		if (member.first.empty())
+			continue;
+
+		try {
+			Creature *creature = createCreature(member.first);
+			creature->applyCreatureInfo(member.second);
+			_partyController.addPartyMember(PartyController::kTemporarySlot, creature);
+		} catch (Common::Exception &e) {
+			e.add("Failed to restore party member \"%s\"", member.first.c_str());
+			printException(e, "WARNING: ");
+		}
+	}
+	_temporaryPartyMembers.clear();
 
 	updateCurrentPartyGUI();
 }
@@ -543,7 +562,13 @@ void Module::unload(bool completeUnload) {
 	if (!completeUnload) {
 		for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
 			const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
-			if (member.first != -1 && member.second)
+			if (!member.second)
+				continue;
+
+			if (member.first == PartyController::kTemporarySlot)
+				_temporaryPartyMembers.emplace_back(member.second->getTemplateResRef(),
+				                                    member.second->buildSavedState());
+			else if (member.first != PartyController::kPCSlot)
 				rememberNPCState(member.first, *member.second);
 		}
 	}
@@ -649,6 +674,7 @@ void Module::replaceModule() {
 		if (loadingSave) {
 			_pcInfo = savedPCInfo;
 			_npcStates.clear();
+			_temporaryPartyMembers.clear();
 		}
 
 		loadModule(newModule, entryLocation, entryLocationType);
@@ -1003,6 +1029,10 @@ void Module::processAutoSave() {
 	}
 }
 
+void Module::setSavedNPCStates(const std::map<int, CreatureInfo> &states) {
+	_npcStates = states;
+}
+
 void Module::setSavedPCInfo(const CreatureInfo &info) {
 	_pcInfo = info;
 }
@@ -1118,6 +1148,20 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 			Aurora::GFF3WriterStructPtr avail = availList->addStruct();
 			avail->addSint32("Index", entry.first);
 			avail->addResRef("NPCResRef", entry.second);
+		}
+
+		// Progression of every companion met so far, including benched ones.
+		for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+			const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+			if (member.second)
+				rememberNPCState(member.first, *member.second);
+		}
+
+		Aurora::GFF3WriterListPtr npcStates = partyRoot->addList("PT_NPC_STATES");
+		for (const auto &entry : _npcStates) {
+			Aurora::GFF3WriterStructPtr npcState = npcStates->addStruct();
+			npcState->addSint32("Index", entry.first);
+			entry.second.save(*npcState->addStruct("CreatureState"));
 		}
 
 		Aurora::GFF3WriterListPtr membersList = partyRoot->addList("PT_MEMBERS");
@@ -1891,11 +1935,18 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 	// Keep companions that stay in the party; bench the others (remembering
 	// their progression) and remove them from the area.
 	std::map<int, Creature *> kept;
+	std::vector<Creature *> temporary;
 	int partySize = static_cast<int>(_partyController.getPartyMemberCount());
 	for (int i = 0; i < partySize; ++i) {
 		auto partyMember = _partyController.getPartyMemberByIndex(i);
-		if (partyMember.first == -1 || !partyMember.second)
+		if (partyMember.first == PartyController::kPCSlot || !partyMember.second)
 			continue;
+
+		// Members without a roster slot aren't part of the selection.
+		if (partyMember.first == PartyController::kTemporarySlot) {
+			temporary.push_back(partyMember.second);
+			continue;
+		}
 
 		if (partyMember.first == npc1 || partyMember.first == npc2) {
 			kept[partyMember.first] = partyMember.second;
@@ -1922,6 +1973,9 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 			printException(e, "WARNING: ");
 		}
 	}
+
+	for (Creature *creature : temporary)
+		_partyController.addPartyMember(PartyController::kTemporarySlot, creature);
 
 	updateCurrentPartyGUI();
 }

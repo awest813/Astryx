@@ -528,7 +528,6 @@ namespace KotORBase {
 			_info = info;
 			_skin = chargenInfo.getSkin();
 			_face = chargenInfo.getFace();
-			_minOneHitPoint = true;
 			if (_info.hasHitPoints()) {
 				_currentHitPoints = _info.getCurrentHitPoints();
 				_maxHitPoints = _info.getMaxHitPoints();

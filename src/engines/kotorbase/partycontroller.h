@@ -41,6 +41,11 @@ class Creature;
 
 class PartyController {
 public:
+	/** Party slot of the PC. */
+	static const int kPCSlot = -1;
+	/** Party slot of members joined via AddToParty (no NPC roster slot). */
+	static const int kTemporarySlot = -2;
+
 	PartyController(Module *module);
 
 	// Current party

@@ -81,6 +81,7 @@ protected:
 	std::vector<SavedPartyMemberState> _savedPartyMembers;
 	int _savedPartyLeaderIndex { 0 };
 	bool _hasSavedPartyState { false };
+	std::map<int, CreatureInfo> _savedNPCStates;
 
 	/** The PC's character-creation identity, if the save has it. */
 	bool _hasPCIdentity { false };

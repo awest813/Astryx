@@ -115,6 +115,17 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 				}
 			}
 
+			if (partyRoot.hasField("PT_NPC_STATES")) {
+				for (const Aurora::GFF3Struct *npc : partyRoot.getList("PT_NPC_STATES")) {
+					if (!npc || !npc->hasField("CreatureState"))
+						continue;
+
+					CreatureInfo info;
+					info.read(npc->getStruct("CreatureState"));
+					_savedNPCStates[npc->getSint("Index", -1)] = info;
+				}
+			}
+
 			if (partyRoot.hasField("PT_MEMBERS")) {
 				const Aurora::GFF3List &membersList = partyRoot.getList("PT_MEMBERS");
 				for (Aurora::GFF3List::const_iterator npc = membersList.begin(); npc != membersList.end(); ++npc) {
@@ -225,6 +236,9 @@ void SavedGame::applyPersistedState(Module &module) const {
 		if (Creature *pc = module.getPC())
 			pc->getInventory().setGold(_partyGold);
 	}
+
+	if (!_savedNPCStates.empty())
+		module.setSavedNPCStates(_savedNPCStates);
 
 	if (_hasSavedPartyState)
 		module.setSavedPartyState(_savedAvailableNPCs, _savedPartyMembers, _savedPartyLeaderIndex);

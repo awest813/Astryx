@@ -397,6 +397,8 @@ protected:
 	/** Returns true if the current module was entered via a save-game load. */
 	bool isLoadedFromSaveGame() const;
 
+	/** Restore the saved progression of every companion (benched ones included). */
+	void setSavedNPCStates(const std::map<int, CreatureInfo> &states);
 	/** Restore PC inventory/equipment/stats from a save before loadPC(). */
 	void setSavedPCInfo(const CreatureInfo &info);
 	/** Restore available/active party roster from a save before loadParty(). */
@@ -621,6 +623,8 @@ protected:
 	 *  that rebuilding them from their template (module change, party
 	 *  selection) keeps their levels, XP, gear and HP. */
 	std::map<int, CreatureInfo> _npcStates;
+	/** AddToParty members (template, state) carried across a module change. */
+	std::vector<std::pair<Common::UString, CreatureInfo>> _temporaryPartyMembers;
 	std::map<int, Common::UString> _savedAvailableNPCs;
 	int _savedPartyLeaderIndex { 0 };
 	bool _hasSavedPartyState { false };

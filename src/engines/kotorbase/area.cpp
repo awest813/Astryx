@@ -1310,8 +1310,24 @@ void Area::handleCreaturesDeath() {
 		}
 	}
 
-	if (_module->getPC() && _module->getPC()->isDead())
-		_module->showDeathGUI();
+	// As in the original: when the leader falls, a living party member takes
+	// over (the fallen get up after the fight); only when the whole party is
+	// down is the game lost.
+	Creature *leader = _module->getPartyLeader();
+	if (leader && leader->isDead()) {
+		const int partySize = _module->getPartyMemberCount();
+		int living = -1;
+		for (int i = 1; i < partySize && living < 0; ++i) {
+			Creature *member = _module->getPartyMemberByIndex(i);
+			if (member && !member->isDead())
+				living = i;
+		}
+
+		if (living > 0)
+			_module->setPartyLeaderByIndex(living);
+		else
+			_module->showDeathGUI();
+	}
 }
 
 Item *Area::spawnDroppedItem(const Common::UString &tag, float x, float y, float z) {
