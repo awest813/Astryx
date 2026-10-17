@@ -97,6 +97,10 @@ void PartyController::addPartyMember(int npc, Creature *creature) {
 			const std::vector<Creature *> &creatures = area->getCreatures();
 			if (std::find(creatures.begin(), creatures.end(), creature) == creatures.end())
 				area->addCreature(creature);
+
+			// A recruited GIT creature now lives in the party; the area must
+			// not bring its GIT instance back on the next visit.
+			area->releaseFromPersistence(*creature);
 		}
 		creature->show();
 	}

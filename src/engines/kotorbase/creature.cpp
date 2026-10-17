@@ -16,6 +16,7 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/aurora/2dafile.h"
 #include "src/aurora/2dareg.h"
 #include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
 #include "src/aurora/locstring.h"
 #include "src/aurora/resman.h"
 #include "src/graphics/aurora/modelnode.h"
@@ -1656,6 +1657,37 @@ namespace KotORBase {
 				return true;
 			}
 			return false;
+		}
+		void Creature::saveState(Aurora::GFF3WriterStruct &gff) const {
+			Object::saveState(gff);
+			gff.addByte("IsDead", _dead ? 1 : 0);
+			gff.addDouble("XPosition", _position[0]);
+			gff.addDouble("YPosition", _position[1]);
+			gff.addDouble("ZPosition", _position[2]);
+			float x, y, z, angle;
+			getOrientation(x, y, z, angle);
+			gff.addDouble("Facing", angle);
+		}
+		void Creature::loadState(const Aurora::GFF3Struct &gff) {
+			Object::loadState(gff);
+			if (gff.hasField("XPosition"))
+				setPosition(gff.getDouble("XPosition"), gff.getDouble("YPosition"), gff.getDouble("ZPosition"));
+			if (gff.hasField("Facing"))
+				setOrientation(0.0f, 0.0f, 1.0f, gff.getDouble("Facing"));
+			// A restored creature already spawned once; don't run OnSpawn again.
+			_spawnEventPending = false;
+			if (gff.getBool("IsDead", false)) {
+				// Dead in a previous visit: stay dead, without death events or XP.
+				_currentHitPoints = 0;
+				_dead = true;
+				_xpAwarded = true;
+				_deathEventPending = false;
+				_damagedEventPending = false;
+				if (_model) {
+					_model->clearDefaultAnimations();
+					_model->addDefaultAnimation("dead", 100);
+				}
+			}
 		}
 		void Creature::resurrect(int hitPoints) {
 			if (!_dead)

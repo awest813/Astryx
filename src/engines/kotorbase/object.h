@@ -159,6 +159,9 @@ public:
 	bool isPersistent() const;
 	/** Set whether this object should be persisted. */
 	void setPersistent(bool persistent);
+	/** The key this object's state is saved under (assigned when the area loads). */
+	const Common::UString &getPersistenceKey() const { return _persistenceKey; }
+	void setPersistenceKey(const Common::UString &key) { _persistenceKey = key; }
 
 	virtual void saveState(Aurora::GFF3WriterStruct &gff) const;
 	virtual void loadState(const Aurora::GFF3Struct &gff);
@@ -273,6 +276,7 @@ protected:
 	bool _minOneHitPoint;  ///< If the object should have at least one hitpoint.
 	bool _plotFlag;        ///< If true, this object is plot-critical and immune to permanent death.
 	bool _persistent;      ///< If true, this object's state should be persisted across area reloads.
+	Common::UString _persistenceKey; ///< Save-state key (area resref, tag, repeat index).
 
 	float _position[3];    ///< The object's position.
 	float _orientation[4]; ///< The object's orientation.

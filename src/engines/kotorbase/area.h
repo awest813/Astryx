@@ -53,6 +53,7 @@ class GFF3WriterStruct;
 namespace Engines {
 
 class LocalPathfinding;
+class ObjectWalkmesh;
 
 namespace KotORBase {
 
@@ -169,6 +170,11 @@ public:
 	// Persistence
 	void loadPersistence();
 	void savePersistence();
+	/** Give every persistent object its save-state key (GIT order). */
+	void assignPersistenceKeys();
+	/** The object leaves the area for good (destroyed, joined the party, ...). */
+	void releaseFromPersistence(Object &object);
+	Common::UString getSpawnedCreaturesKey() const;
 	/** Save-state key of an object; tagCounts tracks repeated tags. */
 	Common::UString getPersistenceKey(const Object &object, std::map<Common::UString, int> &tagCounts) const;
 	void writePersistence(Aurora::GFF3WriterStruct &gff) const;
@@ -289,6 +295,9 @@ private:
 
 	/** Objects queued by DestroyObject: (object ID, timestamp when due). */
 	std::vector<std::pair<uint32_t, uint32_t>> _pendingDestruction;
+
+	/** Static pathfinding walkmesh of each door/placeable (owned by the local pathfinding). */
+	std::map<const Object *, const Engines::ObjectWalkmesh *> _staticWalkmeshes;
 
 	bool _highlightAll; ///< Are we currently highlighting all objects?
 	std::vector<bool> _mapExplored;

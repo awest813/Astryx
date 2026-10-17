@@ -35,6 +35,7 @@
 #include "src/aurora/gff3writer.h"
 
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/object.h"
@@ -173,6 +174,74 @@ GTEST_TEST(KotORSaveSerialization, objectStateRoundTrip) {
 
 	EXPECT_EQ(loaded.getCurrentHitPoints(), 7);
 	EXPECT_FALSE(loaded.isUsable());
+}
+
+namespace {
+
+class StateTestCreature : public Engines::KotORBase::Creature {
+public:
+	StateTestCreature() : Creature() {}
+
+protected:
+	void getPartModelsPC(PartModels &parts, uint32_t state, uint8_t textureVariation) override {
+		(void)parts;
+		(void)state;
+		(void)textureVariation;
+	}
+};
+
+} // End of anonymous namespace
+
+GTEST_TEST(KotORSaveSerialization, creatureStateRoundTrip) {
+	StateTestCreature creature;
+	creature.setMaxHitPoints(30);
+	creature.setCurrentHitPoints(12);
+	creature.setPosition(1.5f, -2.0f, 3.25f);
+	creature.setOrientation(0.0f, 0.0f, 1.0f, 90.0f);
+	creature.setLocalInt("__localbool_10", 1);
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+
+	StateTestCreature loaded;
+	loaded.setMaxHitPoints(30);
+	loaded.queueSpawnEvent();
+	loaded.loadState(gff.getTopLevel());
+
+	float x, y, z, ox, oy, oz, angle;
+	loaded.getPosition(x, y, z);
+	loaded.getOrientation(ox, oy, oz, angle);
+
+	EXPECT_EQ(loaded.getCurrentHitPoints(), 12);
+	EXPECT_FLOAT_EQ(x, 1.5f);
+	EXPECT_FLOAT_EQ(y, -2.0f);
+	EXPECT_FLOAT_EQ(z, 3.25f);
+	EXPECT_NEAR(angle, 90.0f, 0.01f);
+	EXPECT_EQ(loaded.getLocalInt("__localbool_10"), 1);
+	EXPECT_FALSE(loaded.isDead());
+	// A restored creature already spawned once: no second OnSpawn.
+	EXPECT_FALSE(loaded.consumeSpawnEvent());
+}
+
+GTEST_TEST(KotORSaveSerialization, deadCreatureStaysDead) {
+	StateTestCreature creature;
+	creature.setMaxHitPoints(10);
+	creature.setCurrentHitPoints(0);
+	ASSERT_TRUE(creature.handleDeath());
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+
+	StateTestCreature loaded;
+	loaded.setMaxHitPoints(10);
+	loaded.loadState(gff.getTopLevel());
+
+	EXPECT_TRUE(loaded.isDead());
+	// No OnDeath and no kill XP again for a corpse from an earlier visit.
+	EXPECT_FALSE(loaded.consumeDeathEvent());
+	EXPECT_TRUE(loaded.isXPAwarded());
 }
 
 GTEST_TEST(KotORSaveSerialization, partyPCStateRoundTrip) {

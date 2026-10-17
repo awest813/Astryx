@@ -143,48 +143,115 @@ Common::UString Area::getPersistenceKey(const Object &object, std::map<Common::U
 	return key;
 }
 
-void Area::loadPersistence() {
+static std::shared_ptr<Aurora::GFF3File> finishStateGFF(Aurora::GFF3Writer &writer) {
+	Common::MemoryWriteStreamDynamic memStream(true);
+	writer.write(memStream);
+
+	return std::make_shared<Aurora::GFF3File>(
+		new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
+}
+
+void Area::assignPersistenceKeys() {
 	std::map<Common::UString, int> tagCounts;
+	for (auto &object : _objects)
+		if (object->isPersistent())
+			object->setPersistenceKey(getPersistenceKey(*object, tagCounts));
+}
+
+Common::UString Area::getSpawnedCreaturesKey() const {
+	return _resRef + ":@spawned";
+}
+
+void Area::loadPersistence() {
+	assignPersistenceKeys();
+
+	std::vector<Object *> destroyed;
 	for (auto &o : _objects) {
-		if (!o->isPersistent())
+		if (!o->isPersistent() || o->getPersistenceKey().empty())
 			continue;
 
-		const Common::UString key = getPersistenceKey(*o, tagCounts);
-		if (std::shared_ptr<Aurora::GFF3File> state = _module->getAreaObjectSave(key))
+		std::shared_ptr<Aurora::GFF3File> state = _module->getAreaObjectSave(o->getPersistenceKey());
+		if (!state)
+			continue;
+
+		if (state->getTopLevel().getBool("Destroyed", false))
+			destroyed.push_back(o.get());
+		else
 			o->loadState(state->getTopLevel());
+	}
+
+	// Objects a script destroyed on an earlier visit stay gone.
+	for (Object *object : destroyed)
+		removeObject(object);
+
+	// Recreate creatures that scripts spawned here (CreateObject) on an earlier visit.
+	std::shared_ptr<Aurora::GFF3File> spawned = _module->getAreaObjectSave(getSpawnedCreaturesKey());
+	if (spawned && spawned->getTopLevel().hasField("Creatures")) {
+		for (const Aurora::GFF3Struct *entry : spawned->getTopLevel().getList("Creatures")) {
+			if (!entry)
+				continue;
+
+			const Common::UString templ = entry->getString("TemplateResRef");
+			if (templ.empty())
+				continue;
+
+			try {
+				Creature *creature = _module->createCreatureByTemplate(templ);
+				if (!creature)
+					continue;
+
+				const Common::UString tag = entry->getString("Tag");
+				if (!tag.empty())
+					creature->setTag(tag);
+
+				addCreature(creature);
+				if (entry->hasField("State"))
+					creature->loadState(entry->getStruct("State"));
+			} catch (Common::Exception &e) {
+				e.add("Failed to restore spawned creature \"%s\"", templ.c_str());
+				printException(e, "WARNING: ");
+			}
+		}
 	}
 }
 
 void Area::savePersistence() {
-	std::map<Common::UString, int> tagCounts;
 	for (auto &object : _objects) {
-		if (!object->isPersistent())
+		if (!object->isPersistent() || object->getPersistenceKey().empty())
 			continue;
-
-		const Common::UString key = getPersistenceKey(*object, tagCounts);
 
 		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
 		object->saveState(*writer.getTopLevel());
 
-		Common::MemoryWriteStreamDynamic memStream(true);
-		writer.write(memStream);
-
-		auto gff = std::make_shared<Aurora::GFF3File>(
-			new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
-
-		_module->setAreaObjectSave(key, gff);
+		_module->setAreaObjectSave(object->getPersistenceKey(), finishStateGFF(writer));
 	}
-}
 
-void Area::writePersistence(Aurora::GFF3WriterStruct &gff) const {
-	std::map<Common::UString, int> tagCounts;
-	Aurora::GFF3WriterListPtr list = gff.addList("AreaObjectList");
-	for (const auto &object : _objects) {
-		if (!object->isPersistent())
+	// Living creatures that scripts spawned here, so they are still around
+	// next visit (the GIT doesn't know about them).
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	Aurora::GFF3WriterListPtr list = writer.getTopLevel()->addList("Creatures");
+	for (Creature *creature : _creatures) {
+		if (creature->isPersistent() || creature->isPC() || creature->isDead() || creature->isRosterSpawn() ||
+		    _module->isObjectPartyMember(creature) || creature->getTemplateResRef().empty())
 			continue;
 
 		Aurora::GFF3WriterStructPtr entry = list->addStruct();
-		entry->addExoString("Key", getPersistenceKey(*object, tagCounts));
+		entry->addResRef("TemplateResRef", creature->getTemplateResRef());
+		entry->addExoString("Tag", creature->getTag());
+		creature->saveState(*entry->addStruct("State"));
+	}
+
+	_module->setAreaObjectSave(getSpawnedCreaturesKey(), finishStateGFF(writer));
+}
+
+void Area::writePersistence(Aurora::GFF3WriterStruct &gff) const {
+	Aurora::GFF3WriterListPtr list = gff.addList("AreaObjectList");
+	for (const auto &object : _objects) {
+		if (!object->isPersistent() || object->getPersistenceKey().empty())
+			continue;
+
+		Aurora::GFF3WriterStructPtr entry = list->addStruct();
+		entry->addExoString("Key", object->getPersistenceKey());
 		object->saveState(*entry);
 	}
 }
@@ -198,6 +265,7 @@ void Area::clear() {
 	_rooms.clear();
 	_triggers.clear();
 	_situatedObjects.clear();
+	_staticWalkmeshes.clear();
 	_activeTrigger = 0;
 }
 
@@ -667,7 +735,10 @@ void Area::loadPlaceables(const Aurora::GFF3List &list) {
 			Placeable *obj = static_cast<Placeable *>(_objects.back().get());
 			obj->setPersistent(true);
 			_situatedObjects.push_back(obj);
-			_localPathfinding->addStaticObjects(new ObjectWalkmesh(obj));
+
+			ObjectWalkmesh *walkmesh = new ObjectWalkmesh(obj);
+			_localPathfinding->addStaticObjects(walkmesh);
+			_staticWalkmeshes[obj] = walkmesh;
 		}
 	}
 }
@@ -680,15 +751,22 @@ void Area::loadDoors(const Aurora::GFF3List &list) {
 			Door *obj = static_cast<Door *>(_objects.back().get());
 			obj->setPersistent(true);
 			_situatedObjects.push_back(obj);
-			_localPathfinding->addStaticObjects(new DoorWalkmesh(obj));
+
+			DoorWalkmesh *walkmesh = new DoorWalkmesh(obj);
+			_localPathfinding->addStaticObjects(walkmesh);
+			_staticWalkmeshes[obj] = walkmesh;
 		}
 	}
 }
 
 void Area::loadCreatures(const Aurora::GFF3List &list) {
-	for (auto &creature : list)
-		if (creature)
-			addCreature(_module->createCreature(*creature));
+	for (auto &creature : list) {
+		if (creature) {
+			Creature *obj = _module->createCreature(*creature);
+			addCreature(obj);
+			obj->setPersistent(true);
+		}
+	}
 }
 
 void Area::loadTriggers(const Aurora::GFF3List &list) {
@@ -1319,7 +1397,23 @@ void Area::processPendingDestruction() {
 	}
 }
 
+void Area::releaseFromPersistence(Object &object) {
+	// Mark the GIT instance as gone for future visits, and stop tracking it.
+	if (object.isPersistent() && !object.getPersistenceKey().empty()) {
+		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+		writer.getTopLevel()->addByte("Destroyed", 1);
+		_module->setAreaObjectSave(object.getPersistenceKey(), finishStateGFF(writer));
+	}
+
+	object.setPersistent(false);
+	object.setPersistenceKey("");
+}
+
 void Area::removeObject(Object *object) {
+	// A GIT object removed for good (DestroyObject, picked up, ...) must not
+	// come back from the GIT on the next visit.
+	releaseFromPersistence(*object);
+
 	// Scrub references other objects hold before the object is deleted.
 	for (Creature *creature : _creatures)
 		if (creature != object)
@@ -1345,6 +1439,13 @@ void Area::removeObject(Object *object) {
 	std::list<Situated *>::iterator soit = std::find(_situatedObjects.begin(), _situatedObjects.end(), object);
 	if (soit != _situatedObjects.end())
 		_situatedObjects.erase(soit);
+
+	// Door walkmeshes point at their door; placeables would leave a ghost obstacle.
+	auto walkmesh = _staticWalkmeshes.find(object);
+	if (walkmesh != _staticWalkmeshes.end()) {
+		_localPathfinding->removeStaticObject(walkmesh->second);
+		_staticWalkmeshes.erase(walkmesh);
+	}
 
 	if (object == _activeTrigger)
 		_activeTrigger = 0;

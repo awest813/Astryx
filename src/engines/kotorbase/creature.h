@@ -417,6 +417,10 @@ public:
 
 	/** Handle creature's death. Return true if changed from alive to dead. */
 	bool handleDeath();
+
+	// Area persistence: alive/dead, position and facing on top of Object's state.
+	void saveState(Aurora::GFF3WriterStruct &gff) const override;
+	void loadState(const Aurora::GFF3Struct &gff) override;
 	/** Bring a dead creature back with the given hit points (at least 1). */
 	void resurrect(int hitPoints);
 	/** Return and clear whether OnDeath is due (set when the creature died). */
@@ -425,6 +429,9 @@ public:
 	bool consumeDamagedEvent();
 	/** Queue OnSpawn (when the creature enters an area) / OnHeartbeat. */
 	void queueSpawnEvent() { _spawnEventPending = true; }
+	/** A roster companion placed by SpawnAvailableNPC; never saved with the area. */
+	void setRosterSpawn(bool rosterSpawn) { _rosterSpawn = rosterSpawn; }
+	bool isRosterSpawn() const { return _rosterSpawn; }
 	void queueHeartbeatEvent() { _heartbeatEventPending = true; }
 	bool consumeSpawnEvent();
 	bool consumeHeartbeatEvent();
@@ -534,6 +541,7 @@ private:
 	bool _deathEventPending { false };   ///< OnDeath queued; run outside creature iteration.
 	bool _damagedEventPending { false }; ///< OnDamaged queued; run outside creature iteration.
 	bool _spawnEventPending { false };     ///< OnSpawn queued; run outside creature iteration.
+	bool _rosterSpawn { false };           ///< Placed by SpawnAvailableNPC.
 	bool _heartbeatEventPending { false }; ///< OnHeartbeat queued; run outside creature iteration.
 
 	float _walkRate;

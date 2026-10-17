@@ -2024,6 +2024,7 @@ Creature *Module::spawnAvailableNPC(int npc, float x, float y, float z, float an
 
 	creature->setPosition(x, y, z);
 	creature->setOrientation(0.0f, 0.0f, 1.0f, angle);
+	creature->setRosterSpawn(true);
 	_area->addCreature(creature);
 	creature->show();
 
