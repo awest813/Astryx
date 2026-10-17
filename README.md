@@ -57,6 +57,7 @@ Endar→Star Forge playthrough. Live smoke still needs game data. Supported slic
 - [x] Door/placeable visual restore on load; SWMG named object getters
 - [x] Audit polish: K1 NWScript signature table repair; Force LOS/FP order; effect instant duration
 - [x] Retail K1 IDs restored (`GetSkillRank` 315, `GetLastAttackType` 317, `GetIsInCombat` 320, `SetLocked` 324); creature GFF load/combat statements un-swallowed
+- [x] Playable-build audit: crash/softlock/save fixes across natives, module flow, combat, GUI (see [docs/PLAYTEST_BUILD.md](docs/PLAYTEST_BUILD.md))
 - [ ] Verified Endar Spire → Dantooine live smoke
 - [ ] SWMG / swoop / turret live progression fidelity
 - [ ] Full GFF save/load campaign round-trips
@@ -81,4 +82,5 @@ powershell -ExecutionPolicy Bypass -File scripts/run_xoreos_windows.ps1
 - [Detailed Roadmap](ROADMAP.md)
 - [Acceptance Criteria](MILESTONE.md)
 - [Full Parity Audit & Plan](docs/FULL_PARITY_AUDIT_AND_PLAN.md)
+- [Playtest Build Guide](docs/PLAYTEST_BUILD.md)
 - [Upstream xoreos](https://github.com/xoreos/xoreos)
