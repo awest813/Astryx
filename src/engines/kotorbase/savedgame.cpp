@@ -93,6 +93,16 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 				_hasSavedPCInfo = true;
 			}
 
+			if (partyRoot.hasField("PT_PC_IDENTITY")) {
+				const Aurora::GFF3Struct &identity = partyRoot.getStruct("PT_PC_IDENTITY");
+				_pcName   = identity.getString("Name");
+				_pcGender = identity.getUint("Gender", _pcGender);
+				_pcClass  = identity.getSint("Class", 0);
+				_pcSkin   = identity.getSint("Skin", 0);
+				_pcFace   = identity.getSint("Face", 0);
+				_hasPCIdentity = true;
+			}
+
 			if (partyRoot.hasField("PT_AVAIL_NPCS")) {
 				const Aurora::GFF3List &availList = partyRoot.getList("PT_AVAIL_NPCS");
 				for (Aurora::GFF3List::const_iterator npc = availList.begin(); npc != availList.end(); ++npc) {

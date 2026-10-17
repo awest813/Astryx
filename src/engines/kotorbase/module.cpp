@@ -1098,6 +1098,17 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 			partyRoot->addUint32("PT_GOLD", pc->getInventory().getGold());
 			Aurora::GFF3WriterStructPtr pcState = partyRoot->addStruct("PT_PC_STATE");
 			_pcInfo.save(*pcState);
+
+			// Who the PC is (not stored in the CreatureInfo), so a load
+			// rebuilds the same character rather than a random one.
+			if (_chargenInfo) {
+				Aurora::GFF3WriterStructPtr identity = partyRoot->addStruct("PT_PC_IDENTITY");
+				identity->addExoString("Name", _chargenInfo->getName());
+				identity->addUint32("Gender", static_cast<uint32_t>(_chargenInfo->getGender()));
+				identity->addSint32("Class", static_cast<int32_t>(_chargenInfo->getClass()));
+				identity->addSint32("Skin", static_cast<int32_t>(_chargenInfo->getSkin()));
+				identity->addSint32("Face", static_cast<int32_t>(_chargenInfo->getFace()));
+			}
 		}
 
 		Aurora::GFF3WriterListPtr availList = partyRoot->addList("PT_AVAIL_NPCS");

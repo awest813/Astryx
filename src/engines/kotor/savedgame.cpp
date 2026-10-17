@@ -35,12 +35,34 @@ SavedGame::SavedGame(const Common::UString &dir, bool loadSav) :
 }
 
 KotORBase::CharacterGenerationInfo *SavedGame::createCharGenInfo() {
-	switch (_pcGender) {
-		case KotORBase::kGenderFemale:
-			return CharacterGenerationInfo::createRandomFemaleSoldier();
+	const bool female = (_pcGender == KotORBase::kGenderFemale);
+
+	CharacterGenerationInfo *info = nullptr;
+	switch (_hasPCIdentity ? _pcClass : KotORBase::kClassSoldier) {
+		case KotORBase::kClassScout:
+			info = female ? CharacterGenerationInfo::createRandomFemaleScout()
+			              : CharacterGenerationInfo::createRandomMaleScout();
+			break;
+		case KotORBase::kClassScoundrel:
+			info = female ? CharacterGenerationInfo::createRandomFemaleScoundrel()
+			              : CharacterGenerationInfo::createRandomMaleScoundrel();
+			break;
 		default:
-			return CharacterGenerationInfo::createRandomMaleSoldier();
+			info = female ? CharacterGenerationInfo::createRandomFemaleSoldier()
+			              : CharacterGenerationInfo::createRandomMaleSoldier();
+			break;
 	}
+
+	// Older saves lack the identity and keep getting a random appearance.
+	if (_hasPCIdentity) {
+		if (!_pcName.empty())
+			info->setName(_pcName);
+		if (_pcSkin >= 0 && _pcSkin < KotORBase::kSkinMAX)
+			info->setSkin(static_cast<KotORBase::Skin>(_pcSkin));
+		info->setFace(static_cast<uint8_t>(_pcFace));
+	}
+
+	return info;
 }
 
 } // End of namespace KotOR

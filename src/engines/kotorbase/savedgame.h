@@ -82,6 +82,13 @@ protected:
 	int _savedPartyLeaderIndex { 0 };
 	bool _hasSavedPartyState { false };
 
+	/** The PC's character-creation identity, if the save has it. */
+	bool _hasPCIdentity { false };
+	Common::UString _pcName;
+	int _pcClass { 0 };
+	int _pcSkin { 0 };
+	int _pcFace { 0 };
+
 	std::unique_ptr<Aurora::GFF3File> _globals;
 	std::unique_ptr<Aurora::GFF3File> _areaState;
 
