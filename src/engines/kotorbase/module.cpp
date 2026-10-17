@@ -561,6 +561,7 @@ void Module::unload(bool completeUnload) {
 		_globalStrings.clear();
 		_loadedFromSaveGame = false;
 		resetSessionState();
+		_queuedUserDefinedEvents.clear();
 
 		_partyController.clearCurrentParty();
 		_partyController.clearAvailableParty();
@@ -931,6 +932,7 @@ void Module::processEventQueue() {
 
 	handleEvents();
 	handleActions();
+	processQueuedUserDefinedEvents();
 
 	_roundController.update();
 	_area->handleCreaturesDeath();
@@ -2221,8 +2223,32 @@ void Module::delayScript(const Common::UString &script,
 
 void Module::signalUserDefinedEvent(Object *owner, int number) {
 	if (owner) {
+		// Handlers may signal further events; restore the outer number after.
+		const int previous = _userDefinedEventNumber;
 		_userDefinedEventNumber = number;
 		owner->runScript(kScriptUserdefined, owner, owner);
+		_userDefinedEventNumber = previous;
+	}
+}
+
+void Module::queueUserDefinedEvent(Object *owner, int number) {
+	if (owner)
+		_queuedUserDefinedEvents.emplace_back(Aurora::NWScript::ObjectReference(owner), number);
+}
+
+void Module::processQueuedUserDefinedEvents() {
+	if (_queuedUserDefinedEvents.empty())
+		return;
+
+	// Events signalled by these handlers run next frame, so a handler that
+	// signals itself can't recurse without bound.
+	std::vector<std::pair<Aurora::NWScript::ObjectReference, int>> events;
+	events.swap(_queuedUserDefinedEvents);
+
+	for (const auto &event : events) {
+		Object *owner = ObjectContainer::toObject(*event.first);
+		if (owner)
+			signalUserDefinedEvent(owner, event.second);
 	}
 }
 

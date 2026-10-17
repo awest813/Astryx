@@ -29,6 +29,7 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <vector>
 
 #include <memory>
 
@@ -172,6 +173,8 @@ public:
 	                 uint32_t delay);
 
 	void signalUserDefinedEvent(Object *owner, int number);
+	/** Queue a user-defined event, as SignalEvent does in the original. */
+	void queueUserDefinedEvent(Object *owner, int number);
 	
 	/** Transition the camera to focus on a target object/waypoint. */
 	virtual void cameraTransitionToTarget(const Common::UString &target, float duration);
@@ -624,6 +627,8 @@ protected:
 	bool _playerInputEnabled { true };
 	bool _cutsceneMode { false };
 	int _userDefinedEventNumber { 0 };
+	/** SignalEvent(EventUserDefined) calls, delivered at the next frame. */
+	std::vector<std::pair<Aurora::NWScript::ObjectReference, int>> _queuedUserDefinedEvents;
 	float _playTime { 0.0f };
 	std::map<Common::UString, std::vector<bool>> _exploredMaps;
 	bool _inBattleMusic { false };  ///< Is the battle music track currently playing?
@@ -708,6 +713,7 @@ private:
 
 	void handleDelayedInteractions();
 	void processAutoSave();
+	void processQueuedUserDefinedEvents();
 	void resetSessionState();
 	/** Create a companion from its template and restore its known state. */
 	Creature *createPartyNPC(int npc, const Common::UString &templ);

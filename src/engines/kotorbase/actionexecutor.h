@@ -67,6 +67,7 @@ private:
 	/** Get if the current creature has reached a specified location. */
 	static bool isLocationReached(const glm::vec2 &location, float range, const ExecutionContext &ctx);
 
+	static void executeDoCommand(Action &action, const ExecutionContext &ctx);
 	static void executeMoveToPoint(Action &action, const ExecutionContext &ctx);
 	static void executeFollowLeader(Action &action, const ExecutionContext &ctx);
 	static void executeOpenLock(Action &action, const ExecutionContext &ctx);

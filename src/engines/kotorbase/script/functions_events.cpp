@@ -40,9 +40,9 @@ namespace Engines {
 namespace KotORBase {
 
 void Functions::signalEvent(Aurora::NWScript::FunctionContext &ctx) {
-	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
 	if (!object)
-		object = _game->getModule().getPC();
+		return;
 
 	Event *e = static_cast<Event *>(ctx.getParams()[1].getEngineType());
 	if (!e) {
@@ -52,11 +52,9 @@ void Functions::signalEvent(Aurora::NWScript::FunctionContext &ctx) {
 
 	switch (e->getType()) {
 		case kEventUserDefined:
-			_game->getModule().signalUserDefinedEvent(object, e->getUserDefinedNumber());
+			_game->getModule().queueUserDefinedEvent(object, e->getUserDefinedNumber());
 			break;
 		case kEventSpellCastAt:
-			if (!object)
-				return;
 			_game->getModule().setSpellScriptContext(e->getSpellId(),
 			                                        ObjectContainer::toObject(ctx.getCaller()),
 			                                        object, 12, e->getSpellHarmful());

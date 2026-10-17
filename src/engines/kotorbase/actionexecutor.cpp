@@ -116,11 +116,25 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 		case kActionTakeItem:
 			ctx.creature->popAction();
 			break;
+		case kActionDoCommand:
+			executeDoCommand(action, ctx);
+			break;
 		default:
 			ctx.creature->popAction();
 			debugC(Common::kDebugEngineLogic, 1, "ActionExecutor: unhandled action type %u", (uint)action.type);
 			break;
 	}
+}
+
+void ActionExecutor::executeDoCommand(Action &action, const ExecutionContext &ctx) {
+	// Pop first: the command commonly queues more actions or clears the queue.
+	const Common::UString script = action.script;
+	std::shared_ptr<Aurora::NWScript::ScriptState> state = action.scriptState;
+	Creature *creature = ctx.creature;
+	creature->popAction();
+
+	if (!script.empty() && state)
+		ScriptContainer::runScript(script, *state, creature, creature);
 }
 
 void ActionExecutor::executeMoveToPoint(Action &action, const ExecutionContext &ctx) {

@@ -25,9 +25,19 @@
 #ifndef ENGINES_KOTORBASE_ACTION_H
 #define ENGINES_KOTORBASE_ACTION_H
 
+#include <memory>
+
 #include "external/glm/vec3.hpp"
 
+#include "src/common/ustring.h"
+
 #include "src/engines/kotorbase/types.h"
+
+namespace Aurora {
+	namespace NWScript {
+		struct ScriptState;
+	}
+}
 
 namespace Engines {
 
@@ -44,6 +54,10 @@ struct Action {
 	int   choreographyFlags { 0 }; ///< Cinematic attack modifiers (CutsceneAttack).
 	float startTime { -1.0f }; ///< Time the action started (for timed actions).
 	bool  initialized { false };
+
+	/** kActionDoCommand: the script closure to run when the action is reached. */
+	Common::UString script;
+	std::shared_ptr<Aurora::NWScript::ScriptState> scriptState;
 
 	Action();
 	Action(ActionType type);

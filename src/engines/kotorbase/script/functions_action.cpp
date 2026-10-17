@@ -1375,27 +1375,25 @@ void Functions::giveItem(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionDoCommand(Aurora::NWScript::FunctionContext &ctx) {
-
-	// ActionDoCommand(action aAction)
-
-	// The script state (closure) in aAction is executed immediately as part of
-
-	// the caller's action queue. We execute it synchronously here since our
-
-	// action queue does not model deferred closures.
-
+	// ActionDoCommand(action aAction): run the closure once the caller's
+	// earlier queued actions are done (e.g. walk somewhere, then destroy self).
 	Common::UString script = ctx.getScriptName();
-
 	if (script.empty())
-
 		return;
-
-
 
 	const Aurora::NWScript::ScriptState &state = ctx.getParams()[0].getScriptState();
 
-	_game->getModule().delayScript(script, state, ctx.getCaller(), ctx.getTriggerer(), 0);
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (!creature) {
+		// Only creatures have an action queue; others run it right away.
+		_game->getModule().delayScript(script, state, ctx.getCaller(), ctx.getTriggerer(), 0);
+		return;
+	}
 
+	Action action(kActionDoCommand);
+	action.script = script;
+	action.scriptState = std::make_shared<Aurora::NWScript::ScriptState>(state);
+	creature->addAction(action);
 }
 
 
