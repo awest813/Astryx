@@ -364,6 +364,12 @@ public:
 
 	void startCombat(Object *target, int round);
 	void cancelCombat();
+	/** Drop every reference to an object that is about to be destroyed. */
+	void forgetObject(const Object *object);
+
+	/** Time (s) the current movement has been blocked; reset on progress. */
+	float addBlockedMoveTime(float dt) { return _blockedMoveTime += dt; }
+	void resetBlockedMoveTime() { _blockedMoveTime = 0.0f; }
 
 	/** Apply an active effect tracking struct directly to this creature. */
 	void applyEffect(const ActiveEffect &effect);
@@ -411,6 +417,17 @@ public:
 
 	/** Handle creature's death. Return true if changed from alive to dead. */
 	bool handleDeath();
+	/** Bring a dead creature back with the given hit points (at least 1). */
+	void resurrect(int hitPoints);
+	/** Return and clear whether OnDeath is due (set when the creature died). */
+	bool consumeDeathEvent();
+	/** Return and clear whether OnDamaged is due (set when damage was taken). */
+	bool consumeDamagedEvent();
+	/** Queue OnSpawn (when the creature enters an area) / OnHeartbeat. */
+	void queueSpawnEvent() { _spawnEventPending = true; }
+	void queueHeartbeatEvent() { _heartbeatEventPending = true; }
+	bool consumeSpawnEvent();
+	bool consumeHeartbeatEvent();
 
 	/** Has kill XP for this creature already been awarded? */
 	bool isXPAwarded() const;
@@ -513,6 +530,11 @@ private:
 	std::vector<std::unique_ptr<Item>> _scriptItems;
 
 	ActionQueue _actions;
+	float _blockedMoveTime { 0.0f };
+	bool _deathEventPending { false };   ///< OnDeath queued; run outside creature iteration.
+	bool _damagedEventPending { false }; ///< OnDamaged queued; run outside creature iteration.
+	bool _spawnEventPending { false };     ///< OnSpawn queued; run outside creature iteration.
+	bool _heartbeatEventPending { false }; ///< OnHeartbeat queued; run outside creature iteration.
 
 	float _walkRate;
 	float _runRate;

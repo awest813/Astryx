@@ -59,6 +59,8 @@ public:
 	Object *getLastClosedBy() const;
 	/** Return the object that last used this situated object. */
 	Object *getLastUsedBy() const;
+	/** Drop every reference to an object that is about to be destroyed. */
+	void forgetObject(const Object *object);
 	/** Get the conversation for this object. */
 	const Common::UString &getConversation() const;
 	/** Get the model name. */

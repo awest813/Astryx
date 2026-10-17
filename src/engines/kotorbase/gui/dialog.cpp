@@ -61,10 +61,20 @@ void DialogGUI::startConversation(const Common::UString &name, Aurora::NWScript:
 		_dlg = std::make_unique<Aurora::DLGFile>(name, owner);
 		_dlg->startConversation();
 		_owner = owner ? owner->getTag() : "";
+		_pickedReply = false;
 		refresh();
 	} catch (Common::Exception &e) {
 		warning("Failed to start conversation %s: %s", name.c_str(), e.what());
 	}
+}
+
+void DialogGUI::stopConversation() {
+	stopSounds();
+	_dlg.reset();
+	_replyIds.clear();
+	_owner.clear();
+	_curSpeaker.clear();
+	_isActive = false;
 }
 
 bool DialogGUI::isConversationActive() const {
@@ -212,16 +222,24 @@ void DialogGUI::update(int width, int height) {
 
 void DialogGUI::refresh() {
 	const Aurora::DLGFile::Line *curEntry = _dlg->getCurrentEntry();
-	if (!curEntry)
+	if (!curEntry) {
+		_isActive = false;
 		return;
+	}
 
 	stopSounds();
 	playSounds();
 
 	const std::vector<const Aurora::DLGFile::Line *> replies = _dlg->getCurrentReplies();
-	_isActive = !replies.empty();
-	if (!_isActive)
+	if (replies.empty() && !_pickedReply) {
+		// A single reply-less line is a one-liner: end at once, but still
+		// run the conversation's EndConversation script.
+		_dlg->pickReply(Aurora::DLGFile::kEndLine);
+		_isActive = false;
 		return;
+	}
+
+	_isActive = true;
 
 	Common::UString text;
 	Odyssey::WidgetLabel *lblMessage = getLabel("LBL_MESSAGE");
@@ -251,6 +269,16 @@ void DialogGUI::refresh() {
 	_replyIds.clear();
 	Odyssey::WidgetListBox *lbReplies = getListBox("LB_REPLIES");
 	lbReplies->removeAllItems();
+
+	if (replies.empty()) {
+		// The NPC's closing line: show it, and end the conversation (running
+		// its EndConversation script) once the player continues.
+		const uint32_t endLine = Aurora::DLGFile::kEndLine; // push_back() would ODR-use the constant
+		_replyIds.push_back(endLine);
+		lbReplies->addItem("1. [END DIALOGUE]");
+		lbReplies->refreshItemWidgets();
+		return;
+	}
 
 	int index = 1;
 	for (std::vector<const Aurora::DLGFile::Line *>::const_iterator it = replies.begin();
@@ -301,6 +329,7 @@ void DialogGUI::pickReply(int index) {
 		_curSpeaker.clear();
 	}
 
+	_pickedReply = true;
 	_dlg->pickReply(_replyIds[index]);
 	if (_dlg->hasEnded()) {
 		stopSounds();

@@ -147,7 +147,7 @@ public:
 	// Triggers
 
 	void toggleTriggers();
-	void evaluateTriggers(float x, float y);
+	void evaluateTriggers(float x, float y, bool allowTransitions = true);
 
 	// Object management
 
@@ -159,6 +159,12 @@ public:
 	Item *spawnDroppedItem(const Common::UString &tag, float x, float y, float z);
 	void addToObjectMap(Object *object);
 	void removeObject(Object *object);
+	/** Destroy an object at the end of the frame (DestroyObject), after an optional delay. */
+	void destroyObjectDeferred(Object *object, float delay = 0.0f);
+	/** Queue OnHeartbeat for every NPC; run with the other creature events. */
+	void queueCreatureHeartbeats();
+	/** Remove objects whose deferred destruction is due. Call outside object iteration. */
+	void processPendingDestruction();
 
 	// Persistence
 	void loadPersistence();
@@ -278,6 +284,9 @@ private:
 	std::vector<Creature *> _creatures;
 
 	Object *_activeObject; ///< The currently active (highlighted) object.
+
+	/** Objects queued by DestroyObject: (object ID, timestamp when due). */
+	std::vector<std::pair<uint32_t, uint32_t>> _pendingDestruction;
 
 	bool _highlightAll; ///< Are we currently highlighting all objects?
 	std::vector<bool> _mapExplored;

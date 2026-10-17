@@ -135,12 +135,24 @@ void LevelUpForcePowersMenu::callbackActive(Widget &widget) {
 		return;
 	}
 
+	if (tag == "BTN_RECOMMENDED" || tag == "BTN_SELECT") {
+		if (!_availablePowers.empty())
+			_selectedPower = _availablePowers.front();
+		updateLabels();
+		return;
+	}
+
 	if (tag == "BTN_ACCEPT") {
-		if (_selectedPower != 0xFFFFFFFF && isPowerAvailable(_selectedPower)) {
+		// The retail panel may not carry a button per power; never let that
+		// block the level-up: fall back to the recommended (first) power.
+		if ((_selectedPower == 0xFFFFFFFF || !isPowerAvailable(_selectedPower)) && !_availablePowers.empty())
+			_selectedPower = _availablePowers.front();
+
+		if (_selectedPower != 0xFFFFFFFF && isPowerAvailable(_selectedPower))
 			_info.addForcePower(_selectedPower);
-			_accepted = true;
-			_returnCode = 1;
-		}
+
+		_accepted = true;
+		_returnCode = 1;
 		return;
 	}
 

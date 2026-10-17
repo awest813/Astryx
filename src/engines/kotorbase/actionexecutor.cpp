@@ -27,9 +27,12 @@
 #include "external/glm/vec3.hpp"
 #include "external/glm/gtc/type_ptr.hpp"
 
+#include "src/common/util.h"
 #include "src/common/maths.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/aurora/nwscript/objectman.h"
+
 #include "src/engines/kotorbase/actionexecutor.h"
 #include "src/common/random.h"
 #include "src/common/debug.h"
@@ -48,6 +51,10 @@
 #include "src/engines/kotorbase/animationnames.h"
 
 static const float kWalkDistance = 2.0f;
+/** Closer than this counts as arrived; a range of 0 is never hit exactly. */
+static const float kMinMoveRange = 0.1f;
+/** Give up on a blocked movement after this many seconds. */
+static const float kMaxBlockedMoveTime = 3.0f;
 
 namespace Engines {
 
@@ -123,6 +130,10 @@ void ActionExecutor::executeMoveToPoint(Action &action, const ExecutionContext &
 
 void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext &ctx) {
 	Creature *partyLeader = ctx.area->_module->getPartyLeader();
+	if (!partyLeader || partyLeader == ctx.creature) {
+		ctx.creature->popAction();
+		return;
+	}
 
 	float x, y, _;
 	partyLeader->getPosition(x, y, _);
@@ -131,12 +142,19 @@ void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext 
 }
 
 void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx) {
+	if (!action.object) {
+		ctx.creature->popAction();
+		return;
+	}
+
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
 	if (!moveTo(glm::vec2(x, y), action.range, ctx))
 		return;
 
+	// popAction() destroys the action, so keep what we still need.
+	Object *target = action.object;
 	ctx.creature->popAction();
 
 	if (ctx.creature != ctx.area->_module->getPartyLeader()) {
@@ -144,8 +162,8 @@ void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx
 		return;
 	}
 
-	Door *door = ObjectContainer::toDoor(action.object);
-	Placeable *placeable = ObjectContainer::toPlaceable(action.object);
+	Door *door = ObjectContainer::toDoor(target);
+	Placeable *placeable = ObjectContainer::toPlaceable(target);
 	Situated *situated = door ? (Situated *)door : (Situated *)placeable;
 
 	if (!situated) {
@@ -184,12 +202,19 @@ void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx
 }
 
 void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ctx) {
+	if (!action.object) {
+		ctx.creature->popAction();
+		return;
+	}
+
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
 	if (!moveTo(glm::vec2(x, y), action.range, ctx))
 		return;
 
+	// popAction() destroys the action, so keep what we still need.
+	Object *target = action.object;
 	ctx.creature->popAction();
 
 	Module *module = ctx.area->_module;
@@ -199,9 +224,14 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 		return;
 	}
 
-	action.object->click(module->getPartyLeader());
+	const uint32_t targetID = target->getID();
+	target->click(module->getPartyLeader());
 
-	Creature *creatureObject = ObjectContainer::toCreature(action.object);
+	// The click scripts (OnUsed, OnDialog, ...) may have destroyed the target.
+	if (ObjectMan.findObject(targetID) != target)
+		return;
+
+	Creature *creatureObject = ObjectContainer::toCreature(target);
 	if (creatureObject) {
 		const Common::UString conversation = creatureObject->getConversation();
 		if (!conversation.empty())
@@ -210,7 +240,7 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 		return;
 	}
 
-	Situated *situated = ObjectContainer::toSituated(action.object);
+	Situated *situated = ObjectContainer::toSituated(target);
 	if (situated) {
 		const Common::UString conversation = situated->getConversation();
 		if (!conversation.empty()) {
@@ -218,7 +248,7 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 			return;
 		}
 
-		Placeable *placeable = ObjectContainer::toPlaceable(action.object);
+		Placeable *placeable = ObjectContainer::toPlaceable(target);
 		if (placeable && placeable->hasInventory()) {
 			module->delayContainer(placeable);
 			return;
@@ -227,18 +257,26 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 }
 
 void ActionExecutor::executeAttackObject(Action &action, const ExecutionContext &ctx) {
+	if (!action.object || action.object->isDead()) {
+		ctx.creature->popAction();
+		return;
+	}
+
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
 	if (!moveTo(glm::vec2(x, y), ctx.creature->getMaxAttackRange(), ctx))
 		return;
 
+	// popAction() destroys the action, so keep what we still need.
+	Object *target = action.object;
+	const int choreographyFlags = action.choreographyFlags;
 	ctx.creature->popAction();
-	
-	if (action.choreographyFlags > 0)
-		ctx.creature->performCutsceneAttack(action.object, action.choreographyFlags);
+
+	if (choreographyFlags > 0)
+		ctx.creature->performCutsceneAttack(target, choreographyFlags);
 	else
-		ctx.creature->startCombat(action.object, ctx.area->_module->getNextCombatRound());
+		ctx.creature->startCombat(target, ctx.area->_module->getNextCombatRound());
 }
 
 void ActionExecutor::executePickUpItem(Action &action, const ExecutionContext &ctx) {
@@ -317,8 +355,12 @@ bool ActionExecutor::isLocationReached(const glm::vec2 &location, float range, c
 }
 
 bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx, bool forceRun) {
-	if (isLocationReached(location, range, ctx))
+	range = MAX(range, kMinMoveRange);
+
+	if (isLocationReached(location, range, ctx)) {
+		ctx.creature->resetBlockedMoveTime();
 		return true;
+	}
 
 	ctx.creature->makeLookAt(location.x, location.y);
 
@@ -333,8 +375,11 @@ bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const Execut
 	bool run = forceRun || dist > kWalkDistance;
 	float moveRate = run ? ctx.creature->getRunRate() : ctx.creature->getWalkRate();
 
-	float x = origin.x + moveRate * dir.x * ctx.frameTime;
-	float y = origin.y + moveRate * dir.y * ctx.frameTime;
+	// Don't overshoot the destination.
+	const float step = MIN(moveRate * ctx.frameTime, dist);
+
+	float x = origin.x + step * dir.x;
+	float y = origin.y + step * dir.y;
 	float z = ctx.area->evaluateElevation(x, y);
 
 	bool haveMovement = (z != FLT_MIN) &&
@@ -342,6 +387,7 @@ bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const Execut
 	                                        glm::vec3(x, y, z + 0.1f));
 
 	if (haveMovement) {
+		ctx.creature->resetBlockedMoveTime();
 		ctx.creature->playAnimation(run ? "run" : "walk", false, -1.0f);
 		ctx.creature->setPosition(x, y, z);
 
@@ -360,6 +406,16 @@ bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const Execut
 
 	} else {
 		ctx.creature->playDefaultAnimation();
+
+		// Straight-line movement can get stuck on walkmesh edges. Rather than
+		// stall the action queue (and any cutscene waiting on it) forever,
+		// give up after a while and let the action proceed from here.
+		if (ctx.creature->addBlockedMoveTime(ctx.frameTime) >= kMaxBlockedMoveTime) {
+			debugC(Common::kDebugEngineLogic, 1, "Creature \"%s\" is stuck; abandoning movement",
+			       ctx.creature->getTag().c_str());
+			ctx.creature->resetBlockedMoveTime();
+			return true;
+		}
 	}
 
 	return false;
@@ -372,8 +428,13 @@ void ActionExecutor::executeWait(Action &action, const ExecutionContext &ctx) {
 		ctx.creature->popAction();
 }
 
-void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ctx) {
+void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionContext &ctx) {
 	Creature *caster = ctx.creature;
+
+	// Casting always consumes the action. Pop it before anything runs: impact
+	// scripts and effects (stun, ClearAllActions, ...) may clear the queue.
+	const Action action = queuedAction;
+	caster->popAction();
 	int cost = 0;
 
 	if (!_spellsLoaded)
@@ -401,7 +462,6 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 
 	if (caster->getForcePoints() < cost) {
 		debugC(Common::kDebugEngineLogic, 1, "Not enough Force Points to cast power %d", action.actionID);
-		caster->popAction();
 		return;
 	}
 
@@ -411,7 +471,6 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 	// Hostile targeted powers need line of sight past closed doors (before spending FP).
 	if (harmful && action.object && ctx.area && !ctx.area->hasLineOfSight(caster, action.object)) {
 		debugC(Common::kDebugEngineLogic, 1, "Force power %d blocked by cover", action.actionID);
-		caster->popAction();
 		return;
 	}
 
@@ -427,7 +486,6 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 		Object *owner = caster;
 		Object *triggerer = action.object ? action.object : caster;
 		ScriptContainer::runScript(spell->impactScript, owner, triggerer);
-		caster->popAction();
 		return;
 	}
 
@@ -551,7 +609,6 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 			break;
 	}
 
-	caster->popAction();
 }
 
 void ActionExecutor::executePlayAnimation(Action &action, const ExecutionContext &ctx) {
@@ -576,14 +633,22 @@ void ActionExecutor::executePlayAnimation(Action &action, const ExecutionContext
 }
 
 void ActionExecutor::executeCutsceneAttack(Action &action, const ExecutionContext &ctx) {
+	if (!action.object) {
+		ctx.creature->popAction();
+		return;
+	}
+
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
 	if (!moveTo(glm::vec2(x, y), ctx.creature->getMaxAttackRange(), ctx))
 		return;
 
+	// popAction() destroys the action, so keep what we still need.
+	Object *target = action.object;
+	const int choreographyFlags = action.choreographyFlags;
 	ctx.creature->popAction();
-	ctx.creature->performCutsceneAttack(action.object, action.choreographyFlags);
+	ctx.creature->performCutsceneAttack(target, choreographyFlags);
 }
 
 void ActionExecutor::loadSpells() {

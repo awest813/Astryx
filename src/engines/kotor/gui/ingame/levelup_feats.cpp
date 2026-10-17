@@ -125,12 +125,24 @@ void LevelUpFeatsMenu::callbackActive(Widget &widget) {
 		return;
 	}
 
+	if (tag == "BTN_RECOMMENDED" || tag == "BTN_SELECT") {
+		if (!_availableFeats.empty())
+			_selectedFeat = _availableFeats.front();
+		updateLabels();
+		return;
+	}
+
 	if (tag == "BTN_ACCEPT") {
-		if (_selectedFeat != 0xFFFFFFFF && isFeatAvailable(_selectedFeat)) {
+		// The retail panel may not carry a button per feat; never let that
+		// block the level-up: fall back to the recommended (first) feat.
+		if ((_selectedFeat == 0xFFFFFFFF || !isFeatAvailable(_selectedFeat)) && !_availableFeats.empty())
+			_selectedFeat = _availableFeats.front();
+
+		if (_selectedFeat != 0xFFFFFFFF && isFeatAvailable(_selectedFeat))
 			_info.addFeat(_selectedFeat);
-			_accepted = true;
-			_returnCode = 1;
-		}
+
+		_accepted = true;
+		_returnCode = 1;
 		return;
 	}
 

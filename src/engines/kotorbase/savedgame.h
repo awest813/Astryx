@@ -56,6 +56,8 @@ public:
 	const Common::UString &getName() const;
 	const Common::UString &getModuleName() const;
 	uint32_t getTimePlayed() const;
+	/** Get the PC's saved position. Returns false if the save has none. */
+	bool getPCPosition(float &x, float &y, float &z) const;
 
 	bool isPCLoaded() const;
 

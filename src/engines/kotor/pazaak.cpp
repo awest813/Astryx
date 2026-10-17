@@ -114,6 +114,12 @@ void PazaakEngine::playerDraw() {
 void PazaakEngine::playerStand() {
 	_player.standing = true;
 	nextTurn();
+
+	// With the player standing nobody else drives the turns, so let the
+	// opponent keep drawing until it stands, busts or the round ends.
+	for (int guard = 0; guard < 32 && _state == kStateOpponentTurn && _player.standing &&
+	                    !_opponent.standing && !_opponent.bust; ++guard)
+		opponentAI();
 }
 
 void PazaakEngine::playerPlayCard(int handIndex) {

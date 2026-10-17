@@ -45,9 +45,21 @@ public:
 	void hide();
 	void notifyNotSeen();
 
+	// Area transitions
+
+	/** Does walking into this trigger move the party somewhere else? */
+	bool isTransition() const;
+	const Common::UString &getLinkedTo() const;
+	const Common::UString &getLinkedToModule() const;
+
 protected:
 	void load(const Aurora::GFF3Struct &gff);
 	void loadBlueprint(const Aurora::GFF3Struct &gff);
+	void loadLinkedTo(const Aurora::GFF3Struct &gff);
+
+private:
+	Common::UString _linkedTo;       ///< Tag of the waypoint/door this trigger leads to.
+	Common::UString _linkedToModule; ///< Module of that object (empty: this module).
 };
 
 } // End of namespace KotORBase

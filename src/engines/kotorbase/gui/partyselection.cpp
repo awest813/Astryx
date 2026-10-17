@@ -97,6 +97,9 @@ void PartySelectionGUI::callbackActive(Widget &widget) {
 		onSelectionChanged();
 
 	} else if (tag == "BTN_ACCEPT") {
+		if (_activeSlot < 0 || _activeSlot >= _slotCount || _config.slotTemplate[_activeSlot].empty())
+			return;
+
 		if ((_activeSlot != _config.forceNPC1) &&
 		    (_activeSlot != _config.forceNPC2)) {;
 			if (!_config.slotSelected[_activeSlot]) {

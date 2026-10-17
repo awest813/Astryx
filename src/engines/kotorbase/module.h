@@ -31,6 +31,9 @@
 #include <utility>
 
 #include <memory>
+
+#include "external/glm/vec3.hpp"
+
 #include "src/common/ustring.h"
 #include "src/common/changeid.h"
 #include "src/common/configman.h"
@@ -577,6 +580,10 @@ protected:
 	bool _exit;              ///< Should we exit the module?
 	bool _loadedFromSaveGame { false }; ///< Was this module entered via a save-game load?
 	bool _autoSavePending { false };    ///< DoSinglePlayerAutoSave requested, not yet written.
+	bool _teleportingParty { false };   ///< Inside moveParty(); suppresses transition triggers.
+	bool _loadingSavedGame { false };   ///< A save was loaded in-game; replaceModule() keeps its state.
+	bool _hasSavedPCPosition { false }; ///< Place the party at _savedPCPosition on enter().
+	glm::vec3 _savedPCPosition { 0.0f, 0.0f, 0.0f };
 
 	Common::UString _module;    ///< The current module's name.
 	Common::UString _newModule; ///< The module we should change to.
@@ -606,6 +613,10 @@ protected:
 	bool _grenadeTargetingActive { false };
 
 	std::vector<SavedPartyMemberState> _savedPartyMembers;
+	/** Last known state of each companion (by NPC slot) for this session, so
+	 *  that rebuilding them from their template (module change, party
+	 *  selection) keeps their levels, XP, gear and HP. */
+	std::map<int, CreatureInfo> _npcStates;
 	std::map<int, Common::UString> _savedAvailableNPCs;
 	int _savedPartyLeaderIndex { 0 };
 	bool _hasSavedPartyState { false };
@@ -696,6 +707,10 @@ private:
 
 	void handleDelayedInteractions();
 	void processAutoSave();
+	void resetSessionState();
+	/** Create a companion from its template and restore its known state. */
+	Creature *createPartyNPC(int npc, const Common::UString &templ);
+	void rememberNPCState(int npc, const Creature &creature);
 	void openContainer(Placeable *placeable);
 
 	void notifyCombatRoundBegan(int round);

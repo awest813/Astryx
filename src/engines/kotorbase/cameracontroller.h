@@ -75,6 +75,8 @@ public:
 	void cameraHold(float duration);
 	void restoreGameplayCamera(float blendTime);
 	void resetToOrbit();
+	/** Drop every reference to an object that is about to be destroyed. */
+	void forgetObject(const Object *object);
 
 	/** Enter scripted camera control without resetting yaw/distance. */
 	void enterCinematicMode();

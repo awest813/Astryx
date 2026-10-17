@@ -40,6 +40,7 @@
 #include "src/common/memwritestream.h"
 #include "src/aurora/2dafile.h"
 #include "src/aurora/2dareg.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/graphics/graphics.h"
 #include "src/graphics/renderable.h"
@@ -47,6 +48,8 @@
 #include "src/graphics/aurora/cursorman.h"
 
 #include "src/sound/sound.h"
+
+#include "src/events/events.h"
 
 #include "src/engines/aurora/util.h"
 #include "src/engines/aurora/localpathfinding.h"
@@ -860,7 +863,7 @@ void Area::toggleTriggers() {
 	}
 }
 
-void Area::evaluateTriggers(float x, float y) {
+void Area::evaluateTriggers(float x, float y, bool allowTransitions) {
 	Trigger *trigger = 0;
 
 	for (std::vector<Trigger *>::iterator it = _triggers.begin();
@@ -877,8 +880,15 @@ void Area::evaluateTriggers(float x, float y) {
 		if (_activeTrigger)
 			_activeTrigger->runScript(kScriptExit, _activeTrigger, _module->getPC());
 		_activeTrigger = trigger;
-		if (_activeTrigger)
+		if (_activeTrigger) {
 			_activeTrigger->runScript(kScriptEnter, _activeTrigger, _module->getPC());
+
+			// Area transition triggers (map edges) move the party on. The OnEnter
+			// script may already have moved it or destroyed the trigger.
+			if (allowTransitions && _activeTrigger == trigger && trigger->isTransition())
+				_module->moveParty(trigger->getLinkedToModule(), trigger->getLinkedTo(),
+				                   static_cast<ObjectType>(kObjectTypeDoor | kObjectTypeWaypoint));
+		}
 	}
 }
 
@@ -920,6 +930,8 @@ void Area::updatePerception(Creature &subject) {
 
 void Area::notifyPartyLeaderMoved() {
 	Creature *partyLeader = _module->getPartyLeader();
+	if (!partyLeader)
+		return;
 
 	const Room *prevRoom = partyLeader->getRoom();
 	notifyObjectMoved(*partyLeader);
@@ -939,7 +951,18 @@ const Aurora::GFF3Struct &Area::getMinigame() {
 
 std::set<Common::UString> Area::getRoomsVisibleByPartyLeader() const {
 	Creature *partyLeader = _module->getPartyLeader();
-	Common::UString currentRoom = partyLeader->getRoom()->getResRef();
+	const Room *room = partyLeader ? partyLeader->getRoom() : nullptr;
+	if (!room) {
+		// The leader is off every room's walkmesh (e.g. a badly placed entry
+		// waypoint): show everything rather than crash or blank the area.
+		std::set<Common::UString> all;
+		for (auto &r : _rooms)
+			all.insert(r->getResRef());
+
+		return all;
+	}
+
+	Common::UString currentRoom = room->getResRef();
 
 	std::set<Common::UString> rooms { currentRoom };
 
@@ -1001,16 +1024,22 @@ Object *Area::getObjectByTag(const Common::UString &tag) {
 	return nullptr;
 }
 
-Creature *Area::getNearestCreature(const Object *target, int UNUSED(nth), const CreatureSearchCriteria &criteria) const {
-	// TODO: Find Nth nearest using all criterias
+Creature *Area::getNearestCreature(const Object *target, int nth, const CreatureSearchCriteria &criteria) const {
+	// Return the Nth (1-based, like retail) nearest creature matching the
+	// criteria, or nullptr if there are fewer than nth matches. Scripts
+	// commonly loop GetNearestCreature(..., nNth++) until OBJECT_INVALID, so
+	// ignoring nth here would never terminate such loops.
+	if (!target)
+		return nullptr;
 
-	Creature *result = 0;
-	float lowestDistance = 0.0f;
+	if (nth < 1)
+		nth = 1;
 
 	float x, y, z;
 	target->getPosition(x, y, z);
 	glm::vec3 targetPosition(x, y, z);
 
+	std::vector<std::pair<float, Creature *>> matches;
 	for (auto c = _creatures.begin(); c != _creatures.end(); ++c) {
 		if (*c == target || (*c)->isDead())
 			continue;
@@ -1019,15 +1048,18 @@ Creature *Area::getNearestCreature(const Object *target, int UNUSED(nth), const 
 			continue;
 
 		(*c)->getPosition(x, y, z);
-		float dist = glm::distance(targetPosition, glm::vec3(x, y, z));
-
-		if ((result == 0) || (dist < lowestDistance)) {
-			result = *c;
-			lowestDistance = dist;
-		}
+		matches.emplace_back(glm::distance(targetPosition, glm::vec3(x, y, z)), *c);
 	}
 
-	return result;
+	if (matches.size() < static_cast<size_t>(nth))
+		return nullptr;
+
+	std::stable_sort(matches.begin(), matches.end(),
+	                 [](const std::pair<float, Creature *> &a, const std::pair<float, Creature *> &b) {
+		return a.first < b.first;
+	});
+
+	return matches[nth - 1].second;
 }
 
 const std::vector<Creature *> &Area::getCreatures() const {
@@ -1039,7 +1071,10 @@ void Area::processCreaturesActions(float dt) {
 	ctx.area = this;
 	ctx.frameTime = dt;
 
-	for (auto &c : _creatures) {
+	// Actions run scripts that may spawn creatures (reallocating _creatures),
+	// so iterate by index rather than with iterators.
+	for (size_t i = 0; i < _creatures.size(); ++i) {
+		Creature *c = _creatures[i];
 		if (c->isDead())
 			continue;
 
@@ -1144,9 +1179,38 @@ bool Area::hasLineOfSight(const Object *from, const Object *to) const {
 }
 
 void Area::handleCreaturesDeath() {
-	for (auto &c : _creatures) {
-		if (c->handleDeath())
-			_module->signalUserDefinedEvent(c, 1007);
+	// Creature event scripts are queued by combat/effects and run here, never
+	// from inside a loop over _creatures. They may spawn creatures (so iterate
+	// by index); DestroyObject is deferred to the end of the frame.
+	for (size_t i = 0; i < _creatures.size(); ++i) {
+		Creature *c = _creatures[i];
+
+		if (c->consumeSpawnEvent() && c->hasScript(kScriptSpawn))
+			c->runScript(kScriptSpawn, c, c);
+
+		c->handleDeath();
+
+		if (c->consumeDeathEvent()) {
+			Object *killer = c->getLastKiller();
+			if (c->hasScript(kScriptDeath))
+				c->runScript(kScriptDeath, c, killer ? killer : c);
+			else
+				_module->signalUserDefinedEvent(c, 1007);
+			continue;
+		}
+
+		if (c->consumeDamagedEvent() && c->hasScript(kScriptDamaged)) {
+			Object *damager = c->getLastHostileActor();
+			c->runScript(kScriptDamaged, c, damager ? damager : c);
+		}
+
+		if (c->consumeHeartbeatEvent()) {
+			// Creature blueprints store it as "ScriptHeartbeat".
+			if (c->hasScript(kScriptHeartbeart))
+				c->runScript(kScriptHeartbeart, c, c);
+			else if (c->hasScript(kScriptHeartbeat))
+				c->runScript(kScriptHeartbeat, c, c);
+		}
 	}
 
 	if (_module->getPC() && _module->getPC()->isDead())
@@ -1175,6 +1239,16 @@ Item *Area::spawnDroppedItem(const Common::UString &tag, float x, float y, float
 void Area::addCreature(Creature *creature) {
 	loadObject(std::unique_ptr<Creature>(creature));
 	_creatures.push_back(creature);
+
+	// OnSpawn sets up AI and the user-defined event flags OnDeath & co rely on.
+	if (!creature->isPC())
+		creature->queueSpawnEvent();
+}
+
+void Area::queueCreatureHeartbeats() {
+	for (Creature *creature : _creatures)
+		if (!creature->isDead() && !creature->isPC() && !_module->isObjectPartyMember(creature))
+			creature->queueHeartbeatEvent();
 }
 
 void Area::addToObjectMap(Object *object) {
@@ -1183,7 +1257,58 @@ void Area::addToObjectMap(Object *object) {
 		_objectMap.insert(std::make_pair(*id, object));
 }
 
+void Area::destroyObjectDeferred(Object *object, float delay) {
+	if (!object)
+		return;
+
+	const uint32_t due = EventMan.getTimestamp() + static_cast<uint32_t>(MAX(delay, 0.0f) * 1000.0f);
+	_pendingDestruction.emplace_back(object->getID(), due);
+}
+
+void Area::processPendingDestruction() {
+	if (_pendingDestruction.empty())
+		return;
+
+	const uint32_t now = EventMan.getTimestamp();
+
+	std::vector<uint32_t> due;
+	for (auto it = _pendingDestruction.begin(); it != _pendingDestruction.end(); ) {
+		if (it->second <= now) {
+			due.push_back(it->first);
+			it = _pendingDestruction.erase(it);
+		} else
+			++it;
+	}
+
+	for (uint32_t id : due) {
+		// Look the object up again: it may already be gone.
+		Object *object = ObjectContainer::toObject(ObjectMan.findObject(id));
+		if (!object)
+			continue;
+
+		Creature *creature = ObjectContainer::toCreature(object);
+		if (creature && (creature == _module->getPC() || _module->isObjectPartyMember(creature))) {
+			warning("Area::processPendingDestruction(): Not destroying party member \"%s\"",
+			        creature->getTag().c_str());
+			continue;
+		}
+
+		const bool owned = std::any_of(_objects.begin(), _objects.end(),
+				[object](const std::unique_ptr<Object> &o) { return o.get() == object; });
+		if (owned)
+			removeObject(object);
+	}
+}
+
 void Area::removeObject(Object *object) {
+	// Scrub references other objects hold before the object is deleted.
+	for (Creature *creature : _creatures)
+		if (creature != object)
+			creature->forgetObject(object);
+	for (Situated *situated : _situatedObjects)
+		if (situated != object)
+			situated->forgetObject(object);
+
 	if (object == _activeObject) {
 		_activeObject->leave();
 		_module->leaveObject(_activeObject);

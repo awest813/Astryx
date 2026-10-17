@@ -113,11 +113,14 @@ void PazaakGUI::updateUI() {
 void PazaakGUI::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
-	if (_engine.getState() == PazaakEngine::kStateMatchEnd) {
-		if (tag == "BTN_EXIT")
-			_returnCode = 1;
+	// Leaving must always be possible, whoever's turn it is.
+	if (tag == "BTN_EXIT") {
+		_returnCode = 1;
 		return;
 	}
+
+	if (_engine.getState() == PazaakEngine::kStateMatchEnd)
+		return;
 
 	if (_engine.getState() != PazaakEngine::kStatePlayerTurn ||
 	    _engine.getPlayer().standing || _engine.getPlayer().bust)

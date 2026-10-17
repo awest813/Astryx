@@ -60,6 +60,8 @@ public:
 	bool isConversationActive() const;
 
 	void startConversation(const Common::UString &name, Aurora::NWScript::Object *owner = 0);
+	/** Drop the conversation without running any scripts (e.g. on module unload). */
+	void stopConversation();
 
 	bool isObjectInConversation(Aurora::NWScript::Object *object) const;
 
@@ -77,6 +79,7 @@ protected:
 private:
 	Module &_module;
 	bool _isActive;
+	bool _pickedReply { false }; ///< Has the player picked a reply in this conversation?
 	std::unique_ptr<Graphics::Aurora::KotORDialogFrame> _frame;
 	std::unique_ptr<Aurora::DLGFile> _dlg;
 	std::vector<uint32_t> _replyIds;

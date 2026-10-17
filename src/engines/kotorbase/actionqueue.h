@@ -41,6 +41,8 @@ public:
 	void clear();
 	void add(const Action &action);
 	void pop();
+	/** Drop every queued action whose object is the given one. */
+	void removeActionsTargeting(const Object *object);
 
 private:
 	std::queue<Action> _actions;

@@ -28,6 +28,8 @@
 
 #include "src/engines/kotorbase/round.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/creature.h"
 
 namespace Engines {
 
@@ -84,6 +86,16 @@ inline void RoundController::raiseCombatRoundBegan() {
 void RoundController::raiseHeartbeat() {
 	_module->_runScriptVar = 2001;
 	_module->_partyController.raiseHeartbeatEvent();
+
+	// Module and area heartbeats drive many plot checks; NPC heartbeats are
+	// queued and run with the other creature events this frame.
+	Creature *pc = _module->getPC();
+	_module->runScript(kScriptHeartbeat, _module, pc);
+
+	if (Area *area = _module->getCurrentArea()) {
+		area->runScript(kScriptHeartbeat, area, pc);
+		area->queueCreatureHeartbeats();
+	}
 }
 
 } // End of namespace KotORBase

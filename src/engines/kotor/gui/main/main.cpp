@@ -26,6 +26,7 @@
 
 #include "src/common/util.h"
 
+#include "src/graphics/graphics.h"
 #include "src/graphics/aurora/model.h"
 
 #include "src/sound/sound.h"
@@ -202,8 +203,12 @@ void MainMenu::callbackActive(Widget &widget) {
 			_returnCode = 2;
 			stopMenuMusic();
 			
-			// Start the opening sequence
+			// Chargen locked the frame on exit (Game::mainMenu() unlocks it
+			// once we return). Videos only advance while frames are rendered,
+			// so release the lock while the opening movies play.
+			GfxMan.unlockFrame();
 			_module->signalEncounter("end_opening");
+			GfxMan.lockFrame();
 			return;
 		}
 

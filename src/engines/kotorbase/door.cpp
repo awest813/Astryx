@@ -93,9 +93,11 @@ void Door::loadObject(const Aurora::GFF3Struct &gff) {
 
 void Door::loadAppearance() {
 	if (_appearanceID == 0) {
-		if (_genericType == Aurora::kFieldIDInvalid)
-			throw Common::Exception("Door \"%s\" has no appearance ID and no generic type",
-			                        _tag.c_str());
+		if (_genericType == Aurora::kFieldIDInvalid) {
+			// Don't fail the whole module load over one malformed door.
+			warning("Door \"%s\" has no appearance ID and no generic type", _tag.c_str());
+			return;
+		}
 
 		loadAppearance(TwoDAReg.get2DA("genericdoors"), _genericType);
 	} else
@@ -111,7 +113,7 @@ void Door::loadAppearance(const Aurora::TwoDAFile &twoda, uint32_t id) {
 		column = twoda.headerToColumn("Model");
 
 	_modelName    = twoda.getRow(id).getString(column);
-	_soundAppType = twoda.getRow(_appearanceID).getInt("SoundAppType");
+	_soundAppType = twoda.getRow(id).getInt("SoundAppType");
 }
 
 void Door::hide() {

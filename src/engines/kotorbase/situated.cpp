@@ -214,6 +214,17 @@ Object *Situated::getLastClosedBy() const {
 	return _lastClosedBy;
 }
 
+void Situated::forgetObject(const Object *object) {
+	if (_lastOpenedBy == object)
+		_lastOpenedBy = nullptr;
+	if (_lastClosedBy == object)
+		_lastClosedBy = nullptr;
+	if (_lastUsedBy == object)
+		_lastUsedBy = nullptr;
+	if (_trapDetectedBy == object)
+		_trapDetectedBy = nullptr;
+}
+
 Object *Situated::getLastUsedBy() const {
 	return _lastUsedBy;
 }

@@ -64,10 +64,16 @@ void Trigger::load(const Aurora::GFF3Struct &gff) {
 	if (!_templateResRef.empty())
 		utt.reset(loadOptionalGFF3(_templateResRef, Aurora::kFileTypeUTT, MKTAG('U', 'T', 'T', ' ')));
 
-	loadBlueprint(utt->getTopLevel());
-
-	if (!utt)
+	if (utt) {
+		loadBlueprint(utt->getTopLevel());
+		loadLinkedTo(utt->getTopLevel());
+	} else {
+		// Fall back to what the GIT instance itself carries.
 		warning("Trigger \"%s\" has no blueprint", _templateResRef.c_str());
+		loadBlueprint(gff);
+	}
+
+	loadLinkedTo(gff);
 
 	float x, y, z;
 	x = (float)gff.getDouble("XPosition");
@@ -90,6 +96,23 @@ void Trigger::load(const Aurora::GFF3Struct &gff) {
 		z = (float)(*p)->getDouble("PointZ");
 		_geometry.push_back(position + glm::vec3(x, y, z));
 	}
+}
+
+void Trigger::loadLinkedTo(const Aurora::GFF3Struct &gff) {
+	_linkedTo       = gff.getString("LinkedTo", _linkedTo);
+	_linkedToModule = gff.getString("LinkedToModule", _linkedToModule);
+}
+
+bool Trigger::isTransition() const {
+	return !_linkedTo.empty();
+}
+
+const Common::UString &Trigger::getLinkedTo() const {
+	return _linkedTo;
+}
+
+const Common::UString &Trigger::getLinkedToModule() const {
+	return _linkedToModule;
 }
 
 void Trigger::loadBlueprint(const Aurora::GFF3Struct &gff) {

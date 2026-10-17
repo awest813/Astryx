@@ -65,12 +65,20 @@ StoreGUI::StoreGUI(KotORBase::Module &module, KotORBase::Store &store, ::Engines
 	updatePrice();
 }
 
+const Common::UString *StoreGUI::getTag(const std::vector<Common::UString> &tags, int index) {
+	if (index < 0 || index >= static_cast<int>(tags.size()))
+		return nullptr;
+
+	return &tags[index];
+}
+
 void StoreGUI::updatePrice() {
 	Odyssey::WidgetLabel *lblPrice = getLabel("LBL_TRANSACTION_PRICE");
 	if (!lblPrice) return;
 
 	Odyssey::WidgetListBox *lbStore = getListBox("LB_STORE_ITEMS");
 	Odyssey::WidgetListBox *lbPlayer = getListBox("LB_PLAYER_ITEMS");
+	if (!lbStore || !lbPlayer) return;
 
 	KotORBase::Creature *pc = _module.getPC();
 	if (!pc) return;
@@ -78,41 +86,53 @@ void StoreGUI::updatePrice() {
 	int selectedStoreIdx = lbStore->getSelectedIndex();
 	int selectedPlayerIdx = lbPlayer->getSelectedIndex();
 
+	// This runs every frame; only reload the item when the selection changed.
+	if (selectedStoreIdx == _pricedStoreIdx && selectedPlayerIdx == _pricedPlayerIdx)
+		return;
+
+	_pricedStoreIdx = selectedStoreIdx;
+	_pricedPlayerIdx = selectedPlayerIdx;
+
 	// Charisma-based price modifiers (1.0 +/- 0.05 per mod point)
 	float chaMod = pc->getCreatureInfo().getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f;
 	float buyMultiplier = 1.0f - chaMod;
 	float sellMultiplier = 1.0f + chaMod;
 
-	if (selectedStoreIdx >= 0) {
-		// Calculate Buy Price
-		auto items = _store.getInventory().getItems();
-		auto it = items.begin();
-		std::advance(it, selectedStoreIdx);
-		KotORBase::Item item(it->second.tag);
-		
-		int basePrice = _store.getBuyPrice(item, *pc);
-		int finalPrice = static_cast<int>(basePrice * buyMultiplier);
-		
-		lblPrice->setText(Common::String::format("Buy: %d Credits (Cha Disc: %d%%)", 
-		                  finalPrice, static_cast<int>(chaMod * 100)));
-		lblPrice->setTextColor(0.0f, 0.8f, 1.0f, 1.0f); // Teal
-	} else if (selectedPlayerIdx >= 0) {
-		// Calculate Sell Price
-		auto items = pc->getInventory().getItems();
-		auto it = items.begin();
-		std::advance(it, selectedPlayerIdx);
-		KotORBase::Item item(it->second.tag);
+	const Common::UString *storeTag = getTag(_storeTags, selectedStoreIdx);
+	const Common::UString *playerTag = getTag(_playerTags, selectedPlayerIdx);
 
-		int basePrice = _store.getSellPrice(item, *pc);
-		int finalPrice = static_cast<int>(basePrice * sellMultiplier);
+	try {
+		if (storeTag) {
+			// Calculate Buy Price
+			KotORBase::Item item(*storeTag);
 
-		lblPrice->setText(Common::String::format("Sell: %d Credits (Cha Bonus: %d%%)", 
-		                  finalPrice, static_cast<int>(chaMod * 100)));
-		lblPrice->setTextColor(1.0f, 0.6f, 0.0f, 1.0f); // Orange
-	} else {
-		lblPrice->setText("Select an item to trade");
-		lblPrice->setTextColor(0.7f, 0.7f, 0.7f, 1.0f); // Grey
+			int basePrice = _store.getBuyPrice(item, *pc);
+			int finalPrice = static_cast<int>(basePrice * buyMultiplier);
+
+			lblPrice->setText(Common::String::format("Buy: %d Credits (Cha Disc: %d%%)",
+			                  finalPrice, static_cast<int>(chaMod * 100)));
+			lblPrice->setTextColor(0.0f, 0.8f, 1.0f, 1.0f); // Teal
+			return;
+		}
+
+		if (playerTag) {
+			// Calculate Sell Price
+			KotORBase::Item item(*playerTag);
+
+			int basePrice = _store.getSellPrice(item, *pc);
+			int finalPrice = static_cast<int>(basePrice * sellMultiplier);
+
+			lblPrice->setText(Common::String::format("Sell: %d Credits (Cha Bonus: %d%%)",
+			                  finalPrice, static_cast<int>(chaMod * 100)));
+			lblPrice->setTextColor(1.0f, 0.6f, 0.0f, 1.0f); // Orange
+			return;
+		}
+	} catch (Common::Exception &e) {
+		printException(e, "WARNING: ");
 	}
+
+	lblPrice->setText("Select an item to trade");
+	lblPrice->setTextColor(0.7f, 0.7f, 0.7f, 1.0f); // Grey
 }
 
 StoreGUI::~StoreGUI() {
@@ -128,55 +148,61 @@ void StoreGUI::callbackActive(::Engines::Widget &widget) {
 
 	if (tag == "BTN_BUY") {
 		Odyssey::WidgetListBox *lbStore = getListBox("LB_STORE_ITEMS");
-		int selectedIdx = lbStore->getSelectedIndex();
-		if (selectedIdx < 0) return;
-
 		KotORBase::Creature *pc = _module.getPC();
-		auto items = _store.getInventory().getItems();
-		auto it = items.begin();
-		std::advance(it, selectedIdx);
-		KotORBase::Item item(it->second.tag);
+		const Common::UString *selected = lbStore ? getTag(_storeTags, lbStore->getSelectedIndex()) : nullptr;
+		if (!selected || !pc) return;
 
-		float buyMultiplier = 1.0f - (pc->getCreatureInfo().getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
-		int price = static_cast<int>(_store.getBuyPrice(item, *pc) * buyMultiplier);
+		const Common::UString itemTag = *selected;
 
-		if (pc->getInventory().getGold() >= (uint32_t)price) {
-			pc->getInventory().addGold(-price);
-			_store.getInventory().addGold(price);
+		try {
+			KotORBase::Item item(itemTag);
 
-			pc->getInventory().addItem(it->second.tag, 1);
-			_store.getInventory().removeItem(it->second.tag, 1);
+			float buyMultiplier = 1.0f - (pc->getCreatureInfo().getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
+			int price = static_cast<int>(_store.getBuyPrice(item, *pc) * buyMultiplier);
 
-			fillStoreInventory();
-			fillPlayerInventory();
-			updatePrice();
+			if (pc->getInventory().getGold() >= (uint32_t)price) {
+				pc->getInventory().addGold(-price);
+				_store.getInventory().addGold(price);
+
+				pc->getInventory().addItem(itemTag, 1);
+				_store.getInventory().removeItem(itemTag, 1);
+
+				fillStoreInventory();
+				fillPlayerInventory();
+				updatePrice();
+			}
+		} catch (Common::Exception &e) {
+			printException(e, "WARNING: ");
 		}
 		return;
 	}
 
 	if (tag == "BTN_SELL") {
 		Odyssey::WidgetListBox *lbPlayer = getListBox("LB_PLAYER_ITEMS");
-		int selectedIdx = lbPlayer->getSelectedIndex();
-		if (selectedIdx < 0) return;
-
 		KotORBase::Creature *pc = _module.getPC();
-		auto items = pc->getInventory().getItems();
-		auto it = items.begin();
-		std::advance(it, selectedIdx);
-		KotORBase::Item item(it->second.tag);
+		const Common::UString *selected = lbPlayer ? getTag(_playerTags, lbPlayer->getSelectedIndex()) : nullptr;
+		if (!selected || !pc) return;
 
-		float sellMultiplier = 1.0f + (pc->getCreatureInfo().getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
-		int price = static_cast<int>(_store.getSellPrice(item, *pc) * sellMultiplier);
+		const Common::UString itemTag = *selected;
 
-		_store.getInventory().addGold(-price);
-		pc->getInventory().addGold(price);
+		try {
+			KotORBase::Item item(itemTag);
 
-		_store.getInventory().addItem(it->second.tag, 1);
-		pc->getInventory().removeItem(it->second.tag, 1);
+			float sellMultiplier = 1.0f + (pc->getCreatureInfo().getAbilityModifier(KotORBase::kAbilityCharisma) * 0.05f);
+			int price = static_cast<int>(_store.getSellPrice(item, *pc) * sellMultiplier);
 
-		fillStoreInventory();
-		fillPlayerInventory();
-		updatePrice();
+			_store.getInventory().addGold(-price);
+			pc->getInventory().addGold(price);
+
+			_store.getInventory().addItem(itemTag, 1);
+			pc->getInventory().removeItem(itemTag, 1);
+
+			fillStoreInventory();
+			fillPlayerInventory();
+			updatePrice();
+		} catch (Common::Exception &e) {
+			printException(e, "WARNING: ");
+		}
 		return;
 	}
 }
@@ -185,14 +211,23 @@ void StoreGUI::fillStoreInventory() {
 	Odyssey::WidgetListBox *lbStore = getListBox("LB_STORE_ITEMS");
 	if (!lbStore) return;
 
+	// Keep the selection on the same row if it still exists after the refill.
+	const int previousSelection = lbStore->getSelectedIndex();
 	lbStore->removeAllItems();
+	lbStore->selectItem(-1);
+	_storeTags.clear();
+	_pricedStoreIdx = -2;
 	for (const auto &group : _store.getInventory().getItems()) {
 		try {
 			KotORBase::Item item(group.second.tag);
 			lbStore->addItem(Common::String::format("%s|%s|%u",
 				item.getName().c_str(), item.getIcon().c_str(), group.second.count));
+			_storeTags.push_back(group.second.tag);
 		} catch (...) {}
 	}
+
+	if (previousSelection >= 0 && previousSelection < static_cast<int>(_storeTags.size()))
+		lbStore->selectItemByIndex(previousSelection);
 	
 	Odyssey::WidgetLabel *lblStoreCredits = getLabel("LBL_STORE_CREDITS");
 	if (lblStoreCredits)
@@ -208,14 +243,23 @@ void StoreGUI::fillPlayerInventory() {
 	KotORBase::Creature *pc = _module.getPC();
 	if (!pc) return;
 
+	// Keep the selection on the same row if it still exists after the refill.
+	const int previousSelection = lbPlayer->getSelectedIndex();
 	lbPlayer->removeAllItems();
+	lbPlayer->selectItem(-1);
+	_playerTags.clear();
+	_pricedPlayerIdx = -2;
 	for (const auto &group : pc->getInventory().getItems()) {
 		try {
 			KotORBase::Item item(group.second.tag);
 			lbPlayer->addItem(Common::String::format("%s|%s|%u",
 				item.getName().c_str(), item.getIcon().c_str(), group.second.count));
+			_playerTags.push_back(group.second.tag);
 		} catch (...) {}
 	}
+
+	if (previousSelection >= 0 && previousSelection < static_cast<int>(_playerTags.size()))
+		lbPlayer->selectItemByIndex(previousSelection);
 
 	Odyssey::WidgetLabel *lblPCCredits = getLabel("LBL_PC_CREDITS");
 	if (lblPCCredits)

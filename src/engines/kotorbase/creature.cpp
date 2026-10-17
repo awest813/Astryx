@@ -393,8 +393,8 @@ namespace KotORBase {
 		void Creature::getModelState(uint32_t &state, uint8_t &textureVariation) {
 			state = 'a';
 			textureVariation = 1;
-			if (_info.isInventorySlotEquipped(kInventorySlotBody)) {
-				Item *item = _equipment[kInventorySlotBody].get();
+			Item *item = getEquipedItem(kInventorySlotBody);
+			if (item) {
 				state += item->getBodyVariation() - 1;
 				textureVariation = item->getTextureVariation();
 			}
@@ -498,10 +498,9 @@ namespace KotORBase {
 				return;
 			}
 			Graphics::Aurora::Model *weaponModel = 0;
-			if (_info.isInventorySlotEquipped(slot)) {
-				Item *item = _equipment[slot].get();
+			Item *item = getEquipedItem(slot);
+			if (item)
 				weaponModel = loadModelObject(item->getModelName());
-			}
 			GfxMan.lockFrame();
 			_model->attachModel(hookNode, weaponModel);
 			GfxMan.unlockFrame();
@@ -547,6 +546,7 @@ namespace KotORBase {
 				setMaxForcePoints(computeMaxForcePoints());
 				setForcePoints(getMaxForcePoints());
 			}
+			setCurrentXP(_info.getExperience());
 			reloadEquipment();
 			loadEquippedModel();
 		}
@@ -655,13 +655,18 @@ namespace KotORBase {
 		const {
 			if (!_info.isInventorySlotEquipped(slot))
 			return nullptr;
-			return _equipment.find(slot)->second.get();
+			// The item may have failed to load (e.g. missing UTI in a save).
+			auto it = _equipment.find(slot);
+			return (it == _equipment.end()) ? nullptr : it->second.get();
 		}
 		float Creature::getMaxAttackRange()
 		const {
 			const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
-			if (rightWeapon && rightWeapon->isRangedWeapon())
-			return rightWeapon->getMaxAttackRange();
+			if (rightWeapon && rightWeapon->isRangedWeapon()) {
+				// An empty maxattackrange would leave ranged attackers unable to fire.
+				const float range = rightWeapon->getMaxAttackRange();
+				return range > 0.0f ? range : 10.0f;
+			}
 			return 1.0f;
 		}
 		Item *Creature::addScriptItem(
@@ -869,6 +874,8 @@ namespace KotORBase {
 			_lastDamageType = damageType;
 			if (damager)
 				_lastHostileActor = damager;
+			if (amount > 0 && !_dead)
+				_damagedEventPending = true;
 		}
 
 		int Creature::getDamageDealtByType(int damageType) const {
@@ -1059,7 +1066,7 @@ namespace KotORBase {
 			if (isPC() || isDead()) return;
 
 			// If no target, try to find one
-			if (!_attackTarget || ObjectContainer::toCreature(_attackTarget)->isDead()) {
+			if (!_attackTarget || _attackTarget->isDead()) { // may be a door/placeable
 				_attackTarget = nullptr; // Combat target needs area context
 			}
 
@@ -1149,6 +1156,19 @@ namespace KotORBase {
 		void Creature::cancelCombat() {
 			_inCombat = false;
 			_attackTarget = nullptr;
+		}
+		void Creature::forgetObject(const Object *object) {
+			if (_attackTarget == object)
+				cancelCombat();
+			if (_attemptedAttackTarget == object)		_attemptedAttackTarget = nullptr;
+			if (_lastHostileActor == object)		_lastHostileActor = nullptr;
+			if (_lastKiller == object)		_lastKiller = nullptr;
+			if (_lastWeaponUsed == object)		_lastWeaponUsed = nullptr;
+			if (_lastPerceived == object)		_lastPerceived = nullptr;
+			if (_blockingDoor == object)		_blockingDoor = nullptr;
+			_seenObjects.erase(const_cast<Object *>(object));
+			_heardObjects.erase(const_cast<Object *>(object));
+			_actions.removeActionsTargeting(object);
 		}
 		void Creature::applyEffect(
 		const ActiveEffect &effect) {
@@ -1292,6 +1312,9 @@ namespace KotORBase {
 					break;
 				case kKotOREffectRegenerate:
 					applyEffect(kEffectHeal, 0.0f, effect.getAmount(), effect.getSpellId());
+					break;
+				case kKotOREffectResurrection:
+					resurrect(MAX(1, effect.getAmount()));
 					break;
 				case kKotOREffectTemporaryForcePoints: {
 					int fp = getForcePoints() + effect.getAmount();
@@ -1618,6 +1641,8 @@ namespace KotORBase {
 		bool Creature::handleDeath() {
 			if (!_dead && _currentHitPoints <= 0) {
 				_dead = true;
+				_deathEventPending = true;
+				_damagedEventPending = false;
 				if (!_lastKiller && _lastHostileActor)
 					_lastKiller = _lastHostileActor;
 				if (_model) {
@@ -1631,6 +1656,39 @@ namespace KotORBase {
 				return true;
 			}
 			return false;
+		}
+		void Creature::resurrect(int hitPoints) {
+			if (!_dead)
+				return;
+			_dead = false;
+			_deathEventPending = false;
+			_damagedEventPending = false;
+			setCurrentHitPoints(MAX(1, MIN(hitPoints, getMaxHitPoints())));
+			if (_model) {
+				_model->clearDefaultAnimations();
+				setDefaultAnimations();
+				playDefaultAnimation();
+			}
+		}
+		bool Creature::consumeDeathEvent() {
+			const bool pending = _deathEventPending;
+			_deathEventPending = false;
+			return pending;
+		}
+		bool Creature::consumeDamagedEvent() {
+			const bool pending = _damagedEventPending;
+			_damagedEventPending = false;
+			return pending;
+		}
+		bool Creature::consumeSpawnEvent() {
+			const bool pending = _spawnEventPending;
+			_spawnEventPending = false;
+			return pending;
+		}
+		bool Creature::consumeHeartbeatEvent() {
+			const bool pending = _heartbeatEventPending;
+			_heartbeatEventPending = false;
+			return pending;
 		}
 		Object *Creature::getLastPerceived()
 		const {
@@ -1788,7 +1846,9 @@ namespace KotORBase {
 		bool Creature::addItemToEquipment(
 		const Common::UString &tag, InventorySlot slot) {
 			try {
-				_equipment.insert(std::make_pair(slot, std::make_unique<Item>(tag)));
+				// Overwrite: companions rebuilt from a template and then given
+				// saved state must not keep the template's gear.
+				_equipment[slot] = std::make_unique<Item>(tag);
 			}
 			catch (Common::Exception &e) {
 				e.add("Failed to load item \"%s\"", tag.c_str());

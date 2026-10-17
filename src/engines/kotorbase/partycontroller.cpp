@@ -22,6 +22,8 @@
  *  Handles the party management in KotOR games.
  */
 
+#include <algorithm>
+
 #include "src/common/error.h"
 
 #include "src/engines/kotorbase/partycontroller.h"
@@ -42,11 +44,11 @@ size_t PartyController::getPartyMemberCount() const {
 }
 
 Creature *PartyController::getPartyLeader() const {
-	return _party[0].second;
+	return _party.empty() ? nullptr : _party[0].second;
 }
 
 const std::pair<int, Creature *> &PartyController::getPartyMemberByIndex(int index) const {
-	if (index >= static_cast<int>(_party.size()))
+	if (index < 0 || index >= static_cast<int>(_party.size()))
 		throw Common::Exception("PartyController::getPartyMember(): Invalid index \"%d\"", index);
 
 	return _party[index];
@@ -87,7 +89,15 @@ void PartyController::addPartyMember(int npc, Creature *creature) {
 	_party.push_back(std::make_pair(npc, creature));
 
 	if (npc != -1) {
-		_module->getCurrentArea()->addCreature(creature);
+		// Scripts often add a creature that is already in the area
+		// (AddPartyMember(NPC_X, GetObjectByTag(...))). Adding it twice would
+		// give it two owners and delete it twice.
+		Area *area = _module->getCurrentArea();
+		if (area) {
+			const std::vector<Creature *> &creatures = area->getCreatures();
+			if (std::find(creatures.begin(), creatures.end(), creature) == creatures.end())
+				area->addCreature(creature);
+		}
 		creature->show();
 	}
 }

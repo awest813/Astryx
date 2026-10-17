@@ -142,11 +142,52 @@ void Module::clear() {
 	unload(true);
 }
 
+Creature *Module::createPartyNPC(int npc, const Common::UString &templ) {
+	Creature *creature = createCreature(templ);
+
+	auto state = _npcStates.find(npc);
+	if (state != _npcStates.end())
+		creature->applyCreatureInfo(state->second);
+
+	return creature;
+}
+
+void Module::rememberNPCState(int npc, const Creature &creature) {
+	if (npc >= 0)
+		_npcStates[npc] = creature.buildSavedState();
+}
+
+void Module::resetSessionState() {
+	// Everything a new game or a loaded save must not inherit from the
+	// previous session (globals and party are handled by the callers).
+	_areaObjectSaves.clear();
+	_exploredMaps.clear();
+	_messages.clear();
+	_journal.clear();
+	_journalWorld.clear();
+	_journalQuestPictures.clear();
+	_planetSelectable.clear();
+	_planetAvailable.clear();
+	_selectedPlanet = -1;
+	_reputations.clear();
+	_returnDestinationModule = "m12aa";
+	_playTime = 0.0f;
+	_playerInputEnabled = true;
+	_cutsceneMode = false;
+	_noClicksUntil = 0;
+	_soloMode = false;
+	_movieQueue.clear();
+	_npcStates.clear();
+	_autoSavePending = false;
+	_hasSavedPCPosition = false;
+}
+
 void Module::load(const Common::UString &module, const Common::UString &entryLocation,
                   ObjectType entryLocationType) {
 
-	if (isRunning()) {
-		// We are currently running a module. Schedule a safe change instead
+	if (isRunning() || _hasModule) {
+		// We are currently running (or still entering, e.g. a StartNewModule
+		// from an OnEnter script) a module. Schedule a safe change instead
 
 		changeModule(module, entryLocation, entryLocationType);
 		return;
@@ -240,6 +281,24 @@ void Module::removeObject(Object &object) {
 
 	if (_ingame->getTargetObject() == &object)
 		_ingame->setTargetObject(0);
+
+	// Nothing may keep pointing at the object once it is deleted.
+	_cameraController.forgetObject(&object);
+
+	if (_delayedContainer == &object)
+		_delayedContainer = nullptr;
+	if (_delayedConversation && _delayedConversation->owner == &object)
+		_delayedConversation.reset();
+	if (_lastAcquiredItem == &object)
+		_lastAcquiredItem = nullptr;
+	if (_spellScriptCaster == &object)
+		_spellScriptCaster = nullptr;
+	if (_spellScriptTarget == &object)
+		_spellScriptTarget = nullptr;
+	if (_spellScriptCastItem == &object)
+		_spellScriptCastItem = nullptr;
+	if (_lastAoECreator == &object)
+		_lastAoECreator = nullptr;
 
 	ObjectContainer::removeObject(object);
 }
@@ -361,10 +420,15 @@ void Module::loadParty() {
 			if (member.templateResRef.empty())
 				continue;
 
-			Creature *creature = createCreature(member.templateResRef);
-			creature->applyCreatureInfo(member.info);
-			_partyController.addPartyMember(member.npcSlot, creature);
-			refreshCreatureEquipmentUpgrades(*creature, *this);
+			try {
+				Creature *creature = createCreature(member.templateResRef);
+				creature->applyCreatureInfo(member.info);
+				_partyController.addPartyMember(member.npcSlot, creature);
+				refreshCreatureEquipmentUpgrades(*creature, *this);
+			} catch (Common::Exception &e) {
+				e.add("Failed to restore saved party member \"%s\"", member.templateResRef.c_str());
+				printException(e, "WARNING: ");
+			}
 		}
 
 		if (_savedPartyLeaderIndex > 0 &&
@@ -389,14 +453,19 @@ void Module::loadParty() {
 				continue;
 			}
 
-			Common::UString templ = _partyController.getAvailableNPCTemplate(npc);
+			// One broken companion must not abort the whole module load.
+			try {
+				Common::UString templ = _partyController.getAvailableNPCTemplate(npc);
 
-			// Special case: Trask exists only on the Endar Spire
-			if (templ == "end_trask")
-				continue;
+				// Special case: Trask exists only on the Endar Spire
+				if (templ == "end_trask")
+					continue;
 
-			Creature *creature = createCreature(templ);
-			_partyController.addPartyMember(npc, creature);
+				_partyController.addPartyMember(npc, createPartyNPC(npc, templ));
+			} catch (Common::Exception &e) {
+				e.add("Failed to restore party member %d", npc);
+				printException(e, "WARNING: ");
+			}
 		}
 	}
 
@@ -448,9 +517,33 @@ void Module::unload(bool completeUnload) {
 	_ingame->resetSelection();
 	_ingame->hideSelection();
 
+	// A dialog script may have changed the module mid-conversation; its owner
+	// and the cinematic camera targets are about to be destroyed.
+	if (_inDialog) {
+		_dialog->stopConversation();
+		_dialog->hide();
+		_inDialog = false;
+	}
+	if (_area) // The party (used to re-target the camera) dies with the area.
+		_cameraController.resetToOrbit();
+	_delayedConversation.reset();
+	_delayedContainer = nullptr;
+
 	if (_pc) {
-		_pcInfo = _pc->getCreatureInfo();
+		// buildSavedState() also captures HP, Force points and XP, which live
+		// outside the CreatureInfo; otherwise they reset on every transition.
+		_pcInfo = _pc->buildSavedState();
 		_pc = nullptr;
+	}
+
+	// Companions are rebuilt from their templates in the next module; keep
+	// their progression (levels, XP, gear, HP) across the transition.
+	if (!completeUnload) {
+		for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+			const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+			if (member.first != -1 && member.second)
+				rememberNPCState(member.first, *member.second);
+		}
 	}
 
 	GfxMan.pauseAnimations();
@@ -465,7 +558,7 @@ void Module::unload(bool completeUnload) {
 		_globalBooleans.clear();
 		_globalStrings.clear();
 		_loadedFromSaveGame = false;
-		_autoSavePending = false;
+		resetSessionState();
 
 		_partyController.clearCurrentParty();
 		_partyController.clearAvailableParty();
@@ -533,15 +626,27 @@ void Module::replaceModule() {
 
 	_newModule.clear();
 
+	const bool loadingSave = _loadingSavedGame;
+	_loadingSavedGame = false;
+
 	try {
-		if (_area) {
+		// When loading a save, the current area's state must not overwrite
+		// the state that was just loaded from it.
+		if (_area && !loadingSave) {
 			_area->savePersistence();
 			setMapExplored(_area->getResRef(), _area->getMapExplored());
 		}
 
+		const CreatureInfo savedPCInfo = _pcInfo;
+
 		unload(false);
 		_exit = true;
-		_loadedFromSaveGame = false;
+		_loadedFromSaveGame = loadingSave;
+
+		if (loadingSave) {
+			_pcInfo = savedPCInfo;
+			_npcStates.clear();
+		}
 
 		loadModule(newModule, entryLocation, entryLocationType);
 		enter();
@@ -572,6 +677,14 @@ void Module::enter() {
 	if (!getEntryObjectLocation(entryX, entryY, entryZ, _))
 		getEntryIFOLocation(entryX, entryY, entryZ, _);
 
+	// A loaded save resumes where the PC stood, not at the module entry.
+	if (_hasSavedPCPosition && _loadedFromSaveGame) {
+		entryX = _savedPCPosition.x;
+		entryY = _savedPCPosition.y;
+		entryZ = _savedPCPosition.z;
+	}
+	_hasSavedPCPosition = false;
+
 	moveParty(entryX, entryY, entryZ, _);
 	enterArea();
 
@@ -582,6 +695,9 @@ void Module::enter() {
 
 	if (!deferIngameHUDOnEnter())
 		_ingame->show();
+
+	// Loading took a while; don't feed that time into the first frame.
+	updateFrameTimestamp();
 }
 
 bool Module::getObjectLocation(const Common::UString &object, ObjectType location,
@@ -803,10 +919,12 @@ void Module::processEventQueue() {
 	_prevTimestamp = now;
 	_playTime += _frameTime;
 
-	if (_noClicksUntil != 0 && EventMan.getTimestamp() >= _noClicksUntil) {
+	// Keep the timer pending while a dialog or cutscene runs, so input is
+	// restored once it ends instead of staying disabled for good.
+	if (_noClicksUntil != 0 && EventMan.getTimestamp() >= _noClicksUntil &&
+	    !_cutsceneMode && !_inDialog) {
 		_noClicksUntil = 0;
-		if (!_cutsceneMode && !_inDialog)
-			setPlayerInputEnabled(true);
+		setPlayerInputEnabled(true);
 	}
 
 	handleEvents();
@@ -848,6 +966,10 @@ void Module::processEventQueue() {
 	onFrameUpdate(_frameTime);
 
 	handleDelayedInteractions();
+
+	if (_area)
+		_area->processPendingDestruction();
+
 	processAutoSave();
 }
 
@@ -1326,12 +1448,11 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 		struct Swing { int babPenalty; int damageMod; };
 		std::vector<Swing> swings;
 
-		// Base iterative attacks from BAB.
-		for (int penalty = 0; bab + penalty > 0; penalty -= 5) {
+		// Base iterative attacks from BAB. Everyone gets the primary swing,
+		// even at BAB 0 (level-1 Scoundrels, Scouts and Jedi).
+		swings.push_back({0, 0});
+		for (int penalty = -5; bab + penalty > 0; penalty -= 5)
 			swings.push_back({penalty, 0});
-			if (bab + penalty < 6)
-				break; // no more iterations below BAB 1
-		}
 
 		// Feat: Flurry / Improved Flurry (melee only).
 		// All attacks (including the bonus one) take a -4 penalty (-2 for Improved).
@@ -1547,6 +1668,17 @@ void Module::updateBattleMusic() {
 	} else if (!anyInCombat && _inBattleMusic) {
 		_inBattleMusic = false;
 		_area->playAmbientMusic();
+
+		// As in the original, fallen party members get back up once the
+		// fight is over (as long as the leader survived).
+		Creature *leader = getPartyLeader();
+		if (leader && !leader->isDead()) {
+			for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+				Creature *member = _partyController.getPartyMemberByIndex(static_cast<int>(i)).second;
+				if (member && member->isDead())
+					member->resurrect(1);
+			}
+		}
 	}
 }
 
@@ -1557,7 +1689,7 @@ void Module::updateXPOnKill() {
 	for (auto &c : _area->getCreatures()) {
 		if (!c->isDead() || c->isXPAwarded())
 			continue;
-		if (c->isPC() || c->isPartyMember())
+		if (c->isPC() || isObjectPartyMember(c))
 			continue;
 
 		int hitDice = c->getHitDice();
@@ -1604,6 +1736,9 @@ void Module::moveParty(float x, float y, float z) {
 }
 
 void Module::moveParty(float x, float y, float z, float angle) {
+	// Arriving inside a transition trigger must not bounce the party right back.
+	_teleportingParty = true;
+
 	int partySize = static_cast<int>(_partyController.getPartyMemberCount());
 	for (int i = 0; i < partySize; ++i) {
 		Creature *creature = _partyController.getPartyMemberByIndex(i).second;
@@ -1615,6 +1750,8 @@ void Module::moveParty(float x, float y, float z, float angle) {
 		else
 			_area->notifyObjectMoved(*creature);
 	}
+
+	_teleportingParty = false;
 
 	setCameraYaw(Common::deg2rad(angle));
 }
@@ -1632,10 +1769,14 @@ void Module::moveParty(const Common::UString &module, const Common::UString &obj
 }
 
 void Module::movedPartyLeader() {
-	float x, y, _;
-	_partyController.getPartyLeader()->getPosition(x, y, _);
+	Creature *leader = _partyController.getPartyLeader();
+	if (!leader || !_area)
+		return;
 
-	_area->evaluateTriggers(x, y);
+	float x, y, _;
+	leader->getPosition(x, y, _);
+
+	_area->evaluateTriggers(x, y, !_teleportingParty);
 	_area->notifyPartyLeaderMoved();
 
 	_cameraController.updateTarget();
@@ -1647,7 +1788,7 @@ Creature *Module::getPartyLeader() const {
 }
 
 Creature *Module::getPartyMemberByIndex(int index) const {
-	if (index >= static_cast<int>(_partyController.getPartyMemberCount()))
+	if (index < 0 || index >= static_cast<int>(_partyController.getPartyMemberCount()))
 		return nullptr;
 
 	return _partyController.getPartyMemberByIndex(index).second;
@@ -1698,6 +1839,9 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 	_partySelection->run();
 	_partySelection->hide();
 
+	// The GUI edits its own copy of the configuration.
+	config = _partySelection->getConfiguration();
+
 	if (_inDialog) {
 		_dialog->show();
 	} else {
@@ -1709,35 +1853,49 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 
 	if ((npc1 == -1) || (npc2 == -1)) {
 		for (int i = 0; i < 10; ++i) {
-			if (config.slotSelected[i]) {
-				if (npc1 == -1) {
-					npc1 = i;
-				} else {
-					npc2 = i;
-					break;
-				}
-			}
+			if (!config.slotSelected[i] || config.slotTemplate[i].empty() || i == npc1 || i == npc2)
+				continue;
+
+			if (npc1 == -1)
+				npc1 = i;
+			else if (npc2 == -1)
+				npc2 = i;
 		}
 	}
 
+	// Keep companions that stay in the party; bench the others (remembering
+	// their progression) and remove them from the area.
+	std::map<int, Creature *> kept;
 	int partySize = static_cast<int>(_partyController.getPartyMemberCount());
 	for (int i = 0; i < partySize; ++i) {
 		auto partyMember = _partyController.getPartyMemberByIndex(i);
-		if (partyMember.first != -1)
-			_area->removeObject(partyMember.second);
+		if (partyMember.first == -1 || !partyMember.second)
+			continue;
+
+		if (partyMember.first == npc1 || partyMember.first == npc2) {
+			kept[partyMember.first] = partyMember.second;
+			continue;
+		}
+
+		rememberNPCState(partyMember.first, *partyMember.second);
+		_area->removeObject(partyMember.second);
 	}
 
 	_partyController.clearCurrentParty();
 	_partyController.addPartyMember(-1, _pc);
 
-	if (npc1 != -1) {
-		Creature *creature = createCreature(config.slotTemplate[npc1]);
-		_partyController.addPartyMember(npc1, creature);
-	}
+	for (int npc : { npc1, npc2 }) {
+		if (npc == -1)
+			continue;
 
-	if (npc2 != -1) {
-		Creature *creature = createCreature(config.slotTemplate[npc2]);
-		_partyController.addPartyMember(npc2, creature);
+		try {
+			auto it = kept.find(npc);
+			Creature *creature = (it != kept.end()) ? it->second : createPartyNPC(npc, config.slotTemplate[npc]);
+			_partyController.addPartyMember(npc, creature);
+		} catch (Common::Exception &e) {
+			e.add("Failed to add party member %d", npc);
+			printException(e, "WARNING: ");
+		}
 	}
 
 	updateCurrentPartyGUI();
@@ -2210,8 +2368,14 @@ void Module::loadSavedGame(SavedGame *save) {
 	try {
 		std::unique_ptr<CharacterGenerationInfo> info(save->createCharGenInfo());
 		usePC(*info.get());
+		resetSessionState();
 		save->applyPersistedState(*this);
+		_playTime = static_cast<float>(save->getTimePlayed());
+		_hasSavedPCPosition = save->getPCPosition(_savedPCPosition.x, _savedPCPosition.y, _savedPCPosition.z);
 		_loadedFromSaveGame = true;
+		// From inside a running game the module swap is deferred to
+		// replaceModule(), which must then keep the state loaded here.
+		_loadingSavedGame = isRunning() || _hasModule;
 		load(save->getModuleName());
 	} catch (...) {
 		Common::exceptionDispatcherWarning();
@@ -2360,8 +2524,12 @@ void Module::setCutsceneMode(bool enabled) {
 	_cutsceneMode = enabled;
 	if (enabled)
 		setPlayerInputEnabled(false);
-	else
+	else {
 		resetToOrbit();
+		// Leaving cutscene mode hands control back to the player.
+		if (_noClicksUntil == 0)
+			setPlayerInputEnabled(true);
+	}
 
 	if (_ingame) {
 		if (enabled)

@@ -22,6 +22,8 @@
  *  Load/save game menu.
  */
 
+#include <memory>
+
 #include "src/aurora/talkman.h"
 
 #include "src/common/error.h"
@@ -153,8 +155,17 @@ void SaveLoadMenu::addSavedGameItems(Odyssey::WidgetListBox *listBox) {
 		if (_type == kSaveLoadMenuTypeSave && !baseName.contains("Game"))
 			continue;
 
+		std::unique_ptr<KotORBase::SavedGame> save;
+		try {
+			save = std::make_unique<SavedGame>(saveDir);
+		} catch (Common::Exception &e) {
+			// A broken or half-written save must not take the whole menu down.
+			e.add("Failed to read saved game \"%s\"", saveDir.c_str());
+			printException(e, "WARNING: ");
+			continue;
+		}
+
 		_saveDirs.push_back(saveDir);
-		KotORBase::SavedGame *save = new SavedGame(saveDir);
 		uint32_t timePlayed = save->getTimePlayed();
 		Common::UString slotText(slotTextFormat);
 
@@ -165,7 +176,6 @@ void SaveLoadMenu::addSavedGameItems(Odyssey::WidgetListBox *listBox) {
 		if (baseName.contains("Game"))
 			slotText += "\r\n" + save->getName();
 
-		delete save;
 		listBox->addItem(slotText);
 	}
 }

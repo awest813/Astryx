@@ -176,6 +176,16 @@ void SavedGame::fillFromModuleIFO(const Aurora::GFF3File &gff) {
 	}
 }
 
+bool SavedGame::getPCPosition(float &x, float &y, float &z) const {
+	if (!_pcLoaded)
+		return false;
+
+	x = _pcPosition[0];
+	y = _pcPosition[1];
+	z = _pcPosition[2];
+	return true;
+}
+
 const Common::UString &SavedGame::getName() const {
 	return _name;
 }

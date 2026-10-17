@@ -80,6 +80,8 @@ void CameraController::setDistance(float value) {
 void CameraController::updateTarget() {
 	float x, y, z;
 	Creature *partyLeader = _module->getPartyLeader();
+	if (!partyLeader)
+		return;
 
 	partyLeader->getPosition(x, y, z);
 
@@ -519,6 +521,17 @@ void CameraController::enterCinematicMode() {
 	}
 
 	_dirty = true;
+}
+
+void CameraController::forgetObject(const Object *object) {
+	if (_cinematicFocus == object)
+		_cinematicFocus = nullptr;
+	if (_cameraTarget == object)
+		_cameraTarget = nullptr;
+	if (_pathStart == object || _pathEnd == object) {
+		_pathStart = nullptr;
+		_pathEnd = nullptr;
+	}
 }
 
 void CameraController::resetToOrbit() {

@@ -36,6 +36,8 @@ namespace KotORBase {
 class PartySelectionGUI : public GUI {
 public:
 	void loadConfiguration(const PartyConfiguration &config);
+	/** The configuration as edited by the player. */
+	const PartyConfiguration &getConfiguration() const { return _config; }
 
 protected:
 	PartySelectionGUI(int slotCount);
