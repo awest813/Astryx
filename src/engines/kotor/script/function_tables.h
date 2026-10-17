@@ -2064,7 +2064,7 @@ const Functions::FunctionDefaults Functions::kFunctionDefaults[] = {
 	{ 363, { } },
 	{ 364, { &kDefaultInt0, &kDefaultInt0, &kDefaultObjectInvalid } },
 	{ 365, { } },
-	{ 366, { &kDefaultObjectInvalid } },
+	{ 366, { } },
 	{ 367, { &kDefaultFalse } },
 	{ 368, { } },
 	{ 369, { } },

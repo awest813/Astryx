@@ -14,6 +14,10 @@ jobs:
       id: install_dependencies
       run: sudo apt-get update -qq && sudo apt-get -y install ninja-build libboost-all-dev libopenal-dev libmad0-dev libvorbis-dev libfaad-dev libsdl2-dev libgl-dev libglu-dev libxvidcore-dev libvpx-dev
 
+    - name: Verify KotOR NWScript tables
+      id: verify_nwscript_tables
+      run: python3 scripts/verify_kotor_nwscript_stubs.py
+
     - name: Configure
       id: configure
       run: cmake -G Ninja .
