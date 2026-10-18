@@ -90,14 +90,18 @@ new way:
   DLG `AnimList` numbers from 10000 are treated as looping animations.
   Shots that can't be resolved fall back to speaker/listener framing.
   DLG `FadeType` fades and stunt (`StuntList`) cutscenes are not played.
-- **Level-up:** feats and Force powers per level come from `featgain.2da`
-  (`<classes.2da featgain>_reg`, by class level) and `classpowergain.2da`
-  (column named by `classes.2da` `spellgaintable`, else `featgain`); check
-  the counts against retail. `_bon` columns are ignored. Picks left unspent
-  (or with no matching button on the retail panel) go to the first eligible
-  choices. Only the built-in feat list and six core powers are offered.
-- **Combat:** experience is shared by the PC and every companion met so far
-  (kill XP is 25 × the victim's hit dice, an approximation). Faction
+- **Level-up and XP** come from the game tables, read the way KotOR.js
+  reads them; confirm in play:
+  - next-level XP from `exptable.2da`; kill XP from `xptable.2da` (column
+    `cr<hit dice>`, row = PC level — the least certain part; if kills give
+    0 or absurd XP, this is why);
+  - feats/powers per level from `featgain.2da` / `classpowergain.2da`;
+    automatic class feats from `feat.2da` `<featstable>_granted`;
+  - selectable feats from `feat.2da` (`_list`, prerequisites, `_recom`
+    order) and Force powers from `spells.2da` (class column vs. character
+    level, `usertype` 1, prerequisites), shown in the panels' `LB_FEATS` /
+    `LB_POWERS` list boxes. Unspent picks go to the recommended choices.
+- **Combat:** experience is shared by the PC and every companion met so far. Faction
   hostility comes from `repute.2da` (row 0 is the player; reputations are
   shared by both factions and saved as `repute.fac` in `SAVEGAME.sav`, read
   the way KotOR.js reads them — check against retail saves); timed
