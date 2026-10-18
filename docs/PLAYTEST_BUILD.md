@@ -98,7 +98,9 @@ new way:
   choices. Only the built-in feat list and six core powers are offered.
 - **Combat:** experience is shared by the PC and every companion met so far
   (kill XP is 25 × the victim's hit dice, an approximation). Faction
-  hostility comes from the built-in faction table, not `repute.2da`; timed
+  hostility comes from `repute.2da` (row 0 is the player; reputations are
+  shared by both factions and saved as `repute.fac` in `SAVEGAME.sav`, read
+  the way KotOR.js reads them — check against retail saves); timed
   ability/skill modifier effects and some talent/effect constants are
   approximated. NPCs now use the stats and Force powers of their `.utc`
   blueprint, so fights may be harder than in earlier builds.

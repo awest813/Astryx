@@ -559,8 +559,6 @@ private:
 	// Area Object Persistence: key = "areaTag:objectTag", value = state
 	std::map<Common::UString, std::shared_ptr<Aurora::GFF3File>> _areaObjectSaves;
 
-	// Inter-faction reputation store: key = (sourceFaction, targetFaction), value in [0, 100]
-	std::map<std::pair<int,int>, int> _reputations;
 
 	// Galaxy map planet state
 

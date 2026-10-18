@@ -37,37 +37,38 @@
 #include "src/common/string.h"
 #include "src/common/ustring.h"
 
+#include "src/common/memreadstream.h"
+#include "src/common/memwritestream.h"
+
+#include "src/aurora/2dafile.h"
+#include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
+
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/location.h"
 #include "src/engines/kotorbase/talent.h"
+#include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/types.h"
 
 // ---------------------------------------------------------------------------
-// Faction relationship helpers (mirrors functions_object.cpp internals)
+// Faction relationships: GetIsEnemy(oTarget, oSource) and friends ask how
+// oSource's faction feels about oTarget's (built-in defaults, no repute.2da)
 // ---------------------------------------------------------------------------
 
 using namespace Engines::KotORBase;
 
-static bool isFactionHostile(Faction f) {
-	return f == kFactionHostile1 ||
-	       f == kFactionHostile2 ||
-	       f == kFactionEndarSpire;
-}
-
-static bool isFactionFriendly(Faction f) {
-	return f == kFactionFriendly1 || f == kFactionFriendly2;
-}
-
 static bool calcIsEnemy(Faction tf, Faction sf) {
-	return (isFactionHostile(tf) && isFactionFriendly(sf)) ||
-	       (isFactionHostile(sf) && isFactionFriendly(tf));
+	ReputationMan.useBuiltInDefaults();
+	ReputationMan.reset();
+	return ReputationMan.isHostile(sf, tf);
 }
 
 static bool calcIsFriend(Faction tf, Faction sf) {
-	return (tf != kFactionInvalid && tf == sf) ||
-	       (isFactionFriendly(tf) && isFactionFriendly(sf));
+	ReputationMan.useBuiltInDefaults();
+	ReputationMan.reset();
+	return ReputationMan.isFriendly(sf, tf);
 }
 
 static bool calcIsNeutral(Faction tf, Faction sf) {
@@ -113,10 +114,11 @@ GTEST_TEST(KotORNWScriptFuncs, hostileVsFriendly2IsEnemy) {
 	EXPECT_TRUE(calcIsEnemy(kFactionFriendly2, kFactionHostile2));
 }
 
-GTEST_TEST(KotORNWScriptFuncs, endarSpireVsFriendlyIsEnemy) {
-	// EndarSpire faction (Sith troopers) is hostile to PC party (Friendly1)
-	EXPECT_TRUE(calcIsEnemy(kFactionEndarSpire, kFactionFriendly1));
-	EXPECT_TRUE(calcIsEnemy(kFactionFriendly1, kFactionEndarSpire));
+GTEST_TEST(KotORNWScriptFuncs, playerFactionIsHostileToHostileFactions) {
+	EXPECT_TRUE(calcIsEnemy(kFactionPlayer, kFactionHostile1));
+	EXPECT_TRUE(calcIsEnemy(kFactionHostile1, kFactionPlayer));
+	EXPECT_TRUE(calcIsEnemy(kFactionTrap, kFactionPlayer));
+	EXPECT_TRUE(calcIsFriend(kFactionPlayer, kFactionFriendly1));
 }
 
 GTEST_TEST(KotORNWScriptFuncs, sameFactionIsNotEnemy) {
@@ -127,7 +129,6 @@ GTEST_TEST(KotORNWScriptFuncs, sameFactionIsNotEnemy) {
 GTEST_TEST(KotORNWScriptFuncs, hostileVsHostileIsNotEnemy) {
 	// Two hostile-faction creatures are not enemies of each other
 	EXPECT_FALSE(calcIsEnemy(kFactionHostile1, kFactionHostile2));
-	EXPECT_FALSE(calcIsEnemy(kFactionHostile2, kFactionEndarSpire));
 }
 
 GTEST_TEST(KotORNWScriptFuncs, invalidFactionIsNotEnemy) {
@@ -180,7 +181,6 @@ GTEST_TEST(KotORNWScriptFuncs, neutralVsHostileIsNeutral) {
 
 GTEST_TEST(KotORNWScriptFuncs, enemyFactionIsNotNeutral) {
 	EXPECT_FALSE(calcIsNeutral(kFactionHostile1, kFactionFriendly1));
-	EXPECT_FALSE(calcIsNeutral(kFactionEndarSpire, kFactionFriendly1));
 }
 
 GTEST_TEST(KotORNWScriptFuncs, friendlyFactionIsNotNeutral) {
@@ -212,6 +212,78 @@ GTEST_TEST(KotORNWScriptFuncs, exactlyOneRelationship) {
 				<< " → e=" << e << " f=" << f << " n=" << n;
 		}
 	}
+}
+
+// ---------------------------------------------------------------------------
+// repute.2da and the saved REPUTE.fac
+// ---------------------------------------------------------------------------
+
+GTEST_TEST(KotORNWScriptFuncs, factionIdsMatchStandardFactionConstants) {
+	// nwscript.nss STANDARD_FACTION_* (repute.2da rows).
+	EXPECT_EQ(static_cast<int>(kFactionPrey),       12);
+	EXPECT_EQ(static_cast<int>(kFactionTrap),       13);
+	EXPECT_EQ(static_cast<int>(kFactionEndarSpire), 14);
+	EXPECT_EQ(static_cast<int>(kFactionRancor),     15);
+	EXPECT_EQ(static_cast<int>(kFactionGizka2),     17);
+}
+
+GTEST_TEST(KotORNWScriptFuncs, reputeTwoDAReadsPlayerRowAndLowerTriangle) {
+	Common::MemoryReadStream stream(
+		"2DA V2.0\n"
+		"\n"
+		"   label      player hostile_1 friendly_1 neutral\n"
+		"0  Player     100    0         100        50\n"
+		"1  Hostile_1  0      100       ****       ****\n"
+		"2  Friendly_1 ****   0         100        ****\n"
+		"3  Neutral    ****   50        80         100\n");
+	Aurora::TwoDAFile repute(stream);
+
+	ReputationMan.loadDefaults(repute);
+	ReputationMan.reset();
+
+	EXPECT_EQ(ReputationMan.get(0, 1), 0);    // Player row.
+	EXPECT_EQ(ReputationMan.get(1, 0), 0);    // Shared with the player row.
+	EXPECT_EQ(ReputationMan.get(3, 0), 50);
+	EXPECT_EQ(ReputationMan.get(1, 2), 0);    // Row 2, column hostile_1.
+	EXPECT_EQ(ReputationMan.get(2, 1), 0);
+	EXPECT_EQ(ReputationMan.get(2, 3), 80);   // Row 3, column friendly_1.
+	EXPECT_EQ(ReputationMan.get(1, 1), 100);
+	EXPECT_TRUE(ReputationMan.isHostile(1, 0));
+	EXPECT_TRUE(ReputationMan.isNeutral(3, 2));
+
+	ReputationMan.useBuiltInDefaults();
+}
+
+GTEST_TEST(KotORNWScriptFuncs, reputationChangesAreSharedAndSaved) {
+	ReputationMan.useBuiltInDefaults();
+	ReputationMan.reset();
+
+	// A script turns the neutral faction against the player.
+	ReputationMan.adjust(kFactionNeutral, kFactionPlayer, -45);
+	EXPECT_EQ(ReputationMan.get(kFactionNeutral, kFactionPlayer), 5);
+	EXPECT_EQ(ReputationMan.get(kFactionPlayer, kFactionNeutral), 5);
+	EXPECT_TRUE(ReputationMan.isHostile(kFactionPlayer, kFactionNeutral));
+	ReputationMan.adjust(kFactionNeutral, kFactionPlayer, -100);
+	EXPECT_EQ(ReputationMan.get(kFactionNeutral, kFactionPlayer), 0);
+
+	Aurora::GFF3Writer writer(MKTAG('F', 'A', 'C', ' '));
+	ReputationMan.save(*writer.getTopLevel());
+	Common::MemoryWriteStreamDynamic out(true);
+	writer.write(out);
+
+	ReputationMan.reset();
+	EXPECT_EQ(ReputationMan.get(kFactionNeutral, kFactionPlayer), 50);
+
+	Aurora::GFF3File fac(new Common::MemoryReadStream(out.getData(), out.size()));
+	EXPECT_EQ(fac.getTopLevel().getList("FactionList").size(), 18U);
+	ReputationMan.load(fac.getTopLevel());
+
+	EXPECT_EQ(ReputationMan.get(kFactionNeutral, kFactionPlayer), 0);
+	EXPECT_EQ(ReputationMan.get(kFactionHostile1, kFactionPlayer), 0);
+	EXPECT_EQ(ReputationMan.get(kFactionFriendly1, kFactionPlayer), 100);
+	EXPECT_EQ(ReputationMan.get(kFactionPredator, kFactionGizka1), 50);
+
+	ReputationMan.reset();
 }
 
 GTEST_TEST(KotORNWScriptFuncs, abilityModifierUsesD20Rule) {

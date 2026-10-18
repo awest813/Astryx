@@ -41,6 +41,7 @@
 #include "src/engines/aurora/util.h"
 
 #include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/location.h"
 #include "src/aurora/gff3file.h"
 #include "src/aurora/gff3writer.h"
@@ -247,9 +248,8 @@ void Object::setFaction(Faction faction) {
 }
 
 bool Object::isEnemy() const {
-	return _faction == kFactionHostile1 ||
-	       _faction == kFactionHostile2 ||
-	       _faction == kFactionEndarSpire;
+	// Hostile to the player's faction.
+	return ReputationMan.isHostile(static_cast<int>(kFactionPlayer), static_cast<int>(_faction));
 }
 
 int Object::getGoodEvilValue() const {

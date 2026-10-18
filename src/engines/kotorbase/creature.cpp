@@ -526,7 +526,7 @@ namespace KotORBase {
 			_name = "Fakoo McFakeston";
 			_tag  = Common::String::format("[PC: %s]", _name.c_str());
 			_isPC = true;
-			setFaction(kFactionFriendly1);
+			setFaction(kFactionPlayer);
 		}
 		void Creature::initAsPC(
 		const CharacterGenerationInfo &chargenInfo,
@@ -534,8 +534,8 @@ namespace KotORBase {
 			_name = chargenInfo.getName();
 			_usable = false;
 			_isPC = true;
-			// The player's party is STANDARD_FACTION_FRIENDLY_1 in the original.
-			setFaction(kFactionFriendly1);
+			// The player's faction is repute.2da row 0.
+			setFaction(kFactionPlayer);
 			_race = kRaceHuman;
 			_subRace = kSubRaceNone;
 			_gender = chargenInfo.getGender();

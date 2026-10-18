@@ -50,6 +50,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/creaturesearch.h \
     src/engines/kotorbase/cameracontroller.h \
     src/engines/kotorbase/cinematicshot.h \
+    src/engines/kotorbase/reputation.h \
     src/engines/kotorbase/levelup.h \
     src/engines/kotorbase/journal.h \
     src/engines/kotorbase/itemactions.h \
@@ -92,6 +93,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/creaturesearch.cpp \
     src/engines/kotorbase/cameracontroller.cpp \
     src/engines/kotorbase/cinematicshot.cpp \
+    src/engines/kotorbase/reputation.cpp \
     src/engines/kotorbase/levelup.cpp \
     src/engines/kotorbase/journal.cpp \
     src/engines/kotorbase/itemactions.cpp \

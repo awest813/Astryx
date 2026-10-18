@@ -167,6 +167,7 @@ enum SubRace {
 enum Faction {
 	kFactionInvalid = -1,
 
+	kFactionPlayer   = 0, ///< Row 0 of repute.2da.
 	kFactionHostile1 = 1,
 	kFactionFriendly1,
 	kFactionHostile2,
@@ -179,6 +180,7 @@ enum Faction {
 	kFactionSurrender2,
 	kFactionPredator,
 	kFactionPrey,
+	kFactionTrap,
 	kFactionEndarSpire,
 	kFactionRancor,
 	kFactionGizka1,

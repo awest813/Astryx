@@ -57,7 +57,9 @@ void setHP(Creature &c, int hp) {
 GTEST_TEST(KotORCombatAI, fakePCIsFriendly) {
 	TestCreature pc;
 	pc.initAsFakePC();
-	EXPECT_EQ(pc.getFaction(), kFactionFriendly1);
+	// repute.2da row 0, like the original's player templates.
+	EXPECT_EQ(pc.getFaction(), kFactionPlayer);
+	EXPECT_FALSE(pc.isEnemy());
 }
 
 GTEST_TEST(KotORCombatAI, effectDeathKills) {

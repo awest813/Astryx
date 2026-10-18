@@ -50,6 +50,8 @@
 #include "src/engines/kotorbase/creaturesearch.h"
 #include "src/engines/kotorbase/effect.h"
 
+#include "src/engines/kotorbase/reputation.h"
+
 #include "src/engines/kotorbase/script/functions.h"
 
 namespace Engines {
@@ -768,78 +770,34 @@ void Functions::getNextItemInInventory(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 // ---------------------------------------------------------------------------
-// Faction relationship helpers
+// Faction relationships: how oSource's faction feels about oTarget's
 // ---------------------------------------------------------------------------
-
-/** Return true if a faction is considered hostile (attacks friendly factions). */
-static bool isFactionHostile(Engines::KotORBase::Faction f) {
-	return f == Engines::KotORBase::kFactionHostile1 ||
-	       f == Engines::KotORBase::kFactionHostile2 ||
-	       f == Engines::KotORBase::kFactionEndarSpire;
-}
-
-/** Return true if a faction is considered friendly (cooperative with other friendly factions). */
-static bool isFactionFriendly(Engines::KotORBase::Faction f) {
-	return f == Engines::KotORBase::kFactionFriendly1 ||
-	       f == Engines::KotORBase::kFactionFriendly2;
-}
 
 void Functions::getIsEnemy(Aurora::NWScript::FunctionContext &ctx) {
 	// GetIsEnemy(object oTarget, object oSource=OBJECT_SELF)
-	// Returns TRUE if oSource and oTarget are in mutually hostile factions.
-	ctx.getReturn() = 0;
-
 	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
 	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
-	if (!target || !source)
-		return;
 
-	Faction tf = target->getFaction();
-	Faction sf = source->getFaction();
-
-	bool enemy = (isFactionHostile(tf) && isFactionFriendly(sf)) ||
-	             (isFactionHostile(sf) && isFactionFriendly(tf));
-	ctx.getReturn() = enemy ? 1 : 0;
+	ctx.getReturn() = (target && source &&
+	                   ReputationMan.isHostile(source->getFaction(), target->getFaction())) ? 1 : 0;
 }
 
 void Functions::getIsFriend(Aurora::NWScript::FunctionContext &ctx) {
 	// GetIsFriend(object oTarget, object oSource=OBJECT_SELF)
-	// Returns TRUE if oSource and oTarget are in mutually friendly factions.
-	ctx.getReturn() = 0;
-
 	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
 	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
-	if (!target || !source)
-		return;
 
-	Faction tf = target->getFaction();
-	Faction sf = source->getFaction();
-
-	// Same non-invalid faction, or both in a friendly faction family
-	bool friendly = (tf != kFactionInvalid && tf == sf) ||
-	                (isFactionFriendly(tf) && isFactionFriendly(sf));
-	ctx.getReturn() = friendly ? 1 : 0;
+	ctx.getReturn() = (target && source &&
+	                   ReputationMan.isFriendly(source->getFaction(), target->getFaction())) ? 1 : 0;
 }
 
 void Functions::getIsNeutral(Aurora::NWScript::FunctionContext &ctx) {
 	// GetIsNeutral(object oTarget, object oSource=OBJECT_SELF)
-	// Returns TRUE if oSource and oTarget are neither friends nor enemies.
-	ctx.getReturn() = 0;
-
 	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
 	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
-	if (!target || !source)
-		return;
 
-	Faction tf = target->getFaction();
-	Faction sf = source->getFaction();
-
-	bool isEnemy  = (isFactionHostile(tf) && isFactionFriendly(sf)) ||
-	                (isFactionHostile(sf) && isFactionFriendly(tf));
-	bool isFriend = (tf != kFactionInvalid && tf == sf) ||
-	                (isFactionFriendly(tf) && isFactionFriendly(sf));
-
-	ctx.getReturn() = (!isEnemy && !isFriend) ? 1 : 0;
+	ctx.getReturn() = (target && source &&
+	                   ReputationMan.isNeutral(source->getFaction(), target->getFaction())) ? 1 : 0;
 }
 
 void Functions::getName(Aurora::NWScript::FunctionContext &ctx) {

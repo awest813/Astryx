@@ -69,6 +69,7 @@
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/itemupgrades.h"
 #include "src/engines/kotorbase/itemactions.h"
 #include "src/engines/kotorbase/area.h"
@@ -173,7 +174,7 @@ void Module::resetSessionState() {
 	_planetSelectable.clear();
 	_planetAvailable.clear();
 	_selectedPlanet = -1;
-	_reputations.clear();
+	ReputationMan.reset();
 	_returnDestinationModule = "m12aa";
 	_playTime = 0.0f;
 	_playerInputEnabled = true;
@@ -685,6 +686,7 @@ void Module::replaceModule() {
 		const auto savedPlanetSelect    = _planetSelectable;
 		const auto savedPlanetAvailable = _planetAvailable;
 		const int  savedSelectedPlanet  = _selectedPlanet;
+		const auto savedReputations     = ReputationMan.getChanges();
 
 		unload(false);
 		_exit = true;
@@ -704,6 +706,7 @@ void Module::replaceModule() {
 			_planetSelectable     = savedPlanetSelect;
 			_planetAvailable      = savedPlanetAvailable;
 			_selectedPlanet       = savedSelectedPlanet;
+			ReputationMan.setChanges(savedReputations);
 			_temporaryPartyMembers.clear();
 			_queuedUserDefinedEvents.clear();
 		}
@@ -1275,7 +1278,7 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 
 	const Common::UString savPath = Common::FilePath::normalize(slot + "/SAVEGAME.sav");
 	Common::WriteFile savFile(savPath);
-	Aurora::ERFWriter savErf(MKTAG('S', 'A', 'V', ' '), 3, savFile, Aurora::ERFWriter::kERFVersion22);
+	Aurora::ERFWriter savErf(MKTAG('S', 'A', 'V', ' '), 4, savFile, Aurora::ERFWriter::kERFVersion22);
 
 	Common::MemoryReadStream globalsStream(globalsMem.getData(), globalsMem.size(), true);
 	savErf.add("GLOBALVARS", Aurora::kFileTypeRES, globalsStream);
@@ -1285,6 +1288,17 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 
 	Common::MemoryReadStream moduleSavStream(moduleSavMem.getData(), moduleSavMem.size(), true);
 	savErf.add(_module, Aurora::kFileTypeSAV, moduleSavStream);
+
+	// Faction reputations, in the original's REPUTE.fac format.
+	Common::MemoryWriteStreamDynamic reputeMem(true);
+	{
+		Aurora::GFF3Writer reputeWriter(MKTAG('F', 'A', 'C', ' '));
+		ReputationMan.save(*reputeWriter.getTopLevel());
+		reputeWriter.write(reputeMem);
+	}
+
+	Common::MemoryReadStream reputeStream(reputeMem.getData(), reputeMem.size(), true);
+	savErf.add("repute", Aurora::kFileTypeFAC, reputeStream);
 
 	info("Game saved to %s", slot.c_str());
 }
@@ -1717,10 +1731,8 @@ void Module::updateCombatAI() {
 				// Can't engage what it can't see (e.g. behind a closed door).
 				if (!_area->hasLineOfSight(c, pm))
 					continue;
-				// Check faction hostility: reputation < 50 means hostile.
-				int rep = getReputation(static_cast<int>(c->getFaction()),
-				                        static_cast<int>(pm->getFaction()));
-				if (rep >= 50)
+				if (!ReputationMan.isHostile(static_cast<int>(c->getFaction()),
+				                             static_cast<int>(pm->getFaction())))
 					continue;
 				if (dist < bestDist) {
 					bestDist   = dist;
@@ -1786,9 +1798,8 @@ void Module::updateCombatAI() {
 					if (pm == nc) { ncIsParty = true; break; }
 				if (ncIsParty)
 					continue;
-				int rep = getReputation(static_cast<int>(c->getFaction()),
-				                        static_cast<int>(nc->getFaction()));
-				if (rep >= 50)
+				if (!ReputationMan.isHostile(static_cast<int>(c->getFaction()),
+				                             static_cast<int>(nc->getFaction())))
 					continue;
 				float dist = c->getDistanceTo(nc);
 				if (dist < bestDist && _area->hasLineOfSight(c, nc)) {
@@ -1877,9 +1888,9 @@ bool Module::isHostileToParty(const Creature *creature) const {
 	if (!creature)
 		return false;
 
-	const Faction partyFaction = _pc ? _pc->getFaction() : kFactionFriendly1;
-	return getReputation(static_cast<int>(creature->getFaction()),
-	                     static_cast<int>(partyFaction == kFactionInvalid ? kFactionFriendly1 : partyFaction)) < 50;
+	const Faction partyFaction = _pc ? _pc->getFaction() : kFactionPlayer;
+	return ReputationMan.isHostile(static_cast<int>(creature->getFaction()),
+	                               static_cast<int>(partyFaction == kFactionInvalid ? kFactionPlayer : partyFaction));
 }
 
 void Module::updateOutOfCombatRecovery() {
@@ -2341,47 +2352,12 @@ Common::UString Module::getGlobalString(const Common::UString &id) const {
 // Reputation helpers
 // ---------------------------------------------------------------------------
 
-static bool isHostileFactionId(int faction) {
-	return faction == static_cast<int>(kFactionHostile1) ||
-	       faction == static_cast<int>(kFactionHostile2) ||
-	       faction == static_cast<int>(kFactionEndarSpire);
-}
-
-static bool isFriendlyFactionId(int faction) {
-	return faction == static_cast<int>(kFactionFriendly1) ||
-	       faction == static_cast<int>(kFactionFriendly2);
-}
-
-static int defaultReputationBetweenFactions(int sourceFaction, int targetFaction) {
-	if (sourceFaction == targetFaction)
-		return 100;
-
-	const bool sourceHostile  = isHostileFactionId(sourceFaction);
-	const bool sourceFriendly = isFriendlyFactionId(sourceFaction);
-	const bool targetHostile  = isHostileFactionId(targetFaction);
-	const bool targetFriendly = isFriendlyFactionId(targetFaction);
-
-	if ((sourceHostile && targetFriendly) || (sourceFriendly && targetHostile))
-		return 0;
-
-	return 50;
-}
-
 int Module::getReputation(int sourceFaction, int targetFaction) const {
-	auto key = std::make_pair(sourceFaction, targetFaction);
-	auto it = _reputations.find(key);
-	if (it != _reputations.end())
-		return it->second;
-	return defaultReputationBetweenFactions(sourceFaction, targetFaction);
+	return ReputationMan.get(sourceFaction, targetFaction);
 }
 
 void Module::adjustReputation(int targetFaction, int sourceFaction, int delta) {
-	auto key = std::make_pair(sourceFaction, targetFaction);
-	int current = getReputation(sourceFaction, targetFaction);
-	int updated = current + delta;
-	if (updated < 0)   updated = 0;
-	if (updated > 100) updated = 100;
-	_reputations[key] = updated;
+	ReputationMan.adjust(sourceFaction, targetFaction, delta);
 }
 
 void Module::setReturnStrref(uint32_t id) {

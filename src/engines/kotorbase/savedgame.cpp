@@ -31,6 +31,7 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 
 namespace Engines {
@@ -80,6 +81,16 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 
 		if (res.name.equalsIgnoreCase("GLOBALVARS") && res.type == Aurora::kFileTypeRES) {
 			_globals = std::make_unique<Aurora::GFF3File>(erf.getResource(res.index));
+			continue;
+		}
+
+		if (res.name.equalsIgnoreCase("repute") && res.type == Aurora::kFileTypeFAC) {
+			try {
+				_repute = std::make_unique<Aurora::GFF3File>(erf.getResource(res.index));
+			} catch (Common::Exception &e) {
+				e.add("Failed to read the saved faction reputations");
+				printException(e, "WARNING: ");
+			}
 			continue;
 		}
 
@@ -229,6 +240,9 @@ void SavedGame::applyPersistedState(Module &module) const {
 
 	if (_areaState)
 		module.loadAreaObjectSaves(_areaState->getTopLevel());
+
+	if (_repute)
+		ReputationMan.load(_repute->getTopLevel());
 
 	if (_hasSavedPCInfo)
 		module.setSavedPCInfo(_savedPCInfo);

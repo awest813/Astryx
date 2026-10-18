@@ -92,6 +92,7 @@ protected:
 
 	std::unique_ptr<Aurora::GFF3File> _globals;
 	std::unique_ptr<Aurora::GFF3File> _areaState;
+	std::unique_ptr<Aurora::GFF3File> _repute;
 
 private:
 	void load(const Common::UString &dir, bool loadSav);
