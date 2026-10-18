@@ -84,6 +84,12 @@ new way:
   queued, not on impact; swoop SWMG offsets model only the x axis and
   bullet hit parts aren't tracked; many natives are simplified (see
   [FULL_PARITY_AUDIT_AND_PLAN.md](FULL_PARITY_AUDIT_AND_PLAN.md)).
+- **Cutscene camera assumptions to confirm in play:** animated camera
+  shots look for `CUT%03dW` (DLG `CameraAnimation` - 1200) on the model's
+  `camerahook`; GIT static camera orientations are read as (w, x, y, z);
+  DLG `AnimList` numbers from 10000 are treated as looping animations.
+  Shots that can't be resolved fall back to speaker/listener framing.
+  DLG `FadeType` fades and stunt (`StuntList`) cutscenes are not played.
 - **Level-up:** the feat/Force-power steps fall back to the first eligible
   choice when the retail panel has no matching button.
 - Movement is straight-line; a creature that is stuck for 3 s abandons the
