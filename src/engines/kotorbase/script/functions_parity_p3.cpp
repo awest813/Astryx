@@ -55,11 +55,11 @@ namespace KotORBase {
 
 namespace {
 
-Aurora::NWScript::EngineType *passThroughEffect(Aurora::NWScript::FunctionContext &ctx) {
+Effect passThroughEffect(Aurora::NWScript::FunctionContext &ctx) {
 	const Effect *effect = 0;
 	if (!ctx.getParams().empty())
 		effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
-	return effect ? effect->clone() : new Effect(kKotOREffectVisual, 0);
+	return effect ? *effect : Effect(kKotOREffectVisual, 0);
 }
 
 int currentHour() {
@@ -190,12 +190,12 @@ void Functions::getModuleItemLostBy(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::eventConversation(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
-	ctx.getReturn() = new Event(kEventUserDefined);
+	ctx.getReturn() = Event(kEventUserDefined);
 }
 
 void Functions::eventActivateItem(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
-	ctx.getReturn() = new Event(kEventUserDefined);
+	ctx.getReturn() = Event(kEventUserDefined);
 }
 
 void Functions::setEncounterDifficulty(Aurora::NWScript::FunctionContext &ctx) {
@@ -285,13 +285,13 @@ void Functions::getIsEncounterCreature(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getStartingLocation(Aurora::NWScript::FunctionContext &ctx) {
-	Location *loc = new Location();
+	Location loc;
 	Area *area = _game->getModule().getCurrentArea();
 	if (area)
-		loc->setArea(area);
+		loc.setArea(area);
 	Creature *pc = _game->getModule().getPC();
 	if (pc)
-		*loc = pc->getLocation();
+		loc = pc->getLocation();
 	ctx.getReturn() = loc;
 }
 
@@ -305,7 +305,7 @@ void Functions::musicBackgroundSetDelay(Aurora::NWScript::FunctionContext &ctx) 
 }
 
 void Functions::getItemActivatedTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Location();
+	ctx.getReturn() = Location();
 }
 
 void Functions::getItemActivatedTarget(Aurora::NWScript::FunctionContext &ctx) {
@@ -313,38 +313,38 @@ void Functions::getItemActivatedTarget(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::effectDisguise(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectVisual, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectVisual, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectTrueSeeing(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
-	ctx.getReturn() = new Effect(kKotOREffectSeeInvisible);
+	ctx.getReturn() = Effect(kKotOREffectSeeInvisible);
 }
 
 void Functions::effectTimeStop(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
-	ctx.getReturn() = new Effect(kKotOREffectParalyze);
+	ctx.getReturn() = Effect(kKotOREffectParalyze);
 }
 
 void Functions::effectHorrified(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
-	ctx.getReturn() = new Effect(kKotOREffectStunned);
+	ctx.getReturn() = Effect(kKotOREffectStunned);
 }
 
 void Functions::effectSpellLevelAbsorption(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectSpellImmunity, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectSpellImmunity, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectDispelMagicBest(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectDispelMagicAll, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectDispelMagicAll, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectMissChance(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectConcealment, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectConcealment, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectDamageShield(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectForceShield, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectForceShield, ctx.getParams()[0].getInt());
 }
 
 void Functions::getMaxStealthXP(Aurora::NWScript::FunctionContext &ctx) {

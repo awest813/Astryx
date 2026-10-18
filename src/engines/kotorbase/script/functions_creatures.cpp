@@ -52,8 +52,8 @@ namespace KotORBase {
 
 namespace {
 
-Talent *createInvalidTalent() {
-	return new Talent();
+Talent createInvalidTalent() {
+	return Talent();
 }
 
 bool hasAnySkillTalent(const Creature *creature) {
@@ -300,17 +300,17 @@ void Functions::getHasFeatEffect(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::talentSpell(Aurora::NWScript::FunctionContext &ctx) {
 	const int spellID = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Talent(kTalentTypeSpell, spellID);
+	ctx.getReturn() = Talent(kTalentTypeSpell, spellID);
 }
 
 void Functions::talentFeat(Aurora::NWScript::FunctionContext &ctx) {
 	const int featID = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Talent(kTalentTypeFeat, featID);
+	ctx.getReturn() = Talent(kTalentTypeFeat, featID);
 }
 
 void Functions::talentSkill(Aurora::NWScript::FunctionContext &ctx) {
 	const int skillID = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Talent(kTalentTypeSkill, skillID);
+	ctx.getReturn() = Talent(kTalentTypeSkill, skillID);
 }
 
 void Functions::getCreatureHasTalent(Aurora::NWScript::FunctionContext &ctx) {
@@ -358,7 +358,7 @@ void Functions::getCreatureTalentRandom(Aurora::NWScript::FunctionContext &ctx) 
 	const std::vector<uint32_t> &feats = creature->getCreatureInfo().getFeats();
 	if ((category == kTalentTypeFeat || category == kTalentTypeInvalid) && !feats.empty()) {
 		const int index = getRandom(0, static_cast<int>(feats.size()) - 1);
-		ctx.getReturn() = new Talent(kTalentTypeFeat, static_cast<int>(feats[index]));
+		ctx.getReturn() = Talent(kTalentTypeFeat, static_cast<int>(feats[index]));
 		return;
 	}
 
@@ -371,7 +371,7 @@ void Functions::getCreatureTalentRandom(Aurora::NWScript::FunctionContext &ctx) 
 
 		if (!skills.empty()) {
 			const int index = getRandom(0, static_cast<int>(skills.size()) - 1);
-			ctx.getReturn() = new Talent(kTalentTypeSkill, skills[index]);
+			ctx.getReturn() = Talent(kTalentTypeSkill, skills[index]);
 			return;
 		}
 	}
@@ -391,14 +391,14 @@ void Functions::getCreatureTalentBest(Aurora::NWScript::FunctionContext &ctx) {
 	// metadata and combat scoring are implemented.
 	const std::vector<uint32_t> &feats = creature->getCreatureInfo().getFeats();
 	if ((category == kTalentTypeFeat || category == kTalentTypeInvalid) && !feats.empty()) {
-		ctx.getReturn() = new Talent(kTalentTypeFeat, static_cast<int>(feats.front()));
+		ctx.getReturn() = Talent(kTalentTypeFeat, static_cast<int>(feats.front()));
 		return;
 	}
 
 	if (category == kTalentTypeSkill || category == kTalentTypeInvalid) {
 		const int bestSkill = getBestSkillTalentID(creature);
 		if (bestSkill >= 0) {
-			ctx.getReturn() = new Talent(kTalentTypeSkill, bestSkill);
+			ctx.getReturn() = Talent(kTalentTypeSkill, bestSkill);
 			return;
 		}
 	}
@@ -523,20 +523,20 @@ void Functions::getLastHostileActor(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::effectHeal(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectHeal, amount);
+	ctx.getReturn() = Effect(kKotOREffectHeal, amount);
 }
 
 void Functions::effectDamage(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
 	int damageType = ctx.getParams()[1].getInt();
 	// param 2 (damage power) is not used in the basic implementation
-	ctx.getReturn() = new Effect(kKotOREffectDamage, amount, damageType);
+	ctx.getReturn() = Effect(kKotOREffectDamage, amount, damageType);
 }
 
 void Functions::effectVisualEffect(Aurora::NWScript::FunctionContext &ctx) {
 	const int visualEffect = ctx.getParams()[0].getInt();
 	const int exposeToNetwork = ctx.getParams()[1].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectVisual, visualEffect, exposeToNetwork);
+	ctx.getReturn() = Effect(kKotOREffectVisual, visualEffect, exposeToNetwork);
 }
 
 void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
@@ -754,26 +754,26 @@ void Functions::setStealthXPDecrement(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::effectACIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectACIncrease(int nValue, int nModifyType=0, int nDamageType=8199)
 	int bonus = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectACIncrease, bonus);
+	ctx.getReturn() = Effect(kKotOREffectACIncrease, bonus);
 }
 
 void Functions::effectAttackIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectAttackIncrease(int nBonus, int nModifierType=0)
 	int bonus = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectAttackIncrease, bonus);
+	ctx.getReturn() = Effect(kKotOREffectAttackIncrease, bonus);
 }
 
 void Functions::effectSkillIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectSkillIncrease(int nSkill, int nValue)
 	int skill  = ctx.getParams()[0].getInt();
 	int amount = ctx.getParams()[1].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectSkillIncrease, amount, skill);
+	ctx.getReturn() = Effect(kKotOREffectSkillIncrease, amount, skill);
 }
 
 void Functions::effectTemporaryHitpoints(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectTemporaryHitpoints(int nHitPoints)
 	int amount = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectTemporaryHitpoints, amount);
+	ctx.getReturn() = Effect(kKotOREffectTemporaryHitpoints, amount);
 }
 
 // ---------------------------------------------------------------------------
@@ -822,27 +822,27 @@ void Functions::setSkillPointBonus(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::effectDeath(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectDeath(int bSpectacularDeath=FALSE, int bDisplayFeedback=TRUE)
 	// Instantly kills the target when applied.
-	ctx.getReturn() = new Effect(kKotOREffectDeath, 0);
+	ctx.getReturn() = Effect(kKotOREffectDeath, 0);
 }
 
 void Functions::effectKnockdown(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectKnockdown() — knocks target prone, losing any Dex bonus to AC.
-	ctx.getReturn() = new Effect(kKotOREffectKnockdown, 0);
+	ctx.getReturn() = Effect(kKotOREffectKnockdown, 0);
 }
 
 void Functions::effectParalyze(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectParalyze() — used by Force Stasis; target cannot act or dodge.
-	ctx.getReturn() = new Effect(kKotOREffectParalyze, 0);
+	ctx.getReturn() = Effect(kKotOREffectParalyze, 0);
 }
 
 void Functions::effectStunned(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectStunned() — stuns target (interrupts action queue).
-	ctx.getReturn() = new Effect(kKotOREffectStunned, 0);
+	ctx.getReturn() = Effect(kKotOREffectStunned, 0);
 }
 
 void Functions::effectHaste(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectHaste() — grants one extra attack per round.
-	ctx.getReturn() = new Effect(kKotOREffectHaste, 0);
+	ctx.getReturn() = Effect(kKotOREffectHaste, 0);
 }
 
 void Functions::effectAbilityIncrease(Aurora::NWScript::FunctionContext &ctx) {
@@ -850,60 +850,60 @@ void Functions::effectAbilityIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	int ability  = ctx.getParams()[0].getInt();
 	int modifyBy = ctx.getParams()[1].getInt();
 	// Pack ability type into damageType field, amount into amount field.
-	ctx.getReturn() = new Effect(kKotOREffectAbilityIncrease, modifyBy, ability);
+	ctx.getReturn() = Effect(kKotOREffectAbilityIncrease, modifyBy, ability);
 }
 
 void Functions::effectMovementSpeedIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectMovementSpeedIncrease(int nNewSpeedPercent)
 	int percent = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectMovementSpeedIncrease, percent);
+	ctx.getReturn() = Effect(kKotOREffectMovementSpeedIncrease, percent);
 }
 
 void Functions::effectResurrection(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectResurrection() — revives a dead creature at 1 HP.
-	ctx.getReturn() = new Effect(kKotOREffectResurrection, 1);
+	ctx.getReturn() = Effect(kKotOREffectResurrection, 1);
 }
 
 void Functions::effectCutSceneHorrified(Aurora::NWScript::FunctionContext &ctx) {
 	// Cut-scene variant: treat as hard crowd-control for script progression.
-	ctx.getReturn() = new Effect(kKotOREffectStunned, 0);
+	ctx.getReturn() = Effect(kKotOREffectStunned, 0);
 }
 
 void Functions::effectCutSceneParalyze(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectParalyze, 0);
+	ctx.getReturn() = Effect(kKotOREffectParalyze, 0);
 }
 
 void Functions::effectCutSceneStunned(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectStunned, 0);
+	ctx.getReturn() = Effect(kKotOREffectStunned, 0);
 }
 
 void Functions::effectForcePushed(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectForcePush, 0);
+	ctx.getReturn() = Effect(kKotOREffectForcePush, 0);
 }
 
 void Functions::effectForcePushTargeted(Aurora::NWScript::FunctionContext &ctx) {
 	// Object oSource is usually the person who cast it.
-	ctx.getReturn() = new Effect(kKotOREffectForcePush, 0);
+	ctx.getReturn() = Effect(kKotOREffectForcePush, 0);
 }
 
 void Functions::effectForceDrain(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectForceDrain, amount);
+	ctx.getReturn() = Effect(kKotOREffectForceDrain, amount);
 }
 
 void Functions::effectForceShield(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectForceShield, amount);
+	ctx.getReturn() = Effect(kKotOREffectForceShield, amount);
 }
 
 void Functions::effectHealForcePoints(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectForcePointsHeal, amount);
+	ctx.getReturn() = Effect(kKotOREffectForcePointsHeal, amount);
 }
 
 void Functions::effectDamageForcePoints(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectForcePointsDamage, amount);
+	ctx.getReturn() = Effect(kKotOREffectForcePointsDamage, amount);
 }
 
 // ---------------------------------------------------------------------------
@@ -1045,12 +1045,12 @@ void Functions::getLastSpellHarmful(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getSpellTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
-	Location *loc = new Location();
+	Location loc;
 	Object *target = _game->getModule().getSpellScriptTarget();
 	if (target) {
 		float x, y, z;
 		target->getPosition(x, y, z);
-		loc->setPosition(x, y, z);
+		loc.setPosition(x, y, z);
 	}
 	ctx.getReturn() = loc;
 }
@@ -1160,7 +1160,7 @@ void Functions::surrenderRetainBuffs(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::effectImmunity(Aurora::NWScript::FunctionContext &ctx) {
 	int immunityType = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectImmunity, immunityType);
+	ctx.getReturn() = Effect(kKotOREffectImmunity, immunityType);
 }
 
 void Functions::getIsImmune(Aurora::NWScript::FunctionContext &ctx) {
@@ -1174,37 +1174,40 @@ void Functions::getIsImmune(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::effectDamageImmunityIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	int damageType = ctx.getParams()[0].getInt();
 	int percent = ctx.getParams()[1].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectDamageImmunityIncrease, percent, damageType);
+	ctx.getReturn() = Effect(kKotOREffectDamageImmunityIncrease, percent, damageType);
 }
 
 void Functions::effectSpellImmunity(Aurora::NWScript::FunctionContext &ctx) {
 	int spellId = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectSpellImmunity, spellId);
+	ctx.getReturn() = Effect(kKotOREffectSpellImmunity, spellId);
 }
 
 void Functions::effectSleep(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectSleep, 0);
+	ctx.getReturn() = Effect(kKotOREffectSleep, 0);
 }
 
 void Functions::effectRegenerate(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectRegenerate, amount);
+	ctx.getReturn() = Effect(kKotOREffectRegenerate, amount);
 }
 
 void Functions::effectTemporaryForcePoints(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectTemporaryForcePoints, amount);
+	ctx.getReturn() = Effect(kKotOREffectTemporaryForcePoints, amount);
 }
 
 void Functions::effectAreaOfEffect(Aurora::NWScript::FunctionContext &ctx) {
 	int aoeId = ctx.getParams()[0].getInt();
 	_game->getModule().setLastAoECreator(ObjectContainer::toObject(ctx.getCaller()));
-	ctx.getReturn() = new Effect(kKotOREffectAreaOfEffect, aoeId);
+	ctx.getReturn() = Effect(kKotOREffectAreaOfEffect, aoeId);
 }
 
 void Functions::magicalEffect(Aurora::NWScript::FunctionContext &ctx) {
 	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
-	ctx.getReturn() = effect ? effect->clone() : new Effect(kKotOREffectVisual, 0);
+	if (effect)
+		ctx.getReturn() = *effect;
+	else
+		ctx.getReturn() = Effect(kKotOREffectVisual, 0);
 }
 
 void Functions::supernaturalEffect(Aurora::NWScript::FunctionContext &ctx) {
@@ -1218,78 +1221,78 @@ void Functions::extraordinaryEffect(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::effectDamageResistance(Aurora::NWScript::FunctionContext &ctx) {
 	int damageType = ctx.getParams()[0].getInt();
 	int amount = ctx.getParams()[1].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectDamageResistance, amount, damageType);
+	ctx.getReturn() = Effect(kKotOREffectDamageResistance, amount, damageType);
 }
 
 void Functions::effectConcealment(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectConcealment, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectConcealment, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectAssuredHit(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectAssuredHit, 1);
+	ctx.getReturn() = Effect(kKotOREffectAssuredHit, 1);
 }
 
 void Functions::effectAssuredDeflection(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectAssuredDeflection, 1);
+	ctx.getReturn() = Effect(kKotOREffectAssuredDeflection, 1);
 }
 
 void Functions::effectEntangle(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectEntangle, 0);
+	ctx.getReturn() = Effect(kKotOREffectEntangle, 0);
 }
 
 void Functions::effectForceJump(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectForceJump, 0);
+	ctx.getReturn() = Effect(kKotOREffectForceJump, 0);
 }
 
 void Functions::effectBeam(Aurora::NWScript::FunctionContext &ctx) {
 	int beamType = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectBeam, beamType);
+	ctx.getReturn() = Effect(kKotOREffectBeam, beamType);
 }
 
 void Functions::effectForceResistanceIncrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectForceResistanceIncrease, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectForceResistanceIncrease, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectBodyFuel(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectBodyFuel, 5);
+	ctx.getReturn() = Effect(kKotOREffectBodyFuel, 5);
 }
 
 void Functions::effectDamageIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
 	int damageType = ctx.getParams().size() > 1 ? ctx.getParams()[1].getInt() : 0;
-	ctx.getReturn() = new Effect(kKotOREffectDamageIncrease, amount, damageType);
+	ctx.getReturn() = Effect(kKotOREffectDamageIncrease, amount, damageType);
 }
 
 void Functions::effectHitPointChangeWhenDying(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = 1;
 	if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeInt)
 		amount = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectHitPointChangeWhenDying, amount);
+	ctx.getReturn() = Effect(kKotOREffectHitPointChangeWhenDying, amount);
 }
 
 void Functions::effectDroidStun(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectDroidStun, 0);
+	ctx.getReturn() = Effect(kKotOREffectDroidStun, 0);
 }
 
 void Functions::effectForceResisted(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectForceResisted, 0);
+	ctx.getReturn() = Effect(kKotOREffectForceResisted, 0);
 }
 
 void Functions::effectForceFizzle(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectForceFizzle, 0);
+	ctx.getReturn() = Effect(kKotOREffectForceFizzle, 0);
 }
 
 void Functions::effectDispelMagicAll(Aurora::NWScript::FunctionContext &ctx) {
 	int casterLevel = ctx.getParams().empty() ? 0 : ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectDispelMagicAll, casterLevel);
+	ctx.getReturn() = Effect(kKotOREffectDispelMagicAll, casterLevel);
 }
 
 void Functions::effectBlasterDeflectionIncrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectBlasterDeflectionIncrease, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectBlasterDeflectionIncrease, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectBlasterDeflectionDecrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectBlasterDeflectionDecrease, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectBlasterDeflectionDecrease, ctx.getParams()[0].getInt());
 }
 
 void Functions::grantFeat(Aurora::NWScript::FunctionContext &ctx) {
@@ -1324,15 +1327,15 @@ void Functions::getReflexSavingThrow(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::effectModifyAttacks(Aurora::NWScript::FunctionContext &ctx) {
 	int attacks = ctx.getParams()[0].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectMovementSpeedIncrease, attacks); // Simplified as speed effect for now
+	ctx.getReturn() = Effect(kKotOREffectMovementSpeedIncrease, attacks); // Simplified as speed effect for now
 }
 
 void Functions::effectLightsaberThrow(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectVisual, 100); // Dummy light side VFX as placeholder
+	ctx.getReturn() = Effect(kKotOREffectVisual, 100); // Dummy light side VFX as placeholder
 }
 
 void Functions::effectWhirlWind(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectStunned, 6); // Whirlwind as stun for now
+	ctx.getReturn() = Effect(kKotOREffectStunned, 6); // Whirlwind as stun for now
 }
 
 
@@ -1361,7 +1364,7 @@ void Functions::getIsDebilitated(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::getFirstAttacker(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 void Functions::getNextAttacker(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 void Functions::playRoomAnimation(Aurora::NWScript::FunctionContext &ctx) {}
-void Functions::effectPsychicStatic(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectVisual, 0); }
+void Functions::effectPsychicStatic(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = Effect(kKotOREffectVisual, 0); }
 void Functions::playVisualAreaEffect(Aurora::NWScript::FunctionContext &ctx) {
 	const int effectId = ctx.getParams()[0].getInt();
 	Location *location = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
@@ -1424,23 +1427,23 @@ void Functions::getLastSpellCaster(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::getLastSpell(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = _game->getModule().getSpellScriptId();
 }
-void Functions::effectConfused(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectStunned, 0); }
-void Functions::effectFrightened(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectStunned, 0); }
-void Functions::effectChoke(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = new Effect(kKotOREffectStunned, 0); }
+void Functions::effectConfused(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = Effect(kKotOREffectStunned, 0); }
+void Functions::effectFrightened(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = Effect(kKotOREffectStunned, 0); }
+void Functions::effectChoke(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = Effect(kKotOREffectStunned, 0); }
 
 void Functions::effectSavingThrowIncrease(Aurora::NWScript::FunctionContext &ctx) {
 	int savingThrow = ctx.getParams()[0].getInt();
 	int value       = ctx.getParams()[1].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectSavingThrowIncrease, value, savingThrow);
+	ctx.getReturn() = Effect(kKotOREffectSavingThrowIncrease, value, savingThrow);
 }
 
 void Functions::effectDamageReduction(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[2].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectDamageReduction, amount);
+	ctx.getReturn() = Effect(kKotOREffectDamageReduction, amount);
 }
 
 void Functions::effectInvisibility(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectInvisibility, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectInvisibility, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectPoison(Aurora::NWScript::FunctionContext &ctx) {
@@ -1450,54 +1453,54 @@ void Functions::effectPoison(Aurora::NWScript::FunctionContext &ctx) {
 	// severity and use the creature's default poison duration (damageType 0).
 	const int poisonType = ctx.getParams()[0].getInt();
 	const int severity   = (poisonType >= 0) ? ((poisonType % 4) + 1) : 1;
-	ctx.getReturn() = new Effect(kKotOREffectPoison, severity, 0);
+	ctx.getReturn() = Effect(kKotOREffectPoison, severity, 0);
 }
 
 void Functions::effectSeeInvisible(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectSeeInvisible() → effect (no parameters)
-	ctx.getReturn() = new Effect(kKotOREffectSeeInvisible);
+	ctx.getReturn() = Effect(kKotOREffectSeeInvisible);
 }
 
 void Functions::effectAbilityDecrease(Aurora::NWScript::FunctionContext &ctx) {
 	int ability  = ctx.getParams()[0].getInt();
 	int modifyBy = ctx.getParams()[1].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectAbilityDecrease, modifyBy, ability);
+	ctx.getReturn() = Effect(kKotOREffectAbilityDecrease, modifyBy, ability);
 }
 
 void Functions::effectAttackDecrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectAttackDecrease, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectAttackDecrease, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectDamageDecrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectDamageDecrease, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectDamageDecrease, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectDamageImmunityDecrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectDamageImmunityDecrease, ctx.getParams()[1].getInt());
+	ctx.getReturn() = Effect(kKotOREffectDamageImmunityDecrease, ctx.getParams()[1].getInt());
 }
 
 void Functions::effectACDecrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectACDecrease, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectACDecrease, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectMovementSpeedDecrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectMovementSpeedDecrease, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectMovementSpeedDecrease, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectSavingThrowDecrease(Aurora::NWScript::FunctionContext &ctx) {
 	int savingThrow = ctx.getParams()[0].getInt();
 	int value       = ctx.getParams()[1].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectSavingThrowDecrease, value, savingThrow);
+	ctx.getReturn() = Effect(kKotOREffectSavingThrowDecrease, value, savingThrow);
 }
 
 void Functions::effectSkillDecrease(Aurora::NWScript::FunctionContext &ctx) {
 	int skill  = ctx.getParams()[0].getInt();
 	int amount = ctx.getParams()[1].getInt();
-	ctx.getReturn() = new Effect(kKotOREffectSkillDecrease, amount, skill);
+	ctx.getReturn() = Effect(kKotOREffectSkillDecrease, amount, skill);
 }
 
 void Functions::effectForceResistanceDecrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectForceResistanceDecrease, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectForceResistanceDecrease, ctx.getParams()[0].getInt());
 }
 
 void Functions::getLastForcePowerUsed(Aurora::NWScript::FunctionContext &ctx) {

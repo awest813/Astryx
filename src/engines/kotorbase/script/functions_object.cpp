@@ -1432,8 +1432,8 @@ KotOREffectType activeEffectToKotOR(EffectType type) {
 	}
 }
 
-Effect *wrapActiveEffect(const Creature::ActiveEffect &active) {
-	return new Effect(activeEffectToKotOR(active.type), active.value, 0, active.spellId);
+Effect wrapActiveEffect(const Creature::ActiveEffect &active) {
+	return Effect(activeEffectToKotOR(active.type), active.value, 0, active.spellId);
 }
 
 } // End of anonymous namespace
@@ -1952,12 +1952,12 @@ void Functions::effectLinkEffects(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
-	Location *loc = new Location();
+	Location loc;
 	Object *target = _game->getModule().getSpellScriptTarget();
 	if (target) {
 		float x, y, z;
 		target->getPosition(x, y, z);
-		loc->setPosition(x, y, z);
+		loc.setPosition(x, y, z);
 	}
 	ctx.getReturn() = loc;
 }
