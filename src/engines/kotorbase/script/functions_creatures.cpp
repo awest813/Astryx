@@ -718,10 +718,7 @@ void Functions::givePlotXP(Aurora::NWScript::FunctionContext &ctx) {
 
 	debugC(Common::kDebugEngineLogic, 1, "GivePlotXP(\"%s\", %d%%): %d XP", plotName.c_str(), percentage, xp);
 
-	// Award to all active party members
-	Creature *pc = _game->getModule().getPC();
-	if (pc)
-		pc->addPlotXP(xp);
+	_game->getModule().awardPartyXP(xp);
 }
 
 void Functions::awardStealthXP(Aurora::NWScript::FunctionContext &ctx) {

@@ -91,7 +91,14 @@ new way:
   Shots that can't be resolved fall back to speaker/listener framing.
   DLG `FadeType` fades and stunt (`StuntList`) cutscenes are not played.
 - **Level-up:** the feat/Force-power steps fall back to the first eligible
-  choice when the retail panel has no matching button.
+  choice when the retail panel has no matching button, and the per-level
+  feat/power gain tables are not enforced.
+- **Combat:** experience is shared by the PC and every companion met so far
+  (kill XP is 25 × the victim's hit dice, an approximation). Faction
+  hostility comes from the built-in faction table, not `repute.2da`; timed
+  ability/skill modifier effects and some talent/effect constants are
+  approximated. NPCs now use the stats and Force powers of their `.utc`
+  blueprint, so fights may be harder than in earlier builds.
 - Movement is straight-line; a creature that is stuck for 3 s abandons the
   move and carries on with its next action.
 - Area state from before this build: creatures in areas visited with an

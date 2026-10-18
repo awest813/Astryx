@@ -263,6 +263,8 @@ public:
 
 	/** Is a specified creature a party member? */
 	bool isObjectPartyMember(Creature *creature) const;
+	/** Give XP to the player and every companion met so far, benched ones included. */
+	void awardPartyXP(int xp);
 	/** Is a NPC slot in the active party? */
 	bool isNPCPartyMember(int npc) const;
 	/** Is a NPC in the list of available party members? */

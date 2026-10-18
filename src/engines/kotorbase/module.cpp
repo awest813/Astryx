@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -1864,7 +1865,7 @@ void Module::updateXPOnKill() {
 
 		// XP = 25 × creature hit dice — consistent with KOTOR's own scaling.
 		int xp = 25 * hitDice;
-		_pc->addPlotXP(xp);
+		awardPartyXP(xp);
 
 		debugC(Common::kDebugEngineLogic, 1,
 		       "Module::updateXPOnKill(): awarded %d XP for killing \"%s\" (HD %d)",
@@ -2023,6 +2024,31 @@ Creature *Module::getPartyMemberByIndex(int index) const {
 
 bool Module::isObjectPartyMember(Creature *object) const {
 	return _partyController.isObjectPartyMember(object);
+}
+
+void Module::awardPartyXP(int xp) {
+	if (xp <= 0)
+		return;
+
+	// In KotOR the whole roster shares experience, so companions keep pace.
+	std::set<Creature *> awarded;
+	std::set<int> activeNPCs;
+
+	if (_pc) {
+		_pc->addPlotXP(xp);
+		awarded.insert(_pc);
+	}
+
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+		const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+		activeNPCs.insert(member.first);
+		if (member.second && awarded.insert(member.second).second)
+			member.second->addPlotXP(xp);
+	}
+
+	for (auto &state : _npcStates)
+		if (activeNPCs.find(state.first) == activeNPCs.end())
+			state.second.setExperience(state.second.getExperience() + xp);
 }
 
 bool Module::isAvailableCreature(int npc) const {
