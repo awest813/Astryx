@@ -29,6 +29,7 @@
 
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
+#include "src/engines/odyssey/listbox.h"
 
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 #include "src/engines/kotorbase/levelup.h"
@@ -56,6 +57,9 @@ static const FeatButtonMap kFeatButtons[] = {
 	{ "BTN_JEDI_DEFENSE", KotORBase::kFeatJediDefense },
 };
 
+/** Rows of the feat list box. */
+static const uint32_t kFeatListRows = 8;
+
 CharacterGenerationFeatsMenu::CharacterGenerationFeatsMenu(
 		KotORBase::CharacterGenerationInfo &info,
 		Console *console) :
@@ -78,15 +82,48 @@ CharacterGenerationFeatsMenu::CharacterGenerationFeatsMenu(
 			known.erase(chosen);
 	}
 
-	_availableFeats = KotORBase::getSelectableFeats(info.getClass(), known);
+	_availableFeats = KotORBase::getSelectableFeats(info, known);
 	if (_availableFeats.empty())
 		_availableFeats.push_back(KotORBase::kFeatToughness);
+
+	// The retail panel lists the feats in a list box (KotOR.js: LB_FEATS).
+	if (Odyssey::WidgetListBox *list = getListBox("LB_FEATS")) {
+		list->setItemSelectionEnabled(true);
+		list->setHideScrollbar(false);
+		list->createItemWidgets(kFeatListRows);
+	}
 
 	updateLabels();
 }
 
 void CharacterGenerationFeatsMenu::updateLabels() {
-	setWidgetText("REMAINING_SELECTIONS_LBL", (_selectedFeat == 0xFFFFFFFF) ? "1" : "0");
+	const Common::UString remaining = (_selectedFeat == 0xFFFFFFFF) ? "1" : "0";
+	setWidgetText("REMAINING_SELECTIONS_LBL", remaining);
+	setWidgetText("STD_REMAINING_SELECTIONS_LBL", remaining);
+
+	Odyssey::WidgetListBox *list = getListBox("LB_FEATS");
+	if (!list)
+		return;
+
+	const int selected = list->getSelectedIndex();
+
+	list->removeAllItems();
+	for (uint32_t feat : _availableFeats)
+		list->addItem(((feat == _selectedFeat) ? "* " : "") + KotORBase::getFeatDisplayName(feat));
+
+	list->selectItemByIndex(selected);
+	list->refreshItemWidgets();
+}
+
+void CharacterGenerationFeatsMenu::callbackKeyInput(const Events::Key &key, const Events::EventType &type) {
+	Odyssey::WidgetListBox *list = getListBox("LB_FEATS");
+	if (!list || type != Events::kEventKeyDown)
+		return;
+
+	if (key == Events::kKeyUp)
+		list->selectPreviousItem();
+	else if (key == Events::kKeyDown)
+		list->selectNextItem();
 }
 
 bool CharacterGenerationFeatsMenu::isFeatAvailable(uint32_t feat) const {
@@ -107,6 +144,18 @@ void CharacterGenerationFeatsMenu::callbackActive(Widget &widget) {
 		if (isFeatAvailable(kFeatButtons[i].feat))
 			_selectedFeat = kFeatButtons[i].feat;
 		updateLabels();
+		return;
+	}
+
+	if (tag == "BTN_SELECT") {
+		// Pick the feat highlighted in the list.
+		Odyssey::WidgetListBox *list = getListBox("LB_FEATS");
+		const int index = list ? list->getSelectedIndex() : -1;
+		if (index >= 0 && static_cast<size_t>(index) < _availableFeats.size()) {
+			_selectedFeat = _availableFeats[index];
+			setWidgetText("LBL_NAME", KotORBase::getFeatDisplayName(_selectedFeat));
+			updateLabels();
+		}
 		return;
 	}
 

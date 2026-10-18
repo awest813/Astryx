@@ -44,11 +44,13 @@ public:
 	~LevelUpFeatsMenu();
 
 	void callbackActive(Widget &widget) override;
+	void callbackKeyInput(const Events::Key &key, const Events::EventType &type) override;
 
 	bool isAccepted() const { return _accepted; }
 
 private:
 	void updateLabels();
+	void fillFeatList();
 	bool isFeatAvailable(uint32_t feat) const;
 	bool isFeatSelected(uint32_t feat) const;
 	void toggleFeat(uint32_t feat);

@@ -22,6 +22,8 @@
  *  Shared population logic for KotOR character profile menus.
  */
 
+#include <limits>
+
 #include "src/common/util.h"
 #include "src/common/strutil.h"
 
@@ -88,7 +90,12 @@ void GUI::populateCharacterSheet(Creature &creature) {
 	setStatPair("LBL_WILL_VAL", "WILL_VAL_LBL", Common::composeString(will));
 
 	const Common::UString xp = Common::composeString(creature.getCurrentXP());
-	setStatPairMany((const char *const[]){ "LBL_XP_VAL", "XP_VAL_LBL", "LBL_XP" }, 3, xp);
+	setStatPairMany((const char *const[]){ "LBL_XP_VAL", "XP_VAL_LBL", "LBL_XP", "LBL_EXPERIENCE_STAT" }, 4, xp);
+
+	// XP for the next level (exptable.2da); blank at the level cap.
+	const int neededXP = levelUpThreshold(creature.getHitDice());
+	setWidgetText("LBL_NEEDED_XP", (neededXP < std::numeric_limits<int>::max()) ?
+	                               Common::composeString(neededXP) : Common::UString());
 
 	if (info.isJedi()) {
 		const Common::UString forcePoints = Common::composeString(creature.getForcePoints())

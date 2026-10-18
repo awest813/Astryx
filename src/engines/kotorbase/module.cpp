@@ -72,6 +72,7 @@
 #include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/itemupgrades.h"
 #include "src/engines/kotorbase/itemactions.h"
+#include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/waypoint.h"
 
@@ -1881,8 +1882,9 @@ void Module::updateXPOnKill() {
 		if (hitDice <= 0)
 			continue;
 
-		// XP = 25 × creature hit dice — consistent with KOTOR's own scaling.
-		int xp = 25 * hitDice;
+		// xptable.2da by party level and challenge rating (hit dice here, as in
+		// GetChallengeRating()); 25 x hit dice without game data.
+		const int xp = killExperience(_pc->getHitDice(), hitDice);
 		awardPartyXP(xp);
 
 		debugC(Common::kDebugEngineLogic, 1,

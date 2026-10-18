@@ -44,11 +44,13 @@ public:
 	~LevelUpForcePowersMenu();
 
 	void callbackActive(Widget &widget) override;
+	void callbackKeyInput(const Events::Key &key, const Events::EventType &type) override;
 
 	bool isAccepted() const { return _accepted; }
 
 private:
 	void updateLabels();
+	void fillPowerList();
 	bool isPowerAvailable(uint32_t power) const;
 	bool isPowerSelected(uint32_t power) const;
 	void togglePower(uint32_t power);

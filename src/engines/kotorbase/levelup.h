@@ -45,11 +45,25 @@ class CharacterGenerationInfo;
 class Creature;
 class CreatureInfo;
 
-/** XP required to reach the next level from @p currentLevel (1-based). */
+/** XP required to reach the next level from @p currentLevel (1-based): exptable.2da,
+ *  else the d20 progression. Past the end of exptable.2da (level cap), INT_MAX. */
 int levelUpThreshold(int currentLevel);
+
+/** exptable.2da's "xp" for level @p currentLevel + 1: the row whose "level" column
+ *  names that level, else row @p currentLevel. -1 when the table has no such row. */
+int levelUpThresholdFromTable(const Aurora::TwoDAFile &exptable, int currentLevel);
 
 /** True when @p creature has enough XP for another class level. */
 bool canLevelUp(const Creature &creature);
+
+/** XP for killing a creature of challenge rating @p challengeRating, from
+ *  xptable.2da: column "cr<N>" (clamped to the highest one), row @p partyLevel
+ *  (or the row whose "level"/"label" column names it; clamped to the last row).
+ *  -1 when the table has no CR columns. */
+int killXPFromTable(const Aurora::TwoDAFile &xptable, int partyLevel, int challengeRating);
+
+/** XP the party earns for a kill: xptable.2da, else 25 x the challenge rating. */
+int killExperience(int partyLevel, int challengeRating);
 
 /** Hit die for a base class (d6 / d8 / d10). */
 int classHitDie(Class charClass);
@@ -72,14 +86,55 @@ void autoLevelUp(Creature &creature);
 /** True when levelling from @p currentLevel grants an ability score increase. */
 bool grantsAbilityIncrease(int currentLevel);
 
-/** Feats the creature may pick on the next level (excludes ones already known). */
+/** Feats the creature may pick on the next level (excludes ones already known),
+ *  recommended ones first. From feat.2da, else a small built-in list. */
 std::vector<uint32_t> getSelectableFeats(const CreatureInfo &info);
 
-/** Feats available during character creation for a class. */
+/** Feats available during character creation (level 1 of the chosen class),
+ *  excluding @p knownFeats; recommended ones first. */
+std::vector<uint32_t> getSelectableFeats(const CharacterGenerationInfo &info,
+                                         const std::vector<uint32_t> &knownFeats);
+
+/** The built-in feat list for a class, used without feat.2da. */
 std::vector<uint32_t> getSelectableFeats(Class charClass, const std::vector<uint32_t> &knownFeats);
 
-/** Force powers a Jedi may pick on the next level (excludes known powers). */
+/** Force powers a Jedi may pick on the next level (excludes known powers),
+ *  recommended ones first. From spells.2da, else the six core powers. */
 std::vector<uint32_t> getSelectableForcePowers(const CreatureInfo &info);
+
+/** The feat.2da column prefix of a class: classes.2da "featstable", lower-cased
+ *  (e.g. "sol", "jcn"). Empty without game data. */
+Common::UString classFeatTableCode(Class charClass);
+
+/** Feats feat.2da grants a class automatically ("<code>_list" 3) on reaching
+ *  @p classLevel ("<code>_granted"). */
+std::vector<uint32_t> grantedFeatsFromTable(const Aurora::TwoDAFile &feats,
+                                            const Common::UString &code, int classLevel);
+
+/** grantedFeatsFromTable() on the game's feat.2da; empty without game data. */
+std::vector<uint32_t> classGrantedFeats(Class charClass, int classLevel);
+
+/** Feats a class may pick from feat.2da: "<code>_list" 0 or 1, not in @p knownFeats,
+ *  with all requirements (prereqfeat1/2, orreqfeat0-4, mincharlevel, minattackbonus,
+ *  min<ability>, minlevel/minlevelclass, reqskill) met by @p next, the character as it
+ *  will be after the level. Feats with a "<code>_recom" rank come first, by rank. */
+std::vector<uint32_t> selectableFeatsFromTable(const Aurora::TwoDAFile &feats, const Common::UString &code,
+                                               const std::vector<uint32_t> &knownFeats,
+                                               const CreatureInfo &next);
+
+/** The spells.2da column holding the level a Jedi class may learn a power at
+ *  ("guardian", "consular", "sentinel", ...); empty for non-Force classes. */
+Common::UString forcePowerClassColumn(Class charClass);
+
+/** Force powers @p charClass may learn from spells.2da: player powers ("usertype" 1)
+ *  whose class column is at most @p next's character level, not yet known, with all
+ *  "prerequisites" (underscore-separated spell rows) known. Powers ranked by
+ *  "light_recom" ("dark_recom" for dark side characters) come first. */
+std::vector<uint32_t> selectableForcePowersFromTable(const Aurora::TwoDAFile &spells, Class charClass,
+                                                     const CreatureInfo &next);
+
+/** Localized (or 2DA label) name of a feat.2da row. */
+Common::UString getFeatDisplayName(uint32_t feat);
 
 /** A class level's entry in a per-level gain table (featgain.2da, classpowergain.2da):
  *  the row whose "label"/"level" column holds @p classLevel, else row classLevel - 1.

@@ -29,6 +29,7 @@
 
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
+#include "src/engines/odyssey/listbox.h"
 
 #include "src/engines/kotorbase/levelup.h"
 
@@ -55,6 +56,9 @@ static const FeatButtonMap kFeatButtons[] = {
 	{ "BTN_JEDI_DEFENSE", KotORBase::kFeatJediDefense },
 };
 
+/** Rows of the feat list box. */
+static const uint32_t kFeatListRows = 8;
+
 LevelUpFeatsMenu::LevelUpFeatsMenu(KotORBase::CreatureInfo &info, Console *console) :
 		KotORBase::GUI(console),
 		_info(info),
@@ -71,15 +75,40 @@ LevelUpFeatsMenu::LevelUpFeatsMenu(KotORBase::CreatureInfo &info, Console *conso
 
 	_availableFeats = KotORBase::getSelectableFeats(_info);
 
+	// The retail panel lists the feats in a list box (KotOR.js: LB_FEATS).
+	if (Odyssey::WidgetListBox *list = getListBox("LB_FEATS")) {
+		list->setItemSelectionEnabled(true);
+		list->setHideScrollbar(false);
+		list->createItemWidgets(kFeatListRows);
+	}
+
 	updateLabels();
 }
 
 LevelUpFeatsMenu::~LevelUpFeatsMenu() {
 }
 
+void LevelUpFeatsMenu::fillFeatList() {
+	Odyssey::WidgetListBox *list = getListBox("LB_FEATS");
+	if (!list)
+		return;
+
+	const int selected = list->getSelectedIndex();
+
+	list->removeAllItems();
+	for (uint32_t feat : _availableFeats)
+		list->addItem((isFeatSelected(feat) ? "* " : "") + KotORBase::getFeatDisplayName(feat));
+
+	list->selectItemByIndex(selected);
+	list->refreshItemWidgets();
+}
+
 void LevelUpFeatsMenu::updateLabels() {
 	const int remaining = MAX<int>(_picks - static_cast<int>(_selectedFeats.size()), 0);
 	setWidgetText("REMAINING_SELECTIONS_LBL", Common::composeString(remaining));
+	setWidgetText("STD_REMAINING_SELECTIONS_LBL", Common::composeString(remaining));
+
+	fillFeatList();
 
 	for (size_t i = 0; i < ARRAYSIZE(kFeatButtons); ++i) {
 		Odyssey::WidgetButton *button = getButton(kFeatButtons[i].tag);
@@ -139,6 +168,18 @@ void LevelUpFeatsMenu::callbackActive(Widget &widget) {
 		return;
 	}
 
+	if (tag == "BTN_SELECT") {
+		// Toggle the feat highlighted in the list.
+		Odyssey::WidgetListBox *list = getListBox("LB_FEATS");
+		const int index = list ? list->getSelectedIndex() : -1;
+		if (index >= 0 && static_cast<size_t>(index) < _availableFeats.size()) {
+			toggleFeat(_availableFeats[index]);
+			setWidgetText("LBL_NAME", KotORBase::getFeatDisplayName(_availableFeats[index]));
+			updateLabels();
+			return;
+		}
+	}
+
 	if (tag == "BTN_RECOMMENDED" || tag == "BTN_SELECT") {
 		_selectedFeats = KotORBase::completeLevelUpPicks(_selectedFeats, _availableFeats, _picks);
 		updateLabels();
@@ -157,6 +198,17 @@ void LevelUpFeatsMenu::callbackActive(Widget &widget) {
 	}
 
 	updateLabels();
+}
+
+void LevelUpFeatsMenu::callbackKeyInput(const Events::Key &key, const Events::EventType &type) {
+	Odyssey::WidgetListBox *list = getListBox("LB_FEATS");
+	if (!list || type != Events::kEventKeyDown)
+		return;
+
+	if (key == Events::kKeyUp)
+		list->selectPreviousItem();
+	else if (key == Events::kKeyDown)
+		list->selectNextItem();
 }
 
 } // End of namespace KotOR
