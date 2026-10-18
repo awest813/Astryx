@@ -727,10 +727,10 @@ void Area::loadObject(std::unique_ptr<Object> &&object) {
 	// Objects added after the area went visible (scripts spawning things)
 	// would otherwise stay hidden until the leader changes rooms.
 	if (_visible) {
-		Object &object = *_objects.back();
-		const Room *room = object.getRoom();
-		if (ObjectContainer::toDoor(&object) || (room && room->isVisible()))
-			object.show();
+		Object &added = *_objects.back();
+		const Room *room = added.getRoom();
+		if (ObjectContainer::toDoor(&added) || (room && room->isVisible()))
+			added.show();
 	}
 }
 

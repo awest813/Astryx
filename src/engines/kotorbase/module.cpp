@@ -129,8 +129,7 @@ Module::Module(Game &game, ::Engines::Console &console) :
 		_frameTime(0),
 		_inDialog(false),
 		_runScriptVar(-1),
-		_soloMode(false),
-		_selectedPlanet(-1) {
+		_soloMode(false) {
 
 	loadSurfaceTypes();
 }

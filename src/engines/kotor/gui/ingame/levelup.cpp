@@ -105,14 +105,14 @@ void LevelUpGUI::callbackRun() {
 				return;
 			}
 		}
-		// Fall through
+		[[fallthrough]];
 	case 2:
 		_step++;
 		if (!showSkills()) {
 			cancel();
 			return;
 		}
-		// Fall through
+		[[fallthrough]];
 	case 3:
 		_step++;
 		if (!KotORBase::getSelectableFeats(_pc.getCreatureInfo()).empty()) {
@@ -121,7 +121,7 @@ void LevelUpGUI::callbackRun() {
 				return;
 			}
 		}
-		// Fall through
+		[[fallthrough]];
 	case 4:
 		_step++;
 		if (_pc.getCreatureInfo().isJedi() &&
@@ -131,7 +131,7 @@ void LevelUpGUI::callbackRun() {
 				return;
 			}
 		}
-		// Fall through
+		[[fallthrough]];
 	case 5:
 		finalizeLevelUp();
 		updateSummaryLabels();

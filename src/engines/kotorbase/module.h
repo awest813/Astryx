@@ -564,7 +564,7 @@ private:
 
 	std::map<int, bool> _planetSelectable; ///< Which planets are selectable on the galaxy map.
 	std::map<int, bool> _planetAvailable;  ///< Which planets are available (unlocked).
-	int _selectedPlanet;                   ///< The planet currently selected on the galaxy map.
+	int _selectedPlanet { -1 };            ///< The planet currently selected on the galaxy map.
 
 	// Delayed object interactions
 
