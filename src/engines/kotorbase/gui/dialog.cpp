@@ -235,8 +235,15 @@ void DialogGUI::refresh() {
 
 	const std::vector<const Aurora::DLGFile::Line *> replies = _dlg->getCurrentReplies();
 	if (replies.empty() && !_pickedReply) {
-		// A single reply-less line is a one-liner: end at once, but still
-		// run the conversation's EndConversation script.
+		// A single reply-less line is a one-liner (a bark): show it over the
+		// speaker's head and end at once, still running EndConversation.
+		Common::UString bark = curEntry->text.getString();
+		preprocessEntry(bark);
+
+		Object *barker = findParticipant(curEntry->speaker);
+		if (barker && !bark.empty())
+			_module.showFloatingText(barker, bark, 4.0f);
+
 		_dlg->pickReply(Aurora::DLGFile::kEndLine);
 		_isActive = false;
 		return;
