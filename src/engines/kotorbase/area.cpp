@@ -60,6 +60,7 @@
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/waypoint.h"
 #include "src/engines/kotorbase/trigger.h"
+#include "src/engines/kotorbase/encounter.h"
 #include "src/engines/kotorbase/sound.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/item.h"
@@ -211,6 +212,12 @@ void Area::loadPersistence() {
 					creature->loadState(entry->getStruct("State"));
 					notifyObjectMoved(*creature);
 				}
+
+				// Still one of an encounter's creatures (it won't re-arm while they live).
+				const Common::UString encounterKey = entry->getString("Encounter");
+				for (Encounter *encounter : _encounters)
+					if (!encounterKey.empty() && encounter->getPersistenceKey() == encounterKey)
+						encounter->adoptCreature(*creature);
 			} catch (Common::Exception &e) {
 				e.add("Failed to restore spawned creature \"%s\"", templ.c_str());
 				printException(e, "WARNING: ");
@@ -243,6 +250,9 @@ void Area::savePersistence() {
 		entry->addResRef("TemplateResRef", creature->getTemplateResRef());
 		entry->addExoString("Tag", creature->getTag());
 		creature->saveState(*entry->addStruct("State"));
+
+		if (const Encounter *encounter = findEncounterOwning(*creature))
+			entry->addExoString("Encounter", encounter->getPersistenceKey());
 	}
 
 	_module->setAreaObjectSave(getSpawnedCreaturesKey(), finishStateGFF(writer));
@@ -268,6 +278,7 @@ void Area::clear() {
 	_creatures.clear();
 	_rooms.clear();
 	_triggers.clear();
+	_encounters.clear();
 	_situatedObjects.clear();
 	_staticWalkmeshes.clear();
 	_activeTrigger = 0;
@@ -649,6 +660,10 @@ void Area::loadGIT(const Aurora::GFF3Struct &git) {
 
 	if (git.hasField("Camera List"))
 		loadCameras(git.getList("Camera List"));
+
+	// Last, so the save-state keys of all other objects stay what they were.
+	if (git.hasField("Encounter List"))
+		loadEncounters(git.getList("Encounter List"));
 }
 
 void Area::loadCameras(const Aurora::GFF3List &list) {
@@ -821,6 +836,32 @@ void Area::loadTriggers(const Aurora::GFF3List &list) {
 			_triggers.push_back(static_cast<Trigger *>(_objects.back().get()));
 		}
 	}
+}
+
+void Area::loadEncounters(const Aurora::GFF3List &list) {
+	for (auto &encounter : list) {
+		if (encounter) {
+			loadObject(std::make_unique<Encounter>(*encounter));
+
+			Encounter *obj = static_cast<Encounter *>(_objects.back().get());
+			obj->setPersistent(true);
+			_encounters.push_back(obj);
+		}
+	}
+}
+
+void Area::updateEncounters() {
+	// Encounter scripts may destroy encounters (deferred), never mid-loop.
+	for (size_t i = 0; i < _encounters.size(); ++i)
+		_encounters[i]->update(*this, *_module);
+}
+
+Encounter *Area::findEncounterOwning(const Object &creature) const {
+	for (Encounter *encounter : _encounters)
+		if (encounter->ownsCreature(creature))
+			return encounter;
+
+	return nullptr;
 }
 
 void Area::loadSounds(const Aurora::GFF3List &list) {
@@ -1002,6 +1043,9 @@ void Area::toggleTriggers() {
 			++it) {
 		(*it)->setVisible(_triggersVisible);
 	}
+
+	for (Encounter *encounter : _encounters)
+		encounter->setVisible(_triggersVisible);
 }
 
 void Area::evaluateTriggers(float x, float y, bool allowTransitions) {
@@ -1526,6 +1570,10 @@ void Area::removeObject(Object *object) {
 	std::vector<Trigger *>::iterator tit = std::find(_triggers.begin(), _triggers.end(), object);
 	if (tit != _triggers.end())
 		_triggers.erase(tit);
+
+	auto eit = std::find(_encounters.begin(), _encounters.end(), object);
+	if (eit != _encounters.end())
+		_encounters.erase(eit);
 
 	std::list<Situated *>::iterator soit = std::find(_situatedObjects.begin(), _situatedObjects.end(), object);
 	if (soit != _situatedObjects.end())

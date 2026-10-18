@@ -108,6 +108,12 @@ new way:
   ability/skill modifier effects and some talent/effect constants are
   approximated. NPCs now use the stats and Force powers of their `.utc`
   blueprint, so fights may be harder than in earlier builds.
+- **Area encounters** (GIT `Encounter List`, `.ute`) now spawn their
+  creatures when the party walks in. Confirm in play: they spawn
+  `RecCreatures` creatures (at most `MaxCreatures`) chosen at random — the
+  `encdifficulty.2da` / CR level budget is not applied; without spawn points
+  creatures appear at the polygon's far corners; spawned creatures keep their
+  `.utc` faction; `OnExhausted` runs once all spawned creatures are gone.
 - Movement is straight-line; a creature that is stuck for 3 s abandons the
   move and carries on with its next action.
 - Area state from before this build: creatures in areas visited with an

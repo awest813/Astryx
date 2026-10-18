@@ -63,6 +63,7 @@ class Situated;
 class Creature;
 class Item;
 class Placeable;
+class Encounter;
 class Pathfinding;
 struct CreatureSearchCriteria;
 
@@ -150,6 +151,13 @@ public:
 
 	void toggleTriggers();
 	void evaluateTriggers(float x, float y, bool allowTransitions = true);
+
+	// Encounters
+
+	/** Let the encounters see where the party is, and spawn. Once per frame. */
+	void updateEncounters();
+	/** The encounter that spawned this creature, if any. */
+	Encounter *findEncounterOwning(const Object &creature) const;
 
 	// Object management
 
@@ -318,6 +326,8 @@ private:
 	bool _triggersVisible;
 	Trigger *_activeTrigger;
 
+	std::vector<Encounter *> _encounters;
+
 
 	std::vector<Camera> _cameras;
 	CameraStyle _cameraStyle;
@@ -352,6 +362,7 @@ private:
 	void loadCreatures (const Aurora::GFF3List &list);
 	void loadSounds    (const Aurora::GFF3List &list);
 	void loadTriggers  (const Aurora::GFF3List &list);
+	void loadEncounters(const Aurora::GFF3List &list);
 	void loadCameras   (const Aurora::GFF3List &list);
 
 	// Highlight / active helpers

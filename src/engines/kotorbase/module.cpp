@@ -1013,6 +1013,7 @@ void Module::processEventQueue() {
 	GfxMan.lockFrame();
 
 	_area->processCreaturesActions(_frameTime);
+	_area->updateEncounters();
 	_cameraController.processRotation(_frameTime);
 
 	if (!_cameraController.isFlyCamera())
