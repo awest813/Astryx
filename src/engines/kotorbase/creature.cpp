@@ -596,9 +596,9 @@ namespace KotORBase {
 			static Common::UString talkCursor("talk");
 			static Common::UString killCursor("kill");
 			static Common::UString useCursor("use");
-			if (!isEnemy())
-			return talkCursor;
-			return isDead() ? useCursor : killCursor;
+			if (isDead())
+			return useCursor;
+			return isEnemy() ? killCursor : talkCursor;
 		}
 		void Creature::highlight(
 		bool enabled) {

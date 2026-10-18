@@ -24,6 +24,12 @@
 
 #include "gtest/gtest.h"
 
+#include "src/common/memreadstream.h"
+#include "src/common/memwritestream.h"
+
+#include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
+
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/types.h"
 
@@ -245,3 +251,23 @@ GTEST_TEST(KotORBaseCreatureInfo, assignmentDoesNotAliasSource) {
 	EXPECT_EQ(src.getAbilityScore(kAbilityStrength), 10);
 	EXPECT_EQ(dst.getAbilityScore(kAbilityStrength), 20);
 }
+
+GTEST_TEST(KotORBaseCreatureInfo, blueprintCarriesItsInventory) {
+	// A UTC's ItemList is what the creature carries, and what it leaves as loot.
+	Aurora::GFF3Writer writer(MKTAG('U', 'T', 'C', ' '));
+	Aurora::GFF3WriterListPtr items = writer.getTopLevel()->addList("ItemList");
+	items->addStruct()->addResRef("InventoryRes", "g_w_blstrpstl001");
+	Aurora::GFF3WriterStructPtr medpacs = items->addStruct();
+	medpacs->addResRef("InventoryRes", "g_i_medeqpmnt01");
+	medpacs->addUint16("Quantity", 2);
+
+	Common::MemoryWriteStreamDynamic out(true);
+	writer.write(out);
+	Aurora::GFF3File utc(new Common::MemoryReadStream(out.getData(), out.size()));
+
+	CreatureInfo info(utc.getTopLevel());
+	EXPECT_TRUE(info.getInventory().hasItem("g_w_blstrpstl001"));
+	ASSERT_EQ(info.getInventory().getItems().size(), 2U);
+	EXPECT_EQ(info.getInventory().getItems().at("g_i_medeqpmnt01").count, 2);
+}
+

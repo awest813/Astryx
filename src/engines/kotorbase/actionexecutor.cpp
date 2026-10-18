@@ -253,6 +253,16 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 		return;
 	}
 
+	// The dead don't talk, but what they carried is left for the taking.
+	Creature *corpse = ObjectContainer::toCreature(target);
+	if (corpse && corpse->isDead()) {
+		if (!corpse->isPC() && !module->isObjectPartyMember(corpse) &&
+		    !corpse->getInventory().getItems().empty())
+			module->delayContainer(corpse);
+
+		return;
+	}
+
 	const uint32_t targetID = target->getID();
 	target->click(module->getPartyLeader());
 

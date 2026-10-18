@@ -98,6 +98,10 @@ CreatureInfo::CreatureInfo(const Aurora::GFF3Struct &gff) {
 
 	_alignment = gff.getSint("GoodEvil", 50);
 
+	// What the creature carries (scripts look for it, and it's left as loot).
+	if (gff.hasField("ItemList"))
+		_inventory.read(gff.getList("ItemList"));
+
 	// UTC Force points: "ForcePoints" is the maximum, "CurrentForce" the current value.
 	const int maxFP = static_cast<int>(gff.getSint("ForcePoints", 0));
 	const int curFP = static_cast<int>(gff.getSint("CurrentForce", maxFP));

@@ -477,7 +477,8 @@ protected:
 	// Delayed object interactions
 
 	void delayConversation(const Common::UString &name, Aurora::NWScript::Object *owner = nullptr);
-	void delayContainer(Placeable *placeable);
+	/** Open the inventory of a placeable, or of a dead creature (its loot). */
+	void delayContainer(Object *container);
 
 
 	void addItemToActiveObject(const Common::UString &item, int count);
@@ -576,7 +577,7 @@ private:
 	};
 
 	std::unique_ptr<DelayedConversation> _delayedConversation;
-	Placeable *_delayedContainer { nullptr };
+	Object *_delayedContainer { nullptr };
 
 	// Surface types
 
@@ -746,7 +747,7 @@ private:
 	/** Create a companion from its template and restore its known state. */
 	Creature *createPartyNPC(int npc, const Common::UString &templ);
 	void rememberNPCState(int npc, const Creature &creature);
-	void openContainer(Placeable *placeable);
+	void openContainer(Object *container);
 
 	void notifyCombatRoundBegan(int round);
 	void notifyCombatRoundEnded(int round);

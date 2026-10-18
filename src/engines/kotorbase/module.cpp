@@ -1493,16 +1493,23 @@ void Module::handleDelayedInteractions() {
 	}
 }
 
-void Module::openContainer(Placeable *placeable) {
+void Module::openContainer(Object *container) {
+	Placeable *placeable = ObjectContainer::toPlaceable(container);
+	Creature *corpse = ObjectContainer::toCreature(container);
+	if (!placeable && !corpse)
+		return;
+
 	_cameraController.stopMovement();
 	_partyLeaderController.clearUserInput();
 	_partyLeaderController.stopMovement();
 
 	_ingame->hideSelection();
-	_ingame->showContainer(placeable->getInventory());
+	_ingame->showContainer(placeable ? placeable->getInventory() : corpse->getInventory());
 
-	placeable->close(_pc);
-	placeable->runScript(kScriptDisturbed, placeable, _pc);
+	if (placeable) {
+		placeable->close(_pc);
+		placeable->runScript(kScriptDisturbed, placeable, _pc);
+	}
 
 	updateFrameTimestamp();
 }
@@ -2899,8 +2906,8 @@ void Module::delayConversation(const Common::UString &name, Aurora::NWScript::Ob
 	_delayedConversation = std::make_unique<DelayedConversation>(name, owner);
 }
 
-void Module::delayContainer(Placeable *placeable) {
-	_delayedContainer = placeable;
+void Module::delayContainer(Object *container) {
+	_delayedContainer = container;
 }
 
 void Module::addItemToActiveObject(const Common::UString &item, int count) {
