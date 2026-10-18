@@ -22,9 +22,16 @@
  *  Unit tests for KotOR level-up helpers.
  */
 
+#include <memory>
+#include <vector>
+
 #include "gtest/gtest.h"
 
 #include "src/common/ustring.h"
+#include "src/common/memreadstream.h"
+
+#include "src/aurora/2dafile.h"
+
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
@@ -58,6 +65,10 @@ using Engines::KotORBase::isJediClass;
 using Engines::KotORBase::progressionClass;
 using Engines::KotORBase::skillPointsPerLevel;
 using Engines::KotORBase::kClassJediConsular;
+using Engines::KotORBase::completeLevelUpPicks;
+using Engines::KotORBase::featsGainedAtClassLevel;
+using Engines::KotORBase::forcePowersGainedAtClassLevel;
+using Engines::KotORBase::gainFromTable;
 
 namespace {
 
@@ -224,3 +235,64 @@ TEST(LevelUpHelpers, ApplyJediClassGrantsDefenseAndForcePool) {
 	EXPECT_EQ(creature.getMaxForcePoints(), 11);
 	EXPECT_EQ(creature.getForcePoints(), 11);
 }
+
+static Aurora::TwoDAFile *makeTwoDA(const char *text) {
+	Common::MemoryReadStream stream(text);
+	return new Aurora::TwoDAFile(stream);
+}
+
+TEST(LevelUpHelpers, FeatGainTableReadsPerClassLevel) {
+	// featgain.2da: rows are class levels, named by the "label" column.
+	std::unique_ptr<Aurora::TwoDAFile> twoda(makeTwoDA(
+		"2DA V2.0\n"
+		"\n"
+		"   label sol_reg sol_bon jgd_reg jgd_bon\n"
+		"0  1     1       0       1       0\n"
+		"1  2     1       0       1       0\n"
+		"2  3     0       0       ****    0\n"
+		"3  4     2       0       1       0\n"));
+
+	EXPECT_EQ(gainFromTable(*twoda, "sol_reg", 1), 1);
+	EXPECT_EQ(gainFromTable(*twoda, "SOL_REG", 3), 0);
+	EXPECT_EQ(gainFromTable(*twoda, "sol_reg", 4), 2);
+	EXPECT_EQ(gainFromTable(*twoda, "jgd_reg", 3), 0);   // "****" grants nothing.
+	EXPECT_EQ(gainFromTable(*twoda, "jgd_reg", 9), 0);   // Past the table.
+	EXPECT_EQ(gainFromTable(*twoda, "sct_reg", 1), -1);  // No such class column.
+	EXPECT_EQ(gainFromTable(*twoda, "sol_reg", 0), -1);
+}
+
+TEST(LevelUpHelpers, PowerGainTableWithoutLabelUsesRowIndex) {
+	std::unique_ptr<Aurora::TwoDAFile> twoda(makeTwoDA(
+		"2DA V2.0\n"
+		"\n"
+		"   jcn jgd\n"
+		"0  2   1\n"
+		"1  1   0\n"
+		"2  1   1\n"));
+
+	EXPECT_EQ(gainFromTable(*twoda, "jcn", 1), 2);
+	EXPECT_EQ(gainFromTable(*twoda, "jgd", 2), 0);
+	EXPECT_EQ(gainFromTable(*twoda, "jgd", 3), 1);
+}
+
+TEST(LevelUpHelpers, GainFallbackWithoutGameData) {
+	// No classes.2da: one feat per level, Force powers only for Jedi.
+	EXPECT_EQ(featsGainedAtClassLevel(kClassSoldier, 2), 1);
+	EXPECT_EQ(forcePowersGainedAtClassLevel(kClassSoldier, 2), 0);
+	EXPECT_EQ(forcePowersGainedAtClassLevel(kClassJediConsular, 2), 1);
+	EXPECT_EQ(featsGainedAtClassLevel(kClassSoldier, 0), 0);
+}
+
+TEST(LevelUpHelpers, CompleteLevelUpPicksHonoursCount) {
+	const std::vector<uint32_t> available = { 10, 11, 12, 13 };
+
+	// Chosen picks first, unknown and duplicate ones dropped, then topped up.
+	EXPECT_EQ(completeLevelUpPicks({ 12, 99, 12 }, available, 2), (std::vector<uint32_t>{ 12, 10 }));
+	// Never more than the level grants.
+	EXPECT_EQ(completeLevelUpPicks({ 13, 12, 11 }, available, 2), (std::vector<uint32_t>{ 13, 12 }));
+	// Nothing granted, nothing picked.
+	EXPECT_TRUE(completeLevelUpPicks({ 10 }, available, 0).empty());
+	// Fewer choices than picks: take what there is.
+	EXPECT_EQ(completeLevelUpPicks({}, { 10 }, 3), (std::vector<uint32_t>{ 10 }));
+}
+

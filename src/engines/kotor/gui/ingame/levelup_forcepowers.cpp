@@ -22,6 +22,8 @@
  *  The Force power selection menu for character level-up.
  */
 
+#include <algorithm>
+
 #include "src/common/strutil.h"
 #include "src/common/util.h"
 
@@ -57,7 +59,7 @@ static const char *kLegacyPowerButtonTags[] = {
 LevelUpForcePowersMenu::LevelUpForcePowersMenu(KotORBase::CreatureInfo &info, Console *console) :
 		KotORBase::GUI(console),
 		_info(info),
-		_selectedPower(0xFFFFFFFF),
+		_picks(KotORBase::forcePowersForNextLevel(info)),
 		_accepted(false) {
 
 	try {
@@ -84,8 +86,21 @@ bool LevelUpForcePowersMenu::isPowerAvailable(uint32_t power) const {
 	return false;
 }
 
+bool LevelUpForcePowersMenu::isPowerSelected(uint32_t power) const {
+	return std::find(_selectedPowers.begin(), _selectedPowers.end(), power) != _selectedPowers.end();
+}
+
+void LevelUpForcePowersMenu::togglePower(uint32_t power) {
+	auto selected = std::find(_selectedPowers.begin(), _selectedPowers.end(), power);
+	if (selected != _selectedPowers.end())
+		_selectedPowers.erase(selected);
+	else if (isPowerAvailable(power) && static_cast<int>(_selectedPowers.size()) < _picks)
+		_selectedPowers.push_back(power);
+}
+
 void LevelUpForcePowersMenu::updateLabels() {
-	setWidgetText("REMAINING_SELECTIONS_LBL", (_selectedPower == 0xFFFFFFFF) ? "1" : "0");
+	const int remaining = MAX<int>(_picks - static_cast<int>(_selectedPowers.size()), 0);
+	setWidgetText("REMAINING_SELECTIONS_LBL", Common::composeString(remaining));
 
 	for (size_t i = 0; i < ARRAYSIZE(kPowerButtonTags); ++i) {
 		const bool hasPower = i < _availablePowers.size();
@@ -109,7 +124,7 @@ void LevelUpForcePowersMenu::updateLabels() {
 			continue;
 		}
 
-		if (_selectedPower == powerId)
+		if (isPowerSelected(powerId))
 			button->setStaticHighlight();
 		else
 			button->setPermanentHighlight(false);
@@ -124,7 +139,7 @@ void LevelUpForcePowersMenu::callbackActive(Widget &widget) {
 	for (size_t i = 0; i < ARRAYSIZE(kPowerButtonTags) && i < _availablePowers.size(); ++i) {
 		if (tag == kPowerButtonTags[i] ||
 		    (i < ARRAYSIZE(kLegacyPowerButtonTags) && tag == kLegacyPowerButtonTags[i])) {
-			_selectedPower = _availablePowers[i];
+			togglePower(_availablePowers[i]);
 			updateLabels();
 			return;
 		}
@@ -136,20 +151,16 @@ void LevelUpForcePowersMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "BTN_RECOMMENDED" || tag == "BTN_SELECT") {
-		if (!_availablePowers.empty())
-			_selectedPower = _availablePowers.front();
+		_selectedPowers = KotORBase::completeLevelUpPicks(_selectedPowers, _availablePowers, _picks);
 		updateLabels();
 		return;
 	}
 
 	if (tag == "BTN_ACCEPT") {
 		// The retail panel may not carry a button per power; never let that
-		// block the level-up: fall back to the recommended (first) power.
-		if ((_selectedPower == 0xFFFFFFFF || !isPowerAvailable(_selectedPower)) && !_availablePowers.empty())
-			_selectedPower = _availablePowers.front();
-
-		if (_selectedPower != 0xFFFFFFFF && isPowerAvailable(_selectedPower))
-			_info.addForcePower(_selectedPower);
+		// block the level-up: unspent picks go to the recommended powers.
+		for (uint32_t power : KotORBase::completeLevelUpPicks(_selectedPowers, _availablePowers, _picks))
+			_info.addForcePower(power);
 
 		_accepted = true;
 		_returnCode = 1;

@@ -50,11 +50,14 @@ public:
 private:
 	void updateLabels();
 	bool isFeatAvailable(uint32_t feat) const;
+	bool isFeatSelected(uint32_t feat) const;
+	void toggleFeat(uint32_t feat);
 
 	KotORBase::CreatureInfo &_info;
 
 	std::vector<uint32_t> _availableFeats;
-	uint32_t _selectedFeat;
+	std::vector<uint32_t> _selectedFeats;
+	int _picks; ///< How many feats this level grants.
 
 	bool _accepted;
 };

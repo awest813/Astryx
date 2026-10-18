@@ -115,7 +115,8 @@ void LevelUpGUI::callbackRun() {
 		[[fallthrough]];
 	case 3:
 		_step++;
-		if (!KotORBase::getSelectableFeats(_pc.getCreatureInfo()).empty()) {
+		if (KotORBase::featsForNextLevel(_pc.getCreatureInfo()) > 0 &&
+		    !KotORBase::getSelectableFeats(_pc.getCreatureInfo()).empty()) {
 			if (!showFeats()) {
 				cancel();
 				return;
@@ -124,7 +125,7 @@ void LevelUpGUI::callbackRun() {
 		[[fallthrough]];
 	case 4:
 		_step++;
-		if (_pc.getCreatureInfo().isJedi() &&
+		if (KotORBase::forcePowersForNextLevel(_pc.getCreatureInfo()) > 0 &&
 		    !KotORBase::getSelectableForcePowers(_pc.getCreatureInfo()).empty()) {
 			if (!showForcePowers()) {
 				cancel();

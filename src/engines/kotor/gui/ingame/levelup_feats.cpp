@@ -22,6 +22,8 @@
  *  The feat selection menu for character level-up.
  */
 
+#include <algorithm>
+
 #include "src/common/strutil.h"
 #include "src/common/util.h"
 
@@ -56,7 +58,7 @@ static const FeatButtonMap kFeatButtons[] = {
 LevelUpFeatsMenu::LevelUpFeatsMenu(KotORBase::CreatureInfo &info, Console *console) :
 		KotORBase::GUI(console),
 		_info(info),
-		_selectedFeat(0xFFFFFFFF),
+		_picks(KotORBase::featsForNextLevel(info)),
 		_accepted(false) {
 
 	try {
@@ -76,7 +78,8 @@ LevelUpFeatsMenu::~LevelUpFeatsMenu() {
 }
 
 void LevelUpFeatsMenu::updateLabels() {
-	setWidgetText("REMAINING_SELECTIONS_LBL", (_selectedFeat == 0xFFFFFFFF) ? "1" : "0");
+	const int remaining = MAX<int>(_picks - static_cast<int>(_selectedFeats.size()), 0);
+	setWidgetText("REMAINING_SELECTIONS_LBL", Common::composeString(remaining));
 
 	for (size_t i = 0; i < ARRAYSIZE(kFeatButtons); ++i) {
 		Odyssey::WidgetButton *button = getButton(kFeatButtons[i].tag);
@@ -90,7 +93,7 @@ void LevelUpFeatsMenu::updateLabels() {
 			continue;
 		}
 
-		if (_selectedFeat == kFeatButtons[i].feat)
+		if (isFeatSelected(kFeatButtons[i].feat))
 			button->setStaticHighlight();
 		else
 			button->setPermanentHighlight(false);
@@ -107,6 +110,18 @@ bool LevelUpFeatsMenu::isFeatAvailable(uint32_t feat) const {
 	return false;
 }
 
+bool LevelUpFeatsMenu::isFeatSelected(uint32_t feat) const {
+	return std::find(_selectedFeats.begin(), _selectedFeats.end(), feat) != _selectedFeats.end();
+}
+
+void LevelUpFeatsMenu::toggleFeat(uint32_t feat) {
+	auto selected = std::find(_selectedFeats.begin(), _selectedFeats.end(), feat);
+	if (selected != _selectedFeats.end())
+		_selectedFeats.erase(selected);
+	else if (isFeatAvailable(feat) && static_cast<int>(_selectedFeats.size()) < _picks)
+		_selectedFeats.push_back(feat);
+}
+
 void LevelUpFeatsMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
@@ -114,8 +129,7 @@ void LevelUpFeatsMenu::callbackActive(Widget &widget) {
 		if (tag != kFeatButtons[i].tag)
 			continue;
 
-		if (isFeatAvailable(kFeatButtons[i].feat))
-			_selectedFeat = kFeatButtons[i].feat;
+		toggleFeat(kFeatButtons[i].feat);
 		updateLabels();
 		return;
 	}
@@ -126,20 +140,16 @@ void LevelUpFeatsMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "BTN_RECOMMENDED" || tag == "BTN_SELECT") {
-		if (!_availableFeats.empty())
-			_selectedFeat = _availableFeats.front();
+		_selectedFeats = KotORBase::completeLevelUpPicks(_selectedFeats, _availableFeats, _picks);
 		updateLabels();
 		return;
 	}
 
 	if (tag == "BTN_ACCEPT") {
 		// The retail panel may not carry a button per feat; never let that
-		// block the level-up: fall back to the recommended (first) feat.
-		if ((_selectedFeat == 0xFFFFFFFF || !isFeatAvailable(_selectedFeat)) && !_availableFeats.empty())
-			_selectedFeat = _availableFeats.front();
-
-		if (_selectedFeat != 0xFFFFFFFF && isFeatAvailable(_selectedFeat))
-			_info.addFeat(_selectedFeat);
+		// block the level-up: unspent picks go to the recommended feats.
+		for (uint32_t feat : KotORBase::completeLevelUpPicks(_selectedFeats, _availableFeats, _picks))
+			_info.addFeat(feat);
 
 		_accepted = true;
 		_returnCode = 1;

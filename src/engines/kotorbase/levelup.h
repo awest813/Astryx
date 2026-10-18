@@ -33,6 +33,10 @@
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/types.h"
 
+namespace Aurora {
+	class TwoDAFile;
+}
+
 namespace Engines {
 
 namespace KotORBase {
@@ -76,6 +80,29 @@ std::vector<uint32_t> getSelectableFeats(Class charClass, const std::vector<uint
 
 /** Force powers a Jedi may pick on the next level (excludes known powers). */
 std::vector<uint32_t> getSelectableForcePowers(const CreatureInfo &info);
+
+/** A class level's entry in a per-level gain table (featgain.2da, classpowergain.2da):
+ *  the row whose "label"/"level" column holds @p classLevel, else row classLevel - 1.
+ *  Returns -1 when the column doesn't exist. */
+int gainFromTable(const Aurora::TwoDAFile &twoda, const Common::UString &column, int classLevel);
+
+/** Feats @p charClass gains on reaching @p classLevel (featgain.2da "<code>_reg"). */
+int featsGainedAtClassLevel(Class charClass, int classLevel);
+
+/** Force powers @p charClass gains on reaching @p classLevel (classpowergain.2da). */
+int forcePowersGainedAtClassLevel(Class charClass, int classLevel);
+
+/** Feats the next level-up of @p info grants. */
+int featsForNextLevel(const CreatureInfo &info);
+
+/** Force powers the next level-up of @p info grants. */
+int forcePowersForNextLevel(const CreatureInfo &info);
+
+/** The final picks for a level-up step: @p chosen (only entries in @p available,
+ *  without duplicates, at most @p count), topped up with the first remaining
+ *  entries of @p available until @p count are picked or none remain. */
+std::vector<uint32_t> completeLevelUpPicks(const std::vector<uint32_t> &chosen,
+                                           const std::vector<uint32_t> &available, int count);
 
 /** True when @p skill is a class skill for @p charClass. */
 bool isClassSkill(Class charClass, Skill skill);

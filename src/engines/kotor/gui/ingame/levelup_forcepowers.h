@@ -50,11 +50,14 @@ public:
 private:
 	void updateLabels();
 	bool isPowerAvailable(uint32_t power) const;
+	bool isPowerSelected(uint32_t power) const;
+	void togglePower(uint32_t power);
 
 	KotORBase::CreatureInfo &_info;
 
 	std::vector<uint32_t> _availablePowers;
-	uint32_t _selectedPower;
+	std::vector<uint32_t> _selectedPowers;
+	int _picks; ///< How many powers this level grants.
 
 	bool _accepted;
 };

@@ -29,6 +29,8 @@
 #include "src/common/strutil.h"
 
 #include "src/aurora/talkman.h"
+#include "src/aurora/2dafile.h"
+#include "src/aurora/2dareg.h"
 
 #include "src/engines/kotorbase/actionexecutor.h"
 #include "src/engines/kotorbase/creature.h"
@@ -376,6 +378,118 @@ std::vector<uint32_t> getSelectableForcePowers(const CreatureInfo &info) {
 	return powers;
 }
 
+/** The row of a per-level gain table for a class level: the row whose level
+ *  column names it, else row (classLevel - 1). */
+static const Aurora::TwoDARow &gainTableRow(const Aurora::TwoDAFile &twoda, int classLevel) {
+	const Common::UString level = Common::composeString(classLevel);
+	for (const char *column : { "label", "level" }) {
+		if (twoda.headerToColumn(column) == Aurora::kFieldIDInvalid)
+			continue;
+
+		const Aurora::TwoDARow &row = twoda.getRow(column, level);
+		if (!row.empty(column))
+			return row;
+	}
+
+	return twoda.getRow(static_cast<size_t>(classLevel - 1));
+}
+
+int gainFromTable(const Aurora::TwoDAFile &twoda, const Common::UString &column, int classLevel) {
+	if (column.empty() || classLevel < 1 || twoda.headerToColumn(column) == Aurora::kFieldIDInvalid)
+		return -1;
+
+	const Aurora::TwoDARow &row = gainTableRow(twoda, classLevel);
+	if (row.empty(column))
+		return 0;
+
+	return MAX<int>(row.getInt(column), 0);
+}
+
+/** gainFromTable() on a game 2DA; -1 when it is unavailable. */
+static int readGain(const char *table, const Common::UString &column, int classLevel) {
+	if (column.empty() || classLevel < 1)
+		return -1;
+
+	try {
+		return gainFromTable(TwoDAReg.get2DA(table), column, classLevel);
+	} catch (...) {
+		return -1;
+	}
+}
+
+/** A column of the class's classes.2da row, or "" when unavailable. */
+static Common::UString classTableString(Class charClass, const char *column) {
+	try {
+		const Aurora::TwoDARow &row = TwoDAReg.get2DA("classes").getRow(static_cast<size_t>(charClass));
+		return row.getString(column);
+	} catch (...) {
+		return "";
+	}
+}
+
+int featsGainedAtClassLevel(Class charClass, int classLevel) {
+	if (classLevel < 1)
+		return 0;
+
+	const Common::UString code = classTableString(charClass, "featgain");
+	const int gain = code.empty() ? -1 : readGain("featgain", code + "_reg", classLevel);
+	if (gain >= 0)
+		return gain;
+
+	// No game data: one feat per level.
+	return 1;
+}
+
+int forcePowersGainedAtClassLevel(Class charClass, int classLevel) {
+	if (classLevel < 1)
+		return 0;
+
+	// The column is named by the class's spell gain table, or its feat gain code.
+	for (const char *column : { "spellgaintable", "featgain" }) {
+		const Common::UString code = classTableString(charClass, column);
+		const int gain = readGain("classpowergain", code, classLevel);
+		if (gain >= 0)
+			return gain;
+	}
+
+	// No game data: one power per Jedi level.
+	return isJediClass(charClass) ? 1 : 0;
+}
+
+static Class nextLevelClass(const CreatureInfo &info) {
+	return (info.getNumClasses() > 0) ? info.getLatestClass() : kClassSoldier;
+}
+
+int featsForNextLevel(const CreatureInfo &info) {
+	const Class charClass = nextLevelClass(info);
+	return featsGainedAtClassLevel(charClass, info.getClassLevel(charClass) + 1);
+}
+
+int forcePowersForNextLevel(const CreatureInfo &info) {
+	const Class charClass = nextLevelClass(info);
+	return forcePowersGainedAtClassLevel(charClass, info.getClassLevel(charClass) + 1);
+}
+
+std::vector<uint32_t> completeLevelUpPicks(const std::vector<uint32_t> &chosen,
+                                           const std::vector<uint32_t> &available, int count) {
+
+	std::vector<uint32_t> picks;
+	auto canPick = [&](uint32_t id) {
+		return std::find(available.begin(), available.end(), id) != available.end() &&
+		       std::find(picks.begin(), picks.end(), id) == picks.end();
+	};
+
+	for (uint32_t id : chosen)
+		if (static_cast<int>(picks.size()) < count && canPick(id))
+			picks.push_back(id);
+
+	for (uint32_t id : available)
+		if (static_cast<int>(picks.size()) < count && canPick(id))
+			picks.push_back(id);
+
+	return picks;
+}
+
 void applyDefaultChargenBuild(CharacterGenerationInfo &info) {
 	if (info.getFeats().empty()) {
 		const auto feats = getSelectableFeats(info.getClass(), info.getFeats());
@@ -441,14 +555,12 @@ void autoLevelUp(Creature &creature) {
 		points -= cost;
 	}
 
-	// Grant a sensible default combat feat when the auto path is used.
-	if (!info.hasFeat(kFeatPowerAttack))
-		info.addFeat(kFeatPowerAttack);
-	else if (!info.hasFeat(kFeatFlurry))
-		info.addFeat(kFeatFlurry);
+	// Take the recommended (first) feats and powers the level grants.
+	for (uint32_t feat : completeLevelUpPicks({}, getSelectableFeats(info), featsForNextLevel(info)))
+		info.addFeat(feat);
 
-	if (info.isJedi() && info.getForcePowers().empty())
-		info.addForcePower(1); // Force Heal
+	for (uint32_t power : completeLevelUpPicks({}, getSelectableForcePowers(info), forcePowersForNextLevel(info)))
+		info.addForcePower(power);
 
 	applyLevelUp(creature);
 }

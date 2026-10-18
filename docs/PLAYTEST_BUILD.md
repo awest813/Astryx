@@ -90,9 +90,12 @@ new way:
   DLG `AnimList` numbers from 10000 are treated as looping animations.
   Shots that can't be resolved fall back to speaker/listener framing.
   DLG `FadeType` fades and stunt (`StuntList`) cutscenes are not played.
-- **Level-up:** the feat/Force-power steps fall back to the first eligible
-  choice when the retail panel has no matching button, and the per-level
-  feat/power gain tables are not enforced.
+- **Level-up:** feats and Force powers per level come from `featgain.2da`
+  (`<classes.2da featgain>_reg`, by class level) and `classpowergain.2da`
+  (column named by `classes.2da` `spellgaintable`, else `featgain`); check
+  the counts against retail. `_bon` columns are ignored. Picks left unspent
+  (or with no matching button on the retail panel) go to the first eligible
+  choices. Only the built-in feat list and six core powers are offered.
 - **Combat:** experience is shared by the PC and every companion met so far
   (kill XP is 25 × the victim's hit dice, an approximation). Faction
   hostility comes from the built-in faction table, not `repute.2da`; timed
