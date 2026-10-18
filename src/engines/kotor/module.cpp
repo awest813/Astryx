@@ -204,23 +204,26 @@ void Module::showIngameOptionsMenu() {
 	menu.showMenu("BTN_OPT");
 
 	updateFrameTimestamp();
-	const uint32_t ret = menu.run();
-	if (ret == 1)
-		_exit = true;
-	else if (ret == 2)
-		GfxMan.unlockFrame();
+	// Closing the menu just returns to the game: "Exit Game" leaves the module
+	// itself, and loading a game already balanced its frame lock in Menu.
+	menu.run();
+	menu.hide();
 
 	updateFrameTimestamp();
 }
 
 void Module::showGalaxyMap() {
 	GalaxyMapMenu gui(*this, _console);
+	gui.show();
 	gui.run();
+	gui.hide();
 }
 
 void Module::showWorkbench() {
 	WorkbenchMenu gui(*this, _console);
+	gui.show();
 	gui.run();
+	gui.hide();
 }
 
 void Module::signalEncounter(const Common::UString &id) {
@@ -263,7 +266,9 @@ void Module::signalEncounter(const Common::UString &id) {
 		engine.startMatch(playerDeck, opponentDeck);
 
 		PazaakGUI gui(engine, _console);
+		gui.show();
 		gui.run();
+		gui.hide();
 
 		const bool playerWon = engine.getWinner() == 1;
 		setGlobalNumber("__pazaak_result", playerWon ? 1 : 0);

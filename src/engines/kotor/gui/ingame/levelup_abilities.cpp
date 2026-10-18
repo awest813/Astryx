@@ -64,7 +64,8 @@ LevelUpAbilitiesMenu::~LevelUpAbilitiesMenu() {
 }
 
 void LevelUpAbilitiesMenu::updateLabels() {
-	static const struct {
+	// Not static: the entries point at this instance's members.
+	const struct {
 		uint32_t *value;
 		const char *pointTag;
 		const char *modTag;
@@ -97,13 +98,14 @@ void LevelUpAbilitiesMenu::callbackActive(Widget &widget) {
 		uint32_t    original;
 	};
 
-	static const AbilityRef kAbilityRefs[] = {
-		{ "STR_PLUS_BTN", "STR_MINUS_BTN", &_str,  0 },
-		{ "DEX_PLUS_BTN", "DEX_MINUS_BTN", &_dex,  0 },
-		{ "CON_PLUS_BTN", "CON_MINUS_BTN", &_con,  0 },
-		{ "INT_PLUS_BTN", "INT_MINUS_BTN", &_intl, 0 },
-		{ "WIS_PLUS_BTN", "WIS_MINUS_BTN", &_wis,  0 },
-		{ "CHA_PLUS_BTN", "CHA_MINUS_BTN", &_cha,  0 },
+	// Not static: the entries point at this instance's members.
+	const AbilityRef kAbilityRefs[] = {
+		{ "STR_PLUS_BTN", "STR_MINUS_BTN", &_str,  _originalStr  },
+		{ "DEX_PLUS_BTN", "DEX_MINUS_BTN", &_dex,  _originalDex  },
+		{ "CON_PLUS_BTN", "CON_MINUS_BTN", &_con,  _originalCon  },
+		{ "INT_PLUS_BTN", "INT_MINUS_BTN", &_intl, _originalIntl },
+		{ "WIS_PLUS_BTN", "WIS_MINUS_BTN", &_wis,  _originalWis  },
+		{ "CHA_PLUS_BTN", "CHA_MINUS_BTN", &_cha,  _originalCha  },
 	};
 
 	static const char * const kLegacyPlus[] = {
@@ -114,14 +116,6 @@ void LevelUpAbilitiesMenu::callbackActive(Widget &widget) {
 		"BTN_STR_MINUS", "BTN_DEX_MINUS", "BTN_CON_MINUS",
 		"BTN_INT_MINUS", "BTN_WIS_MINUS", "BTN_CHA_MINUS"
 	};
-
-	// Update original values in the static array (shady but works for this local loop)
-	const_cast<AbilityRef&>(kAbilityRefs[0]).original = _originalStr;
-	const_cast<AbilityRef&>(kAbilityRefs[1]).original = _originalDex;
-	const_cast<AbilityRef&>(kAbilityRefs[2]).original = _originalCon;
-	const_cast<AbilityRef&>(kAbilityRefs[3]).original = _originalIntl;
-	const_cast<AbilityRef&>(kAbilityRefs[4]).original = _originalWis;
-	const_cast<AbilityRef&>(kAbilityRefs[5]).original = _originalCha;
 
 	for (size_t i = 0; i < ARRAYSIZE(kAbilityRefs); ++i) {
 		if (tag == kAbilityRefs[i].plusTag || tag == kLegacyPlus[i]) {

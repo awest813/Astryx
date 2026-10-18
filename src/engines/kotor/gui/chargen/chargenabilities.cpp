@@ -129,7 +129,8 @@ void CharacterGenerationAbilitiesMenu::callbackActive(Widget &widget) {
 		uint32_t   *value;
 	};
 
-	static const AbilityRef kAbilityRefs[] = {
+	// Not static: the entries point at this instance's members.
+	const AbilityRef kAbilityRefs[] = {
 		{ "STR_PLUS_BTN", "STR_MINUS_BTN", "BTN_STR_PLUS", "BTN_STR_MINUS", &_str  },
 		{ "DEX_PLUS_BTN", "DEX_MINUS_BTN", "BTN_DEX_PLUS", "BTN_DEX_MINUS", &_dex  },
 		{ "CON_PLUS_BTN", "CON_MINUS_BTN", "BTN_CON_PLUS", "BTN_CON_MINUS", &_con  },
@@ -193,6 +194,12 @@ void CharacterGenerationAbilitiesMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "BTN_ACCEPT") {
+		// Skill points depend on Intelligence: if it changed after skills
+		// were assigned, they could be over budget, so start them over.
+		if (_info.getAbilities().intelligence != _intl)
+			for (int i = 0; i < KotORBase::kSkillMAX; ++i)
+				_info.setSkillRank(static_cast<KotORBase::Skill>(i), 0);
+
 		_info.setAbilityScore(KotORBase::kAbilityStrength,     _str);
 		_info.setAbilityScore(KotORBase::kAbilityDexterity,    _dex);
 		_info.setAbilityScore(KotORBase::kAbilityConstitution, _con);

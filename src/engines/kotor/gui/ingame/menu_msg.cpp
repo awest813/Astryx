@@ -54,6 +54,7 @@ void MenuMessages::fillMessages() {
 	if (!list)
 		return;
 
+	list->createItemWidgets(10); // No-op once created.
 	list->removeAllItems();
 
 	if (_module) {

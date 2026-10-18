@@ -163,8 +163,15 @@ void MenuEquipment::callbackRun() {
 void MenuEquipment::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 	if (_slotFixated) {
+		// Switching party member mid-selection would equip onto someone else
+		// from a list built for the previous member.
+		if (tag.beginsWith("BTN_CHANGE"))
+			return;
+
 		if (tag == "BTN_EQUIP") {
 			int selectedIndex = getListBox("LB_ITEMS")->getSelectedIndex();
+			if (selectedIndex < 0 || selectedIndex > static_cast<int>(_visibleItems.size()))
+				return; // Nothing (valid) selected; row 0 is "none" and unequips.
 			Common::UString itemTag = selectedIndex > 0 ? _visibleItems[selectedIndex - 1] : "";
 
 			KotORBase::Creature *pc = _module->getPC();

@@ -93,11 +93,9 @@ SaveLoadMenu::SaveLoadMenu(KotORBase::Module &module,
 		if (saveLoad)
 			saveLoad->setText(TalkMan.getString(1589)); // Load
 
-	} else
-		lbGames->addItem(TalkMan.getString(1590));
+	}
 
-	addSavedGameItems(lbGames);
-	lbGames->refreshItemWidgets();
+	fillSavedGames();
 }
 
 void SaveLoadMenu::callbackActive(Widget &widget) {
@@ -133,6 +131,27 @@ void SaveLoadMenu::callbackKeyInput(const Events::Key &key, const Events::EventT
 				break;
 		}
 	}
+}
+
+void SaveLoadMenu::show() {
+	// The menu can outlive saves made since it was built (the HUD keeps one).
+	fillSavedGames();
+	KotORBase::GUI::show();
+}
+
+void SaveLoadMenu::fillSavedGames() {
+	Odyssey::WidgetListBox *lbGames = getListBox("LB_GAMES");
+	if (!lbGames)
+		return;
+
+	lbGames->removeAllItems();
+	_saveDirs.clear();
+
+	if (_type != kSaveLoadMenuTypeLoad)
+		lbGames->addItem(TalkMan.getString(1590)); // New save
+
+	addSavedGameItems(lbGames);
+	lbGames->refreshItemWidgets();
 }
 
 void SaveLoadMenu::addSavedGameItems(Odyssey::WidgetListBox *listBox) {
@@ -192,6 +211,7 @@ void SaveLoadMenu::tryLoadGame(const Common::UString &dir) {
 		_returnCode = 2;
 	} catch (Common::Exception &e) {
 		warning("Failed to load saved game: %s %s", dir.c_str(), e.what());
+		show(); // Stay usable: the menu was hidden for the load.
 	}
 }
 

@@ -63,6 +63,7 @@ void WorkbenchMenu::fillItemList() {
 	if (!lb)
 		return;
 
+	lb->createItemWidgets(8); // No-op once created.
 	lb->removeAllItems();
 	_selectedItemTag.clear();
 	_itemTags.clear();
@@ -117,6 +118,7 @@ void WorkbenchMenu::fillUpgradeList() {
 	if (!lb)
 		return;
 
+	lb->createItemWidgets(6); // No-op once created.
 	lb->removeAllItems();
 
 	if (_selectedItemTag.empty())

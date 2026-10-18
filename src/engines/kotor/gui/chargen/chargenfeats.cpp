@@ -22,6 +22,8 @@
  *  The feat selection menu for custom character creation.
  */
 
+#include <algorithm>
+
 #include "src/common/strutil.h"
 #include "src/common/util.h"
 
@@ -68,7 +70,15 @@ CharacterGenerationFeatsMenu::CharacterGenerationFeatsMenu(
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
-	_availableFeats = KotORBase::getSelectableFeats(info.getClass(), info.getFeats());
+	// Re-entering this step replaces the earlier pick: offer it again.
+	std::vector<uint32_t> known = info.getFeats();
+	if (info.getChosenFeat() != 0xFFFFFFFF) {
+		auto chosen = std::find(known.begin(), known.end(), info.getChosenFeat());
+		if (chosen != known.end())
+			known.erase(chosen);
+	}
+
+	_availableFeats = KotORBase::getSelectableFeats(info.getClass(), known);
 	if (_availableFeats.empty())
 		_availableFeats.push_back(KotORBase::kFeatToughness);
 
@@ -112,8 +122,13 @@ void CharacterGenerationFeatsMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "BTN_ACCEPT") {
+		// The retail panel may not carry a button per feat; never block on
+		// that: fall back to the recommended (first) feat.
+		if ((_selectedFeat == 0xFFFFFFFF || !isFeatAvailable(_selectedFeat)) && !_availableFeats.empty())
+			_selectedFeat = _availableFeats.front();
+
 		if (_selectedFeat != 0xFFFFFFFF && isFeatAvailable(_selectedFeat)) {
-			_info.addFeat(_selectedFeat);
+			_info.setChosenFeat(_selectedFeat);
 			accept();
 			_returnCode = 1;
 		}

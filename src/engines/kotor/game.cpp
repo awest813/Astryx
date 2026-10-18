@@ -193,7 +193,9 @@ void Game::showLevelUpGUI(KotORBase::Creature *target) {
 	}
 
 	LevelUpGUI gui(*_module, *creature, _console);
+	gui.show();
 	gui.run();
+	gui.hide();
 }
 
 void Game::openStoreGUI(const Common::UString &tag) {
@@ -212,7 +214,9 @@ void Game::openStoreGUI(const Common::UString &tag) {
 	}
 
 	StoreGUI gui(*_module, *store, _console);
+	gui.show();
 	gui.run();
+	gui.hide();
 }
 
 } // End of namespace KotOR

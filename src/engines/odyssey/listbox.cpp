@@ -129,6 +129,7 @@ const Common::UString &WidgetListBox::getItem(int index) const {
 void WidgetListBox::removeAllItems() {
 	_startIndex = 0;
 	_items.clear();
+	_selectedIndex = -1; // A stale index would point into the new contents.
 }
 
 bool WidgetListBox::isEmpty() const {
@@ -322,10 +323,25 @@ void WidgetListBox::setHeight(float height) {
 }
 
 void WidgetListBox::subActive(Engines::Widget &widget) {
-	if (_itemSelectionEnabled)
+	if (_itemSelectionEnabled) {
 		selectItemByWidgetTag(widget.getTag());
-	else
-		raiseCallbackActive(widget);
+		return;
+	}
+
+	// Without visible selection, still record which row was clicked, so the
+	// owner's click handler can ask getSelectedIndex().
+	const Common::UString &tag = widget.getTag();
+	if (tag.beginsWith(_tag + "_ITEM_")) {
+		Common::UString tmp(tag);
+		tmp.replaceAll(_tag + "_ITEM_", "");
+
+		int index = -1;
+		Common::parseString(tmp, index);
+		if (index >= 0 && static_cast<size_t>(_startIndex + index) < _items.size())
+			_selectedIndex = _startIndex + index;
+	}
+
+	raiseCallbackActive(widget);
 }
 
 void WidgetListBox::setSoundSelectItem(const Common::UString &resRef) {

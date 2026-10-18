@@ -72,6 +72,9 @@ public:
 	void setSkillRank(Skill skill, uint32_t rank);
 	/** Add a feat. */
 	void addFeat(uint32_t feat);
+	/** The feat picked during character creation; picking again replaces it. */
+	void setChosenFeat(uint32_t feat);
+	uint32_t getChosenFeat() const { return _chosenFeat; }
 
 protected:
 	Class _class { kClassSoldier };
@@ -81,6 +84,7 @@ protected:
 	CreatureInfo::Abilities _abilities;
 	CreatureInfo::Skills _skills;
 	std::vector<uint32_t> _feats;
+	uint32_t _chosenFeat { 0xFFFFFFFF };
 
 	Common::UString _name;
 

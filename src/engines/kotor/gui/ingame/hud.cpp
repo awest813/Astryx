@@ -400,7 +400,7 @@ void HUD::updateLevelUpIndicators() {
 
 	for (size_t i = 0; i < ARRAYSIZE(kPortraitSlots); ++i) {
 		KotORBase::Creature *member = _module.getPartyMemberByIndex(kPartyIndices[i]);
-		const bool show = member && member->isPC() && KotORBase::canLevelUp(*member);
+		const bool show = member && KotORBase::canLevelUp(*member);
 		setLevelUpIndicator(kPortraitSlots[i], show);
 	}
 }
@@ -562,7 +562,7 @@ void HUD::callbackActive(Widget &widget) {
 		const int slot = widget.getTag() == "LBL_LEVELUP1" ? 0 :
 		                 widget.getTag() == "LBL_LEVELUP2" ? 1 : 2;
 		KotORBase::Creature *member = _module.getPartyMemberByIndex(kPartyIndices[slot]);
-		if (member && member->isPC() && KotORBase::canLevelUp(*member))
+		if (member && KotORBase::canLevelUp(*member))
 			_module.getGame().showLevelUpGUI(member);
 		return;
 	}
