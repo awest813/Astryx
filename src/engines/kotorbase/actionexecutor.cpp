@@ -119,6 +119,11 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 		case kActionDoCommand:
 			executeDoCommand(action, ctx);
 			break;
+		case kActionPauseConversation:
+		case kActionResumeConversation:
+			ctx.area->_module->setConversationPaused(action.type == kActionPauseConversation);
+			ctx.creature->popAction();
+			break;
 		default:
 			ctx.creature->popAction();
 			debugC(Common::kDebugEngineLogic, 1, "ActionExecutor: unhandled action type %u", (uint)action.type);

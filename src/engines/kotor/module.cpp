@@ -31,7 +31,13 @@
 #include "src/engines/kotor/creature.h"
 #include "src/engines/kotorbase/creature.h"
 
+#include "src/common/debug.h"
+
+#include "src/aurora/2dareg.h"
+#include "src/aurora/2dafile.h"
+#include "src/aurora/talkman.h"
 #include "src/engines/kotor/gui/saveload.h"
+#include "src/engines/kotor/gui/dialogs/confirm.h"
 #include "src/engines/kotor/gui/dialog.h"
 
 #include "src/engines/kotor/gui/ingame/ingame.h"
@@ -131,6 +137,36 @@ void Module::showDeathGUI() {
 		_exit = true;
 
 	updateFrameTimestamp();
+}
+
+void Module::showTutorialWindow(int index) {
+	if (!_ingame || !_running)
+		return;
+
+	// tutorial.2da: one row per tutorial, the text as a talk table strref.
+	Common::UString text;
+	try {
+		const Aurora::TwoDARow &row = TwoDAReg.get2DA("tutorial").getRow(index);
+		for (const char *column : { "message_pc", "message", "messagepc", "strref" }) {
+			const int strRef = row.getInt(column);
+			if (strRef > 0) {
+				text = TalkMan.getString(strRef);
+				break;
+			}
+		}
+	} catch (...) {
+	}
+
+	if (text.empty()) {
+		debugC(Common::kDebugEngineLogic, 1, "Tutorial window %d has no text", index);
+		return;
+	}
+
+	ConfirmDialog dialog(_console);
+	dialog.setText(text);
+	dialog.show();
+	dialog.run();
+	dialog.hide();
 }
 
 void Module::showGUIPanel(int panel) {

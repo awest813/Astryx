@@ -58,6 +58,7 @@ public:
 	void showMenu() override;
 	void showGUIPanel(int panel) override;
 	void showDeathGUI() override;
+	void showTutorialWindow(int index) override;
 
 	void enter() override;
 

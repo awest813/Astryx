@@ -150,6 +150,12 @@ public:
 	virtual void showMenu();
 	virtual void showGUIPanel(int panel);
 	virtual void showDeathGUI();
+	/** Show a tutorial.2da pop-up (blocks until dismissed). */
+	virtual void showTutorialWindow(int UNUSED(index)) { }
+
+	/** ShowTutorialWindow: queued, shown once per row, outside conversations/cutscenes. */
+	void requestTutorialWindow(int index);
+	void setTutorialWindowsEnabled(bool enabled) { _tutorialWindowsEnabled = enabled; }
 
 	/** Show the galaxy map menu. */
 	virtual void showGalaxyMap();
@@ -363,6 +369,9 @@ public:
 	bool isCutsceneMode() const { return _cutsceneMode; }
 	/** Is a conversation running (encounter helpers must not take over the camera)? */
 	bool isInConversation() const { return _inDialog; }
+	/** ActionPauseConversation / ActionResumeConversation: hold the conversation while actors act. */
+	void setConversationPaused(bool paused);
+	bool isConversationPaused() const { return _conversationPausedSince != 0; }
 	/** Request an autosave (DoSinglePlayerAutoSave); performed at the next safe frame. */
 	void requestAutoSave();
 
@@ -598,6 +607,9 @@ protected:
 	bool _autoSavePending { false };    ///< DoSinglePlayerAutoSave requested, not yet written.
 	bool _teleportingParty { false };   ///< Inside moveParty(); suppresses transition triggers.
 	bool _loadingSavedGame { false };   ///< A save was loaded in-game; replaceModule() keeps its state.
+	uint32_t _conversationPausedSince { 0 }; ///< Timestamp of ActionPauseConversation, 0 if not paused.
+	bool _tutorialWindowsEnabled { true };
+	std::vector<int> _pendingTutorialWindows;
 	bool _hasSavedPCPosition { false }; ///< Place the party at _savedPCPosition on enter().
 	glm::vec3 _savedPCPosition { 0.0f, 0.0f, 0.0f };
 
@@ -727,6 +739,7 @@ private:
 
 	void handleDelayedInteractions();
 	void processAutoSave();
+	void processTutorialWindows();
 	void processQueuedUserDefinedEvents();
 	void resetSessionState();
 	/** Create a companion from its template and restore its known state. */

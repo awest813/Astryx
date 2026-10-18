@@ -324,6 +324,8 @@ enum ActionType {
 	kActionCutsceneAttack = 42,
 	kActionGiveItem      = 43,
 	kActionTakeItem      = 44,
+	kActionPauseConversation  = 45,
+	kActionResumeConversation = 46,
 	kActionQueueEmpty    = 65534,
 	kActionInvalid       = 65535
 };

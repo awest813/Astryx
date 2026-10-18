@@ -935,17 +935,21 @@ void Functions::actionJumpToLocation(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionPauseConversation(Aurora::NWScript::FunctionContext &ctx) {
-
-	(void)ctx;
-
+	// Queued: the conversation holds once the actor reaches this point of its
+	// action queue, until a queued ActionResumeConversation.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (creature)
+		creature->addAction(Action(kActionPauseConversation));
+	else
+		_game->getModule().setConversationPaused(true);
 }
 
-
-
 void Functions::actionResumeConversation(Aurora::NWScript::FunctionContext &ctx) {
-
-	(void)ctx;
-
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (creature)
+		creature->addAction(Action(kActionResumeConversation));
+	else
+		_game->getModule().setConversationPaused(false);
 }
 
 

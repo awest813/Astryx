@@ -546,6 +546,8 @@ void Module::unload(bool completeUnload) {
 		_dialog->hide();
 		_inDialog = false;
 	}
+	_conversationPausedSince = 0;
+	_pendingTutorialWindows.clear();
 	if (_area) // The party (used to re-target the camera) dies with the area.
 		_cameraController.resetToOrbit();
 	_delayedConversation.reset();
@@ -1037,6 +1039,7 @@ void Module::processEventQueue() {
 	if (_area)
 		_area->processPendingDestruction();
 
+	processTutorialWindows();
 	processAutoSave();
 }
 
@@ -1359,9 +1362,19 @@ void Module::handleEvents() {
 	_eventQueue.clear();
 
 	if (_inDialog) {
+		// A pause whose ActionResumeConversation never comes (the actor died,
+		// got stuck, ...) must not hold the conversation forever.
+		if (_conversationPausedSince != 0 &&
+		    EventMan.getTimestamp() - _conversationPausedSince > 15000) {
+			warning("Conversation paused for too long; resuming");
+			_conversationPausedSince = 0;
+		}
+
 		_dialog->processEventQueue();
-		_dialog->update(_frameTime);
+		if (_conversationPausedSince == 0)
+			_dialog->update(_frameTime);
 		if (!_dialog->isConversationActive()) {
+			_conversationPausedSince = 0;
 			_dialog->hide();
 			_ingame->show();
 			_inDialog = false;
@@ -2626,6 +2639,38 @@ void Module::setCameraPitch(float pitch) {
 
 void Module::setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel) {
 	_cameraController.setCinematicCamera(cameraID, cameraAngle, cameraModel);
+}
+
+void Module::requestTutorialWindow(int index) {
+	if (!_tutorialWindowsEnabled || index < 0)
+		return;
+
+	// Each tutorial is shown only once per game (globals are saved).
+	const Common::UString shown = Common::String::format("__tutorial_%d", index);
+	if (getGlobalBoolean(shown))
+		return;
+
+	setGlobalBoolean(shown, true);
+	_pendingTutorialWindows.push_back(index);
+}
+
+void Module::processTutorialWindows() {
+	if (_pendingTutorialWindows.empty() || _inDialog || _cutsceneMode || isMoviePlaying())
+		return;
+
+	const int index = _pendingTutorialWindows.front();
+	_pendingTutorialWindows.erase(_pendingTutorialWindows.begin());
+
+	_cameraController.stopMovement();
+	_partyLeaderController.clearUserInput();
+	_partyLeaderController.stopMovement();
+
+	showTutorialWindow(index);
+	updateFrameTimestamp();
+}
+
+void Module::setConversationPaused(bool paused) {
+	_conversationPausedSince = paused ? MAX<uint32_t>(EventMan.getTimestamp(), 1) : 0;
 }
 
 void Module::setDialogShot(int cameraAngle, Object *speaker, Object *listener) {

@@ -418,6 +418,10 @@ void DialogGUI::pickReply(int index) {
 	if ((int)_replyIds.size() <= index)
 		return;
 
+	// Actors are still acting out the line (ActionPauseConversation).
+	if (_module.isConversationPaused())
+		return;
+
 	if (!_curSpeaker.empty()) {
 		playDefaultAnimations(_curSpeaker);
 		_curSpeaker.clear();

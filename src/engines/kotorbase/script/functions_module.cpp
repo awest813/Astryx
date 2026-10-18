@@ -598,11 +598,13 @@ void Functions::doSinglePlayerAutoSave(Aurora::NWScript::FunctionContext &UNUSED
 void Functions::setTutorialWindowsEnabled(Aurora::NWScript::FunctionContext &ctx) {
 	int enabled = ctx.getParams()[0].getInt();
 	debugC(Common::kDebugEngineLogic, 1, "SetTutorialWindowsEnabled: %d", enabled);
+	_game->getModule().setTutorialWindowsEnabled(enabled != 0);
 }
 
 void Functions::showTutorialWindow(Aurora::NWScript::FunctionContext &ctx) {
 	int windowId = ctx.getParams()[0].getInt();
 	debugC(Common::kDebugEngineLogic, 1, "ShowTutorialWindow: %d", windowId);
+	_game->getModule().requestTutorialWindow(windowId);
 }
 
 void Functions::startCreditSequence(Aurora::NWScript::FunctionContext &ctx) {
