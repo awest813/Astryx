@@ -658,6 +658,7 @@ protected:
 	float _playTime { 0.0f };
 	std::map<Common::UString, std::vector<bool>> _exploredMaps;
 	bool _inBattleMusic { false };  ///< Is the battle music track currently playing?
+	int _calmHeartbeats { 0 };      ///< Consecutive heartbeats without anyone in combat.
 	Object *_lastAcquiredItem { nullptr }; ///< Last item acquired via script events.
 	int _spellScriptId { -1 };
 	Object *_spellScriptCaster { nullptr };
@@ -762,6 +763,13 @@ private:
 
 	/** Award XP to the party for creatures that died this frame. */
 	void updateXPOnKill();
+
+	/** Heartbeat: out-of-combat Force regeneration, and fallen party members
+	 *  getting back up once nobody has been fighting for a while. */
+	void updateOutOfCombatRecovery();
+
+	/** Is this creature hostile to the player's party? */
+	bool isHostileToParty(const Creature *creature) const;
 
 	friend class Area;
 	friend class ActionExecutor;

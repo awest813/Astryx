@@ -31,6 +31,8 @@
 #include "src/common/debug.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/2dafile.h"
+#include "src/aurora/2dareg.h"
 
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/object.h"
@@ -702,12 +704,24 @@ void Functions::givePlotXP(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &plotName = ctx.getParams()[0].getString();
 	int percentage = ctx.getParams()[1].getInt();
 
-	warning("Functions::givePlotXP: plot '%s', %d%%", plotName.c_str(), percentage);
+	// plot.2da: the row whose label is the plot name holds its base XP.
+	int xp = percentage; // Fallback: previous behaviour, when the row is missing.
+	try {
+		const Aurora::TwoDARow &row = TwoDAReg.get2DA("plot").getRow("label", plotName);
+		if (!row.empty("xp"))
+			xp = (row.getInt("xp") * percentage) / 100;
+		else
+			warning("Functions::givePlotXP: no plot.2da row for \"%s\"", plotName.c_str());
+	} catch (...) {
+		warning("Functions::givePlotXP: plot.2da unavailable (plot \"%s\")", plotName.c_str());
+	}
+
+	debugC(Common::kDebugEngineLogic, 1, "GivePlotXP(\"%s\", %d%%): %d XP", plotName.c_str(), percentage, xp);
 
 	// Award to all active party members
 	Creature *pc = _game->getModule().getPC();
 	if (pc)
-		pc->addPlotXP(percentage);
+		pc->addPlotXP(xp);
 }
 
 void Functions::awardStealthXP(Aurora::NWScript::FunctionContext &ctx) {
@@ -1127,16 +1141,27 @@ void Functions::getLastWeaponUsed(Aurora::NWScript::FunctionContext &ctx) {
 		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(creature->getLastWeaponUsed());
 }
 
+namespace {
+
+/** Surrender, and make everyone in the area stop attacking the surrendering creature. */
+void surrenderInArea(Creature &creature, Area *area, bool retainBuffs) {
+	creature.surrenderToEnemies(retainBuffs);
+	if (area)
+		Creature::stopAttacksOn(area->getCreatures(), &creature, true);
+}
+
+} // End of anonymous namespace
+
 void Functions::surrenderToEnemies(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
 	if (caller)
-		caller->surrenderToEnemies(false);
+		surrenderInArea(*caller, _game->getModule().getCurrentArea(), false);
 }
 
 void Functions::actionSurrenderToEnemies(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
 	if (caller)
-		caller->surrenderToEnemies(false);
+		surrenderInArea(*caller, _game->getModule().getCurrentArea(), false);
 }
 
 void Functions::surrenderByFaction(Aurora::NWScript::FunctionContext &ctx) {
@@ -1148,14 +1173,14 @@ void Functions::surrenderByFaction(Aurora::NWScript::FunctionContext &ctx) {
 	for (size_t i = 0; i < creatures.size(); ++i) {
 		Creature *c = creatures[i];
 		if (c && !c->isDead() && static_cast<int>(c->getFaction()) == faction)
-			c->surrenderToEnemies(false);
+			surrenderInArea(*c, area, false);
 	}
 }
 
 void Functions::surrenderRetainBuffs(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
 	if (caller)
-		caller->surrenderToEnemies(true);
+		surrenderInArea(*caller, _game->getModule().getCurrentArea(), true);
 }
 
 void Functions::effectImmunity(Aurora::NWScript::FunctionContext &ctx) {

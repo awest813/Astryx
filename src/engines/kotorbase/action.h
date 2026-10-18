@@ -55,6 +55,7 @@ struct Action {
 	int   damage { 0 };            ///< CutsceneAttack: damage dealt when the blow lands.
 	float startTime { -1.0f }; ///< Time the action started (for timed actions).
 	bool  initialized { false };
+	bool  cheat { false };     ///< CastSpell: bCheat, cast without spending Force points.
 
 	/** kActionDoCommand: the script closure to run when the action is reached. */
 	Common::UString script;

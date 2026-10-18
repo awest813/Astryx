@@ -496,3 +496,42 @@ GTEST_TEST(KotORSaveSerialization, planetAvailabilityRoundTrip) {
 	}
 	EXPECT_TRUE(select[6]);
 }
+
+GTEST_TEST(KotORSaveSerialization, creatureFactionPersists) {
+	StateTestCreature creature;
+	creature.setFaction(Engines::KotORBase::kFactionSurrender1);
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+
+	StateTestCreature loaded;
+	loaded.setFaction(Engines::KotORBase::kFactionHostile1);
+	loaded.loadState(gff.getTopLevel());
+	EXPECT_EQ(loaded.getFaction(), Engines::KotORBase::kFactionSurrender1);
+}
+
+GTEST_TEST(KotORSaveSerialization, blueprintForcePointsAndKnownPowers) {
+	// UTC layout: ForcePoints / CurrentForce and ClassList[].KnownList0[].Spell
+	Aurora::GFF3Writer writer(MKTAG('U', 'T', 'C', ' '));
+	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();
+	root->addSint16("ForcePoints", 42);
+	root->addSint16("CurrentForce", 30);
+
+	Aurora::GFF3WriterListPtr classes = root->addList("ClassList");
+	Aurora::GFF3WriterStructPtr jedi = classes->addStruct();
+	jedi->addSint32("Class", static_cast<int32_t>(Engines::KotORBase::kClassJediConsular));
+	jedi->addSint16("ClassLevel", 5);
+	Aurora::GFF3WriterListPtr known = jedi->addList("KnownList0");
+	known->addStruct()->addUint16("Spell", 5);
+	known->addStruct()->addUint16("Spell", 14);
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	CreatureInfo info(gff.getTopLevel());
+
+	EXPECT_EQ(info.getMaxForcePoints(), 42u);
+	EXPECT_EQ(info.getForcePoints(), 30u);
+	EXPECT_TRUE(info.hasForcePower(5));
+	EXPECT_TRUE(info.hasForcePower(14));
+	EXPECT_EQ(info.getForcePowers().size(), 2u);
+}

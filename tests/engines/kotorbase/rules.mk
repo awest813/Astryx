@@ -43,6 +43,11 @@ tests_engines_kotorbase_test_combat_SOURCES           = tests/engines/kotorbase/
 tests_engines_kotorbase_test_combat_LDADD             = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_combat_CXXFLAGS          = $(test_CXXFLAGS)
 
+check_PROGRAMS                                       += tests/engines/kotorbase/test_combat_ai
+tests_engines_kotorbase_test_combat_ai_SOURCES        = tests/engines/kotorbase/combat_ai.cpp
+tests_engines_kotorbase_test_combat_ai_LDADD          = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_combat_ai_CXXFLAGS       = $(test_CXXFLAGS)
+
 check_PROGRAMS                                       += tests/engines/kotorbase/test_inventory
 tests_engines_kotorbase_test_inventory_SOURCES        = tests/engines/kotorbase/inventory.cpp
 tests_engines_kotorbase_test_inventory_LDADD          = $(kotorbase_LIBS)

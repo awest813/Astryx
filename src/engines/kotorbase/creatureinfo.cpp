@@ -93,8 +93,32 @@ CreatureInfo::CreatureInfo(const Aurora::GFF3Struct &gff) {
 	loadSkills(gff);
 	loadAbilities(gff);
 	loadFeats(gff);
+	loadForcePowers(gff);
+	loadKnownPowers(gff);
 
 	_alignment = gff.getSint("GoodEvil", 50);
+
+	// UTC Force points: "ForcePoints" is the maximum, "CurrentForce" the current value.
+	const int maxFP = static_cast<int>(gff.getSint("ForcePoints", 0));
+	const int curFP = static_cast<int>(gff.getSint("CurrentForce", maxFP));
+	_forcePointsMax     = static_cast<uint32_t>(MAX(0, maxFP));
+	_forcePointsCurrent = static_cast<uint32_t>(MAX(0, MIN(curFP, maxFP)));
+}
+
+void CreatureInfo::loadKnownPowers(const Aurora::GFF3Struct &gff) {
+	// Blueprints list the known Force powers per class: ClassList[].KnownList0[].Spell
+	if (!gff.hasField("ClassList"))
+		return;
+
+	for (const auto &charClass : gff.getList("ClassList")) {
+		if (!charClass || !charClass->hasField("KnownList0"))
+			continue;
+
+		for (const auto &spell : charClass->getList("KnownList0")) {
+			if (spell && spell->hasField("Spell"))
+				addForcePower(static_cast<uint32_t>(spell->getUint("Spell")));
+		}
+	}
 }
 
 CreatureInfo::CreatureInfo(const CharacterGenerationInfo &info) {

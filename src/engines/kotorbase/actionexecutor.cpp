@@ -98,6 +98,9 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 		case kActionCastSpell:
 			executeCastSpell(action, ctx);
 			break;
+		case kActionRest:
+			executeRest(action, ctx);
+			break;
 		case kActionCutsceneAttack:
 			executeCutsceneAttack(action, ctx);
 			break;
@@ -291,7 +294,8 @@ void ActionExecutor::executeAttackObject(Action &action, const ExecutionContext 
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
-	if (!moveTo(glm::vec2(x, y), ctx.creature->getMaxAttackRange(), ctx))
+	const float range = ctx.creature->getMaxAttackRange();
+	if (!moveTo(glm::vec2(x, y), range, ctx))
 		return;
 
 	// popAction() destroys the action, so keep what we still need.
@@ -300,10 +304,23 @@ void ActionExecutor::executeAttackObject(Action &action, const ExecutionContext 
 	const int damage = action.damage;
 	ctx.creature->popAction();
 
-	if (choreographyFlags > 0)
+	if (choreographyFlags > 0) {
 		ctx.creature->performCutsceneAttack(target, choreographyFlags, damage);
-	else
-		ctx.creature->startCombat(target, ctx.area->_module->getNextCombatRound());
+		return;
+	}
+
+	// moveTo() also "arrives" when it gives up on a blocked path. Fighting an
+	// unreachable target would never land a blow, so drop it instead; the AI
+	// picks a (possibly different) target again.
+	if (!isLocationReached(glm::vec2(x, y), MAX(range, kMinMoveRange) + 0.01f, ctx)) {
+		debugC(Common::kDebugEngineLogic, 1, "Creature \"%s\" cannot reach \"%s\"; dropping the attack",
+		       ctx.creature->getTag().c_str(), target->getTag().c_str());
+		if (ctx.creature->getAttackTarget() == target)
+			ctx.creature->cancelCombat();
+		return;
+	}
+
+	ctx.creature->startCombat(target, ctx.area->_module->getNextCombatRound());
 }
 
 void ActionExecutor::executePickUpItem(Action &action, const ExecutionContext &ctx) {
@@ -468,7 +485,7 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 		loadSpells();
 
 	const SpellInfo *spell = getSpellInfo(action.actionID);
-	if (spell)
+	if (spell && !action.cheat) // bCheat: cast for free
 		cost = spell->cost;
 
 	// Alignment adjustments (KotOR rule: Opposite side costs more)
@@ -503,6 +520,14 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 
 	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->setLastForcePowerUsed(action.actionID);
+
+	// A hostile power makes the caster the target's last hostile actor, so a
+	// kill by the power is credited to the caster (XP, GetLastKiller).
+	if (harmful) {
+		Creature *targetCreature = ObjectContainer::toCreature(action.object);
+		if (targetCreature && targetCreature != caster)
+			targetCreature->setLastHostileActor(caster);
+	}
 	ctx.area->_module->setSpellScriptContext(action.actionID, caster, action.object, saveDC, harmful);
 	ctx.area->_module->setGlobalNumber("__force_unsuccessful", 0);
 
@@ -513,6 +538,8 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 		Object *owner = caster;
 		Object *triggerer = action.object ? action.object : caster;
 		ScriptContainer::runScript(spell->impactScript, owner, triggerer);
+		// The impact script has resolved; don't leak its context into later scripts.
+		ctx.area->_module->clearSpellScriptContext();
 		return;
 	}
 
@@ -636,6 +663,33 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 			break;
 	}
 
+	ctx.area->_module->clearSpellScriptContext();
+}
+
+void ActionExecutor::executeRest(Action &UNUSED(action), const ExecutionContext &ctx) {
+	Creature *creature = ctx.creature;
+	creature->popAction();
+
+	Module *module = ctx.area->_module;
+
+	// As in the original, resting restores the whole party, and only when
+	// nobody in the party is fighting.
+	std::vector<Creature *> resting;
+	if (module->isObjectPartyMember(creature)) {
+		for (int i = 0; i < module->getPartyMemberCount(); ++i) {
+			Creature *member = module->getPartyMemberByIndex(i);
+			if (member)
+				resting.push_back(member);
+		}
+	} else
+		resting.push_back(creature);
+
+	for (Creature *c : resting)
+		if (c->isInCombat())
+			return;
+
+	for (Creature *c : resting)
+		c->restoreFully();
 }
 
 void ActionExecutor::executePlayAnimation(Action &action, const ExecutionContext &ctx) {

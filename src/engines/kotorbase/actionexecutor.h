@@ -77,6 +77,7 @@ private:
 	static void executeDropItem(Action &action, const ExecutionContext &ctx);
 	static void executeWait(Action &action, const ExecutionContext &ctx);
 	static void executeCastSpell(Action &action, const ExecutionContext &ctx);
+	static void executeRest(Action &action, const ExecutionContext &ctx);
 	static void executeCutsceneAttack(Action &action, const ExecutionContext &ctx);
 	static void executePlayAnimation(Action &action, const ExecutionContext &ctx);
 

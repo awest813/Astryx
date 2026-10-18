@@ -1219,7 +1219,11 @@ void Area::processCreaturesActions(float dt) {
 		if (c->isDead())
 			continue;
 
+		// Effects keep ticking (so stuns expire), but an incapacitated
+		// creature neither thinks nor acts.
 		c->update(dt);
+		if (c->isIncapacitated())
+			continue;
 
 		const Action *action = c->getCurrentAction();
 		if (!action) {
@@ -1332,6 +1336,9 @@ void Area::handleCreaturesDeath() {
 		c->handleDeath();
 
 		if (c->consumeDeathEvent()) {
+			// Nobody keeps fighting a corpse; attackers pick new targets.
+			Creature::stopAttacksOn(_creatures, c, false);
+
 			Object *killer = c->getLastKiller();
 			if (c->hasScript(kScriptDeath))
 				c->runScript(kScriptDeath, c, killer ? killer : c);
@@ -1352,6 +1359,21 @@ void Area::handleCreaturesDeath() {
 			else if (c->hasScript(kScriptHeartbeat))
 				c->runScript(kScriptHeartbeat, c, c);
 		}
+
+		// The scripts above may have spawned creatures (reallocating
+		// _creatures) or killed this one; re-check before each event.
+		Object *attacker = nullptr;
+		if (c->consumeAttackedEvent(attacker) && !c->isDead() && c->hasScript(kScriptAttacked))
+			c->runScript(kScriptAttacked, c, attacker ? attacker : c);
+
+		Creature::PerceptionEvent perception;
+		while (!c->isDead() && c->consumePerceptionEvent(perception)) {
+			if (c->hasScript(kScriptNotice))
+				c->runScript(kScriptNotice, c, perception.object ? perception.object : c);
+		}
+
+		if (c->consumeEndRoundEvent() && !c->isDead() && c->hasScript(kScriptEndRound))
+			c->runScript(kScriptEndRound, c, c);
 	}
 
 	// As in the original: when the leader falls, a living party member takes

@@ -26,6 +26,7 @@
 #define ENGINES_KOTORBASE_CREATURE_H
 
 #include <set>
+#include <vector>
 #include <map>
 #include <array>
 #include <memory>
@@ -271,6 +272,8 @@ public:
 	void updateEffects(float dt);
 	bool hasEffect(EffectType type) const;
 	bool hasSpellEffect(int spellId) const;
+	/** Stunned, paralysed, asleep or knocked down: no actions, no attacks. */
+	bool isIncapacitated() const;
 	const std::vector<ActiveEffect> &getActiveEffects() const { return _effects; }
 	void clearActiveEffects();
 	bool removeActiveEffectAt(size_t index);
@@ -292,6 +295,7 @@ public:
 	int getAttackRound() const;
 	Object *getAttemptedAttackTarget() const;
 	Object *getLastHostileActor() const;
+	void setLastHostileActor(Object *actor) { _lastHostileActor = actor; }
 	int getLastCombatFeatUsed() const;
 	int getLastForcePowerUsed() const;
 	void setLastForcePowerUsed(int spellID);
@@ -322,6 +326,17 @@ public:
 
 	/** Cancel combat, clear actions, and optionally clear buffs; set surrender faction. */
 	void surrenderToEnemies(bool retainBuffs = false);
+
+	/** Make every creature in @p creatures that attacks @p target stop doing so.
+	 *  With @p clearQueuedActions, their action queues are cleared as well
+	 *  (surrender); otherwise only actions targeting @p target are dropped. */
+	static void stopAttacksOn(const std::vector<Creature *> &creatures, const Object *target,
+	                          bool clearQueuedActions);
+
+	/** Regenerate a fraction of the maximum Force points (out of combat). */
+	void regenerateForcePoints();
+	/** Full rest: restore hit points and Force points to their maximum. */
+	void restoreFully();
 
 	int getAILevel() const { return _aiLevel; }
 	void setAILevel(int level) { _aiLevel = level; }
@@ -436,6 +451,19 @@ public:
 	void queueHeartbeatEvent() { _heartbeatEventPending = true; }
 	bool consumeSpawnEvent();
 	bool consumeHeartbeatEvent();
+	/** Queue OnEndCombatRound (creature was in combat when the round ended). */
+	void queueEndRoundEvent() { _endRoundEventPending = true; }
+	bool consumeEndRoundEvent();
+	/** Return and clear whether OnAttacked is due; @p attacker receives the attacker. */
+	bool consumeAttackedEvent(Object *&attacker);
+
+	/** A change in what this creature perceives, queued for OnPerception. */
+	struct PerceptionEvent {
+		Object *object { nullptr };
+		bool seen { false };   ///< true: object became visible; false: it vanished.
+	};
+	/** Pop the oldest pending perception event and make it the "last perceived" state. */
+	bool consumePerceptionEvent(PerceptionEvent &event);
 
 	/** Has kill XP for this creature already been awarded? */
 	bool isXPAwarded() const;
@@ -544,6 +572,10 @@ private:
 	bool _spawnEventPending { false };     ///< OnSpawn queued; run outside creature iteration.
 	bool _rosterSpawn { false };           ///< Placed by SpawnAvailableNPC.
 	bool _heartbeatEventPending { false }; ///< OnHeartbeat queued; run outside creature iteration.
+	bool _endRoundEventPending { false };  ///< OnEndCombatRound queued.
+	bool _attackedEventPending { false };  ///< OnAttacked queued.
+	Object *_lastAttacker { nullptr };     ///< Attacker for the pending OnAttacked.
+	std::vector<PerceptionEvent> _perceptionEvents; ///< OnPerception queue.
 
 	float _walkRate;
 	float _runRate;

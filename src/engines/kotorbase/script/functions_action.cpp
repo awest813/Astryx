@@ -1196,6 +1196,8 @@ void Functions::actionCastSpellAtObject(Aurora::NWScript::FunctionContext &ctx) 
 	Action action(kActionCastSpell);
 	action.object = target;
 	action.actionID = spellID;
+	// ActionCastSpellAtObject(nSpell, oTarget, nMetaMagic, bCheat, ...)
+	action.cheat = (ctx.getParams().size() > 3) && (ctx.getParams()[3].getInt() != 0);
 	caller->addAction(action);
 }
 
@@ -1214,6 +1216,8 @@ void Functions::actionCastSpellAtLocation(Aurora::NWScript::FunctionContext &ctx
 	Action action(kActionCastSpell);
 	action.location = glm::vec3(x, y, z);
 	action.actionID = spellID;
+	// ActionCastSpellAtLocation(nSpell, lTargetLocation, nMetaMagic, bCheat, ...)
+	action.cheat = (ctx.getParams().size() > 3) && (ctx.getParams()[3].getInt() != 0);
 	caller->addAction(action);
 }
 

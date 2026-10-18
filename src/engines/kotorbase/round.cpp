@@ -96,6 +96,8 @@ void RoundController::raiseHeartbeat() {
 		area->runScript(kScriptHeartbeat, area, pc);
 		area->queueCreatureHeartbeats();
 	}
+
+	_module->updateOutOfCombatRecovery();
 }
 
 } // End of namespace KotORBase

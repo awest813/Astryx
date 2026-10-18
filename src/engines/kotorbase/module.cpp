@@ -1500,6 +1500,12 @@ void Module::notifyCombatRoundBegan(int round) {
 		if (c->isDead())
 			continue;
 
+		// Stunned / paralysed / asleep / knocked down: no attack this round.
+		if (c->isIncapacitated()) {
+			c->setAttemptedAttackTarget(nullptr);
+			continue;
+		}
+
 		if (!c->isPC())
 			c->updateCombatAI();
 
@@ -1507,6 +1513,13 @@ void Module::notifyCombatRoundBegan(int round) {
 			continue;
 
 		Object *target = c->getAttackTarget();
+		if (target && target->isDead()) {
+			// Never swing at a corpse; the AI picks a new target.
+			c->cancelCombat();
+			c->setAttemptedAttackTarget(nullptr);
+			continue;
+		}
+
 		if (!target || c->getDistanceTo(target) > c->getMaxAttackRange())
 			continue;
 
@@ -1530,8 +1543,11 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 		if (c->isDead() || !c->isInCombat())
 			continue;
 
+		// OnEndCombatRound runs later, outside this iteration.
+		c->queueEndRoundEvent();
+
 		Object *target = c->getAttemptedAttackTarget();
-		if (!target) {
+		if (!target || target->isDead() || c->isIncapacitated()) {
 			c->setAttemptedAttackTarget(nullptr);
 			continue;
 		}
@@ -1649,7 +1665,7 @@ void Module::updateCombatAI() {
 		partyMembers.push_back(_partyController.getPartyMemberByIndex(i).second);
 
 	for (auto &c : creatures) {
-		if (c->isDead() || !c->isCommandable())
+		if (c->isDead() || !c->isCommandable() || c->isIncapacitated())
 			continue;
 
 		bool isPartyMember = false;
@@ -1697,6 +1713,9 @@ void Module::updateCombatAI() {
 				float dist = c->getDistanceTo(pm);
 				if (dist > kNPCNoticeRange)
 					continue;
+				// Can't engage what it can't see (e.g. behind a closed door).
+				if (!_area->hasLineOfSight(c, pm))
+					continue;
 				// Check faction hostility: reputation < 50 means hostile.
 				int rep = getReputation(static_cast<int>(c->getFaction()),
 				                        static_cast<int>(pm->getFaction()));
@@ -1733,6 +1752,24 @@ void Module::updateCombatAI() {
 		if (!idle)
 			continue;
 
+		// Already fighting a living target: only chase it when out of range.
+		// Re-queueing the attack every frame restarted combat and wiped the
+		// attack scheduled for the round, so companions never landed a blow.
+		if (c->isInCombat()) {
+			Object *t = c->getAttackTarget();
+			if (t && !t->isDead()) {
+				if (c->getDistanceTo(t) > c->getMaxAttackRange()) {
+					c->clearActions();
+					CombatAction attack(kActionAttackObject);
+					attack.object = t;
+					attack.range  = c->getMaxAttackRange();
+					c->addAction(attack);
+				}
+				continue;
+			}
+			c->cancelCombat();
+		}
+
 		// Prefer the leader's current attack target.
 		Object *leaderTarget = leader->isInCombat() ? leader->getAttackTarget() : nullptr;
 
@@ -1753,7 +1790,7 @@ void Module::updateCombatAI() {
 				if (rep >= 50)
 					continue;
 				float dist = c->getDistanceTo(nc);
-				if (dist < bestDist) {
+				if (dist < bestDist && _area->hasLineOfSight(c, nc)) {
 					bestDist    = dist;
 					leaderTarget = nc;
 				}
@@ -1812,11 +1849,18 @@ void Module::updateXPOnKill() {
 		if (c->isPC() || isObjectPartyMember(c))
 			continue;
 
+		c->markXPAwarded();
+
+		// Only kills by the party, of creatures hostile to the party, give XP.
+		Creature *killer = ObjectContainer::toCreature(c->getLastKiller());
+		if (!killer || !(killer->isPC() || killer == _pc || isObjectPartyMember(killer)))
+			continue;
+		if (!isHostileToParty(c))
+			continue;
+
 		int hitDice = c->getHitDice();
 		if (hitDice <= 0)
 			continue;
-
-		c->markXPAwarded();
 
 		// XP = 25 × creature hit dice — consistent with KOTOR's own scaling.
 		int xp = 25 * hitDice;
@@ -1825,6 +1869,55 @@ void Module::updateXPOnKill() {
 		debugC(Common::kDebugEngineLogic, 1,
 		       "Module::updateXPOnKill(): awarded %d XP for killing \"%s\" (HD %d)",
 		       xp, c->getTag().c_str(), hitDice);
+	}
+}
+
+bool Module::isHostileToParty(const Creature *creature) const {
+	if (!creature)
+		return false;
+
+	const Faction partyFaction = _pc ? _pc->getFaction() : kFactionFriendly1;
+	return getReputation(static_cast<int>(creature->getFaction()),
+	                     static_cast<int>(partyFaction == kFactionInvalid ? kFactionFriendly1 : partyFaction)) < 50;
+}
+
+void Module::updateOutOfCombatRecovery() {
+	if (!_area)
+		return;
+
+	bool anyInCombat = false;
+	for (Creature *c : _area->getCreatures()) {
+		if (!c->isDead() && c->isInCombat()) {
+			anyInCombat = true;
+			break;
+		}
+	}
+
+	if (anyInCombat) {
+		_calmHeartbeats = 0;
+		return;
+	}
+
+	++_calmHeartbeats;
+
+	// Force points slowly come back outside of combat.
+	for (Creature *c : _area->getCreatures())
+		c->regenerateForcePoints();
+
+	// Fallen party members get back up once nobody has fought for two
+	// heartbeats, even when no battle music transition happened (scripted
+	// damage, a death outside of a fight, ...).
+	if (_calmHeartbeats < 2)
+		return;
+
+	Creature *leader = getPartyLeader();
+	if (!leader || leader->isDead())
+		return;
+
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+		Creature *member = _partyController.getPartyMemberByIndex(static_cast<int>(i)).second;
+		if (member && member->isDead())
+			member->resurrect(1);
 	}
 }
 

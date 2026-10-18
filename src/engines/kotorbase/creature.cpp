@@ -274,12 +274,26 @@ namespace KotORBase {
 		void Creature::load(
 		const Aurora::GFF3Struct &instance,
 		const Aurora::GFF3Struct *blueprint) {
-			_info = CreatureInfo(instance);
+			// Area (GIT) instances only carry a TemplateResRef and a position;
+			// classes, feats, skills, Force points and powers live in the blueprint.
+			const bool instanceHasStats = instance.hasField("ClassList");
+			_info = CreatureInfo((blueprint && !instanceHasStats) ? *blueprint : instance);
 
 			// General properties
 			if (blueprint)
 				loadProperties(*blueprint); // Blueprint
 			loadProperties(instance, false); // Instance
+
+			// Force points: templated Jedi without stored values get the class formula.
+			if (getMaxForcePoints() <= 0) {
+				const int maxFP = computeMaxForcePoints();
+				if (maxFP > 0) {
+					setMaxForcePoints(maxFP);
+					setForcePoints(maxFP);
+				}
+			}
+			if (getForcePoints() > getMaxForcePoints())
+				setForcePoints(getMaxForcePoints());
 
 			// Appearance
 			if (_appearance == Aurora::kFieldIDInvalid)
@@ -494,6 +508,8 @@ namespace KotORBase {
 				break;
 				default:			throw Common::Exception("Unsupported equip slot");
 			}
+			if (!_model)
+				return;
 			if (!_model->hasNode(hookNode)) {
 				warning("Creature::attachWeaponModel(): Model \"%s\" does not have node \"%s\"",		        _model->getName().c_str(), hookNode.c_str());
 				return;
@@ -510,6 +526,7 @@ namespace KotORBase {
 			_name = "Fakoo McFakeston";
 			_tag  = Common::String::format("[PC: %s]", _name.c_str());
 			_isPC = true;
+			setFaction(kFactionFriendly1);
 		}
 		void Creature::initAsPC(
 		const CharacterGenerationInfo &chargenInfo,
@@ -517,6 +534,8 @@ namespace KotORBase {
 			_name = chargenInfo.getName();
 			_usable = false;
 			_isPC = true;
+			// The player's party is STANDARD_FACTION_FRIENDLY_1 in the original.
+			setFaction(kFactionFriendly1);
 			_race = kRaceHuman;
 			_subRace = kSubRaceNone;
 			_gender = chargenInfo.getGender();
@@ -945,9 +964,60 @@ namespace KotORBase {
 			clearActions();
 			setFaction(kFactionSurrender1);
 			if (!retainBuffs) {
-				_effects.clear();
+				// Reverse the modifiers the effects applied, don't just drop them.
+				clearActiveEffects();
 				clearImmunities();
 			}
+		}
+
+		void Creature::stopAttacksOn(const std::vector<Creature *> &creatures, const Object *target,
+		                             bool clearQueuedActions) {
+			if (!target)
+				return;
+
+			for (Creature *c : creatures) {
+				if (!c || c == target)
+					continue;
+
+				const Action *current = c->getCurrentAction();
+				const bool attacking = (c->_attackTarget == target) ||
+				                       (c->_attemptedAttackTarget == target) ||
+				                       (current && current->object == target &&
+				                        (current->type == kActionAttackObject || current->type == kActionCastSpell));
+				if (!attacking)
+					continue;
+
+				if (c->_attackTarget == target)
+					c->cancelCombat();
+				if (c->_attemptedAttackTarget == target)
+					c->_attemptedAttackTarget = nullptr;
+
+				if (clearQueuedActions)
+					c->clearActions();
+				else
+					c->_actions.removeActionsTargeting(target);
+			}
+		}
+
+		void Creature::regenerateForcePoints() {
+			if (_dead || _inCombat)
+				return;
+
+			const int maxFP = getMaxForcePoints();
+			const int fp = getForcePoints();
+			if (maxFP <= 0 || fp >= maxFP)
+				return;
+
+			// Conservative: 5% of the maximum (at least 1) per heartbeat.
+			setForcePoints(MIN(maxFP, fp + MAX(1, maxFP / 20)));
+		}
+
+		void Creature::restoreFully() {
+			if (_dead)
+				return;
+
+			setCurrentHitPoints(getMaxHitPoints());
+			setForcePoints(getMaxForcePoints());
 		}
 
 		int Creature::getDamageResistance(int damageType) const {
@@ -1078,7 +1148,16 @@ namespace KotORBase {
 			// Decide action
 			float dist = getDistanceTo(_attackTarget);
 			if (dist > getMaxAttackRange()) {
-				// Move closer
+				// Move closer, unless already on the way (this runs every round).
+				const Action *current = _actions.getCurrent();
+				if (current && (current->type == kActionMoveToPoint ||
+				                (current->type == kActionAttackObject && current->object == _attackTarget)))
+					return;
+				if (current && current->type != kActionFollowLeader)
+					return; // Busy with something else (e.g. a scripted action).
+				if (current)
+					clearActions();
+
 				float tx, ty, tz;
 				_attackTarget->getPosition(tx, ty, tz);
 				Action move(kActionMoveToPoint);
@@ -1148,10 +1227,13 @@ namespace KotORBase {
 				cancelCombat();
 				return;
 			}
+			// Re-engaging the same target mid-round must not wipe the attack
+			// notifyCombatRoundBegan() already scheduled for this round.
+			if (_attackTarget != target)
+				_attemptedAttackTarget = nullptr;
 			_inCombat = true;
 			_attackTarget = target;
 			_attackRound = round;
-			_attemptedAttackTarget = nullptr;
 		}
 		void Creature::cancelCombat() {
 			_inCombat = false;
@@ -1166,6 +1248,16 @@ namespace KotORBase {
 			if (_lastWeaponUsed == object)		_lastWeaponUsed = nullptr;
 			if (_lastPerceived == object)		_lastPerceived = nullptr;
 			if (_blockingDoor == object)		_blockingDoor = nullptr;
+			if (_lastAttacker == object) {
+				_lastAttacker = nullptr;
+				_attackedEventPending = false;
+			}
+			for (auto it = _perceptionEvents.begin(); it != _perceptionEvents.end(); ) {
+				if (it->object == object)
+					it = _perceptionEvents.erase(it);
+				else
+					++it;
+			}
 			_seenObjects.erase(const_cast<Object *>(object));
 			_heardObjects.erase(const_cast<Object *>(object));
 			_actions.removeActionsTargeting(object);
@@ -1272,6 +1364,23 @@ namespace KotORBase {
 					}
 					break;
 				}
+				case kKotOREffectDeath:
+					// Plot creatures cannot be killed (Object::_plotFlag: "immune to
+					// permanent death"); death immunity blocks it as well. Min1HP keeps
+					// the creature at 1 HP, which is why the original scripts clear it
+					// with SetMinOneHP(FALSE) before applying EffectDeath.
+					if (_dead || getPlotFlag() || isImmune(kImmunityTypeDeath))
+						break;
+					if (getMinOneHitPoints()) {
+						setCurrentHitPoints(MIN(current, 1));
+						break;
+					}
+					setCurrentHitPoints(0);
+					cancelCombat();
+					if (_lastHostileActor)
+						_lastKiller = _lastHostileActor;
+					handleDeath();
+					break;
 				case kKotOREffectTemporaryHitpoints:
 				case kKotOREffectForceShield: {
 					int maxHP = getMaxHitPoints();
@@ -1406,7 +1515,12 @@ namespace KotORBase {
 				return;
 			}
 			// Track hostility for NWScript callers (GetLastHostileActor/GetLastAttacker).
-			if (targetCreature)		targetCreature->_lastHostileActor = this;
+			if (targetCreature) {
+				targetCreature->_lastHostileActor = this;
+				// OnAttacked runs later, outside the creature iteration.
+				targetCreature->_lastAttacker = this;
+				targetCreature->_attackedEventPending = true;
+			}
 			Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
 			Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
 			Object *weaponUsed = rightWeapon ? static_cast<Object *>(rightWeapon)
@@ -1616,7 +1730,8 @@ namespace KotORBase {
 			if (hp < minHp)		hp = minHp;
 			target->setCurrentHitPoints(hp);
 			debugC(Common::kDebugEngineLogic, 1,	       "Object \"%s\" was %shit by \"%s\" (d20=%d bab=%d abMod=%d effect=%d total=%d vs AC %d), %d dmg, %d/%d HP",	       target->getTag().c_str(), isCrit ? "CRITICALLY " : "",	       _tag.c_str(), d20, bab + babPenalty, abMod, _attackModifier, attackRoll, targetAC,	       damage, hp, target->getMaxHitPoints());
-			if (hp <= minHp) {
+			// A Min1HP target left at 1 HP is still alive: no kill bookkeeping.
+			if (hp <= 0) {
 				cancelCombat();
 				if (targetCreature) {
 					targetCreature->cancelCombat();
@@ -1643,6 +1758,10 @@ namespace KotORBase {
 				_dead = true;
 				_deathEventPending = true;
 				_damagedEventPending = false;
+				// The dead don't perceive, get attacked or end combat rounds.
+				_attackedEventPending = false;
+				_endRoundEventPending = false;
+				_perceptionEvents.clear();
 				if (!_lastKiller && _lastHostileActor)
 					_lastKiller = _lastHostileActor;
 				if (_model) {
@@ -1666,6 +1785,7 @@ namespace KotORBase {
 			float x, y, z, angle;
 			getOrientation(x, y, z, angle);
 			gff.addDouble("Facing", angle);
+			gff.addSint32("FactionID", static_cast<int32_t>(getFaction()));
 		}
 		void Creature::loadState(const Aurora::GFF3Struct &gff) {
 			Object::loadState(gff);
@@ -1673,6 +1793,9 @@ namespace KotORBase {
 				setPosition(gff.getDouble("XPosition"), gff.getDouble("YPosition"), gff.getDouble("ZPosition"));
 			if (gff.hasField("Facing"))
 				setOrientation(0.0f, 0.0f, 1.0f, gff.getDouble("Facing"));
+			// Scripts change factions (hostile on insult, surrender, ...).
+			if (gff.hasField("FactionID"))
+				setFaction(Faction(gff.getSint("FactionID")));
 			// A restored creature already spawned once; don't run OnSpawn again.
 			_spawnEventPending = false;
 			if (gff.getBool("IsDead", false)) {
@@ -1721,6 +1844,30 @@ namespace KotORBase {
 			_heartbeatEventPending = false;
 			return pending;
 		}
+		bool Creature::consumeEndRoundEvent() {
+			const bool pending = _endRoundEventPending;
+			_endRoundEventPending = false;
+			return pending;
+		}
+		bool Creature::consumeAttackedEvent(Object *&attacker) {
+			const bool pending = _attackedEventPending;
+			attacker = _lastAttacker;
+			_attackedEventPending = false;
+			return pending;
+		}
+		bool Creature::consumePerceptionEvent(PerceptionEvent &event) {
+			if (_perceptionEvents.empty())
+				return false;
+			event = _perceptionEvents.front();
+			_perceptionEvents.erase(_perceptionEvents.begin());
+			// GetLastPerceived & co. describe the event being dispatched.
+			_lastPerceived           = event.object;
+			_lastPerceptionSeen      = event.seen;
+			_lastPerceptionVanished  = !event.seen;
+			_lastPerceptionHeard     = event.seen;
+			_lastPerceptionInaudible = !event.seen;
+			return true;
+		}
 		Object *Creature::getLastPerceived()
 		const {
 			return _lastPerceived;
@@ -1759,6 +1906,10 @@ namespace KotORBase {
 				_lastPerceptionVanished  = false;
 				_lastPerceptionHeard     = false;
 				_lastPerceptionInaudible = false;
+				PerceptionEvent event;
+				event.object = &object;
+				event.seen = true;
+				_perceptionEvents.push_back(event);
 				debugC(Common::kDebugEngineLogic, 2,			"Creature \"%s\" have seen \"%s\"",			_tag.c_str(), object.getTag().c_str());
 			}
 		}
@@ -1770,6 +1921,10 @@ namespace KotORBase {
 				_lastPerceptionVanished  = true;
 				_lastPerceptionHeard     = false;
 				_lastPerceptionInaudible = false;
+				PerceptionEvent event;
+				event.object = &object;
+				event.seen = false;
+				_perceptionEvents.push_back(event);
 				debugC(Common::kDebugEngineLogic, 2,			"Object \"%s\" have vanished from \"%s\"",			object.getTag().c_str(), _tag.c_str());
 			}
 		}
@@ -2002,8 +2157,7 @@ namespace KotORBase {
 					if (canCast && getDistanceTo(target) <= 12.0f) {
 						Action spell(kActionCastSpell, target);
 						spell.actionID = static_cast<int>(powers[static_cast<size_t>(RNG.getNext(0, static_cast<int>(powers.size())))]);
-						_actions.add(spell);
-						setForcePoints(std::max(0, getForcePoints() - 10));
+						_actions.add(spell); // executeCastSpell() deducts the Force point cost.
 						_aiCooldown = 2.0f;
 					} else {
 						_actions.add(Action(kActionAttackObject, target));
@@ -2052,12 +2206,17 @@ namespace KotORBase {
 			) {
 				it->duration -= dt;
 				if (it->type == kEffectPoison) {
-					// Periodic poison damage (simplified: value is damage per sec)
-					if (_currentHitPoints > 0) {
-						float dam = it->value * dt;
-						_currentHitPoints -= (int)dam;
-						if (_currentHitPoints < 1) _currentHitPoints = 1;
-						// Poison usually doesn't kill in KOTOR
+					// Periodic poison damage: value is damage per second, applied in
+					// whole-second ticks (truncating value * dt lost every tick).
+					it->nextTick -= dt;
+					while (it->nextTick <= 0.0f) {
+						it->nextTick += 1.0f;
+						if (_currentHitPoints > 1 && it->value > 0) {
+							// Poison wears a creature down but doesn't kill it.
+							const int dealt = MIN(it->value, _currentHitPoints - 1);
+							recordDamageTaken(dealt, 0, _lastHostileActor);
+							_currentHitPoints -= dealt;
+						}
 					}
 				}
 				if (it->duration <= 0.0f) {
@@ -2077,6 +2236,10 @@ namespace KotORBase {
 				return true;
 			}
 			return false;
+		}
+
+		bool Creature::isIncapacitated() const {
+			return hasEffect(kEffectStun) || hasEffect(kEffectKnockdown);
 		}
 
 		bool Creature::hasSpellEffect(int spellId) const {
