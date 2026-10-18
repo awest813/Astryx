@@ -85,8 +85,8 @@ new way:
   bullet hit parts aren't tracked; many natives are simplified (see
   [FULL_PARITY_AUDIT_AND_PLAN.md](FULL_PARITY_AUDIT_AND_PLAN.md)).
 - **Cutscene camera assumptions to confirm in play:** animated camera
-  shots look for `CUT%03dW` (DLG `CameraAnimation` - 1200) on the model's
-  `camerahook`; GIT static camera orientations are read as (w, x, y, z);
+  shots look for `CUT%03dW` (DLG `CameraAnimation` - 1200; possibly off by
+  one — if animated shots never play, try - 1199) on the model's `camerahook`; GIT static camera orientations are read as (w, x, y, z);
   DLG `AnimList` numbers from 10000 are treated as looping animations.
   Shots that can't be resolved fall back to speaker/listener framing.
   DLG `FadeType` fades and stunt (`StuntList`) cutscenes are not played.

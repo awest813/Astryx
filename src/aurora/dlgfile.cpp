@@ -80,6 +80,12 @@ static double getOptionalNumber(const GFF3Struct &gff, const Common::UString &fi
 	return def;
 }
 
+/** Like getOptionalNumber(), for unsigned fields; negative values (-1) map to def. */
+static uint32_t getOptionalUint(const GFF3Struct &gff, const Common::UString &field, uint32_t def = 0) {
+	const double value = getOptionalNumber(gff, field, def);
+	return (value < 0.0 || value > 4294967295.0) ? def : static_cast<uint32_t>(value);
+}
+
 static Common::UString getOptionalString(const GFF3Struct &gff, const Common::UString &field) {
 	try {
 		return gff.getString(field);
@@ -250,7 +256,7 @@ void DLGFile::load(const GFF3Struct &dlg) {
 	_stuntList = getOptionalString(dlg, "StuntList");
 
 	_cameraModel      = getOptionalString(dlg, "CameraModel");
-	_conversationType = static_cast<uint32_t>(getOptionalNumber(dlg, "ConversationType", 0.0));
+	_conversationType = getOptionalUint(dlg, "ConversationType");
 	_animatedCut      = getOptionalNumber(dlg, "AnimatedCut", 0.0) != 0.0;
 
 	// NPC lines ("entries")
@@ -327,11 +333,11 @@ void DLGFile::readEntry(const GFF3Struct &gff, Entry &entry) {
 	entry.line.listener    = getOptionalString(gff, "Listener");
 
 	entry.line.cameraModel = getOptionalString(gff, "CameraModel");
-	entry.line.cameraID    = static_cast<uint32_t>(getOptionalNumber(gff, "CameraID"));
+	entry.line.cameraID    = getOptionalUint(gff, "CameraID");
 	entry.line.cameraAngle = static_cast<float>(getOptionalNumber(gff, "CameraAngle"));
-	entry.line.cameraAnimation = static_cast<uint32_t>(getOptionalNumber(gff, "CameraAnimation"));
+	entry.line.cameraAnimation = getOptionalUint(gff, "CameraAnimation");
 	entry.line.camFieldOfView  = static_cast<float>(getOptionalNumber(gff, "CamFieldOfView"));
-	entry.line.delay = static_cast<uint32_t>(getOptionalNumber(gff, "Delay", kInvalidLine));
+	entry.line.delay = getOptionalUint(gff, "Delay", kInvalidLine);
 
 	if (gff.hasField("AnimList")) {
 		for (const GFF3Struct *anim : gff.getList("AnimList")) {
@@ -340,7 +346,7 @@ void DLGFile::readEntry(const GFF3Struct &gff, Entry &entry) {
 
 			Animation animation;
 			animation.participant = getOptionalString(*anim, "Participant");
-			animation.animation   = static_cast<uint32_t>(getOptionalNumber(*anim, "Animation"));
+			animation.animation   = getOptionalUint(*anim, "Animation");
 			entry.line.animations.push_back(animation);
 		}
 	}

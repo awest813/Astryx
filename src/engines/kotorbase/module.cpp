@@ -22,6 +22,7 @@
  *  The context needed to run a module in KotOR games.
  */
 
+#include <algorithm>
 #include <map>
 #include <utility>
 #include <vector>
@@ -2584,6 +2585,7 @@ void Module::startConversation(const Common::UString &name, Aurora::NWScript::Ob
 		return;
 
 	_lastConversation = finalName;
+	_conversationPausedSince = 0;
 	_dialog->startConversation(finalName, owner);
 
 	if (_dialog->isConversationActive()) {
@@ -2645,13 +2647,15 @@ void Module::requestTutorialWindow(int index) {
 	if (!_tutorialWindowsEnabled || index < 0)
 		return;
 
-	// Each tutorial is shown only once per game (globals are saved).
+	// Each tutorial is shown only once per game (globals are saved; the flag
+	// is set when it is actually displayed).
 	const Common::UString shown = Common::String::format("__tutorial_%d", index);
 	if (getGlobalBoolean(shown))
 		return;
 
-	setGlobalBoolean(shown, true);
-	_pendingTutorialWindows.push_back(index);
+	if (std::find(_pendingTutorialWindows.begin(), _pendingTutorialWindows.end(), index) ==
+	    _pendingTutorialWindows.end())
+		_pendingTutorialWindows.push_back(index);
 }
 
 void Module::processTutorialWindows() {
@@ -2665,11 +2669,16 @@ void Module::processTutorialWindows() {
 	_partyLeaderController.clearUserInput();
 	_partyLeaderController.stopMovement();
 
+	setGlobalBoolean(Common::String::format("__tutorial_%d", index), true);
 	showTutorialWindow(index);
 	updateFrameTimestamp();
 }
 
 void Module::setConversationPaused(bool paused) {
+	// A pause reached after its conversation ended must not hold the next one.
+	if (paused && !_inDialog)
+		return;
+
 	_conversationPausedSince = paused ? MAX<uint32_t>(EventMan.getTimestamp(), 1) : 0;
 }
 

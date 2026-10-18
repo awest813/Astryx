@@ -23,6 +23,7 @@
  */
 
 #include <cmath>
+#include <vector>
 #include <cstdint>
 
 #include "src/common/maths.h"
@@ -307,6 +308,31 @@ void CameraController::startShot(ShotType type, float blendTime) {
 	if (type != kShotAnimated)
 		releaseAnimatedCamera();
 
+	// A new shot supersedes a running restore to the gameplay camera.
+	_restoringGameplay = false;
+
+	// Paths only drive scripted focus shots.
+	if (type != kShotFocus) {
+		_pathStart = nullptr;
+		_pathEnd = nullptr;
+	}
+
+	// Coming from the gameplay camera: blend from what is on screen.
+	if (!_haveView) {
+		const float *position = CameraMan.getPosition();
+		const float pitch = Common::deg2rad(_pitch);
+
+		_viewPosition  = glm::vec3(position[0], position[1], position[2]);
+		_viewDirection = glm::vec3(-std::sin(_yaw) * std::sin(pitch),
+		                            std::cos(_yaw) * std::sin(pitch),
+		                           -std::cos(pitch));
+		_haveView = true;
+	}
+
+	// A field of view belongs to the shot that set it.
+	if (_shotFieldOfView != 0.0f)
+		setShotFieldOfView(0.0f);
+
 	_shotType = type;
 	_holding = false;
 
@@ -403,7 +429,9 @@ void CameraController::setCinematicCamera(uint32_t cameraID, float UNUSED(camera
 }
 
 void CameraController::setCameraMode(CameraMode mode, Object *target) {
-	startShot(kShotFocus);
+	// Keep a running transition (CameraTransitionToTarget) blending.
+	if (!_cinematic || _shotType != kShotFocus)
+		startShot(kShotFocus);
 	_cinematicFocus = target;
 
 	// Distance (m) and elevation (degrees) of the shot around the focus.
@@ -454,13 +482,42 @@ glm::vec3 CameraController::getEyes(const Object &object) const {
 	return glm::vec3(x, y, z + (creature ? creature->getCameraHeight() : 1.0f));
 }
 
+/** World transform of a model node, composed from the node chain each call.
+ *  (ModelNode's cached absolute transform is only refreshed when the
+ *  model's bound is rebuilt, not on every animation frame.) */
+static glm::mat4 composeNodeTransform(const Graphics::Aurora::ModelNode &node) {
+	std::vector<const Graphics::Aurora::ModelNode *> chain;
+	for (const Graphics::Aurora::ModelNode *n = &node; n; n = n->getParent())
+		chain.push_back(n);
+
+	glm::mat4 transform(1.0f);
+	for (auto n = chain.rbegin(); n != chain.rend(); ++n) {
+		float x, y, z, a;
+
+		(*n)->getPosition(x, y, z);
+		transform = glm::translate(transform, glm::vec3(x, y, z));
+
+		(*n)->getOrientation(x, y, z, a);
+		const glm::vec3 axis(x, y, z);
+		if (glm::length(axis) > 0.0001f && a != 0.0f)
+			transform = glm::rotate(transform, Common::deg2rad(a), glm::normalize(axis));
+
+		(*n)->getRotation(x, y, z);
+		transform = glm::rotate(transform, Common::deg2rad(x), glm::vec3(1.0f, 0.0f, 0.0f));
+		transform = glm::rotate(transform, Common::deg2rad(y), glm::vec3(0.0f, 1.0f, 0.0f));
+		transform = glm::rotate(transform, Common::deg2rad(z), glm::vec3(0.0f, 0.0f, 1.0f));
+	}
+
+	return transform;
+}
+
 bool CameraController::computeShot(CinematicShot &shot) const {
 	switch (_shotType) {
 		case kShotAnimated:
 			if (_animatedCamera) {
 				const Graphics::Aurora::ModelNode *hook = _animatedCamera->getNode("camerahook");
 				if (hook) {
-					const glm::mat4 transform = hook->getAbsolutePosition();
+					const glm::mat4 transform = composeNodeTransform(*hook);
 					shot.position  = glm::vec3(transform[3]);
 					shot.direction = lookDirectionFromTransform(transform);
 					return true;
@@ -572,7 +629,7 @@ void CameraController::updateCinematic(float frameTime) {
 		return;
 	}
 
-	if (_pathStart && _pathEnd && _pathTime >= _pathDuration) {
+	if (_shotType == kShotFocus && _pathStart && _pathEnd && _pathTime >= _pathDuration) {
 		// Stay where the path ended.
 		_staticPosition  = shot.position;
 		_staticDirection = shot.direction;

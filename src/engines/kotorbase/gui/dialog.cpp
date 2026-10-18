@@ -374,8 +374,9 @@ void DialogGUI::armAutoAdvance(const Aurora::DLGFile::Line &entry,
 	if (entry.delay != Aurora::DLGFile::kInvalidLine && entry.delay > 0) {
 		_autoAdvance = true;
 		_autoAdvanceDelay = static_cast<float>(entry.delay);
-	} else if (_voice) {
-		// Continue shortly after the voice-over finishes.
+	} else if (_voice && SoundMan.isPlaying(*_voice)) {
+		// Continue shortly after the voice-over finishes (a missing VO
+		// resource leaves an empty handle: wait for the player then).
 		_autoAdvance = true;
 		_autoAdvanceDelay = -1.0f;
 	}
