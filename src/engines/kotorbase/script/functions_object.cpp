@@ -305,6 +305,9 @@ void Functions::jumpToLocation(Aurora::NWScript::FunctionContext &ctx) {
 	float x, y, z;
 	moveTo->getPosition(x, y, z);
 	object->setPosition(x, y, z);
+	object->setOrientation(0.0f, 0.0f, 1.0f, moveTo->getFacing());
+
+	_game->getModule().notifyObjectTeleported(*object);
 }
 
 void Functions::jumpToObject(Aurora::NWScript::FunctionContext &ctx) {
@@ -314,9 +317,14 @@ void Functions::jumpToObject(Aurora::NWScript::FunctionContext &ctx) {
 	if (!caller || !target)
 		return;
 
-	float x, y, z;
+	// Cutscenes place actors on waypoints this way: take their facing too.
+	float x, y, z, ox, oy, oz, angle;
 	target->getPosition(x, y, z);
+	target->getOrientation(ox, oy, oz, angle);
 	caller->setPosition(x, y, z);
+	caller->setOrientation(0.0f, 0.0f, 1.0f, angle);
+
+	_game->getModule().notifyObjectTeleported(*caller);
 }
 
 void Functions::locationCreate(Aurora::NWScript::FunctionContext &ctx) {

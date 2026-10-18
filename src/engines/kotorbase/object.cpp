@@ -184,13 +184,15 @@ void Object::makeLookAt(Object *target) {
 
 Location Object::getLocation() const {
 	// TODO: Object::getLocation(): Area
-	// TODO: Object::getLocation(): Facing
 
 	Location location;
 
 	location.setArea(nullptr);
 	location.setPosition(_position[0], _position[1], _position[2]);
-	location.setFacing(0.0f);
+
+	float x, y, z, angle;
+	getOrientation(x, y, z, angle);
+	location.setFacing(angle);
 
 	return location;
 }

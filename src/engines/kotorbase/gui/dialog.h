@@ -45,6 +45,7 @@ namespace Engines {
 namespace KotORBase {
 
 class Module;
+class Object;
 
 class DialogGUI : public GUI, Events::Notifyable {
 public:
@@ -60,6 +61,8 @@ public:
 	bool isConversationActive() const;
 
 	void startConversation(const Common::UString &name, Aurora::NWScript::Object *owner = 0);
+	/** Per-frame update: lines that only continue advance after their voice-over. */
+	void update(float frameTime);
 	/** Drop the conversation without running any scripts (e.g. on module unload). */
 	void stopConversation();
 
@@ -80,6 +83,8 @@ private:
 	Module &_module;
 	bool _isActive;
 	bool _pickedReply { false }; ///< Has the player picked a reply in this conversation?
+	bool  _autoAdvance { false };     ///< Continue by itself (voice-over / delay)?
+	float _autoAdvanceDelay { 0.0f }; ///< Seconds left; negative while the voice plays.
 	std::unique_ptr<Graphics::Aurora::KotORDialogFrame> _frame;
 	std::unique_ptr<Aurora::DLGFile> _dlg;
 	std::vector<uint32_t> _replyIds;
@@ -89,6 +94,11 @@ private:
 	Common::UString _curSpeaker;
 
 	void refresh();
+	Object *findParticipant(const Common::UString &tag) const;
+	void updateCamera(const Aurora::DLGFile::Line &entry, Object *speaker, Object *listener);
+	void playParticipantAnimations(const Aurora::DLGFile::Line &entry);
+	void armAutoAdvance(const Aurora::DLGFile::Line &entry,
+	                    const std::vector<const Aurora::DLGFile::Line *> &replies);
 	void playSounds();
 	void stopSounds();
 	void pickReply(int index);

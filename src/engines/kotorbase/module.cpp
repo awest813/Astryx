@@ -1360,6 +1360,7 @@ void Module::handleEvents() {
 
 	if (_inDialog) {
 		_dialog->processEventQueue();
+		_dialog->update(_frameTime);
 		if (!_dialog->isConversationActive()) {
 			_dialog->hide();
 			_ingame->show();
@@ -1872,6 +1873,20 @@ void Module::moveParty(const Common::UString &module, const Common::UString &obj
 	}
 
 	load(module, object, type);
+}
+
+void Module::notifyObjectTeleported(Object &object) {
+	if (!_area)
+		return;
+
+	if (&object == getPartyLeader()) {
+		// Arriving inside a transition trigger must not move the party on.
+		_teleportingParty = true;
+		movedPartyLeader();
+		_teleportingParty = false;
+	} else {
+		_area->notifyObjectMoved(object);
+	}
 }
 
 void Module::movedPartyLeader() {
@@ -2611,6 +2626,22 @@ void Module::setCameraPitch(float pitch) {
 
 void Module::setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel) {
 	_cameraController.setCinematicCamera(cameraID, cameraAngle, cameraModel);
+}
+
+void Module::setDialogShot(int cameraAngle, Object *speaker, Object *listener) {
+	_cameraController.setDialogShot(cameraAngle, speaker, listener);
+}
+
+bool Module::setStaticShot(uint32_t cameraID) {
+	return _cameraController.setStaticShot(cameraID);
+}
+
+bool Module::setAnimatedShot(const Common::UString &cameraModel, uint32_t cameraAnimation) {
+	return _cameraController.setAnimatedShot(cameraModel, cameraAnimation);
+}
+
+void Module::setShotFieldOfView(float fov) {
+	_cameraController.setShotFieldOfView(fov);
 }
 
 void Module::setCameraMode(CameraMode mode, Object *target) {

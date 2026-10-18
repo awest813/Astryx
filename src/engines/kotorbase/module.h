@@ -231,6 +231,8 @@ public:
 	void moveParty(const Common::UString &module, const Common::UString &object, ObjectType type = kObjectTypeAll);
 	/** Notify the module that the party leader was moved. */
 	void movedPartyLeader();
+	/** A script teleported an object (JumpTo*): update rooms, perception and camera. */
+	void notifyObjectTeleported(Object &object);
 
 	/** Shake the camera. */
 	void shakeCamera(float duration, float intensity);
@@ -365,6 +367,11 @@ public:
 	void requestAutoSave();
 
 	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
+	/** Conversation camera shots; see CameraController. */
+	void setDialogShot(int cameraAngle, Object *speaker, Object *listener);
+	bool setStaticShot(uint32_t cameraID);
+	bool setAnimatedShot(const Common::UString &cameraModel, uint32_t cameraAnimation);
+	void setShotFieldOfView(float fov);
 	void setCameraMode(CameraMode mode, Object *target = nullptr);
 	void setCinematicFocus(Object *target);
 	void cameraTransitionToTarget(float blendTime);

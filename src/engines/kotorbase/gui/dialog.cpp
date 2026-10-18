@@ -43,6 +43,9 @@
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/script/functions.h"
+#include "src/engines/kotorbase/animationnames.h"
+#include "src/engines/kotorbase/cinematicshot.h"
+#include "src/engines/kotorbase/objectcontainer.h"
 
 #include "src/engines/kotorbase/gui/dialog.h"
 
@@ -252,18 +255,17 @@ void DialogGUI::refresh() {
 	else
 		_curSpeaker = curEntry->speaker;
 
-	_module.setCinematicCamera(curEntry->cameraID, curEntry->cameraAngle, curEntry->cameraModel);
+	Object *speakerObj = findParticipant(_curSpeaker);
+	Object *listenerObj = curEntry->listener.empty() ? _module.getPartyLeader() : findParticipant(curEntry->listener);
 
-	if (!_curSpeaker.empty()) {
-		Object *speakerObj = _module.getCurrentArea()->getObjectByTag(_curSpeaker);
-		if (speakerObj) {
-			makeLookAtPC(_curSpeaker);
-			playTalkAnimations(_curSpeaker);
-			_module.setCinematicFocus(speakerObj);
-		}
-	} else {
-		_module.setCinematicFocus(nullptr);
+	if (speakerObj) {
+		makeLookAtPC(_curSpeaker);
+		playTalkAnimations(_curSpeaker);
 	}
+
+	updateCamera(*curEntry, speakerObj, listenerObj);
+	playParticipantAnimations(*curEntry);
+	armAutoAdvance(*curEntry, replies);
 
 	lblMessage->setText(text);
 	_replyIds.clear();
@@ -297,6 +299,98 @@ void DialogGUI::refresh() {
 		lbReplies->addItem(text);
 	}
 	lbReplies->refreshItemWidgets();
+}
+
+Object *DialogGUI::findParticipant(const Common::UString &tag) const {
+	Area *area = _module.getCurrentArea();
+	if (!area)
+		return nullptr;
+
+	if (tag.empty() || tag.equalsIgnoreCase("OWNER"))
+		return _owner.empty() ? nullptr : area->getObjectByTag(_owner);
+
+	if (tag.equalsIgnoreCase("PLAYER"))
+		return _module.getPartyLeader();
+
+	return area->getObjectByTag(tag);
+}
+
+void DialogGUI::updateCamera(const Aurora::DLGFile::Line &entry, Object *speaker, Object *listener) {
+	const int angle = static_cast<int>(entry.cameraAngle);
+
+	// Static (GIT) and animated cameras; anything unavailable falls back to
+	// framing the speaker and listener.
+	bool placed = false;
+	if (angle == kDialogCameraStatic) {
+		placed = _module.setStaticShot(entry.cameraID);
+	} else if (angle == kDialogCameraAnimated || entry.cameraAnimation != 0) {
+		const Common::UString &model = entry.cameraModel.empty() ? _dlg->getCameraModel() : entry.cameraModel;
+		placed = _module.setAnimatedShot(model, entry.cameraAnimation);
+	}
+
+	if (!placed)
+		_module.setDialogShot(angle, speaker, listener);
+
+	if (angle != kDialogCameraStatic || !placed)
+		_module.setShotFieldOfView(entry.camFieldOfView);
+}
+
+void DialogGUI::playParticipantAnimations(const Aurora::DLGFile::Line &entry) {
+	for (const Aurora::DLGFile::Animation &animation : entry.animations) {
+		Creature *creature = ObjectContainer::toCreature(findParticipant(animation.participant));
+		if (!creature)
+			continue;
+
+		// Numbers from 10000 are looping animations, the others play once.
+		const bool looping = animation.animation >= 10000;
+		const Common::UString name = getAnimationNameById(
+			static_cast<int>(looping ? animation.animation - 10000 : animation.animation));
+		if (name.empty())
+			continue;
+
+		creature->playAnimation(name, true, looping ? -1.0f : 0.0f);
+	}
+}
+
+void DialogGUI::armAutoAdvance(const Aurora::DLGFile::Line &entry,
+                               const std::vector<const Aurora::DLGFile::Line *> &replies) {
+	_autoAdvance = false;
+	_autoAdvanceDelay = 0.0f;
+
+	// Only lines the player can merely continue from advance by themselves:
+	// a closing line, or a single reply without text.
+	const bool continueOnly = replies.empty() ||
+		(replies.size() == 1 && replies.front()->text.getString().empty());
+	if (!continueOnly)
+		return;
+
+	if (entry.delay != Aurora::DLGFile::kInvalidLine && entry.delay > 0) {
+		_autoAdvance = true;
+		_autoAdvanceDelay = static_cast<float>(entry.delay);
+	} else if (_voice) {
+		// Continue shortly after the voice-over finishes.
+		_autoAdvance = true;
+		_autoAdvanceDelay = -1.0f;
+	}
+}
+
+void DialogGUI::update(float frameTime) {
+	if (!_isActive || !_autoAdvance)
+		return;
+
+	if (_autoAdvanceDelay < 0.0f) {
+		if (_voice && SoundMan.isPlaying(*_voice))
+			return;
+
+		_autoAdvanceDelay = 0.5f;
+	}
+
+	_autoAdvanceDelay -= frameTime;
+	if (_autoAdvanceDelay > 0.0f)
+		return;
+
+	_autoAdvance = false;
+	pickReply(0);
 }
 
 void DialogGUI::playSounds() {

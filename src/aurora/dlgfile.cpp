@@ -44,6 +44,42 @@ static const uint32_t kDLGID = MKTAG('D', 'L', 'G', ' ');
 
 namespace Aurora {
 
+/** Read a numeric field whatever its stored type (KotOR stores some as ints). */
+static double getOptionalNumber(const GFF3Struct &gff, const Common::UString &field, double def = 0.0) {
+	try {
+		switch (gff.getFieldType(field)) {
+			case GFF3Struct::kFieldTypeNone:
+				return def;
+
+			case GFF3Struct::kFieldTypeFloat:
+			case GFF3Struct::kFieldTypeDouble:
+				return gff.getDouble(field, def);
+
+			case GFF3Struct::kFieldTypeChar:
+			case GFF3Struct::kFieldTypeSint16:
+			case GFF3Struct::kFieldTypeSint32:
+			case GFF3Struct::kFieldTypeSint64:
+				return static_cast<double>(gff.getSint(field));
+
+			case GFF3Struct::kFieldTypeByte:
+			case GFF3Struct::kFieldTypeUint16:
+			case GFF3Struct::kFieldTypeUint32:
+			case GFF3Struct::kFieldTypeUint64:
+				return static_cast<double>(gff.getUint(field));
+
+			default: {
+				double value = def;
+				Common::parseString(gff.getString(field), value);
+				return value;
+			}
+		}
+	} catch (...) {
+		debugC(Common::kDebugEngineLogic, 2, "DLGFile: Ignoring non-numeric field \"%s\"", field.c_str());
+	}
+
+	return def;
+}
+
 static Common::UString getOptionalString(const GFF3Struct &gff, const Common::UString &field) {
 	try {
 		return gff.getString(field);
@@ -52,23 +88,6 @@ static Common::UString getOptionalString(const GFF3Struct &gff, const Common::US
 	}
 
 	return "";
-}
-
-static double getOptionalDouble(const GFF3Struct &gff, const Common::UString &field, double def = 0.0) {
-	try {
-		return gff.getDouble(field, def);
-	} catch (...) {
-		double value = def;
-		try {
-			Common::parseString(gff.getString(field), value);
-			return value;
-		} catch (...) {
-		}
-
-		debugC(Common::kDebugEngineLogic, 2, "DLGFile: Ignoring non-numeric optional field \"%s\"", field.c_str());
-	}
-
-	return def;
 }
 
 DLGFile::DLGFile(Common::SeekableReadStream *dlg, NWScript::Object *owner, bool repairNWNPremium) :
@@ -109,6 +128,18 @@ uint32_t DLGFile::getDelayReply() const {
 
 bool DLGFile::isSkippable() const {
 	return _skippable;
+}
+
+const Common::UString &DLGFile::getCameraModel() const {
+	return _cameraModel;
+}
+
+uint32_t DLGFile::getConversationType() const {
+	return _conversationType;
+}
+
+bool DLGFile::isAnimatedCut() const {
+	return _animatedCut;
 }
 
 Common::UString DLGFile::getStuntList() const {
@@ -218,6 +249,10 @@ void DLGFile::load(const GFF3Struct &dlg) {
 	_skippable = dlg.getBool("Skippable", true);
 	_stuntList = getOptionalString(dlg, "StuntList");
 
+	_cameraModel      = getOptionalString(dlg, "CameraModel");
+	_conversationType = static_cast<uint32_t>(getOptionalNumber(dlg, "ConversationType", 0.0));
+	_animatedCut      = getOptionalNumber(dlg, "AnimatedCut", 0.0) != 0.0;
+
 	// NPC lines ("entries")
 
 	const GFF3List &entries = dlg.getList("EntryList");
@@ -289,9 +324,26 @@ void DLGFile::readEntry(const GFF3Struct &gff, Entry &entry) {
 	entry.line.quest      = getOptionalString(gff, "Quest");
 	entry.line.questEntry = gff.getUint("QuestEntry", 0xFFFFFFFF);
 
+	entry.line.listener    = getOptionalString(gff, "Listener");
+
 	entry.line.cameraModel = getOptionalString(gff, "CameraModel");
-	entry.line.cameraID    = gff.getUint("CameraID", 0);
-	entry.line.cameraAngle = static_cast<float>(getOptionalDouble(gff, "CameraAngle"));
+	entry.line.cameraID    = static_cast<uint32_t>(getOptionalNumber(gff, "CameraID"));
+	entry.line.cameraAngle = static_cast<float>(getOptionalNumber(gff, "CameraAngle"));
+	entry.line.cameraAnimation = static_cast<uint32_t>(getOptionalNumber(gff, "CameraAnimation"));
+	entry.line.camFieldOfView  = static_cast<float>(getOptionalNumber(gff, "CamFieldOfView"));
+	entry.line.delay = static_cast<uint32_t>(getOptionalNumber(gff, "Delay", kInvalidLine));
+
+	if (gff.hasField("AnimList")) {
+		for (const GFF3Struct *anim : gff.getList("AnimList")) {
+			if (!anim)
+				continue;
+
+			Animation animation;
+			animation.participant = getOptionalString(*anim, "Participant");
+			animation.animation   = static_cast<uint32_t>(getOptionalNumber(*anim, "Animation"));
+			entry.line.animations.push_back(animation);
+		}
+	}
 	entry.line.camVidEffect= gff.getUint("CamVidEffect", 0);
 	entry.line.fadeType    = gff.getUint("FadeType", 0);
 

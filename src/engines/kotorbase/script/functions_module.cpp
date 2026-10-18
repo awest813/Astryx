@@ -184,11 +184,15 @@ void Functions::getDifficultyModifier(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setCameraMode(Aurora::NWScript::FunctionContext &ctx) {
-	// SetCameraMode(object oPlayer, int nCameraMode)
-	Object *player = ObjectContainer::toObject(ctx.getParams()[0].getObject());
-	int mode = ctx.getParams()[1].getInt();
+	// SetCameraMode(object oPlayer, int nCameraMode): the CAMERA_MODE_*
+	// constants (chase, top-down, stiff chase) select the *gameplay* camera,
+	// not a cinematic shot. Hand the camera back to the player, unless a
+	// conversation is framing the scene.
+	(void)ctx;
 
-	_game->getModule().setCameraMode(static_cast<CameraMode>(mode), player);
+	Module &module = _game->getModule();
+	if (!module.isInConversation())
+		module.restoreGameplayCamera(0.0f);
 }
 
 void Functions::setCutsceneMode(Aurora::NWScript::FunctionContext &ctx) {

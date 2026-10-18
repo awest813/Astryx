@@ -137,3 +137,8 @@ check_PROGRAMS                                                 += tests/engines/
 tests_engines_kotorbase_test_nwscript_natives_SOURCES          = tests/engines/kotorbase/nwscript_natives.cpp
 tests_engines_kotorbase_test_nwscript_natives_LDADD            = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_nwscript_natives_CXXFLAGS         = $(test_CXXFLAGS)
+
+check_PROGRAMS                                                 += tests/engines/kotorbase/test_cinematic_camera
+tests_engines_kotorbase_test_cinematic_camera_SOURCES          = tests/engines/kotorbase/cinematic_camera.cpp
+tests_engines_kotorbase_test_cinematic_camera_LDADD            = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_cinematic_camera_CXXFLAGS         = $(test_CXXFLAGS)

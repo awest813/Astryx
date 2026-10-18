@@ -54,6 +54,12 @@ public:
 	static const uint32_t kEndLine     = 0xFFFFFFFE;
 	static const uint32_t kInvalidLine = 0xFFFFFFFF;
 
+	/** KotOR: an animation a conversation participant plays during a line. */
+	struct Animation {
+		Common::UString participant; ///< Tag of the participant ("OWNER" for the owner).
+		uint32_t        animation;   ///< DLG animation number.
+	};
+
 	struct Line {
 		uint32_t id; ///< ID of this line (entry-local).
 
@@ -69,9 +75,16 @@ public:
 		uint32_t        questEntry; ///< Entry ID to set the quest to.
 
 
+		Common::UString listener;    ///< KotOR: Tag of the listener, empty if default.
+
 		Common::UString cameraModel; ///< KotOR: Camera model to use.
 		uint32_t        cameraID;    ///< KotOR: Camera ID to use.
-		float           cameraAngle; ///< KotOR: Camera angle to use.
+		float           cameraAngle; ///< KotOR: Camera angle (shot type) to use.
+		uint32_t        cameraAnimation; ///< KotOR: Animation of the camera model (0: none).
+		float           camFieldOfView;  ///< KotOR: Field of view for this line (0: default).
+		uint32_t        delay;           ///< KotOR: Seconds to show the line (kInvalidLine: default).
+
+		std::vector<Animation> animations; ///< KotOR: Participant animations during this line.
 		uint32_t        camVidEffect;///< KotOR: Camera video effect.
 		uint32_t        fadeType;    ///< KotOR: Screen fade type.
 
@@ -108,6 +121,13 @@ public:
 
 	/** KotOR: Return the stunt list. */
 	Common::UString getStuntList() const;
+
+	/** KotOR: Camera model for animated camera shots. */
+	const Common::UString &getCameraModel() const;
+	/** KotOR: Conversation type (0: cinematic/human, 1: computer). */
+	uint32_t getConversationType() const;
+	/** KotOR: Is this an animated cutscene? */
+	bool isAnimatedCut() const;
 
 	bool hasEnded() const;
 
@@ -161,6 +181,9 @@ private:
 
 	bool            _skippable; ///< KotOR: Is the conversation skippable?
 	Common::UString _stuntList; ///< KotOR: Stunt list for the conversation.
+	Common::UString _cameraModel;      ///< KotOR: Camera model for animated shots.
+	uint32_t        _conversationType; ///< KotOR: Conversation type.
+	bool            _animatedCut;      ///< KotOR: Animated cutscene.
 
 	std::vector<Entry> _entriesNPC; ///< NPC dialog lines ("entries").
 	std::vector<Entry> _entriesPC;  ///< PC dialog lines ("replies").
