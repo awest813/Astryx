@@ -1254,7 +1254,7 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 			ifoWriter.write(ifoMem);
 		}
 
-		Common::MemoryReadStream ifoStream(ifoMem.getData(), ifoMem.size(), true);
+		Common::MemoryReadStream ifoStream(ifoMem.getData(), ifoMem.size());
 		moduleErf.add("Module", Aurora::kFileTypeIFO, ifoStream);
 
 		if (_area) {
@@ -1273,7 +1273,7 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 			}
 			areaWriter.write(areaMem);
 
-			Common::MemoryReadStream areaStream(areaMem.getData(), areaMem.size(), true);
+			Common::MemoryReadStream areaStream(areaMem.getData(), areaMem.size());
 			moduleErf.add("areastate", Aurora::kFileTypeRES, areaStream);
 		}
 	}
@@ -1282,13 +1282,13 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 	Common::WriteFile savFile(savPath);
 	Aurora::ERFWriter savErf(MKTAG('S', 'A', 'V', ' '), 4, savFile, Aurora::ERFWriter::kERFVersion22);
 
-	Common::MemoryReadStream globalsStream(globalsMem.getData(), globalsMem.size(), true);
+	Common::MemoryReadStream globalsStream(globalsMem.getData(), globalsMem.size());
 	savErf.add("GLOBALVARS", Aurora::kFileTypeRES, globalsStream);
 
-	Common::MemoryReadStream partyStream(partyMem.getData(), partyMem.size(), true);
+	Common::MemoryReadStream partyStream(partyMem.getData(), partyMem.size());
 	savErf.add("partytable", Aurora::kFileTypeRES, partyStream);
 
-	Common::MemoryReadStream moduleSavStream(moduleSavMem.getData(), moduleSavMem.size(), true);
+	Common::MemoryReadStream moduleSavStream(moduleSavMem.getData(), moduleSavMem.size());
 	savErf.add(_module, Aurora::kFileTypeSAV, moduleSavStream);
 
 	// Faction reputations, in the original's REPUTE.fac format.
@@ -1299,7 +1299,7 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 		reputeWriter.write(reputeMem);
 	}
 
-	Common::MemoryReadStream reputeStream(reputeMem.getData(), reputeMem.size(), true);
+	Common::MemoryReadStream reputeStream(reputeMem.getData(), reputeMem.size());
 	savErf.add("repute", Aurora::kFileTypeFAC, reputeStream);
 
 	info("Game saved to %s", slot.c_str());
@@ -3133,6 +3133,8 @@ void Module::loadAreaObjectSaves(const Aurora::GFF3Struct &gff) {
 		Common::MemoryWriteStreamDynamic memStream(true);
 		writer.write(memStream);
 
+		// The GFF takes over the buffer.
+		memStream.setDisposable(false);
 		auto state = std::make_shared<Aurora::GFF3File>(
 			new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
 		setAreaObjectSave(key, state);

@@ -148,6 +148,8 @@ static std::shared_ptr<Aurora::GFF3File> finishStateGFF(Aurora::GFF3Writer &writ
 	Common::MemoryWriteStreamDynamic memStream(true);
 	writer.write(memStream);
 
+	// The GFF takes over the buffer.
+	memStream.setDisposable(false);
 	return std::make_shared<Aurora::GFF3File>(
 		new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
 }
