@@ -43,6 +43,9 @@
 #include "src/engines/odyssey/listbox.h"
 #include "src/engines/odyssey/scrollbar.h"
 
+#include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/area.h"
+
 #include "src/engines/kotor/savedgame.h"
 
 #include "src/engines/kotor/gui/saveload.h"
@@ -194,8 +197,15 @@ void SaveLoadMenu::tryLoadGame(const Common::UString &dir) {
 
 void SaveLoadMenu::trySaveGame(const Common::UString &dir) {
 	try {
-		// Use the module's actual name or a generic "Saved Game"
-		Common::UString saveName = "Saved Game";
+		// Name the save after where it was made, so saves can be told apart.
+		Common::UString saveName;
+		if (KotORBase::Area *area = _module->getCurrentArea())
+			saveName = area->getName();
+		if (saveName.empty())
+			saveName = _module->getName();
+		if (saveName.empty())
+			saveName = "Saved Game";
+
 		_module->saveGame(dir, saveName);
 		
 		_returnCode = 1; // Return to the previous menu
