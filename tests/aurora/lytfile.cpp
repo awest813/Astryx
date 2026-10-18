@@ -178,6 +178,49 @@ GTEST_TEST(LYTFile, getArtPlaceables) {
 	EXPECT_FLOAT_EQ(artPlaceables[4].z, 22.4);
 }
 
+GTEST_TEST(LYTFile, getTracksAndObstacles) {
+	static const char *kLYTMinigame =
+		"#MAXLAYOUT ASCII\n"
+		"beginlayout\n"
+		"   roomcount 1\n"
+		"      Room01 0.0 0.0 0.0\n"
+		"   trackcount 2\n"
+		"      Track01 1.0 2.0 3.0\n"
+		"      Track02 -1.5 4.25 0.5\n"
+		"   obstaclecount 1\n"
+		"      Obstacle01 7.0 8.0 9.0\n"
+		"   doorhookcount 0\n"
+		"donelayout\n";
+
+	Common::MemoryReadStream stream(kLYTMinigame);
+	Aurora::LYTFile lyt;
+	lyt.load(stream);
+
+	ASSERT_EQ(lyt.getRooms().size(), 1);
+
+	const Aurora::LYTFile::PlacedModelArray &tracks = lyt.getTracks();
+	ASSERT_EQ(tracks.size(), 2);
+	EXPECT_STREQ(tracks[0].model.c_str(), "Track01");
+	EXPECT_FLOAT_EQ(tracks[0].x, 1.0f);
+	EXPECT_FLOAT_EQ(tracks[0].y, 2.0f);
+	EXPECT_FLOAT_EQ(tracks[0].z, 3.0f);
+	EXPECT_STREQ(tracks[1].model.c_str(), "Track02");
+	EXPECT_FLOAT_EQ(tracks[1].x, -1.5f);
+	EXPECT_FLOAT_EQ(tracks[1].y, 4.25f);
+	EXPECT_FLOAT_EQ(tracks[1].z, 0.5f);
+
+	const Aurora::LYTFile::PlacedModelArray &obstacles = lyt.getObstacles();
+	ASSERT_EQ(obstacles.size(), 1);
+	EXPECT_STREQ(obstacles[0].model.c_str(), "Obstacle01");
+	EXPECT_FLOAT_EQ(obstacles[0].x, 7.0f);
+	EXPECT_FLOAT_EQ(obstacles[0].y, 8.0f);
+	EXPECT_FLOAT_EQ(obstacles[0].z, 9.0f);
+
+	lyt.clear();
+	EXPECT_EQ(lyt.getTracks().size(), 0);
+	EXPECT_EQ(lyt.getObstacles().size(), 0);
+}
+
 GTEST_TEST(LYTFile, clear) {
 	Common::MemoryReadStream stream(kLYTFile);
 	Aurora::LYTFile lyt;
