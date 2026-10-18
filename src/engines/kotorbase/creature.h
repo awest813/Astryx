@@ -256,6 +256,7 @@ public:
 	void addAction(const Action &action);
 	/** Remove the current action from the action queue of this creature. */
 	void popAction();
+	size_t getActionCount() const { return _actions.size(); }
 
 	struct ActiveEffect {
 		EffectType type;
@@ -274,7 +275,7 @@ public:
 	void clearActiveEffects();
 	bool removeActiveEffectAt(size_t index);
 
-	void performCutsceneAttack(Object *target, int flags);
+	void performCutsceneAttack(Object *target, int flags, int damage = 0);
 
 	// Tooltip
 

@@ -167,6 +167,8 @@ public:
 	void destroyObjectDeferred(Object *object, float delay = 0.0f);
 	/** Queue OnHeartbeat for every NPC; run with the other creature events. */
 	void queueCreatureHeartbeats();
+	/** Run queued OnSpawn scripts now (before the area's OnEnter, as in the original). */
+	void runPendingSpawnEvents();
 	/** Remove objects whose deferred destruction is due. Call outside object iteration. */
 	void processPendingDestruction();
 
@@ -238,7 +240,8 @@ public:
 		float position[3];
 		float orientation[4];
 		float fieldOfView;
-		float pitch;
+		float pitch;  ///< Degrees, applied after the orientation (0 looks straight down).
+		float height; ///< Added to the position's z.
 	};
 
 	const Camera *getCamera(uint32_t id) const;

@@ -174,10 +174,12 @@ void Area::loadPersistence() {
 		if (!state)
 			continue;
 
-		if (state->getTopLevel().getBool("Destroyed", false))
+		if (state->getTopLevel().getBool("Destroyed", false)) {
 			destroyed.push_back(o.get());
-		else
+		} else {
 			o->loadState(state->getTopLevel());
+			notifyObjectMoved(*o); // It may have moved since the GIT placed it.
+		}
 	}
 
 	// Objects a script destroyed on an earlier visit stay gone.
@@ -205,8 +207,10 @@ void Area::loadPersistence() {
 					creature->setTag(tag);
 
 				addCreature(creature);
-				if (entry->hasField("State"))
+				if (entry->hasField("State")) {
 					creature->loadState(entry->getStruct("State"));
+					notifyObjectMoved(*creature);
+				}
 			} catch (Common::Exception &e) {
 				e.add("Failed to restore spawned creature \"%s\"", templ.c_str());
 				printException(e, "WARNING: ");
@@ -652,10 +656,10 @@ void Area::loadCameras(const Aurora::GFF3List &list) {
 		if (!c) continue;
 		Camera camera;
 		camera.id = c->getUint("CameraID");
-		camera.fieldOfView = c->getDouble("FieldOfView");
-		camera.pitch = c->getDouble("MicRange"); // MicRange is often reused for pitch in some gffs? No, Pitch exists.
-		camera.pitch = c->getDouble("Pitch");
-		
+		camera.fieldOfView = c->getDouble("FieldOfView", 55.0);
+		camera.pitch = c->getDouble("Pitch", 90.0);
+		camera.height = c->getDouble("Height", 0.0);
+
 		c->getVector("Position", camera.position[0], camera.position[1], camera.position[2]);
 		c->getOrientation("Orientation", camera.orientation[0], camera.orientation[1], camera.orientation[2], camera.orientation[3]);
 		
@@ -1397,6 +1401,14 @@ void Area::addCreature(Creature *creature) {
 	// OnSpawn sets up AI and the user-defined event flags OnDeath & co rely on.
 	if (!creature->isPC())
 		creature->queueSpawnEvent();
+}
+
+void Area::runPendingSpawnEvents() {
+	for (size_t i = 0; i < _creatures.size(); ++i) {
+		Creature *creature = _creatures[i];
+		if (creature->consumeSpawnEvent() && creature->hasScript(kScriptSpawn))
+			creature->runScript(kScriptSpawn, creature, creature);
+	}
 }
 
 void Area::queueCreatureHeartbeats() {

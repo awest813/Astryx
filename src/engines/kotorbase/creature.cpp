@@ -1825,8 +1825,8 @@ namespace KotORBase {
 			return _info.hasForcePower(power);
 		}
 		void Creature::performCutsceneAttack(Object *target,
-		int flags) {
-			if (!target)
+		int flags, int damage) {
+			if (!target || target->isDead())
 				return;
 
 			makeLookAt(target);
@@ -1858,6 +1858,11 @@ namespace KotORBase {
 			if ((flags & kCutsceneAttackKnockback) || (flags & kCutsceneAttackFinishingBlow)) {
 				if (targetCreature && !(flags & kCutsceneAttackNoDamage))
 					targetCreature->playAnimation("die", false, 1.5f);
+			}
+			// The scripted damage lands with the blow, not when it was queued.
+			if (targetCreature && damage > 0 && !(flags & kCutsceneAttackNoDamage)) {
+				targetCreature->recordDamageTaken(damage, 0, this);
+				targetCreature->applyEffect(Effect(kKotOREffectDamage, damage));
 			}
 		}
 		void Creature::setDefaultAnimations() {

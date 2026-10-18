@@ -31,6 +31,7 @@
 #include "src/engines/kotor/creature.h"
 #include "src/engines/kotorbase/creature.h"
 
+#include "src/engines/kotor/gui/saveload.h"
 #include "src/engines/kotor/gui/dialog.h"
 
 #include "src/engines/kotor/gui/ingame/ingame.h"
@@ -107,7 +108,29 @@ void Module::showMenu() {
 }
 
 void Module::showDeathGUI() {
-	showIngameOptionsMenu();
+	if (_inDialog || !_ingame || !_running)
+		return;
+
+	_cameraController.stopMovement();
+	_partyLeaderController.clearUserInput();
+	_partyLeaderController.stopMovement();
+	_ingame->hideSelection();
+
+	// As in the original, a defeated party can only load a game or quit;
+	// no saving, and no returning to the dead party.
+	SaveLoadMenu menu(*this, _console, kSaveLoadMenuTypeLoad, true);
+	menu.show();
+
+	updateFrameTimestamp();
+	const uint32_t ret = menu.run();
+	menu.hide();
+
+	if (ret == 2)
+		GfxMan.unlockFrame();
+	else
+		_exit = true;
+
+	updateFrameTimestamp();
 }
 
 void Module::showGUIPanel(int panel) {

@@ -149,6 +149,13 @@ void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext 
 		return;
 	}
 
+	// Following never finishes on its own; give way to anything queued after
+	// it (e.g. an ActionDoCommand from a cutscene script).
+	if (ctx.creature->getActionCount() > 1) {
+		ctx.creature->popAction();
+		return;
+	}
+
 	float x, y, _;
 	partyLeader->getPosition(x, y, _);
 
@@ -285,10 +292,11 @@ void ActionExecutor::executeAttackObject(Action &action, const ExecutionContext 
 	// popAction() destroys the action, so keep what we still need.
 	Object *target = action.object;
 	const int choreographyFlags = action.choreographyFlags;
+	const int damage = action.damage;
 	ctx.creature->popAction();
 
 	if (choreographyFlags > 0)
-		ctx.creature->performCutsceneAttack(target, choreographyFlags);
+		ctx.creature->performCutsceneAttack(target, choreographyFlags, damage);
 	else
 		ctx.creature->startCombat(target, ctx.area->_module->getNextCombatRound());
 }
@@ -661,8 +669,9 @@ void ActionExecutor::executeCutsceneAttack(Action &action, const ExecutionContex
 	// popAction() destroys the action, so keep what we still need.
 	Object *target = action.object;
 	const int choreographyFlags = action.choreographyFlags;
+	const int damage = action.damage;
 	ctx.creature->popAction();
-	ctx.creature->performCutsceneAttack(target, choreographyFlags);
+	ctx.creature->performCutsceneAttack(target, choreographyFlags, damage);
 }
 
 void ActionExecutor::loadSpells() {

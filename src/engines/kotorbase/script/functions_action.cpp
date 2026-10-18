@@ -748,13 +748,12 @@ void Functions::cutsceneAttack(Aurora::NWScript::FunctionContext &ctx) {
 			if ((damage >= victim->getCurrentHitPoints()) && !victim->getMinOneHitPoints())
 				flags |= kCutsceneAttackFinishingBlow;
 
-			// The queued action has no damage payload, so apply the scripted
-			// damage now; scripts that wait for the target to die rely on it.
-			victim->applyEffect(Effect(kKotOREffectDamage, damage));
+			// Applied when the blow lands (Creature::performCutsceneAttack).
 		}
 	}
 
 	Action action(kActionCutsceneAttack, target, flags);
+	action.damage = (miss || (flags & kCutsceneAttackNoDamage)) ? 0 : damage;
 	attacker->addAction(action);
 }
 

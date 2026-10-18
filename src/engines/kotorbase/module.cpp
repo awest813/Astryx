@@ -88,7 +88,8 @@ namespace KotORBase {
 
 static std::map<int, Common::UString> sCustomDialogTokens;
 
-static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst);
+static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst,
+                                 const char *skipField = nullptr);
 
 const std::map<int, Common::UString> &Module::getCustomDialogTokens() {
 	return sCustomDialogTokens;
@@ -558,8 +559,9 @@ void Module::unload(bool completeUnload) {
 	}
 
 	// Companions are rebuilt from their templates in the next module; keep
-	// their progression (levels, XP, gear, HP) across the transition.
-	if (!completeUnload) {
+	// their progression (levels, XP, gear, HP) across the transition. Only
+	// while the area (which owns them) is alive: a transition unloads twice.
+	if (!completeUnload && _area) {
 		for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
 			const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
 			if (!member.second)
@@ -665,16 +667,42 @@ void Module::replaceModule() {
 			setMapExplored(_area->getResRef(), _area->getMapExplored());
 		}
 
+		// Leaving the old area runs OnExit scripts and saves its state; when
+		// loading a save, none of that may leak into the state just loaded.
 		const CreatureInfo savedPCInfo = _pcInfo;
+		const auto savedNPCStates       = _npcStates;
+		const auto savedAreaObjectSaves = _areaObjectSaves;
+		const auto savedExploredMaps    = _exploredMaps;
+		const auto savedBooleans        = _globalBooleans;
+		const auto savedNumbers         = _globalNumbers;
+		const auto savedStrings         = _globalStrings;
+		const auto savedJournal         = _journal;
+		const auto savedJournalWorld    = _journalWorld;
+		const auto savedQuestPictures   = _journalQuestPictures;
+		const auto savedPlanetSelect    = _planetSelectable;
+		const auto savedPlanetAvailable = _planetAvailable;
+		const int  savedSelectedPlanet  = _selectedPlanet;
 
 		unload(false);
 		_exit = true;
 		_loadedFromSaveGame = loadingSave;
 
 		if (loadingSave) {
-			_pcInfo = savedPCInfo;
-			_npcStates.clear();
+			_pcInfo               = savedPCInfo;
+			_npcStates            = savedNPCStates;
+			_areaObjectSaves      = savedAreaObjectSaves;
+			_exploredMaps         = savedExploredMaps;
+			_globalBooleans       = savedBooleans;
+			_globalNumbers        = savedNumbers;
+			_globalStrings        = savedStrings;
+			_journal              = savedJournal;
+			_journalWorld         = savedJournalWorld;
+			_journalQuestPictures = savedQuestPictures;
+			_planetSelectable     = savedPlanetSelect;
+			_planetAvailable      = savedPlanetAvailable;
+			_selectedPlanet       = savedSelectedPlanet;
 			_temporaryPartyMembers.clear();
+			_queuedUserDefinedEvents.clear();
 		}
 
 		loadModule(newModule, entryLocation, entryLocationType);
@@ -778,6 +806,9 @@ void Module::leave() {
 }
 
 void Module::enterArea() {
+	// Creatures spawn (and set up their AI) before any OnEnter script runs.
+	_area->runPendingSpawnEvents();
+
 	GfxMan.lockFrame();
 
 	_area->show();
@@ -957,6 +988,12 @@ void Module::processEventQueue() {
 	}
 
 	handleEvents();
+
+	// A save was just loaded from the menu: the old world must not run another
+	// frame (scripts, deaths, destruction) on top of the loaded state.
+	if (_loadingSavedGame && !_newModule.empty())
+		return;
+
 	handleActions();
 	processQueuedUserDefinedEvents();
 
@@ -2806,8 +2843,12 @@ Object *Module::getLastAoECreator() const {
 }
 
 /** Copy every field of a GFF3 struct (recursively) into a writer struct. */
-static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst) {
+static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst,
+                                 const char *skipField) {
 	for (const Common::UString &name : src.getFieldNames()) {
+		if (skipField && name == skipField)
+			continue;
+
 		switch (src.getFieldType(name)) {
 			case Aurora::GFF3Struct::kFieldTypeByte:
 				dst.addByte(name, static_cast<uint8_t>(src.getUint(name)));
@@ -2898,7 +2939,7 @@ void Module::loadAreaObjectSaves(const Aurora::GFF3Struct &gff) {
 			continue;
 
 		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
-		copyObjectSaveFields(*entry, *writer.getTopLevel());
+		copyObjectSaveFields(*entry, *writer.getTopLevel(), "Key");
 
 		Common::MemoryWriteStreamDynamic memStream(true);
 		writer.write(memStream);

@@ -52,6 +52,7 @@ struct Action {
 	float range;
 	int   actionID { -1 }; ///< Spell, feat or power ID.
 	int   choreographyFlags { 0 }; ///< Cinematic attack modifiers (CutsceneAttack).
+	int   damage { 0 };            ///< CutsceneAttack: damage dealt when the blow lands.
 	float startTime { -1.0f }; ///< Time the action started (for timed actions).
 	bool  initialized { false };
 
