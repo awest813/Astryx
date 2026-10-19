@@ -20,13 +20,21 @@
 
 /** @file
  *  Unit tests for KotOR world interactions: bashing locked doors and
- *  containers open, computer terminals.
+ *  containers open, computer terminals, setting mines.
  */
+
+#include <cmath>
+#include <vector>
 
 #include "gtest/gtest.h"
 
+#include "src/common/memreadstream.h"
+
+#include "src/aurora/2dafile.h"
+
 #include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/situated.h"
+#include "src/engines/kotorbase/trap.h"
 #include "src/engines/kotorbase/gui/dialog.h"
 
 using namespace Engines::KotORBase;
@@ -77,4 +85,56 @@ GTEST_TEST(KotORInteraction, computerCountersCountItemsByTag) {
 
 	inventory.removeItem("k_computer_spike", 1);
 	EXPECT_EQ(inventory.countItems(kComputerSpikeTag), 2);
+}
+
+GTEST_TEST(KotORInteraction, minePlacementAheadOfTheSetter) {
+	// Orientation 0 faces +Y (Object::makeLookAt()), 90 faces -X, -90 faces +X.
+	glm::vec2 at = TrapRules::getMinePlacement(glm::vec2(10.0f, 20.0f), 0.0f, 1.0f);
+	EXPECT_NEAR(at.x, 10.0f, 1e-4f);
+	EXPECT_NEAR(at.y, 21.0f, 1e-4f);
+
+	at = TrapRules::getMinePlacement(glm::vec2(10.0f, 20.0f), 90.0f, 2.0f);
+	EXPECT_NEAR(at.x, 8.0f, 1e-4f);
+	EXPECT_NEAR(at.y, 20.0f, 1e-4f);
+
+	at = TrapRules::getMinePlacement(glm::vec2(0.0f, 0.0f), -90.0f, TrapRules::kMinePlaceDistance);
+	EXPECT_NEAR(at.x, TrapRules::kMinePlaceDistance, 1e-4f);
+	EXPECT_NEAR(at.y, 0.0f, 1e-4f);
+
+	// A square around the mine.
+	const std::vector<glm::vec3> geometry = TrapRules::getMineGeometry(0.5f);
+	ASSERT_EQ(geometry.size(), 4u);
+	for (const glm::vec3 &point : geometry) {
+		EXPECT_FLOAT_EQ(std::fabs(point.x), 0.5f);
+		EXPECT_FLOAT_EQ(std::fabs(point.y), 0.5f);
+		EXPECT_FLOAT_EQ(point.z, 0.0f);
+	}
+}
+
+GTEST_TEST(KotORInteraction, mineItemsAndTrapTypes) {
+	EXPECT_TRUE(TrapRules::isMineItem(TrapRules::kBaseItemMine, false));
+	EXPECT_TRUE(TrapRules::isMineItem(1, true));   // A Trap property makes a mine.
+	EXPECT_FALSE(TrapRules::isMineItem(59, false)); // Security tunneler.
+
+	Common::MemoryReadStream stream(
+		"2DA V2.0\n"
+		"\n"
+		"   label            trapscript       resref         detectdcmod disarmdcmod\n"
+		"0  Minor_Frag       k_trp_minorfrag  g_i_trapkit001 0           0\n"
+		"1  Average_Frag     k_trp_avgfrag    g_i_trapkit002 5           5\n"
+		"2  Minor_Gas        k_trp_minorgas   g_i_trapkit010 0           0\n");
+	const Aurora::TwoDAFile traps(stream);
+
+	// The row whose recovered item is the mine item, whatever the case.
+	EXPECT_EQ(TrapRules::findTrapType(traps, "G_I_TRAPKIT002", -1), 1);
+	EXPECT_EQ(TrapRules::findTrapType(traps, "g_i_trapkit010", 0), 2);
+	// Else the Trap property's subtype, when it is a row.
+	EXPECT_EQ(TrapRules::findTrapType(traps, "g_i_unknown", 0), 0);
+	EXPECT_EQ(TrapRules::findTrapType(traps, "g_i_unknown", 7), -1);
+	EXPECT_EQ(TrapRules::findTrapType(traps, "", -1), -1);
+
+	// DCs grow with the setter's Demolitions.
+	EXPECT_EQ(TrapRules::getSetMineDC(0, 0), 10);
+	EXPECT_EQ(TrapRules::getSetMineDC(6, 5), 21);
+	EXPECT_EQ(TrapRules::getSetMineDC(-3, 0), 10);
 }

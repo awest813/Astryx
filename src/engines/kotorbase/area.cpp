@@ -182,6 +182,31 @@ Common::UString Area::getSpawnedCreaturesKey() const {
 	return _resRef + ":@spawned";
 }
 
+Common::UString Area::getPlacedMinesKey() const {
+	return _resRef + ":@mines";
+}
+
+/** The GIT-like trigger instance of a laid mine (without its trap fields). */
+static void writeMineInstance(Aurora::GFF3WriterStruct &gff, const Common::UString &tag, uint32_t faction,
+                              const Common::UString &script, const glm::vec3 &position) {
+	gff.addExoString("Tag", tag);
+	gff.addUint32("Type", Trigger::kKindTrap);
+	gff.addUint32("Faction", faction);
+	gff.addResRef("OnTrapTriggered", script);
+
+	gff.addFloat("XPosition", position.x);
+	gff.addFloat("YPosition", position.y);
+	gff.addFloat("ZPosition", position.z);
+
+	Aurora::GFF3WriterListPtr geometry = gff.addList("Geometry");
+	for (const glm::vec3 &point : TrapRules::getMineGeometry(TrapRules::kMineHalfSize)) {
+		Aurora::GFF3WriterStructPtr vertex = geometry->addStruct();
+		vertex->addFloat("PointX", point.x);
+		vertex->addFloat("PointY", point.y);
+		vertex->addFloat("PointZ", point.z);
+	}
+}
+
 void Area::loadPersistence() {
 	assignPersistenceKeys();
 
@@ -205,6 +230,13 @@ void Area::loadPersistence() {
 	// Objects a script destroyed on an earlier visit stay gone.
 	for (Object *object : destroyed)
 		removeObject(object);
+
+	// The mines the party laid here on an earlier visit.
+	std::shared_ptr<Aurora::GFF3File> mines = _module->getAreaObjectSave(getPlacedMinesKey());
+	if (mines && mines->getTopLevel().hasField("Mines"))
+		for (const Aurora::GFF3Struct *entry : mines->getTopLevel().getList("Mines"))
+			if (entry)
+				addMine(*entry);
 
 	// Recreate creatures that scripts spawned here (CreateObject) on an earlier visit.
 	std::shared_ptr<Aurora::GFF3File> spawned = _module->getAreaObjectSave(getSpawnedCreaturesKey());
@@ -275,6 +307,93 @@ void Area::savePersistence() {
 	}
 
 	_module->setAreaObjectSave(getSpawnedCreaturesKey(), finishStateGFF(writer));
+
+	// Mines the party laid that are still armed.
+	Aurora::GFF3Writer minesWriter(MKTAG('G', 'F', 'F', ' '));
+	Aurora::GFF3WriterListPtr mines = minesWriter.getTopLevel()->addList("Mines");
+	for (uint32_t id : _placedMines) {
+		const Trigger *mine = findTrigger(id);
+		if (!mine || !mine->isTrapActive())
+			continue;
+
+		float x, y, z;
+		mine->getPosition(x, y, z);
+
+		Aurora::GFF3WriterStructPtr entry = mines->addStruct();
+		writeMineInstance(*entry, mine->getTag(), static_cast<uint32_t>(mine->getFaction()),
+		                  mine->getScript(kScriptTrapTriggered), glm::vec3(x, y, z));
+		mine->saveState(*entry);
+	}
+
+	_module->setAreaObjectSave(getPlacedMinesKey(), finishStateGFF(minesWriter));
+}
+
+Trigger *Area::addMine(const Aurora::GFF3Struct &instance) {
+	std::unique_ptr<Trigger> trigger;
+	try {
+		trigger = std::make_unique<Trigger>(instance);
+	} catch (Common::Exception &e) {
+		e.add("Failed to lay a mine");
+		printException(e, "WARNING: ");
+		return nullptr;
+	}
+
+	// Armed, and known to the party (shows its model).
+	trigger->loadState(instance);
+
+	Trigger *mine = trigger.get();
+	loadObject(std::move(trigger));
+	_triggers.push_back(mine);
+	_placedMines.push_back(mine->getID());
+
+	return mine;
+}
+
+Trigger *Area::placeMine(int trapType, const glm::vec3 &position, Creature &setter) {
+	Common::UString script;
+	int detectModifier = 0, disarmModifier = 0;
+
+	try {
+		const Aurora::TwoDAFile &traps = TwoDAReg.get2DA("traps");
+		if ((trapType < 0) || (static_cast<size_t>(trapType) >= traps.getRowCount()))
+			return nullptr;
+
+		const Aurora::TwoDARow &row = traps.getRow(trapType);
+		script         = row.getString("trapscript");
+		detectModifier = row.empty("detectdcmod") ? 0 : row.getInt("detectdcmod");
+		disarmModifier = row.empty("disarmdcmod") ? 0 : row.getInt("disarmdcmod");
+	} catch (...) {
+		warning("Area::placeMine(): could not read traps.2da");
+		return nullptr;
+	}
+
+	const int demolitions = setter.getSkillRank(kSkillDemolitions);
+
+	Trap trap;
+	trap.setTrapped(true);
+	trap.setType(static_cast<uint8_t>(trapType));
+	trap.setDetectDC(static_cast<uint8_t>(TrapRules::getSetMineDC(demolitions, detectModifier)));
+	trap.setDisarmDC(static_cast<uint8_t>(TrapRules::getSetMineDC(demolitions, disarmModifier)));
+	trap.setOneShot(true);
+	trap.setFlagged(true); // The party knows where its own mines are.
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	writeMineInstance(*writer.getTopLevel(), "PartyMine", static_cast<uint32_t>(setter.getFaction()), script, position);
+	trap.saveState(*writer.getTopLevel());
+
+	std::shared_ptr<Aurora::GFF3File> instance = finishStateGFF(writer);
+
+	Trigger *mine = addMine(instance->getTopLevel());
+	if (!mine)
+		return nullptr;
+
+	mine->getTrap().setCreatorID(setter.getID());
+
+	debugC(Common::kDebugEngineLogic, 1, "\"%s\" laid mine %d at %.2f, %.2f (DC %d/%d)",
+	       setter.getTag().c_str(), trapType, position.x, position.y,
+	       (int)mine->getTrap().getDetectDC(), (int)mine->getTrap().getDisarmDC());
+
+	return mine;
 }
 
 void Area::writePersistence(Aurora::GFF3WriterStruct &gff) const {
@@ -297,6 +416,7 @@ void Area::clear() {
 	_creatures.clear();
 	_rooms.clear();
 	_triggers.clear();
+	_placedMines.clear();
 	_encounters.clear();
 	_situatedObjects.clear();
 	_staticWalkmeshes.clear();

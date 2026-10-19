@@ -67,7 +67,7 @@ enum ActionMenuSelfPanel {
 	kSelfPanelPower   = 0, ///< Friendly Force powers.
 	kSelfPanelMedical = 1, ///< Medical items (medpacs).
 	kSelfPanelOther   = 2, ///< Other usable items (stims, shields, ...).
-	kSelfPanelMine    = 3  ///< Mines (not offered yet: nothing can set one).
+	kSelfPanelMine    = 3  ///< Mines to set ahead of the leader.
 };
 
 enum ActionMenuOptionType {
@@ -79,7 +79,8 @@ enum ActionMenuOptionType {
 	kActionMenuItemPower,///< Cast the Force power of an equipped item (armband).
 	kActionMenuDisarmMine, ///< Demolitions: disarm a detected mine.
 	kActionMenuRecoverMine,///< Demolitions: recover a detected mine (harder; gives the mine).
-	kActionMenuBash        ///< Attack a locked door or container to break it open.
+	kActionMenuBash,       ///< Attack a locked door or container to break it open.
+	kActionMenuSetMine     ///< Demolitions: lay a mine (itemTag) ahead of the leader.
 };
 
 struct ActionMenuOption {
@@ -170,7 +171,8 @@ struct ActionMenuItemEntry {
 		kKindNone,    ///< Not usable from the action menus.
 		kKindMedical, ///< Restores vitality.
 		kKindOther,   ///< Other usable item (stim, shield, ...).
-		kKindGrenade  ///< Thrown at the target.
+		kKindGrenade, ///< Thrown at the target.
+		kKindMine     ///< Set on the ground.
 	};
 
 	Common::UString tag;
@@ -179,7 +181,7 @@ struct ActionMenuItemEntry {
 	Kind kind { kKindNone };
 };
 
-/** Describe an inventory item for the menus: medical (restores vitality),
+/** Describe an inventory item for the menus: mine, medical (restores vitality),
  *  grenade, other usable item, or not usable from the menus. */
 ActionMenuItemEntry describeActionMenuItem(const Item &item);
 

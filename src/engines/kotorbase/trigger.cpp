@@ -87,8 +87,9 @@ void Trigger::load(const Aurora::GFF3Struct &gff) {
 		loadLinkedTo(utt->getTopLevel());
 		loadTrap(utt->getTopLevel());
 	} else {
-		// Fall back to what the GIT instance itself carries.
-		warning("Trigger \"%s\" has no blueprint", _templateResRef.c_str());
+		// Fall back to what the GIT instance itself carries (mines laid at runtime have no blueprint).
+		if (!_templateResRef.empty())
+			warning("Trigger \"%s\" has no blueprint", _templateResRef.c_str());
 		loadBlueprint(gff);
 	}
 

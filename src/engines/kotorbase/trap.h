@@ -37,6 +37,10 @@
  *    harder: the DC is DisarmDC + kRecoverDCPenalty.
  *  - Locks are picked with Security + roll against the lock DC; failure
  *    costs nothing but time, so out of combat the check takes 20.
+ *  - Mines the party sets (mine items, baseitems.2da row 58 as in KotOR.js)
+ *    are laid just ahead of the creature setting them, as a small square
+ *    trap trigger of its faction: the enemies set them off. Their DCs are
+ *    10 + the setter's Demolitions + the traps.2da DC modifiers.
  */
 
 #ifndef ENGINES_KOTORBASE_TRAP_H
@@ -44,12 +48,16 @@
 
 #include <vector>
 
+#include "external/glm/vec2.hpp"
+#include "external/glm/vec3.hpp"
+
 #include "src/common/types.h"
 #include "src/common/ustring.h"
 
 namespace Aurora {
 	class GFF3Struct;
 	class GFF3WriterStruct;
+	class TwoDAFile;
 }
 
 namespace Engines {
@@ -89,6 +97,35 @@ DisarmResult disarm(int demolitions, int roll, int disarmDC, bool recover);
 
 /** Does a creature with this Security skill (plus any tool bonus) open a lock of this DC? */
 bool unlocks(int security, int roll, int lockDC);
+
+/** baseitems.2da row of the mines (KotOR.js' mine filter). */
+extern const int kBaseItemMine;
+/** itempropdef.2da row of the "Trap" item property: its subtype is the traps.2da row. */
+extern const int kItemPropertyTrap;
+/** Mines are laid this far (m) ahead of the creature setting them. */
+extern const float kMinePlaceDistance;
+/** Half the side (m) of a laid mine's square trigger. */
+extern const float kMineHalfSize;
+/** How long (s) setting a mine takes. */
+extern const float kSetMineTime;
+
+/** Is an item of this base item, with or without a Trap property, a mine? */
+bool isMineItem(int baseItem, bool hasTrapProperty);
+
+/** The traps.2da row of a mine item: the row whose "resref" (the item recovering
+ *  the mine gives) is the item's template, else @p trapProperty (the subtype of
+ *  its Trap property), else -1. */
+int findTrapType(const Aurora::TwoDAFile &traps, const Common::UString &itemResRef, int trapProperty);
+
+/** Where a creature standing at @p position facing @p orientation (degrees, as
+ *  Object::getOrientation()) lays a mine. */
+glm::vec2 getMinePlacement(const glm::vec2 &position, float orientation, float distance);
+
+/** The corners of a laid mine's trigger, relative to its position. */
+std::vector<glm::vec3> getMineGeometry(float halfSize);
+
+/** The detect or disarm DC of a mine set with this Demolitions skill. */
+int getSetMineDC(int demolitions, int dcModifier);
 
 } // End of namespace TrapRules
 

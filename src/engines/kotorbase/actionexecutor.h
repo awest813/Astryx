@@ -93,6 +93,8 @@ private:
 	static void executeRandomWalk(Action &action, const ExecutionContext &ctx);
 	/** Disarm, recover, flag or examine a mine or a trapped door/placeable. */
 	static void executeTrapAction(Action &action, const ExecutionContext &ctx);
+	/** Lay the mine of the action's item just ahead of the creature. */
+	static void executeSetTrap(Action &action, const ExecutionContext &ctx);
 	static void executeUseObject(Action &action, const ExecutionContext &ctx);
 	static void executeAttackObject(Action &action, const ExecutionContext &ctx);
 	static void executePickUpItem(Action &action, const ExecutionContext &ctx);

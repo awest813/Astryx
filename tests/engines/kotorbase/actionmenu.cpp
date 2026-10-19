@@ -211,6 +211,34 @@ GTEST_TEST(KotORBaseActionMenu, hostileTargetGetsAttacksFeatsAndHostilePowers) {
 	EXPECT_EQ(optionIDs(panels[kTargetPanelAttack]), (std::vector<int>{ -1, 30 }));
 }
 
+GTEST_TEST(KotORBaseActionMenu, minesAreSetFromTheSelfMenu) {
+	const ActionMenuTalents talents = makeTalents();
+	const CreatureInfo leader = makeLeader();
+
+	ActionMenuInput input;
+	input.leader = &leader;
+
+	ActionMenuItemEntry mine;
+	mine.tag  = "g_i_trapkit001";
+	mine.name = "Minor Frag Mine";
+	mine.kind = ActionMenuItemEntry::kKindMine;
+	ActionMenuItemEntry medpac;
+	medpac.tag = "g_i_medeqpmnt01";
+	medpac.kind = ActionMenuItemEntry::kKindMedical;
+	input.items = { mine, medpac };
+
+	const ActionMenuSelfPanels panels = buildSelfActionMenu(input, talents);
+	ASSERT_EQ(panels[kSelfPanelMine].size(), 1u);
+	EXPECT_EQ(panels[kSelfPanelMine].getOptions()[0].type, kActionMenuSetMine);
+	EXPECT_EQ(panels[kSelfPanelMine].getOptions()[0].itemTag, "g_i_trapkit001");
+	EXPECT_EQ(panels[kSelfPanelMine].getOptions()[0].name, "Minor Frag Mine");
+	EXPECT_EQ(panels[kSelfPanelMedical].size(), 1u);
+
+	// Not thrown at a target like a grenade.
+	input.target = kActionMenuTargetHostile;
+	EXPECT_TRUE(buildTargetActionMenu(input, talents)[kTargetPanelItem].empty());
+}
+
 GTEST_TEST(KotORBaseActionMenu, noHostileActionsOnNonHostileTargets) {
 	const ActionMenuTalents talents = makeTalents();
 	const CreatureInfo leader = makeLeader();
@@ -395,7 +423,8 @@ GTEST_TEST(KotORBaseActionMenu, lockedObjectOffersBashAndSecurity) {
 	ASSERT_EQ(panels[kTargetPanelPower].size(), 1u);
 	EXPECT_EQ(panels[kTargetPanelPower].getOptions()[0].type, kActionMenuOpenLock);
 
-	// Plot, NotBlastable or already broken: Security only.
+	// Plot, NotBlastable or already broken: Security only (and no mine on the ground).
+	EXPECT_TRUE(buildSelfActionMenu(input, talents)[kSelfPanelMine].empty());
 	input.targetCanBeBashed = false;
 	EXPECT_TRUE(buildTargetActionMenu(input, talents)[kTargetPanelAttack].empty());
 }

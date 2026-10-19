@@ -985,6 +985,20 @@ void Module::useActionMenuOption(const ActionMenuOption &option, Object *target)
 			break;
 		}
 
+		case kActionMenuSetMine: {
+			Creature *pc = getPC();
+			if (!pc || !pc->getInventory().hasItem(option.itemTag))
+				return;
+
+			// Laid just ahead of the leader (ActionExecutor::executeSetTrap()).
+			KotORBase::Action action(kActionSetTrap);
+			action.item = option.itemTag;
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
 		case kActionMenuDisarmMine:
 		case kActionMenuRecoverMine: {
 			if (!target)

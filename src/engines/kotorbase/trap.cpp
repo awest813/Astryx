@@ -24,9 +24,14 @@
  */
 
 #include <algorithm>
+#include <cmath>
+
+#include "src/common/maths.h"
+#include "src/common/util.h"
 
 #include "src/aurora/gff3file.h"
 #include "src/aurora/gff3writer.h"
+#include "src/aurora/2dafile.h"
 
 #include "src/engines/kotorbase/trap.h"
 
@@ -65,6 +70,48 @@ DisarmResult disarm(int demolitions, int roll, int disarmDC, bool recover) {
 
 bool unlocks(int security, int roll, int lockDC) {
 	return (roll + security) >= lockDC;
+}
+
+const int   kBaseItemMine      = 58;
+const int   kItemPropertyTrap  = 46;
+const float kMinePlaceDistance = 1.0f;
+const float kMineHalfSize      = 0.75f;
+const float kSetMineTime       = 1.5f;
+
+bool isMineItem(int baseItem, bool hasTrapProperty) {
+	return (baseItem == kBaseItemMine) || hasTrapProperty;
+}
+
+int findTrapType(const Aurora::TwoDAFile &traps, const Common::UString &itemResRef, int trapProperty) {
+	if (!itemResRef.empty()) {
+		for (size_t i = 0; i < traps.getRowCount(); ++i)
+			if (traps.getRow(i).getString("resref").equalsIgnoreCase(itemResRef))
+				return static_cast<int>(i);
+	}
+
+	if ((trapProperty >= 0) && (static_cast<size_t>(trapProperty) < traps.getRowCount()))
+		return trapProperty;
+
+	return -1;
+}
+
+glm::vec2 getMinePlacement(const glm::vec2 &position, float orientation, float distance) {
+	// An orientation of 0 faces +Y (Object::makeLookAt()).
+	const float facing = Common::deg2rad(orientation + 90.0f);
+	return position + distance * glm::vec2(std::cos(facing), std::sin(facing));
+}
+
+std::vector<glm::vec3> getMineGeometry(float halfSize) {
+	return {
+		glm::vec3(-halfSize, -halfSize, 0.0f),
+		glm::vec3( halfSize, -halfSize, 0.0f),
+		glm::vec3( halfSize,  halfSize, 0.0f),
+		glm::vec3(-halfSize,  halfSize, 0.0f)
+	};
+}
+
+int getSetMineDC(int demolitions, int dcModifier) {
+	return CLIP(10 + MAX(demolitions, 0) + dcModifier, 1, 255);
 }
 
 } // End of namespace TrapRules

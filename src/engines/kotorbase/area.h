@@ -187,6 +187,10 @@ public:
 	Item *spawnDroppedItem(const Common::UString &tag, float x, float y, float z);
 	/** Create a placeable from its blueprint (CreateObject). */
 	Placeable *spawnPlaceable(const Common::UString &templateResRef, float x, float y, float z, float facing);
+	/** Lay a mine of traps.2da row @p trapType at @p position, set by @p setter: a
+	 *  trap trigger of the setter's faction (it goes off for their enemies), that
+	 *  the party knows about. It's kept when the party leaves and comes back. */
+	Trigger *placeMine(int trapType, const glm::vec3 &position, Creature &setter);
 	void addToObjectMap(Object *object);
 	void removeObject(Object *object);
 	/** Destroy an object at the end of the frame (DestroyObject), after an optional delay. */
@@ -208,6 +212,9 @@ public:
 	/** The object leaves the area for good (destroyed, joined the party, ...). */
 	void releaseFromPersistence(Object &object);
 	Common::UString getSpawnedCreaturesKey() const;
+	Common::UString getPlacedMinesKey() const;
+	/** Add a mine laid at runtime, from its instance and trap state. */
+	Trigger *addMine(const Aurora::GFF3Struct &instance);
 	/** Save-state key of an object; tagCounts tracks repeated tags. */
 	Common::UString getPersistenceKey(const Object &object, std::map<Common::UString, int> &tagCounts) const;
 	void writePersistence(Aurora::GFF3WriterStruct &gff) const;
@@ -355,6 +362,8 @@ private:
 	bool _processingTriggers { false };
 	/** Creature ID -> the mine (trigger ID) it spotted last. */
 	std::map<uint32_t, uint32_t> _lastTrapDetected;
+	/** Mines laid at runtime (trigger IDs), which the GIT doesn't know about. */
+	std::vector<uint32_t> _placedMines;
 
 	HeartbeatScheduler _heartbeats;
 

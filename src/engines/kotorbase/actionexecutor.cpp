@@ -126,6 +126,9 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 		case kActionRandomWalk:
 			executeRandomWalk(action, ctx);
 			break;
+		case kActionSetTrap:
+			executeSetTrap(action, ctx);
+			break;
 		case kActionDisableTrap:
 		case kActionRecoverTrap:
 		case kActionFlagTrap:
@@ -525,6 +528,74 @@ void ActionExecutor::executeTrapAction(Action &action, const ExecutionContext &c
 	// A mine is gone for good once disarmed.
 	if (mine)
 		ctx.area->destroyObjectDeferred(mine);
+}
+
+/** The animation of setting a mine: animations.2da row 52 (KotOR.js' SET_MINE). */
+static Common::UString getSetMineAnimation() {
+	try {
+		const Aurora::TwoDAFile &animations = TwoDAReg.get2DA("animations");
+		const Common::UString name = animations.getRow(52).getString("name");
+		if (!name.empty())
+			return name;
+	} catch (...) {
+	}
+
+	return "setmine";
+}
+
+void ActionExecutor::executeSetTrap(Action &action, const ExecutionContext &ctx) {
+	Creature *creature = ctx.creature;
+
+	if (action.step == 0) {
+		const Common::UString animation = getSetMineAnimation();
+		if (creature->hasModelAnimation(animation))
+			creature->playAnimation(animation, false);
+
+		action.step = 1;
+		action.startTime = 0.0f;
+		return;
+	}
+
+	action.startTime += ctx.frameTime;
+	if (action.startTime < TrapRules::kSetMineTime)
+		return;
+
+	// popAction() destroys the action, so keep what we still need.
+	const Common::UString item = action.item;
+	creature->popAction();
+	creature->playDefaultAnimation();
+
+	Inventory &inventory = getLootInventory(*ctx.area->_module, *creature);
+	if (!inventory.hasItem(item))
+		return;
+
+	int trapType = -1;
+	try {
+		const Item mine(item);
+		trapType = TrapRules::findTrapType(TwoDAReg.get2DA("traps"), item,
+		                                   mine.getItemPropertySubtype(TrapRules::kItemPropertyTrap, -1));
+	} catch (...) {
+		trapType = -1;
+	}
+
+	if (trapType < 0) {
+		warning("Cannot set mine \"%s\": no traps.2da row", item.c_str());
+		return;
+	}
+
+	float x, y, z, ox, oy, oz, angle;
+	creature->getPosition(x, y, z);
+	creature->getOrientation(ox, oy, oz, angle);
+
+	const glm::vec2 place = TrapRules::getMinePlacement(glm::vec2(x, y), angle, TrapRules::kMinePlaceDistance);
+
+	// Not into a wall: lay it at the creature's feet then.
+	glm::vec3 at(place.x, place.y, ctx.area->evaluateElevation(place.x, place.y));
+	if ((at.z == FLT_MIN) || !ctx.area->walkable(glm::vec3(x, y, z + 0.1f), glm::vec3(at.x, at.y, at.z + 0.1f)))
+		at = glm::vec3(x, y, z);
+
+	if (ctx.area->placeMine(trapType, at, *creature))
+		inventory.removeItem(item, 1);
 }
 
 void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ctx) {

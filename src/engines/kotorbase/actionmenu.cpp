@@ -38,6 +38,7 @@
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/itemactions.h"
+#include "src/engines/kotorbase/trap.h"
 #include "src/engines/kotorbase/types.h"
 
 namespace Engines {
@@ -339,7 +340,9 @@ ActionMenuItemEntry describeActionMenuItem(const Item &item) {
 	entry.icon = item.getIcon();
 	entry.name = item.getName();
 
-	if (isEquipableItem(item) || !isUsableConsumable(item))
+	if (TrapRules::isMineItem(item.getBaseItem(), item.hasItemProperty(TrapRules::kItemPropertyTrap)))
+		entry.kind = ActionMenuItemEntry::kKindMine;
+	else if (isEquipableItem(item) || !isUsableConsumable(item))
 		entry.kind = ActionMenuItemEntry::kKindNone;
 	else if (item.getItemClass().equalsIgnoreCase("grenade"))
 		entry.kind = ActionMenuItemEntry::kKindGrenade;
@@ -499,6 +502,11 @@ ActionMenuSelfPanels buildSelfActionMenu(const ActionMenuInput &input, const Act
 			panels[kSelfPanelMedical].add(makeItemOption(item));
 		else if (item.kind == ActionMenuItemEntry::kKindOther)
 			panels[kSelfPanelOther].add(makeItemOption(item));
+		else if (item.kind == ActionMenuItemEntry::kKindMine) {
+			ActionMenuOption option = makeItemOption(item);
+			option.type = kActionMenuSetMine;
+			panels[kSelfPanelMine].add(option);
+		}
 	}
 
 	return panels;
