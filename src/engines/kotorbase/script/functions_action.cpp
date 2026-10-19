@@ -193,7 +193,16 @@ void Functions::actionStartConversation(Aurora::NWScript::FunctionContext &ctx) 
 
 	const Common::UString &convName = ctx.getParams()[1].getString();
 
-	_game->getModule().startConversation(convName, ctx.getCaller());
+	// The NPC owns the conversation (its dialog when sDialog is empty, OBJECT_SELF
+	// of the dialog's scripts), even when the PC is told to start it (as KotOR.js).
+	Aurora::NWScript::Object *owner = ctx.getCaller();
+	Creature *caller = ObjectContainer::toCreature(owner);
+	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	if (caller && caller->isPC() && target && (target != caller) &&
+	    !(ObjectContainer::toCreature(target) && ObjectContainer::toCreature(target)->isPC()))
+		owner = target;
+
+	_game->getModule().startConversation(convName, owner);
 
 }
 
