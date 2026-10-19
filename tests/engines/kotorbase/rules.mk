@@ -157,3 +157,8 @@ check_PROGRAMS                                           += tests/engines/kotorb
 tests_engines_kotorbase_test_pathfollow_SOURCES           = tests/engines/kotorbase/pathfollow.cpp
 tests_engines_kotorbase_test_pathfollow_LDADD             = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_pathfollow_CXXFLAGS          = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_worldscript
+tests_engines_kotorbase_test_worldscript_SOURCES          = tests/engines/kotorbase/worldscript.cpp
+tests_engines_kotorbase_test_worldscript_LDADD            = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_worldscript_CXXFLAGS         = $(test_CXXFLAGS)

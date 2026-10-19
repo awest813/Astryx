@@ -28,6 +28,8 @@ namespace Engines {
 
 namespace KotORBase {
 
+const uint32_t HeartbeatScheduler::kInterval;
+
 HeartbeatScheduler::HeartbeatScheduler(uint32_t interval) : _interval(interval > 0 ? interval : 1) {
 }
 
