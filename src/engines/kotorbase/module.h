@@ -270,6 +270,9 @@ public:
 	/** Get the count of party members including the leader. */
 	int getPartyMemberCount() const;
 
+	/** Where a creature's items and credits are: the shared party inventory (the
+	 *  PC's) for the PC and party members, else the creature's own. */
+	Inventory &getInventoryOf(Creature &creature);
 	/** Is a specified creature a party member? */
 	bool isObjectPartyMember(Creature *creature) const;
 	/** Give XP to the player and every companion met so far, benched ones included. */
@@ -799,6 +802,8 @@ private:
 	void updateAutoPause();
 	/** Run an item use now, or once the game is unpaused. */
 	void runWhenUnpaused(const std::function<void()> &command);
+	/** Run the item uses queued while paused (at a safe point of the frame). */
+	void runUnpauseCommands();
 	/** Use an item from the action menus: on the user, or thrown at the target. */
 	void useActionMenuItem(const Common::UString &tag, uint32_t userID, uint32_t targetID);
 

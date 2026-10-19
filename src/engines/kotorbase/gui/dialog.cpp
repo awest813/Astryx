@@ -380,10 +380,9 @@ void DialogGUI::setMessage(const Common::UString &text) {
 
 void DialogGUI::updateComputerCounters() {
 	Creature *leader = _module.getPartyLeader();
-	Creature *pc = _module.getPC();
 
 	// The party shares the PC's inventory.
-	const Inventory *inventory = pc ? &pc->getInventory() : (leader ? &leader->getInventory() : nullptr);
+	const Inventory *inventory = leader ? &_module.getInventoryOf(*leader) : nullptr;
 
 	const int spikes = inventory ? inventory->countItems(kComputerSpikeTag) : 0;
 	const int parts  = inventory ? inventory->countItems(kRepairPartTag) : 0;

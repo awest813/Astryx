@@ -79,6 +79,7 @@
 #include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/minigameruntime.h"
+#include "src/engines/kotorbase/swoopminigame.h"
 #include "src/engines/kotorbase/waypoint.h"
 
 #include "src/engines/kotorbase/gui/partyselection.h"
@@ -601,6 +602,9 @@ void Module::unload(bool completeUnload) {
 	if (completeUnload) {
 		unloadTexturePack();
 
+		// No minigame script objects may outlive the game (and ObjectMan).
+		SwoopMinigame::get().reset();
+
 		_globalNumbers.clear();
 		_globalBooleans.clear();
 		_globalStrings.clear();
@@ -779,9 +783,16 @@ void Module::enter() {
 		entryY = _savedPCPosition.y;
 		entryZ = _savedPCPosition.z;
 	}
+	const bool resumingSave = _hasSavedPCPosition && _loadedFromSaveGame;
 	_hasSavedPCPosition = false;
 
 	moveParty(entryX, entryY, entryZ, _);
+
+	// A loaded save resumes inside the triggers it was saved in: their
+	// OnEnter already ran before the save.
+	if (resumingSave && _area)
+		_area->seedTriggerOccupants();
+
 	enterArea();
 
 	GfxMan.resumeAnimations();
@@ -986,8 +997,7 @@ void Module::useActionMenuOption(const ActionMenuOption &option, Object *target)
 		}
 
 		case kActionMenuSetMine: {
-			Creature *pc = getPC();
-			if (!pc || !pc->getInventory().hasItem(option.itemTag))
+			if (!getInventoryOf(*leader).hasItem(option.itemTag))
 				return;
 
 			// Laid just ahead of the leader (ActionExecutor::executeSetTrap()).
@@ -1178,7 +1188,6 @@ void Module::processEventQueue() {
 	uint32_t now = SDL_GetTicks();
 	_frameTime = (now - _prevTimestamp) / 1000.f;
 	_prevTimestamp = now;
-	_playTime += _frameTime;
 
 	// Keep the timer pending while a dialog or cutscene runs, so input is
 	// restored once it ends instead of staying disabled for good.
@@ -1205,7 +1214,12 @@ void Module::processEventQueue() {
 	// and the player's orders (queued for later) still work.
 	const bool worldFrozen = _pause.isWorldFrozen(pauseBlockers);
 
+	// The game clock (encounter timers, the saved play time) stands still too.
+	if (!worldFrozen)
+		_playTime += _frameTime;
+
 	if (!worldFrozen) {
+		runUnpauseCommands();
 		handleActions();
 		processQueuedUserDefinedEvents();
 
@@ -2250,7 +2264,14 @@ void Module::unpauseGame() {
 
 	debugC(Common::kDebugEngineLogic, 1, "Game unpaused");
 
-	// Item uses the player chose while paused.
+	// Item uses the player chose while paused run at the next frame's safe
+	// point (runUnpauseCommands()), not from inside whatever unpaused us.
+}
+
+void Module::runUnpauseCommands() {
+	if (_unpauseCommands.empty() || _pause.isPaused() || getPauseBlockers().any())
+		return;
+
 	std::vector<std::function<void()>> commands;
 	commands.swap(_unpauseCommands);
 	for (const std::function<void()> &command : commands)
@@ -2295,8 +2316,10 @@ void Module::shiftWorldTimers(uint32_t ms) {
 
 	_roundController.delay(ms);
 
-	if (_area)
+	if (_area) {
 		_area->delayPendingDestruction(ms);
+		_area->delayHeartbeats(ms);
+	}
 }
 
 void Module::runWhenUnpaused(const std::function<void()> &command) {
@@ -2406,6 +2429,10 @@ void Module::notifyObjectTeleported(Object &object) {
 	if (!_area)
 		return;
 
+	// A route planned from where it stood no longer applies.
+	if (Creature *creature = ObjectContainer::toCreature(&object))
+		creature->getMovePath().clear();
+
 	if (&object == getPartyLeader()) {
 		// Arriving inside a transition trigger must not move the party on.
 		_teleportingParty = true;
@@ -2442,6 +2469,13 @@ Creature *Module::getPartyMemberByIndex(int index) const {
 
 bool Module::isObjectPartyMember(Creature *object) const {
 	return _partyController.isObjectPartyMember(object);
+}
+
+Inventory &Module::getInventoryOf(Creature &creature) {
+	if (_pc && ((&creature == _pc) || isObjectPartyMember(&creature)))
+		return _pc->getInventory();
+
+	return creature.getInventory();
 }
 
 void Module::awardPartyXP(int xp) {

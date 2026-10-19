@@ -1334,7 +1334,7 @@ void Functions::actionGiveItem(Aurora::NWScript::FunctionContext &ctx) {
 
 
 
-	target->getInventory().addItem(resRef);
+	_game->getModule().getInventoryOf(*target).addItem(resRef);
 
 
 
@@ -1342,7 +1342,7 @@ void Functions::actionGiveItem(Aurora::NWScript::FunctionContext &ctx) {
 
 	if (caller)
 
-		caller->getInventory().removeItem(resRef);
+		_game->getModule().getInventoryOf(*caller).removeItem(resRef);
 
 }
 
@@ -1382,13 +1382,13 @@ void Functions::actionTakeItem(Aurora::NWScript::FunctionContext &ctx) {
 
 
 
-	source->getInventory().removeItem(resRef);
+	_game->getModule().getInventoryOf(*source).removeItem(resRef);
 
 
 
 	if (caller)
 
-		caller->getInventory().addItem(resRef);
+		_game->getModule().getInventoryOf(*caller).addItem(resRef);
 
 }
 

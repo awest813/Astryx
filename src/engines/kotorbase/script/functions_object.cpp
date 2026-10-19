@@ -268,7 +268,7 @@ void Functions::createItemOnObject(Aurora::NWScript::FunctionContext &ctx) {
 
 	Creature *creature = ObjectContainer::toCreature(object);
 	if (creature) {
-		creature->getInventory().addItem(itemTag, count);
+		_game->getModule().getInventoryOf(*creature).addItem(itemTag, count);
 		Item *item = creature->addScriptItem(itemTag);
 		if (item)
 			ctx.getReturn() = item;
@@ -574,7 +574,7 @@ void Functions::getItemPossessedBy(Aurora::NWScript::FunctionContext &ctx) {
 	}
 
 	// If tag is in inventory (tag+count), create a live Item object for scripting
-	if (creature->getInventory().hasItem(tag)) {
+	if (_game->getModule().getInventoryOf(*creature).hasItem(tag)) {
 		item = creature->addScriptItem(tag);
 		if (item)
 			ctx.getReturn() = item;
@@ -734,7 +734,7 @@ void Functions::getFirstItemInInventory(Aurora::NWScript::FunctionContext &ctx) 
 
 	Creature *creature = ObjectContainer::toCreature(object);
 	if (creature) {
-		for (const auto &kv : creature->getInventory().getItems())
+		for (const auto &kv : _game->getModule().getInventoryOf(*creature).getItems())
 			_inventoryIterTags.push_back(kv.first);
 	} else {
 		Placeable *placeable = ObjectContainer::toPlaceable(object);
@@ -1464,6 +1464,21 @@ void Functions::removeEffect(Aurora::NWScript::FunctionContext &ctx) {
 		if (wrapped.getType() == effect->getType() &&
 		    wrapped.getAmount() == effect->getAmount() &&
 		    wrapped.getSpellId() == effect->getSpellId()) {
+
+			// Inside a GetFirstEffect/GetNextEffect loop over this creature,
+			// keep the loop on the entry after the current one: removing an
+			// effect removes its whole link, possibly before the current one.
+			if (creature == _effectIterCreature && _effectIterIndex < effects.size()) {
+				const int linkId = effects[i].linkId;
+				size_t removedUpToCurrent = 0;
+				for (size_t j = 0; j <= _effectIterIndex; ++j)
+					if ((j == i) || ((linkId != 0) && (effects[j].linkId == linkId)))
+						++removedUpToCurrent;
+
+				// GetNextEffect() steps forward first (unsigned wrap-around is intended).
+				_effectIterIndex -= removedUpToCurrent;
+			}
+
 			creature->removeActiveEffectAt(i);
 			return;
 		}
