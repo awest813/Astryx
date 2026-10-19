@@ -164,6 +164,19 @@ new way:
 - **`SetMinOneHP`** is saved with creatures; the PC's is restored when
   loading a save made in the same module, but not carried to other modules
   (unverified what the original does there).
+- **Corpses and `SetIsDestroyable`:** a creature a script made
+  non-destroyable can't be removed by `DestroyObject` and, once dead, can
+  only be clicked or looted if it's "selectable when dead"; it can be
+  raised only if "raiseable". Corpses don't fade (neither in KotOR.js);
+  check the Korriban torture victim and that the Dantooine bodies scripts
+  remove still disappear.
+- **Containers:** the container screen has the original "Give Items" mode.
+  A container's OnInventoryDisturbed script runs once per item moved in or
+  out (not just for opening it), with `GetInventoryDisturbItem/Type` set —
+  the Tomb of Ajunta Pall obelisk depends on this. `DestroyObject` on an
+  item a script got that way does nothing yet.
+- **Room animations** (`PlayRoomAnimation`) loop `scriptloopNN` on the
+  room's model (the Ebon Hawk's window views).
 - **Party selection** starts with the current companions ticked (forced ones
   first, at most two). Companions a script made unselectable
   (`SetNPCSelectability`) can't be ticked or unticked.

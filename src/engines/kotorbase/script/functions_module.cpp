@@ -302,8 +302,8 @@ void Functions::getNPCAIStyle(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::shipBuild(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	// This plays the released game: its scripts skip their debug output.
+	ctx.getReturn() = 1;
 }
 
 void Functions::startNewModule(Aurora::NWScript::FunctionContext &ctx) {

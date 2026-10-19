@@ -461,8 +461,14 @@ void Functions::exportAllCharacters(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getCreatureMovmentType(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	// As KotOR.js: MOVEMENT_SPEED_IMMOBILE (1) for anything that can't move
+	// (k_inc_force won't Force push it), else MOVEMENT_SPEED_PC (0).
+	const Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	const bool immobile = !creature || creature->isDead() ||
+	                      creature->hasEffect(kEffectStun) || creature->hasEffect(kEffectKnockdown) ||
+	                      creature->hasEffect(kEffectConfusion) || creature->hasEffect(kEffectDazed);
+
+	ctx.getReturn() = immobile ? 1 : 0;
 }
 
 void Functions::musicBackgroundGetBattleTrack(Aurora::NWScript::FunctionContext &ctx) {
