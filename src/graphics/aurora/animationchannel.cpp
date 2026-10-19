@@ -131,6 +131,7 @@ void AnimationChannel::manageAnimations(float dt) {
 
 	// The loop of the animation ended: make sure to play the last frame
 	if (lastFrame < _animationLoopLength && nextFrame >= _animationLoopLength) {
+		fireEvents(lastFrame, _animationLoopLength, true);
 		_currentAnimation->update(_model, lastFrame, _animationLoopLength, _modelNodeMap);
 
 		_animationTime += dt;
@@ -164,6 +165,7 @@ void AnimationChannel::manageAnimations(float dt) {
 	}
 
 	// Update the animation
+	fireEvents(lastFrame, nextFrame, false);
 	_currentAnimation->update(_model, lastFrame, nextFrame, _modelNodeMap);
 
 	_animationTime += dt;
@@ -173,6 +175,17 @@ void AnimationChannel::manageAnimations(float dt) {
 		_model->createBound();
 
 	_manageMutex.unlock();
+}
+
+void AnimationChannel::fireEvents(float lastFrame, float nextFrame, bool loopEnd) {
+	if (!_currentAnimation || _currentAnimation->getEvents().empty() || (nextFrame < lastFrame))
+		return;
+
+	_firedEvents.clear();
+	_currentAnimation->collectEvents(lastFrame, nextFrame, loopEnd, _firedEvents);
+
+	for (const Common::UString &event : _firedEvents)
+		_model->queueAnimationEvent(_currentAnimation->getName(), event);
 }
 
 void AnimationChannel::playDefaultAnimationInternal() {

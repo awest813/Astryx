@@ -24,6 +24,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <algorithm>
 
 #include "src/common/fallthrough.h"
 START_IGNORE_IMPLICIT_FALLTHROUGH
@@ -91,6 +92,14 @@ Model::Model(ModelType type) :
 
 Model::~Model() {
 	hide();
+
+	{
+		std::lock_guard<std::recursive_mutex> lock(_effectMutex);
+		for (EffectModel &effect : _effectModels)
+			delete effect.model;
+
+		_effectModels.clear();
+	}
 
 	for (AnimationChannelMap::iterator c = _animationChannels.begin();
 			c != _animationChannels.end(); ++c) {
@@ -496,6 +505,103 @@ void Model::attachModel(const Common::UString &nodeName, Model *model) {
 	createBound();
 }
 
+bool Model::addEffectModel(const Common::UString &nodeName, Model *model) {
+	if (!model)
+		return false;
+
+	ModelNode *node = nullptr;
+	if (!nodeName.empty()) {
+		if (_currentState) {
+			NodeMap::iterator n = _currentState->nodeMap.find(nodeName);
+			if (n != _currentState->nodeMap.end())
+				node = n->second;
+		}
+
+		if (!node) {
+			delete model;
+			return false;
+		}
+	}
+
+	GfxMan.lockFrame();
+
+	{
+		std::lock_guard<std::recursive_mutex> lock(_effectMutex);
+
+		_effectModels.push_back({ node, model });
+		if (node)
+			node->_effectModels.push_back(model);
+	}
+
+	GfxMan.unlockFrame();
+
+	return true;
+}
+
+void Model::removeEffectModel(Model *model) {
+	if (!model)
+		return;
+
+	GfxMan.lockFrame();
+
+	{
+		std::lock_guard<std::recursive_mutex> lock(_effectMutex);
+
+		for (std::vector<EffectModel>::iterator e = _effectModels.begin(); e != _effectModels.end(); ++e) {
+			if (e->model != model)
+				continue;
+
+			if (e->node) {
+				std::vector<Model *> &nodeEffects = e->node->_effectModels;
+				nodeEffects.erase(std::remove(nodeEffects.begin(), nodeEffects.end(), model), nodeEffects.end());
+			}
+
+			_effectModels.erase(e);
+			delete model;
+			break;
+		}
+	}
+
+	GfxMan.unlockFrame();
+}
+
+bool Model::hasEffectModel(const Model *model) const {
+	std::lock_guard<std::recursive_mutex> lock(_effectMutex);
+
+	for (const EffectModel &effect : _effectModels)
+		if (effect.model == model)
+			return true;
+
+	return false;
+}
+
+void Model::setAnimationEventsEnabled(bool enabled) {
+	std::lock_guard<std::mutex> lock(_animationEventMutex);
+
+	_animationEventsEnabled = enabled;
+	if (!enabled)
+		_animationEvents.clear();
+}
+
+void Model::takeAnimationEvents(std::vector<FiredAnimationEvent> &events) {
+	std::lock_guard<std::mutex> lock(_animationEventMutex);
+
+	events.insert(events.end(), _animationEvents.begin(), _animationEvents.end());
+	_animationEvents.clear();
+}
+
+void Model::queueAnimationEvent(const Common::UString &animation, const Common::UString &name) {
+	// More than this many events not taken: nobody's listening, stop queueing
+	static const size_t kMaxQueuedAnimationEvents = 256;
+
+	std::lock_guard<std::mutex> lock(_animationEventMutex);
+
+	if (!_animationEventsEnabled || (_animationEvents.size() >= kMaxQueuedAnimationEvents))
+		return;
+
+	_animationEvents.push_back({ animation, name });
+}
+
 void Model::setStuntModel(Model *stunt) {
 	_stuntModel = stunt;
 }
@@ -642,6 +748,12 @@ void Model::flushNodeBuffers() {
 		m->second->flushNodeBuffers();
 	}
 
+	{
+		std::lock_guard<std::recursive_mutex> lock(_effectMutex);
+		for (EffectModel &effect : _effectModels)
+			effect.model->flushNodeBuffers();
+	}
+
 	if (!_currentState)
 		return;
 
@@ -680,6 +792,10 @@ void Model::manageAnimations(float dt) {
 			m != _attachedModels.end(); ++m) {
 		m->second->manageAnimations(dt);
 	}
+
+	std::lock_guard<std::recursive_mutex> lock(_effectMutex);
+	for (EffectModel &effect : _effectModels)
+		effect.model->manageAnimations(dt);
 }
 
 void Model::render(RenderPass pass) {
@@ -709,6 +825,8 @@ void Model::render(RenderPass pass) {
 		glPopMatrix();
 	}
 
+	renderRootEffects(pass);
+
 	// Reset the first texture units
 	TextureMan.reset();
 
@@ -729,6 +847,10 @@ void Model::renderImmediate(const glm::mat4 &parentTransform) {
 	     n != _currentState->rootNodes.end(); ++n) {
 		(*n)->renderImmediate(transform);
 	}
+
+	for (EffectModel &effect : _effectModels)
+		if (!effect.node)
+			effect.model->renderImmediate(transform);
 }
 
 void Model::queueRender(const glm::mat4 &parentTransform) {
@@ -743,6 +865,21 @@ void Model::queueRender(const glm::mat4 &parentTransform) {
 	for (NodeList::iterator n = _currentState->rootNodes.begin();
 	     n != _currentState->rootNodes.end(); ++n) {
 		(*n)->queueRender(transform);
+	}
+
+	for (EffectModel &effect : _effectModels)
+		if (!effect.node)
+			effect.model->queueRender(transform);
+}
+
+void Model::renderRootEffects(RenderPass pass) {
+	for (EffectModel &effect : _effectModels) {
+		if (effect.node)
+			continue;
+
+		glPushMatrix();
+		effect.model->render(pass);
+		glPopMatrix();
 	}
 }
 

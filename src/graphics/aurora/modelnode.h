@@ -261,6 +261,8 @@ protected:
 	std::list<ModelNode *> _children; ///< The node's children.
 
 	Model *_attachedModel; ///< The model that is attached to this node.
+	/** Visual effect models attached to this node, owned by the Model. */
+	std::vector<Model *> _effectModels;
 
 	uint32_t _level;
 

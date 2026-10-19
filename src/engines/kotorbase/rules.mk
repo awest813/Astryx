@@ -68,6 +68,8 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/console.h \
     src/engines/kotorbase/actionqueue.h \
     src/engines/kotorbase/round.h \
+    src/engines/kotorbase/creaturesounds.h \
+    src/engines/kotorbase/visualeffects.h \
     src/engines/kotorbase/effect.h \
     src/engines/kotorbase/talent.h \
     src/engines/kotorbase/store.h \
@@ -120,6 +122,8 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/console.cpp \
     src/engines/kotorbase/actionqueue.cpp \
     src/engines/kotorbase/round.cpp \
+    src/engines/kotorbase/creaturesounds.cpp \
+    src/engines/kotorbase/visualeffects.cpp \
     src/engines/kotorbase/effect.cpp \
     src/engines/kotorbase/talent.cpp \
     src/engines/kotorbase/store.cpp \

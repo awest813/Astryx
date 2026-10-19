@@ -93,6 +93,9 @@ public:
 	virtual bool faceWalkable(uint32_t faceID) const;
 	/** Get the height at a specific point (in the XY plane) in the walkmesh. */
 	float getHeight(float x, float y, bool onlyWalkable = false) const;
+	/** Get the surface (material) of the walkable face at a point in the XY plane,
+	 *  or UINT32_MAX when there's no walkable face there. */
+	uint32_t getSurfaceAt(float x, float y);
 
 	/** Show the computed path. */
 	void showPath(bool visible = true);

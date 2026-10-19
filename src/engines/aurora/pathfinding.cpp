@@ -381,6 +381,14 @@ float Pathfinding::getHeight(float x, float y, bool onlyWalkable) const {
 	return FLT_MIN;
 }
 
+uint32_t Pathfinding::getSurfaceAt(float x, float y) {
+	const uint32_t face = findFace(x, y, true);
+	if (face >= _faceProperty.size())
+		return UINT32_MAX;
+
+	return _faceProperty[face];
+}
+
 uint32_t Pathfinding::findFace(float x, float y, bool onlyWalkable) {
 	for (std::vector<Common::AABBNode *>::iterator it = _aabbTrees.begin(); it != _aabbTrees.end(); ++it) {
 		if (*it == 0)
