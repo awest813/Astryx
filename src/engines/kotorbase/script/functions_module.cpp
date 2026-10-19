@@ -144,10 +144,11 @@ void Functions::getMaxForcePoints(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::pauseGame(Aurora::NWScript::FunctionContext &ctx) {
-	const bool paused = ctx.getParams()[0].getInt() != 0;
-	_game->getModule().setGlobalBoolean("__game_paused", paused);
-	if (paused)
-		_game->getModule().showMenu();
+	// As KotOR.js: a generic pause, as if the player had pressed the pause key.
+	if (ctx.getParams()[0].getInt() != 0)
+		_game->getModule().pauseGame(kPauseReasonGeneric);
+	else
+		_game->getModule().unpauseGame();
 }
 
 void Functions::setPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx) {

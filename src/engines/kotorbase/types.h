@@ -377,51 +377,59 @@ enum BaseItem {
 	kBaseItemShortLightsaber  = 11
 };
 
-/** KotOR feat IDs: feat.2da rows, the FEAT_* constants of nwscript.nss. */
+/** KotOR feat IDs: feat.2da rows, the values of K1's nwscript FEAT_* constants
+ *  (scripts and creature blueprints use these numbers). */
 enum FeatID {
-	kFeatImprovedJediDefense   =   1, ///< FEAT_ADVANCED_JEDI_DEFENSE.
-	kFeatTwoWeaponFighting     =   3,
-	kFeatCriticalStrike        =   8,
-	kFeatImprovedTwoWeapon     =   9, ///< FEAT_TWO_WEAPON_ADVANCED.
-	kFeatFlurry                =  11,
-	kFeatConditioning          =  13,
-	kFeatImprovedPowerAttack   =  17,
-	kFeatImprovedPowerBlast    =  18,
-	kFeatImprovedCriticalStrike = 19,
-	kFeatImprovedSniperShot    =  20,
-	kFeatMasterJediDefense     =  24,
-	kFeatMasterRapidShot       =  26, ///< FEAT_MULTI_SHOT.
-	kFeatPowerAttack           =  28,
-	kFeatPowerBlast            =  29,
-	kFeatRapidShot             =  30,
-	kFeatSniperShot            =  31,
-	kFeatWeaponFocusBlaster    =  32,
-	kFeatWeaponFocusBlasterRifle = 33,
-	kFeatWeaponFocusLightsaber =  36,
-	kFeatWeaponFocusMelee      =  37,
-	kFeatWeaponSpecializationBlaster  = 46,
+	kFeatImprovedJediDefense         =   1, ///< FEAT_ADVANCED_JEDI_DEFENSE
+	kFeatTwoWeaponFighting           =   3,
+	kFeatCriticalStrike              =   8,
+	kFeatImprovedTwoWeapon           =   9, ///< FEAT_TWO_WEAPON_ADVANCED
+	kFeatFlurry                      =  11,
+	kFeatConditioning                =  13,
+	kFeatImprovedPowerAttack         =  17,
+	kFeatImprovedPowerBlast          =  18,
+	kFeatImprovedCriticalStrike      =  19,
+	kFeatImprovedSniperShot          =  20,
+	kFeatImprovedConditioning        =  21,
+	kFeatMasterConditioning          =  22,
+	kFeatMasterJediDefense           =  24,
+	kFeatMasterRapidShot             =  26,
+	kFeatPowerAttack                 =  28,
+	kFeatPowerBlast                  =  29,
+	kFeatRapidShot                   =  30,
+	kFeatSniperShot                  =  31,
+	kFeatWeaponFocusBlaster          =  32,
+	kFeatWeaponFocusBlasterRifle     =  33,
+	kFeatWeaponFocusHeavyWeapons     =  35,
+	kFeatWeaponFocusLightsaber       =  36,
+	kFeatWeaponFocusMelee            =  37,
+	kFeatWeaponSpecializationBlaster      = 46,
 	kFeatWeaponSpecializationBlasterRifle = 47,
-	kFeatWeaponSpecializationLightsaber = 50,
-	kFeatWeaponSpecializationMelee    = 51,
-	kFeatMasterFlurry          =  53,
-	kFeatJediDefense           =  55,
-	kFeatSneakAttack1          =  60, ///< FEAT_SNEAK_ATTACK_1D6 .. _9D6 are 60 .. 68.
-	kFeatSneakAttack2          =  61,
-	kFeatSneakAttack3          =  62,
-	kFeatSneakAttack4          =  63,
-	kFeatSneakAttack5          =  64,
-	kFeatSneakAttack6          =  65,
-	kFeatSneakAttack7          =  66,
-	kFeatSneakAttack8          =  67,
-	kFeatSneakAttack9          =  68,
-	kFeatMasterSniperShot      =  77,
-	kFeatMasterCriticalStrike  =  81,
-	kFeatMasterPowerBlast      =  82,
-	kFeatMasterPowerAttack     =  83,
-	kFeatToughness             =  84,
-	kFeatMasterTwoWeapon       =  85, ///< FEAT_TWO_WEAPON_MASTERY.
-	kFeatImprovedFlurry        =  91,
-	kFeatImprovedRapidShot     =  92
+	kFeatWeaponSpecializationHeavyWeapons = 49,
+	kFeatWeaponSpecializationLightsaber   = 50,
+	kFeatWeaponSpecializationMelee        = 51,
+	kFeatMasterFlurry                =  53,
+	kFeatJediDefense                 =  55,
+	kFeatSneakAttack1                =  60, ///< Sneak attack ranks are consecutive.
+	kFeatSneakAttack2                =  61,
+	kFeatSneakAttack3                =  62,
+	kFeatSneakAttack4                =  63,
+	kFeatSneakAttack5                =  64,
+	kFeatSneakAttack6                =  65,
+	kFeatSneakAttack7                =  66,
+	kFeatSneakAttack8                =  67,
+	kFeatSneakAttack9                =  68,
+	kFeatSneakAttack10               =  69,
+	kFeatMasterSniperShot            =  77,
+	kFeatMasterCriticalStrike        =  81,
+	kFeatMasterPowerBlast            =  82,
+	kFeatMasterPowerAttack           =  83,
+	kFeatToughness                   =  84,
+	kFeatMasterTwoWeapon             =  85, ///< FEAT_TWO_WEAPON_MASTERY
+	kFeatImprovedFlurry              =  91,
+	kFeatImprovedRapidShot           =  92,
+	kFeatImprovedToughness           = 123,
+	kFeatMasterToughness             = 124
 };
 
 enum CameraMode {

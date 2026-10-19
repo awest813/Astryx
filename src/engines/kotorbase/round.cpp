@@ -71,6 +71,10 @@ void RoundController::update() {
 	}
 }
 
+void RoundController::delay(uint32_t ms) {
+	_startTimestamp += ms;
+}
+
 inline bool RoundController::hasTimePassed(int ms) {
 	return EventMan.getTimestamp() > _startTimestamp + ms;
 }

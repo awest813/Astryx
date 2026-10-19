@@ -51,6 +51,7 @@
 #include "src/aurora/2dareg.h"
 #include "src/aurora/2dafile.h"
 #include "src/aurora/talkman.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/graphics/camera.h"
 
@@ -558,6 +559,10 @@ void Module::unload(bool completeUnload) {
 		_inDialog = false;
 	}
 	_conversationPausedSince = 0;
+	_pause.unpause(EventMan.getTimestamp());
+	GfxMan.setAnimationTimeFrozen(false);
+	_unpauseCommands.clear();
+	_autoPauseMonitor.reset();
 	_pendingTutorialWindows.clear();
 	if (_area) // The party (used to re-target the camera) dies with the area.
 		_cameraController.resetToOrbit();
@@ -916,6 +921,98 @@ void Module::clickObject(Object *object) {
 	partyLeader->addAction(action);
 }
 
+void Module::useActionMenuOption(const ActionMenuOption &option, Object *target) {
+	if (getGlobalNumber("__player_restrict_mode") != 0)
+		return;
+
+	Creature *leader = getPartyLeader();
+	if (!leader || leader->isDead())
+		return;
+
+	switch (option.type) {
+		case kActionMenuAttack:
+		case kActionMenuFeat: {
+			if (!target || target->isDead())
+				return;
+
+			// As clicking a hostile target; the feat applies to the next combat round.
+			KotORBase::Action action(kActionAttackObject);
+			action.object = target;
+			action.range = 1.0f;
+
+			leader->clearActions();
+			if (option.type == kActionMenuFeat) {
+				leader->setLastCombatFeatUsed(option.id);
+				leader->queueCombatFeat(option.id);
+			}
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuPower: {
+			KotORBase::Action action(kActionCastSpell, option.id);
+			action.object = target ? target : leader;
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuOpenLock: {
+			if (!target)
+				return;
+
+			KotORBase::Action action(kActionOpenLock);
+			action.object = target;
+			action.range = 1.0f;
+
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuItem: {
+			// Items are used at once, so they wait for the game to be unpaused.
+			const Common::UString tag = option.itemTag;
+			const uint32_t leaderID = leader->getID();
+			const uint32_t targetID = target ? target->getID() : leaderID;
+
+			runWhenUnpaused([this, tag, leaderID, targetID]() {
+				useActionMenuItem(tag, leaderID, targetID);
+			});
+			break;
+		}
+
+		default:
+			return;
+	}
+
+	pauseGame(kPauseReasonActionMenuUsed);
+}
+
+void Module::useActionMenuItem(const Common::UString &tag, uint32_t userID, uint32_t targetID) {
+	// The party shares the PC's inventory (as the inventory menu does).
+	Creature *user = ObjectContainer::toCreature(ObjectMan.findObject(userID));
+	if (!_pc || !user || user->isDead() || !_pc->getInventory().hasItem(tag))
+		return;
+
+	Object *target = ObjectContainer::toObject(ObjectMan.findObject(targetID));
+
+	ItemActionResult result;
+	if (target && (target != user)) {
+		// A grenade, thrown at the target.
+		if (target->isDead())
+			return;
+
+		float x, y, z;
+		target->getPosition(x, y, z);
+		result = throwGrenadeAt(*_pc, tag, *this, x, y, z);
+	} else
+		result = useInventoryItem(*user, *_pc, tag, this);
+
+	if (!result.success && !result.message.empty())
+		showFloatingText(user, result.message, 3.0f);
+}
+
 void Module::enterObject(Object *object) {
 	_ingame->setHoveredObject(object);
 }
@@ -1043,24 +1140,38 @@ void Module::processEventQueue() {
 	if (_loadingSavedGame && !_newModule.empty())
 		return;
 
-	handleActions();
-	processQueuedUserDefinedEvents();
+	// Conversations, cutscenes and minigames never run paused.
+	const PauseBlockers pauseBlockers = getPauseBlockers();
+	if (_pause.isPaused() && pauseBlockers.any())
+		unpauseGame();
 
-	_roundController.update();
-	_area->handleCreaturesDeath();
+	// While paused, the world stands still: no actions, combat rounds,
+	// heartbeats, effects, script timers or movement. The camera, the HUD
+	// and the player's orders (queued for later) still work.
+	const bool worldFrozen = _pause.isWorldFrozen(pauseBlockers);
 
-	// Run NPC and party combat AI before executing movement/actions.
-	updateCombatAI();
+	if (!worldFrozen) {
+		handleActions();
+		processQueuedUserDefinedEvents();
+
+		_roundController.update();
+		_area->handleCreaturesDeath();
+
+		// Run NPC and party combat AI before executing movement/actions.
+		updateCombatAI();
+	}
 
 	GfxMan.lockFrame();
 
-	_area->processCreaturesActions(_frameTime);
-	_area->updateEncounters();
+	if (!worldFrozen) {
+		_area->processCreaturesActions(_frameTime);
+		_area->updateEncounters();
+	}
 
 	if (!_minigame) {
 		_cameraController.processRotation(_frameTime);
 
-		if (!_cameraController.isFlyCamera())
+		if (!_cameraController.isFlyCamera() && !worldFrozen)
 			_partyLeaderController.processMovement(_frameTime);
 
 		_cameraController.processMovement(_frameTime);
@@ -1091,12 +1202,16 @@ void Module::processEventQueue() {
 		showWorkbench();
 	}
 
-	onFrameUpdate(_frameTime);
+	if (!worldFrozen) {
+		onFrameUpdate(_frameTime);
 
-	handleDelayedInteractions();
+		handleDelayedInteractions();
 
-	if (_area)
-		_area->processPendingDestruction();
+		if (_area)
+			_area->processPendingDestruction();
+
+		updateAutoPause();
+	}
 
 	processTutorialWindows();
 	processAutoSave();
@@ -1414,6 +1529,13 @@ void Module::handleEvents() {
 				_console->show();
 				continue;
 			}
+
+			// Pause (the minigames use Space to fire)
+			if ((event->key.keysym.sym == SDLK_SPACE) && !_minigame) {
+				if (!event->key.repeat)
+					toggleGamePaused();
+				continue;
+			}
 		}
 
 		// A minigame takes all the input the menu and console don't.
@@ -1622,6 +1744,10 @@ void Module::notifyCombatRoundBegan(int round) {
 void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 	if (!_area)
 		return;
+
+	Creature *leader = getPartyLeader();
+	if (leader && !leader->isDead() && leader->isInCombat())
+		pauseGame(kPauseReasonCombatRoundEnd);
 
 	for (auto &c : _area->getCreatures()) {
 		if (c->isDead() || !c->isInCombat())
@@ -2005,6 +2131,144 @@ void Module::handleActions() {
 
 		_delayedActions.erase(action);
 	}
+}
+
+bool Module::isGamePaused() const {
+	return _pause.isPaused();
+}
+
+PauseReason Module::getPauseReason() const {
+	return _pause.getReason();
+}
+
+PauseBlockers Module::getPauseBlockers() const {
+	PauseBlockers blockers;
+
+	blockers.conversation = _inDialog;
+	blockers.cutscene     = _cutsceneMode || !_playerInputEnabled;
+	blockers.minigame     = _minigame != nullptr;
+	blockers.movie        = _moviePlaying;
+
+	return blockers;
+}
+
+bool Module::pauseGame(PauseReason reason) {
+	if (!_running || !_area)
+		return false;
+
+	const bool wasPaused = _pause.isPaused();
+	const bool paused = _pause.requestPause(reason, AutoPauseOptions::fromConfig(),
+	                                        getPauseBlockers(), EventMan.getTimestamp());
+
+	if (paused && !wasPaused) {
+		GfxMan.setAnimationTimeFrozen(true);
+		_partyLeaderController.stopMovement();
+		debugC(Common::kDebugEngineLogic, 1, "Game paused (reason %d)", static_cast<int>(reason));
+	}
+
+	return paused;
+}
+
+void Module::unpauseGame() {
+	if (!_pause.isPaused())
+		return;
+
+	shiftWorldTimers(_pause.unpause(EventMan.getTimestamp()));
+	GfxMan.setAnimationTimeFrozen(false);
+	updateFrameTimestamp();
+
+	debugC(Common::kDebugEngineLogic, 1, "Game unpaused");
+
+	// Item uses the player chose while paused.
+	std::vector<std::function<void()>> commands;
+	commands.swap(_unpauseCommands);
+	for (const std::function<void()> &command : commands)
+		command();
+}
+
+void Module::toggleGamePaused() {
+	if (_pause.isPaused())
+		unpauseGame();
+	else
+		pauseGame(kPauseReasonGeneric);
+}
+
+void Module::shiftWorldTimers(uint32_t ms) {
+	if (ms == 0)
+		return;
+
+	// DelayCommand and friends
+	ActionQueue delayed;
+	for (const Action &action : _delayedActions) {
+		Action shifted = action;
+		shifted.timestamp += ms;
+		delayed.insert(shifted);
+	}
+	_delayedActions.swap(delayed);
+
+	_roundController.delay(ms);
+
+	if (_area)
+		_area->delayPendingDestruction(ms);
+}
+
+void Module::runWhenUnpaused(const std::function<void()> &command) {
+	if (_pause.isPaused())
+		_unpauseCommands.push_back(command);
+	else
+		command();
+}
+
+void Module::updateAutoPause() {
+	if (!_area || getPauseBlockers().any())
+		return;
+
+	Creature *leader = getPartyLeader();
+	if (!leader || leader->isDead())
+		return;
+
+	// Party member down
+	std::vector<uint32_t> down;
+	for (int i = 0; i < getPartyMemberCount(); ++i) {
+		Creature *member = getPartyMemberByIndex(i);
+		if (member && member->isDead())
+			down.push_back(member->getID());
+	}
+	if (_autoPauseMonitor.updatePartyDown(down))
+		pauseGame(kPauseReasonPartyMemberKilled);
+
+	// New target selected: the leader's target died and the leader took on another one.
+	Object *target = leader->getAttackTarget();
+	auto isDead = [](uint32_t id) {
+		Object *object = ObjectContainer::toObject(ObjectMan.findObject(id));
+		return !object || object->isDead();
+	};
+	if (_autoPauseMonitor.updateLeaderTarget(target ? target->getID() : 0, leader->isInCombat(), isDead))
+		pauseGame(kPauseReasonNewTargetSelected);
+
+	// Enemy sighted, by the leader's perception (see Creature::updatePerception()).
+	_autoPauseScanTimer -= _frameTime;
+	if (_autoPauseScanTimer > 0.0f)
+		return;
+	_autoPauseScanTimer = 0.25f;
+
+	static const float kPerceptionRange = 16.0f;
+
+	std::vector<uint32_t> hostiles;
+	for (Creature *creature : _area->getCreatures()) {
+		if (!creature || creature->isDead() || (creature == leader) || isObjectPartyMember(creature))
+			continue;
+		if (!isHostileToParty(creature))
+			continue;
+		if (leader->getDistanceTo(creature) > kPerceptionRange)
+			continue;
+		if (!_area->hasLineOfSight(leader, creature))
+			continue;
+
+		hostiles.push_back(creature->getID());
+	}
+	if (_autoPauseMonitor.updateSightedEnemies(hostiles, leader->isInCombat()))
+		pauseGame(kPauseReasonEnemySighted);
 }
 
 void Module::moveParty(float x, float y, float z) {

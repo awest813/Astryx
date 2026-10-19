@@ -64,7 +64,7 @@ Classify it with the tags from [SUPPORTED_CONTENT.md](SUPPORTED_CONTENT.md)
 - what you did just before, and a save from just before if you have one
 - the log file (`--logfile`) — look for `WARNING:` lines near the failure
 
-## 5. Known gaps (as of 2026-10-17)
+## 5. Known gaps (as of 2026-10-19)
 
 These are known and do not need new reports unless they block progress in a
 new way:
@@ -158,6 +158,31 @@ new way:
     Defense for an extra attack, Critical Strike -5 Defense, Critical
     Strike/Sniper Shot a +1/+2/+3 critical threat range (Sniper Shot's
     effect is assumed to mirror Critical Strike's).
+- **Action menus** (built as KotOR.js' `ActionMenuManager`): above a
+  hostile target, `BTN_TARGET0` offers attack and the leader's melee or
+  ranged combat feats (`feat.2da` `category` 0x1104 / 0x1111, only the last
+  known feat of a `successor` chain), `BTN_TARGET1` hostile Force powers
+  (`spells.2da` `forcehostile`) or Security on a locked door/placeable, and
+  `BTN_TARGET2` grenades. The self buttons `BTN_ACTION0`-`3` offer friendly
+  powers (`forcefriendly`), medical items, other usable items, and (empty)
+  mines — the order follows KotOR.js' tooltips; KotOR.js itself fills
+  friendly powers into the second panel, so check the order against retail.
+  Icons go on the target buttons and fill `LBL_ACTION0`-`3`; the up/down
+  arrows cycle options and `LBL_ACTIONDESC` names the chosen one for 2 s.
+  Not offered yet: bashing locked objects, security tunnelers, setting,
+  disarming or recovering mines.
+- **Pause:** Space (or `TB_PAUSE`) pauses; `PauseGame` pauses/unpauses.
+  While paused, creature actions, combat rounds, heartbeats, effects,
+  `DelayCommand` timers and model animation time stop (timers resume where
+  they were); the camera turns and orders are queued. Item uses from the
+  action menus wait for the unpause. The reason shows in `LBL_CMBTMODEMSG`
+  (`dialog.tlk` 1508/42432/42396/42397/42481/42482 as KotOR.js uses them —
+  check the texts). Auto-pause follows the options: enemy sighted (a hostile
+  within 16 m and in line of sight of the leader while out of combat),
+  party member down, end of combat round, new target after the old one
+  died, action menu used; "mine sighted" isn't detected yet. Never during
+  conversations, cutscenes, movies or minigames. Opening a menu (Esc,
+  inventory) still lets script timers run on, as before.
 - **Area encounters** (GIT `Encounter List`, `.ute`) now spawn their
   creatures when the party walks in. Confirm in play: they spawn
   `RecCreatures` creatures (at most `MaxCreatures`) chosen at random — the
