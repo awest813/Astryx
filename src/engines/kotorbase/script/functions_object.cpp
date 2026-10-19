@@ -313,7 +313,7 @@ void Functions::getPositionFromLocation(Aurora::NWScript::FunctionContext &ctx) 
 
 void Functions::getFacingFromLocation(Aurora::NWScript::FunctionContext &ctx) {
 	Location *location = ObjectContainer::toLocation(ctx.getParams()[0].getEngineType());
-	ctx.getReturn() = location ? location->getFacing() : 0.0f;
+	ctx.getReturn() = location ? orientationToScriptFacing(location->getFacing()) : 0.0f;
 }
 
 void Functions::jumpToLocation(Aurora::NWScript::FunctionContext &ctx) {
@@ -356,7 +356,7 @@ void Functions::locationCreate(Aurora::NWScript::FunctionContext &ctx) {
 
 	Location loc;
 	loc.setPosition(x, y, z);
-	loc.setFacing(facing);
+	loc.setFacing(scriptFacingToOrientation(facing));
 
 	ctx.getReturn() = loc;
 }
@@ -524,7 +524,7 @@ void Functions::getFacing(Aurora::NWScript::FunctionContext &ctx) {
 
 	float x, y, z, angle;
 	object->getOrientation(x, y, z, angle);
-	ctx.getReturn() = angle;
+	ctx.getReturn() = orientationToScriptFacing(angle);
 }
 
 void Functions::getItemPossessor(Aurora::NWScript::FunctionContext &ctx) {
@@ -954,8 +954,11 @@ void Functions::applyEffectAtLocation(Aurora::NWScript::FunctionContext &ctx) {
 		const int durationType = ctx.getParams()[0].getInt();
 		const float duration = (ctx.getParams().size() > 3) ? ctx.getParams()[3].getFloat() : 0.0f;
 		area->playVisualEffectAt(effect->getAmount(), lx, ly, lz, (durationType == 1) ? duration : 0.0f);
+		shakeForVisualEffects(*effect);
 		return;
 	}
+
+	shakeForVisualEffects(*effect);
 
 	const float radius = 5.0f;
 
@@ -1571,8 +1574,8 @@ void Functions::faceObjectAwayFromObject(Aurora::NWScript::FunctionContext &ctx)
 	facer ->getPosition(fx, fy, fz);
 	source->getPosition(sx, sy, sz);
 
-	float angle = Common::rad2deg(atan2f(fy - sy, fx - sx));
-	facer->setOrientation(0.0f, 0.0f, 1.0f, angle);
+	// Look at the point mirrored through the facer, away from the source.
+	facer->makeLookAt(2.0f * fx - sx, 2.0f * fy - sy);
 }
 
 void Functions::getInventoryDisturbType(Aurora::NWScript::FunctionContext &ctx) {

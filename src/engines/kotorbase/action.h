@@ -56,6 +56,8 @@ struct Action {
 	float startTime { -1.0f }; ///< Time the action started (for timed actions).
 	bool  initialized { false };
 	bool  cheat { false };     ///< CastSpell: bCheat, cast without spending Force points.
+	bool  fake { false };      ///< CastSpell: ActionCastFakeSpell*, only the casting motions.
+	float timeout { 0.0f };    ///< MoveToPoint: ActionForceMove*'s fTimeout, jump there after it.
 	int   step { 0 };          ///< Progress of an action done in steps (random walk, lock picking, mines).
 	glm::vec3 origin { 0.0f, 0.0f, 0.0f }; ///< RandomWalk: where the walk started.
 	/** Inventory tag of the item involved: OpenLock, the security tunneler used (its

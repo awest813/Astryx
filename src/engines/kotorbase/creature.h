@@ -285,6 +285,12 @@ public:
 	                       float length = 0.0f,
 	                       float speed = 1.0f);
 
+	/** The model animation a script ANIMATION_* constant plays on this creature
+	 *  (its READY stance depends on the weapon held). */
+	Common::UString getScriptAnimationName(int animation) const;
+	/** The length of a model animation in seconds, 0 if the model lacks it. */
+	float getModelAnimationLength(const Common::UString &anim);
+
 	// Sounds and visual effects
 
 	/** Once a frame, for the dead as well: play the sounds of the animation
@@ -361,7 +367,9 @@ public:
 	 *  (fromX, fromY), stopping where the walkmesh ends. Returns the distance moved. */
 	float knockBack(Area &area, float fromX, float fromY, float distance);
 
-	void performCutsceneAttack(Object *target, int flags, int damage = 0);
+	/** CutsceneAttack: @p animation is the animations.2da row the attacker plays
+	 *  (-1: its usual attack animation). */
+	void performCutsceneAttack(Object *target, int flags, int damage = 0, int animation = -1);
 
 	// Tooltip
 

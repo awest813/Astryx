@@ -441,6 +441,13 @@ enum CameraMode {
 	kCameraModeReveal    = 4
 };
 
+/** How a scripted move goes (Action::choreographyFlags of kActionMoveToPoint). */
+enum MoveSpeed {
+	kMoveAuto = 0, ///< Walk short distances, run longer ones.
+	kMoveRun  = 1, ///< bRun TRUE.
+	kMoveWalk = 2  ///< bRun FALSE.
+};
+
 enum CutsceneAttackFlag {
 	kCutsceneAttackForceHit      = 1 << 0,
 	kCutsceneAttackForceMiss     = 1 << 1,

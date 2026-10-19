@@ -201,8 +201,41 @@ void ActionExecutor::executeDoCommand(Action &action, const ExecutionContext &ct
 }
 
 void ActionExecutor::executeMoveToPoint(Action &action, const ExecutionContext &ctx) {
-	if (moveTo(action.location, action.range, ctx, action.choreographyFlags != 0))
-		ctx.creature->popAction();
+	// Put the creature right there (a force move that ran out of time).
+	auto jumpCreatureTo = [](const glm::vec3 &location, const ExecutionContext &context) {
+		const float z = context.area->evaluateElevation(location.x, location.y);
+
+		context.creature->getMovePath().clear();
+		context.creature->resetBlockedMoveTime();
+		context.creature->setPosition(location.x, location.y, (z != FLT_MIN) ? z : location.z);
+		context.creature->playDefaultAnimation();
+
+		if (context.creature == context.area->_module->getPartyLeader())
+			context.area->_module->movedPartyLeader();
+		else
+			context.area->notifyObjectMoved(*context.creature);
+	};
+
+	// ActionForceMove*: a creature that doesn't get there in time jumps there.
+	if (action.timeout > 0.0f) {
+		action.startTime += ctx.frameTime;
+		if (action.startTime >= action.timeout) {
+			jumpCreatureTo(action.location, ctx);
+			ctx.creature->popAction();
+			return;
+		}
+	}
+
+	const glm::vec2 location(action.location.x, action.location.y);
+	if (!moveTo(location, action.range, ctx,
+	            action.choreographyFlags == kMoveRun, action.choreographyFlags == kMoveWalk))
+		return;
+
+	// A force move that gave up on a blocked way jumps the rest.
+	if ((action.timeout > 0.0f) && !isLocationReached(location, MAX(action.range, kMinMoveRange) + 0.01f, ctx))
+		jumpCreatureTo(action.location, ctx);
+
+	ctx.creature->popAction();
 }
 
 void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext &ctx) {
@@ -919,6 +952,22 @@ ActionExecutor::CastApproach ActionExecutor::approachCastTarget(Action &action, 
 }
 
 void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionContext &ctx) {
+	// ActionCastFakeSpell*: the casting motions where the caster stands, no effect.
+	if (queuedAction.fake) {
+		const Action action = queuedAction;
+		ctx.creature->popAction();
+
+		if (action.object)
+			ctx.creature->makeLookAt(action.object);
+		else
+			ctx.creature->makeLookAt(action.location.x, action.location.y);
+
+		ctx.creature->setLastForcePowerUsed(action.actionID);
+		ctx.creature->playSpellCastVisuals(action.actionID);
+		ctx.creature->playAnimation("castout", false);
+		return;
+	}
+
 	// The dead are past any Force power cast at them.
 	Creature *targetCreature = ObjectContainer::toCreature(queuedAction.object);
 	if (targetCreature && (targetCreature != ctx.creature) && targetCreature->isDead()) {
@@ -1181,22 +1230,38 @@ void ActionExecutor::executeRest(Action &UNUSED(action), const ExecutionContext 
 }
 
 void ActionExecutor::executePlayAnimation(Action &action, const ExecutionContext &ctx) {
-	const Common::UString animName = getAnimationNameById(action.actionID);
-	if (animName.empty()) {
-		ctx.creature->popAction();
-		return;
-	}
+	// action.actionID: the script ANIMATION_* constant; action.range: the speed;
+	// action.startTime: the requested duration, then the time left to wait.
+	if (action.step == 0) {
+		const Common::UString animName = ctx.creature->getScriptAnimationName(action.actionID);
+		if (animName.empty()) {
+			ctx.creature->popAction();
+			return;
+		}
 
-	if (action.startTime < 0.0f) {
-		float speed = action.range > 0.0f ? action.range : 1.0f;
-		float length = -action.startTime;
-		ctx.creature->playAnimation(animName, true, length, speed);
-		action.startTime = length;
+		const float speed    = action.range > 0.0f ? action.range : 1.0f;
+		const float duration = action.startTime;
+
+		const PlayAnimationTiming timing =
+			getPlayAnimationTiming(action.actionID, duration, speed,
+			                       ctx.creature->getModelAnimationLength(animName));
+
+		ctx.creature->playAnimation(animName, true, timing.modelLength, speed);
+
+		if (timing.wait <= 0.0f) {
+			// Looping for good: done queueing, the animation plays on.
+			ctx.creature->popAction();
+			return;
+		}
+
+		action.step = timing.backToDefault ? 1 : 2;
+		action.startTime = timing.wait;
 	}
 
 	action.startTime -= ctx.frameTime;
 	if (action.startTime <= 0.0f) {
-		ctx.creature->playDefaultAnimation();
+		if (action.step == 1)
+			ctx.creature->playDefaultAnimation();
 		ctx.creature->popAction();
 	}
 }
@@ -1217,8 +1282,9 @@ void ActionExecutor::executeCutsceneAttack(Action &action, const ExecutionContex
 	Object *target = action.object;
 	const int choreographyFlags = action.choreographyFlags;
 	const int damage = action.damage;
+	const int animation = action.actionID;
 	ctx.creature->popAction();
-	ctx.creature->performCutsceneAttack(target, choreographyFlags, damage);
+	ctx.creature->performCutsceneAttack(target, choreographyFlags, damage, animation);
 }
 
 void ActionExecutor::loadSpells() {

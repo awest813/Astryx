@@ -36,6 +36,36 @@ namespace KotORBase {
 
 Common::UString getAnimationNameById(int animID);
 
+/** The model animation a script ANIMATION_* constant (ActionPlayAnimation,
+ *  PlayAnimation) plays: the name in its animations.2da row, as KotOR.js maps
+ *  them (ModuleObject.getAnimationNameById/animationConstantToAnimation), or
+ *  the usual model animation name when animations.2da isn't there.
+ *
+ *  @param animation An ANIMATION_LOOPING_* (0-35) or ANIMATION_FIREFORGET_*
+ *                   (100-123) constant.
+ *  @param weapon    The creature's weapon animation number (for READY), -1 for none.
+ *  @param simple    Is the creature a "simple" one (model type S or L: droids, beasts)?
+ *  @return The animation name, or "" for an unknown constant.
+ */
+Common::UString getScriptAnimationName(int animation, int weapon, bool simple);
+
+/** Is this script ANIMATION_* constant a fire-and-forget (play once) one? */
+bool isFireAndForgetScriptAnimation(int animation);
+
+/** How ActionPlayAnimation plays an animation (as KotOR.js' ActionPlayAnimation). */
+struct PlayAnimationTiming {
+	float modelLength { 0.0f };   ///< For Model::playAnimation(): 0 once, -1 for good, else loop that long.
+	float wait { 0.0f };          ///< How long the action lasts; 0: it's done at once.
+	bool backToDefault { false }; ///< Return to the default animation when the action ends?
+};
+
+/** ActionPlayAnimation(@p animation, @p speed, @p duration) of an animation
+ *  @p animationLength seconds long: a fire-and-forget animation, or one asked
+ *  for with no duration, plays once; a negative duration loops it until the
+ *  next animation; else it loops for that many seconds. */
+PlayAnimationTiming getPlayAnimationTiming(int animation, float duration, float speed,
+                                           float animationLength);
+
 /** Can a creature's model play this animation? */
 typedef std::function<bool(const Common::UString &)> HasAnimation;
 

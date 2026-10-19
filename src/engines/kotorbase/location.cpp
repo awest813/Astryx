@@ -22,6 +22,8 @@
  *  A location within an area in KotOR games.
  */
 
+#include <cmath>
+
 #include "src/engines/kotorbase/location.h"
 
 namespace Engines {
@@ -58,6 +60,18 @@ float Location::getFacing() const {
 
 void Location::setFacing(float facing) {
 	_facing = facing;
+}
+
+float scriptFacingToOrientation(float facing) {
+	return facing - 90.0f;
+}
+
+float orientationToScriptFacing(float angle) {
+	float facing = std::fmod(angle + 90.0f, 360.0f);
+	if (facing < 0.0f)
+		facing += 360.0f;
+
+	return facing;
 }
 
 } // End of namespace KotORBase

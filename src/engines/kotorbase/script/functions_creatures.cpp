@@ -45,6 +45,8 @@
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/situated.h"
+#include "src/engines/kotorbase/visualeffects.h"
 
 #include "src/engines/kotorbase/script/functions.h"
 
@@ -519,14 +521,77 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 
 		targetCreature->applyEffect(applied, durationOverride);
 	} else {
-		// Fallback for non-creature objects (e.g. placeable damage)
-		int current = target->getCurrentHitPoints();
-		if (applied.getType() == kKotOREffectDamage) {
-			target->setCurrentHitPoints(MAX(0, current - applied.getAmount()));
-		} else if (applied.getType() == kKotOREffectHeal) {
-			target->setCurrentHitPoints(MIN(target->getMaxHitPoints(), current + applied.getAmount()));
-		}
+		// A door or placeable: its damage (the Endar Spire's exploding barrel), healing, visuals.
+		applyEffectToNonCreature(applied, *target, ObjectContainer::toObject(ctx.getCaller()),
+		                         (durationType == 1) ? duration : 0.0f);
 	}
+
+	// PlayExplosion's VFX_IMP_SCREEN_SHAKE on the PC.
+	shakeForVisualEffects(applied);
+}
+
+void Functions::shakeForVisualEffects(const Effect &effect) {
+	auto shake = [this](const Effect &part) {
+		if (part.getType() != kKotOREffectVisual)
+			return;
+
+		VisualEffectInfo info;
+		try {
+			if (!loadVisualEffect(TwoDAReg.get2DA("visualeffects"), part.getAmount(), info))
+				return;
+		} catch (...) {
+			return;
+		}
+
+		float duration = 0.0f, intensity = 0.0f;
+		if (getVisualEffectShake(info, duration, intensity))
+			_game->getModule().shakeCamera(duration, intensity);
+	};
+
+	shake(effect);
+	for (const Effect &part : effect.getLinkedEffects())
+		shake(part);
+}
+
+void Functions::applyEffectToNonCreature(const Effect &effect, Object &target, Object *source,
+                                         float visualDuration) {
+
+	Situated *situated = ObjectContainer::toSituated(&target);
+
+	auto apply = [&](const Effect &part) {
+		switch (part.getType()) {
+			case kKotOREffectDamage:
+				// Through the object's OnDamaged/OnDeath (Area::handleSituatedEvents()).
+				if (situated)
+					situated->takeDamage(part.getAmount(), source);
+				else
+					target.setCurrentHitPoints(MAX(0, target.getCurrentHitPoints() - part.getAmount()));
+				break;
+
+			case kKotOREffectHeal:
+				target.setCurrentHitPoints(MIN(target.getMaxHitPoints(),
+				                               target.getCurrentHitPoints() + part.getAmount()));
+				break;
+
+			case kKotOREffectVisual: {
+				Area *area = _game->getModule().getCurrentArea();
+				if (!area)
+					break;
+
+				float x, y, z;
+				target.getPosition(x, y, z);
+				area->playVisualEffectAt(part.getAmount(), x, y, z, visualDuration);
+				break;
+			}
+
+			default:
+				break;
+		}
+	};
+
+	apply(effect);
+	for (const Effect &part : effect.getLinkedEffects())
+		apply(part);
 }
 
 
@@ -974,10 +1039,14 @@ void Functions::setStealthMode(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setLightsaberPowered(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	bool powered = ctx.getParams()[1].getInt() != 0;
+	// SetLightsaberPowered(object oCreature, int bOverride, int bPowered=TRUE,
+	//                      int bShowTransition=FALSE): bOverride FALSE gives the
+	// blade back to the game (which keeps it lit).
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	const bool overridden = ctx.getParams()[1].getInt() != 0;
+	const bool powered  = ctx.getParams()[2].getInt() != 0;
 	if (creature)
-		creature->setLightsaberPowered(powered);
+		creature->setLightsaberPowered(!overridden || powered);
 }
 
 void Functions::getAppearanceType(Aurora::NWScript::FunctionContext &ctx) {

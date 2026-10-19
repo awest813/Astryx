@@ -146,6 +146,8 @@ class Object;
 
 class Creature;
 
+class Effect;
+
 
 class Event;
 
@@ -257,6 +259,13 @@ protected:
 
 
 	static Aurora::NWScript::Object *getParamObject(const Aurora::NWScript::FunctionContext &ctx, size_t n);
+
+	/** Shake the camera for the screen shakes among an effect's visuals. */
+	void shakeForVisualEffects(const Effect &effect);
+	/** Apply an effect to an object that isn't a creature (a door, a placeable):
+	 *  its damage, healing and visuals. */
+	void applyEffectToNonCreature(const Effect &effect, Object &target, Object *source,
+	                              float visualDuration);
 
 
 

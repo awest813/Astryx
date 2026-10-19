@@ -150,6 +150,9 @@ public:
 	/** A blow of @p damage (before Hardness) by @p attacker landed. The OnDamaged
 	 *  and OnDeath scripts run later, from the area (see consume*Event()). */
 	void takeBashDamage(int damage, Object *attacker);
+	/** Damage from an effect (EffectDamage): no Hardness, otherwise as a blow.
+	 *  An object without hit points can't be harmed. */
+	void takeDamage(int damage, Object *attacker);
 	/** @p attacker swung at the object (its OnMeleeAttacked script runs later). */
 	void notifyAttacked(Object *attacker);
 
