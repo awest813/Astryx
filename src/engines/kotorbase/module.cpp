@@ -825,22 +825,24 @@ void Module::enterArea() {
 
 	_area->show();
 
+	// Swoop race and turret areas run their minigame instead of the party.
+	// Set it up before the module scripts, so their SWMG_* calls stick.
+	if (_area->isMinigame()) {
+		_minigame = std::make_unique<MinigameRuntime>(*this, *_area);
+		if (_minigame->load())
+			_ingame->hide();
+		else
+			_minigame.reset();
+	}
+
 	runScript(kScriptModuleLoad , this, _pc);
 	runScript(kScriptModuleStart, this, _pc);
 	runScript(kScriptEnter      , this, _pc);
 
 	GfxMan.unlockFrame();
 
-	// Swoop race and turret areas run their minigame instead of the party.
-	if (_area->isMinigame()) {
-		_minigame = std::make_unique<MinigameRuntime>(*this, *_area);
-		if (_minigame->load()) {
-			_ingame->hide();
-			_minigame->start();
-		} else {
-			_minigame.reset();
-		}
-	}
+	if (_minigame)
+		_minigame->start();
 
 	_area->runScript(kScriptEnter, _area.get(), _pc);
 }
