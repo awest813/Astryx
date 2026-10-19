@@ -123,7 +123,14 @@ public:
 	bool isSkippable() const;
 
 	/** KotOR: Return the stunt list. */
-	Common::UString getStuntList() const;
+	/** A participant who plays a stunt model's animations in this cutscene. */
+	struct Stunt {
+		Common::UString participant; ///< Tag, "OWNER" or "PLAYER".
+		Common::UString stuntModel;  ///< Model whose animations the participant plays.
+	};
+
+	/** KotOR: the conversation's stunt actors ("StuntList"). */
+	const std::vector<Stunt> &getStunts() const;
 
 	/** KotOR: Camera model for animated camera shots. */
 	const Common::UString &getCameraModel() const;
@@ -183,7 +190,7 @@ private:
 	bool _noZoomIn; ///< Starting the conversation does not zoom the camera onto the speaker.
 
 	bool            _skippable; ///< KotOR: Is the conversation skippable?
-	Common::UString _stuntList; ///< KotOR: Stunt list for the conversation.
+	std::vector<Stunt> _stunts; ///< KotOR: Stunt actors of the conversation.
 	Common::UString _cameraModel;      ///< KotOR: Camera model for animated shots.
 	uint32_t        _conversationType; ///< KotOR: Conversation type.
 	bool            _animatedCut;      ///< KotOR: Animated cutscene.

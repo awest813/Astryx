@@ -182,6 +182,11 @@ GTEST_TEST(CinematicCamera, dlgCutsceneFieldsAreParsed) {
 	Aurora::GFF3WriterStructPtr top = writer.getTopLevel();
 	top->addResRef("CameraModel", "end_cam");
 	top->addUint32("ConversationType", 0);
+	Aurora::GFF3WriterListPtr stunts = top->addList("StuntList");
+	Aurora::GFF3WriterStructPtr stunt = stunts->addStruct();
+	stunt->addExoString("Participant", "trask");
+	stunt->addResRef("StuntModel", "end_trask01");
+	stunts->addStruct()->addResRef("StuntModel", "end_owner01");
 
 	Aurora::GFF3WriterStructPtr entry = top->addList("EntryList")->addStruct();
 	entry->addExoString("Speaker", "trask");
@@ -209,6 +214,11 @@ GTEST_TEST(CinematicCamera, dlgCutsceneFieldsAreParsed) {
 	Aurora::DLGFile dlg(new Common::MemoryReadStream(out.getData(), out.size()));
 	EXPECT_TRUE(dlg.getCameraModel().equalsIgnoreCase("end_cam"));
 
+	ASSERT_EQ(dlg.getStunts().size(), 2U);
+	EXPECT_TRUE(dlg.getStunts()[0].participant.equalsIgnoreCase("trask"));
+	EXPECT_TRUE(dlg.getStunts()[0].stuntModel.equalsIgnoreCase("end_trask01"));
+	EXPECT_TRUE(dlg.getStunts()[1].participant.equalsIgnoreCase("OWNER")); // Empty: the owner.
+
 	dlg.startConversation();
 	const Aurora::DLGFile::Line *line = dlg.getCurrentEntry();
 	ASSERT_NE(line, nullptr);
@@ -229,3 +239,16 @@ GTEST_TEST(CinematicCamera, dlgCutsceneFieldsAreParsed) {
 	EXPECT_TRUE(line->animations[0].participant.equalsIgnoreCase("OWNER"));
 	EXPECT_EQ(line->animations[0].animation, 10010U);
 }
+
+GTEST_TEST(CinematicCamera, cutsceneAnimationNames) {
+	// KotOR.js names them "CUT" + (number - 1199); number - 1200 is the fallback.
+	const std::vector<Common::UString> names = cutsceneAnimationNames(1205);
+	ASSERT_EQ(names.size(), 2U);
+	EXPECT_STREQ(names[0].c_str(), "CUT006W");
+	EXPECT_STREQ(names[1].c_str(), "CUT005W");
+
+	EXPECT_STREQ(cutsceneAnimationNames(1200)[1].c_str(), "CUT000W");
+	EXPECT_TRUE(cutsceneAnimationNames(10010).size() == 2U);
+	EXPECT_TRUE(cutsceneAnimationNames(1199).empty());
+}
+

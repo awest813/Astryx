@@ -30,6 +30,8 @@
 #include "external/glm/gtc/quaternion.hpp"
 
 #include "src/common/maths.h"
+#include "src/common/strutil.h"
+#include "src/common/string.h"
 
 #include "src/engines/kotorbase/cinematicshot.h"
 
@@ -119,6 +121,16 @@ CinematicShot computeStaticShot(const float position[3], const float orientation
 	shot.position  = glm::vec3(transform[3]);
 	shot.direction = lookDirectionFromTransform(transform);
 	return shot;
+}
+
+std::vector<Common::UString> cutsceneAnimationNames(uint32_t number) {
+	std::vector<Common::UString> names;
+	if (number < 1200)
+		return names;
+
+	names.push_back(Common::String::format("CUT%03dW", static_cast<int>(number) - 1199));
+	names.push_back(Common::String::format("CUT%03dW", static_cast<int>(number) - 1200));
+	return names;
 }
 
 CinematicShot computeFocusShot(const glm::vec3 &focus, float yaw, float distance, float elevation) {

@@ -95,15 +95,19 @@ new way:
 - **Script approximations:** `CutsceneAttack` applies its damage when
   queued, not on impact; SWMG bullet hit parts aren't tracked; many natives are simplified (see
   [FULL_PARITY_AUDIT_AND_PLAN.md](FULL_PARITY_AUDIT_AND_PLAN.md)).
-- **Cutscene camera assumptions to confirm in play:** animated camera
-  shots look for `CUT%03dW` (DLG `CameraAnimation` - 1200; possibly off by
-  one — if animated shots never play, try - 1199) on the model's `camerahook`; GIT static camera orientations are read as (w, x, y, z);
-  DLG `AnimList` numbers from 10000 are treated as looping animations.
-  Shots that can't be resolved fall back to speaker/listener framing.
-  DLG line fades play as KotOR.js reads them (`FadeType` 1 cut to
-  `FadeColor`, 2 cut from it, 3 fade in, 4 fade out, over `FadeLength`
-  after `FadeDelay`) — check the 1/2 vs 3/4 meaning in play. Stunt
-  (`StuntList`) cutscenes are not played.
+- **Cutscene assumptions to confirm in play:** animated camera shots and
+  cutscene participant animations (DLG numbers from 1200) are named
+  `CUT%03dW` of the number - 1199 (as KotOR.js names them), falling back to
+  - 1200; cameras use the model's `camerahook`. GIT static camera
+  orientations are read as (w, x, y, z); DLG `AnimList` numbers from 10000
+  are looping animations. Shots that can't be resolved fall back to
+  speaker/listener framing. DLG line fades play as KotOR.js reads them
+  (`FadeType` 1 cut to `FadeColor`, 2 cut from it, 3 fade in, 4 fade out,
+  over `FadeLength` after `FadeDelay`). Stunt cutscenes: each `StuntList`
+  participant plays animations from its `StuntModel` (looked up before its
+  own) for the conversation; actors are not repositioned (KotOR.js faces
+  them to 0 for `AnimatedCut` dialogs — check placement in the Endar Spire
+  and Leviathan cutscenes).
 - **Level-up and XP** come from the game tables, read the way KotOR.js
   reads them; confirm in play:
   - next-level XP from `exptable.2da`; kill XP from `xptable.2da` (column

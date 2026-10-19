@@ -496,7 +496,20 @@ void Model::attachModel(const Common::UString &nodeName, Model *model) {
 	createBound();
 }
 
+void Model::setStuntModel(Model *stunt) {
+	_stuntModel = stunt;
+}
+
+bool Model::canPlayAnimation(const Common::UString &anim) {
+	return getAnimation(anim) != nullptr;
+}
+
 Animation *Model::getAnimation(const Common::UString &anim) {
+	if (_stuntModel) {
+		Animation *stunt = _stuntModel->getAnimation(anim);
+		if (stunt)
+			return stunt;
+	}
 
 	AnimationMap::iterator n = _animationMap.find(anim);
 	if (n == _animationMap.end()) {
@@ -535,6 +548,9 @@ bool Model::arePositionFramesRelative() const {
 
 float Model::getAnimationScale(const Common::UString &anim) {
 	// TODO: We can cache this for performance
+	if (_stuntModel && _stuntModel->getAnimation(anim))
+		return 1.0f;
+
 	AnimationMap::iterator n = _animationMap.find(anim);
 	if (n == _animationMap.end()) {
 		// Animation scaling only applies to inherited animations

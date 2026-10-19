@@ -91,11 +91,16 @@ private:
 	std::unique_ptr<Sound::ChannelHandle> _voice;
 	std::unique_ptr<Sound::ChannelHandle> _sound;
 	Common::UString _owner;
+	std::vector<uint32_t> _stuntActors; ///< IDs of creatures playing a stunt model.
 	Common::UString _curSpeaker;
 
 	void refresh();
 	Object *findParticipant(const Common::UString &tag) const;
 	void updateCamera(const Aurora::DLGFile::Line &entry, Object *speaker, Object *listener);
+	/** Give the conversation's stunt actors their stunt models' animations. */
+	void applyStunts();
+	/** Take them back (the conversation ended). */
+	void releaseStunts();
 	/** The line's screen fade (FadeType, FadeDelay, FadeLength, FadeColor). */
 	void applyFade(const Aurora::DLGFile::Line &entry);
 	void playParticipantAnimations(const Aurora::DLGFile::Line &entry);

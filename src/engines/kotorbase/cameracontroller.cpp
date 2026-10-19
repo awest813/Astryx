@@ -373,10 +373,6 @@ bool CameraController::setAnimatedShot(const Common::UString &cameraModel, uint3
 	if (cameraModel.empty() || cameraAnimation == 0)
 		return false;
 
-	// Camera animations are named after their DLG number, offset by 1200.
-	const Common::UString animation =
-		Common::String::format("CUT%03dW", static_cast<int>(cameraAnimation) - 1200);
-
 	try {
 		if (!_animatedCamera || !_animatedCameraName.equalsIgnoreCase(cameraModel)) {
 			releaseAnimatedCamera();
@@ -385,8 +381,16 @@ bool CameraController::setAnimatedShot(const Common::UString &cameraModel, uint3
 			_animatedCameraName = cameraModel;
 		}
 
-		if (!_animatedCamera || !_animatedCamera->hasAnimation(animation) ||
-		    !_animatedCamera->getNode("camerahook")) {
+		// Camera animations are named after their DLG number.
+		Common::UString animation;
+		if (_animatedCamera)
+			for (const Common::UString &name : cutsceneAnimationNames(cameraAnimation))
+				if (_animatedCamera->hasAnimation(name)) {
+					animation = name;
+					break;
+				}
+
+		if (!_animatedCamera || animation.empty() || !_animatedCamera->getNode("camerahook")) {
 			releaseAnimatedCamera();
 			return false;
 		}

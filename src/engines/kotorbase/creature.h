@@ -390,6 +390,11 @@ public:
 	/** Time (s) the current movement has been blocked; reset on progress. */
 	float addBlockedMoveTime(float dt) { return _blockedMoveTime += dt; }
 	void resetBlockedMoveTime() { _blockedMoveTime = 0.0f; }
+	/** Play animations from this model before the creature's own (dialog stunts). */
+	void setStuntModel(Graphics::Aurora::Model *stunt);
+	/** Does the creature's model (or its stunt model) have this animation? */
+	bool hasModelAnimation(const Common::UString &anim);
+
 	/** The walkmesh route the current movement follows. */
 	MovePath &getMovePath() { return _movePath; }
 

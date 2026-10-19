@@ -34,6 +34,10 @@
 #include "external/glm/vec3.hpp"
 #include "external/glm/mat4x4.hpp"
 
+#include <vector>
+
+#include "src/common/ustring.h"
+
 namespace Engines {
 
 namespace KotORBase {
@@ -76,6 +80,11 @@ CinematicShot computeDialogShot(int cameraAngle,
 /** A GIT static camera: Position, Orientation (w, x, y, z), Height and Pitch (degrees). */
 CinematicShot computeStaticShot(const float position[3], const float orientation[4],
                                 float height, float pitch);
+
+/** Model animation names a DLG cutscene number (CameraAnimation, AnimList
+ *  from 1200) may go by, most likely first: "CUT%03dW" of number - 1199 (as
+ *  KotOR.js names them), then of number - 1200. Empty below 1200. */
+std::vector<Common::UString> cutsceneAnimationNames(uint32_t number);
 
 /** A shot of a focus point from a yaw (radians), distance and elevation (degrees). */
 CinematicShot computeFocusShot(const glm::vec3 &focus, float yaw, float distance, float elevation);

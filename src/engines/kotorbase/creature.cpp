@@ -841,6 +841,12 @@ namespace KotORBase {
 		float speed) {
 			if (_model)		_model->playAnimation(anim, restart, length, speed);
 		}
+		void Creature::setStuntModel(Graphics::Aurora::Model *stunt) {
+			if (_model)		_model->setStuntModel(stunt);
+		}
+		bool Creature::hasModelAnimation(const Common::UString &anim) {
+			return _model && _model->canPlayAnimation(anim);
+		}
 		void Creature::getTooltipAnchor(
 		float &x,
 		float &y,

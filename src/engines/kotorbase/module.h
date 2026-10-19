@@ -140,6 +140,9 @@ public:
 	Game &getGame() const;
 	/** Return a map between surface type and whether it is walkable. */
 	const std::vector<bool> &getWalkableSurfaces() const;
+	/** A dialog stunt model (loaded once per area; nullptr if it can't be). */
+	Graphics::Aurora::Model *getStuntModel(const Common::UString &resRef);
+
 	/** Return the fade quad. */
 	Graphics::Aurora::FadeQuad &getFadeQuad();
 	void holdWorldFadeInForDialog();
@@ -625,6 +628,8 @@ protected:
 	Common::UString _entryLocation; ///< The tag of the object in the start location for this module.
 	ObjectType      _entryLocationType; ///< The type(s) of the object in the start location for this module.
 
+	/** Dialog stunt models, declared before the area so they outlive its creatures (creatures may still play their animations). */
+	std::map<Common::UString, std::unique_ptr<Graphics::Aurora::Model>, Common::UString::iless> _stuntModels;
 	std::unique_ptr<Area> _area; ///< The current module's area.
 	std::unique_ptr<MinigameRuntime> _minigame; ///< The area's running minigame, if any.
 

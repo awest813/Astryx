@@ -40,6 +40,7 @@
 
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/aurora/nwscript/objectman.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/script/functions.h"
@@ -61,10 +62,12 @@ DialogGUI::DialogGUI(Module &module) :
 
 void DialogGUI::startConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
 	try {
+		releaseStunts();
 		_dlg = std::make_unique<Aurora::DLGFile>(name, owner);
 		_dlg->startConversation();
 		_owner = owner ? owner->getTag() : "";
 		_pickedReply = false;
+		applyStunts();
 		refresh();
 	} catch (Common::Exception &e) {
 		warning("Failed to start conversation %s: %s", name.c_str(), e.what());
@@ -73,6 +76,7 @@ void DialogGUI::startConversation(const Common::UString &name, Aurora::NWScript:
 
 void DialogGUI::stopConversation() {
 	stopSounds();
+	releaseStunts();
 	_dlg.reset();
 	_replyIds.clear();
 	_owner.clear();
@@ -227,6 +231,7 @@ void DialogGUI::refresh() {
 	const Aurora::DLGFile::Line *curEntry = _dlg->getCurrentEntry();
 	if (!curEntry) {
 		_isActive = false;
+		releaseStunts();
 		return;
 	}
 
@@ -246,6 +251,7 @@ void DialogGUI::refresh() {
 
 		_dlg->pickReply(Aurora::DLGFile::kEndLine);
 		_isActive = false;
+		releaseStunts();
 		return;
 	}
 
@@ -364,11 +370,53 @@ void DialogGUI::applyFade(const Aurora::DLGFile::Line &entry) {
 		fade.fadeOut();
 }
 
+void DialogGUI::applyStunts() {
+	if (!_dlg)
+		return;
+
+	for (const Aurora::DLGFile::Stunt &stunt : _dlg->getStunts()) {
+		Creature *creature = ObjectContainer::toCreature(findParticipant(stunt.participant));
+		if (!creature)
+			continue;
+
+		Graphics::Aurora::Model *model = _module.getStuntModel(stunt.stuntModel);
+		if (!model)
+			continue;
+
+		creature->setStuntModel(model);
+		_stuntActors.push_back(creature->getID());
+	}
+}
+
+void DialogGUI::releaseStunts() {
+	for (uint32_t id : _stuntActors) {
+		Creature *creature = ObjectContainer::toCreature(ObjectMan.findObject(id));
+		if (!creature)
+			continue;
+
+		creature->setStuntModel(nullptr);
+		creature->playDefaultAnimation();
+	}
+
+	_stuntActors.clear();
+}
+
 void DialogGUI::playParticipantAnimations(const Aurora::DLGFile::Line &entry) {
 	for (const Aurora::DLGFile::Animation &animation : entry.animations) {
 		Creature *creature = ObjectContainer::toCreature(findParticipant(animation.participant));
 		if (!creature)
 			continue;
+
+		// Cutscene animations (from 1200, usually a stunt model's) play once.
+		if (animation.animation >= 1200 && animation.animation < 10000) {
+			for (const Common::UString &name : cutsceneAnimationNames(animation.animation))
+				if (creature->hasModelAnimation(name)) {
+					creature->playAnimation(name, true, 0.0f);
+					break;
+				}
+
+			continue;
+		}
 
 		// Numbers from 10000 are looping animations, the others play once.
 		const bool looping = animation.animation >= 10000;
@@ -467,6 +515,7 @@ void DialogGUI::pickReply(int index) {
 		stopSounds();
 		_module.resetToOrbit();
 		_isActive = false;
+		releaseStunts();
 	} else
 		refresh();
 }

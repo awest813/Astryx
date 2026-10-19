@@ -160,6 +160,11 @@ public:
 
 	/** Does this model have this named animation? */
 	bool hasAnimation(const Common::UString &anim) const;
+	/** Look animations up in @p stunt first (KotOR dialog stunts); nullptr to stop.
+	 *  The stunt model must outlive any animation started from it. */
+	void setStuntModel(Model *stunt);
+	/** Can playAnimation() play this (own, stunt or super model animations)? */
+	bool canPlayAnimation(const Common::UString &anim);
 	/** Are position frames in animations relative to the node's base position? */
 	bool arePositionFramesRelative() const;
 	/** Does the model have skin nodes? */
@@ -245,6 +250,7 @@ protected:
 
 	Common::UString _superModelName; ///< Name of the super model.
 	Model *_superModel; ///< The actual super model.
+	Model *_stuntModel { nullptr }; ///< Cutscene animations, looked up first.
 
 	StateList _stateList;   ///< All states within this model.
 	StateMap  _stateMap;    ///< All states within this model, index by name.

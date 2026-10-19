@@ -62,6 +62,7 @@
 #include "src/events/events.h"
 
 #include "src/engines/aurora/util.h"
+#include "src/engines/aurora/model.h"
 #include "src/engines/aurora/resources.h"
 #include "src/engines/aurora/console.h"
 #include "src/engines/aurora/flycamera.h"
@@ -635,6 +636,24 @@ void Module::unloadIFO() {
 void Module::unloadArea() {
 	_minigame.reset(); // It refers to the area.
 	_area.reset();
+	_stuntModels.clear(); // After the creatures that may play their animations.
+}
+
+Graphics::Aurora::Model *Module::getStuntModel(const Common::UString &resRef) {
+	auto it = _stuntModels.find(resRef);
+	if (it != _stuntModels.end())
+		return it->second.get();
+
+	std::unique_ptr<Graphics::Aurora::Model> model;
+	try {
+		model.reset(loadModelObject(resRef));
+	} catch (...) {
+		Common::exceptionDispatcherWarning("Failed to load stunt model \"%s\"", resRef.c_str());
+	}
+
+	Graphics::Aurora::Model *stunt = model.get();
+	_stuntModels[resRef] = std::move(model);
+	return stunt;
 }
 
 void Module::unloadTexturePack() {

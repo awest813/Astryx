@@ -148,8 +148,8 @@ bool DLGFile::isAnimatedCut() const {
 	return _animatedCut;
 }
 
-Common::UString DLGFile::getStuntList() const {
-	return _stuntList;
+const std::vector<DLGFile::Stunt> &DLGFile::getStunts() const {
+	return _stunts;
 }
 
 bool DLGFile::hasEnded() const {
@@ -253,7 +253,24 @@ void DLGFile::load(const GFF3Struct &dlg) {
 	_noZoomIn = !dlg.getBool("PreventZoomIn", true);
 
 	_skippable = dlg.getBool("Skippable", true);
-	_stuntList = getOptionalString(dlg, "StuntList");
+	if (dlg.hasField("StuntList")) {
+		try {
+			for (const GFF3Struct *stunt : dlg.getList("StuntList")) {
+				if (!stunt)
+					continue;
+
+				Stunt entry;
+				entry.participant = getOptionalString(*stunt, "Participant");
+				entry.stuntModel  = getOptionalString(*stunt, "StuntModel");
+				if (entry.participant.empty())
+					entry.participant = "OWNER";
+				if (!entry.stuntModel.empty())
+					_stunts.push_back(entry);
+			}
+		} catch (...) {
+			// Not a list: no stunts.
+		}
+	}
 
 	_cameraModel      = getOptionalString(dlg, "CameraModel");
 	_conversationType = getOptionalUint(dlg, "ConversationType");
