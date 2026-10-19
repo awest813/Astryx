@@ -162,13 +162,18 @@ bool Situated::canBeBashed() const {
 }
 
 void Situated::takeBashDamage(int damage, Object *attacker) {
+	takeDamage(BashRules::damageAfterHardness(damage, _hardness), attacker);
+}
+
+void Situated::takeDamage(int damage, Object *attacker) {
 	if (_broken)
 		return;
 
-	damage = BashRules::damageAfterHardness(damage, _hardness);
-
 	if (attacker)
 		_lastHostileActor = attacker;
+
+	if ((_maxHitPoints <= 0) && (_currentHitPoints <= 0))
+		return;
 
 	// Plot objects can't be harmed.
 	if (_plotFlag || (damage <= 0))

@@ -248,9 +248,8 @@ bool Placeable::unlock(Object *UNUSED(unlocker)) {
 }
 
 void Placeable::breakOpen(Object *breaker) {
-	if (_broken)
-		return;
-
+	// Situated::takeDamage() marks the object broken as soon as it dies; this
+	// runs once, after its OnDeath script.
 	Situated::breakOpen(breaker);
 
 	_lastOpenedBy = breaker;

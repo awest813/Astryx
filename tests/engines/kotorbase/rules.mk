@@ -103,6 +103,11 @@ tests_engines_kotorbase_test_endar_spire_golden_SOURCES   = tests/engines/kotorb
 tests_engines_kotorbase_test_endar_spire_golden_LDADD     = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_endar_spire_golden_CXXFLAGS  = $(test_CXXFLAGS)
 
+check_PROGRAMS                                            += tests/engines/kotorbase/test_endar_spire_effects
+tests_engines_kotorbase_test_endar_spire_effects_SOURCES   = tests/engines/kotorbase/endar_spire_effects.cpp
+tests_engines_kotorbase_test_endar_spire_effects_LDADD     = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_endar_spire_effects_CXXFLAGS  = $(test_CXXFLAGS)
+
 check_PROGRAMS                                           += tests/engines/kotorbase/test_levelup
 tests_engines_kotorbase_test_levelup_SOURCES                = tests/engines/kotorbase/levelup.cpp
 tests_engines_kotorbase_test_levelup_LDADD                  = $(kotorbase_LIBS)

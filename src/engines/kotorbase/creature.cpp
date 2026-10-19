@@ -952,6 +952,13 @@ static const int kAnimationForcePushed = 84;
 		bool Creature::hasModelAnimation(const Common::UString &anim) {
 			return _model && _model->canPlayAnimation(anim);
 		}
+		Common::UString Creature::getScriptAnimationName(int animation) const {
+			const bool simple = (_modelType == "S") || (_modelType == "L");
+			return KotORBase::getScriptAnimationName(animation, getWeaponAnimationNumber(), simple);
+		}
+		float Creature::getModelAnimationLength(const Common::UString &anim) {
+			return _model ? _model->getAnimationLength(anim) : 0.0f;
+		}
 		void Creature::getTooltipAnchor(
 		float &x,
 		float &y,
@@ -2436,7 +2443,7 @@ static const int kAnimationForcePushed = 84;
 			return _info.hasForcePower(power);
 		}
 		void Creature::performCutsceneAttack(Object *target,
-		int flags, int damage) {
+		int flags, int damage, int animation) {
 			if (!target || target->isDead())
 				return;
 
@@ -2445,7 +2452,15 @@ static const int kAnimationForcePushed = 84;
 			if (targetCreature)
 				targetCreature->makeLookAt(this);
 
-			playAnimation("attack1", false, 1.2f);
+			// The animation the script asks for (an animations.2da row, as
+			// KotOR.js plays it); else the attack of the weapon held.
+			const Common::UString scripted = (animation >= 0) ? getAnimationNameById(animation) : "";
+			if (!scripted.empty() && hasModelAnimation(scripted))
+				playAnimation(scripted, true);
+			else if (_model && (getWeaponAnimationNumber() != -1))
+				playAttackAnimation();
+			else
+				playAnimation("attack1", false, 1.2f);
 
 			if (flags & kCutsceneAttackForceHit) {
 				if (targetCreature && (flags & kCutsceneAttackPlayReaction)) {

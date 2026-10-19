@@ -67,12 +67,26 @@ struct VisualEffectInfo {
 
 	Common::UString impactSound; ///< "soundimpact".
 
+	Common::UString label; ///< "label", e.g. "VFX_IMP_SCREEN_SHAKE".
+
+	int   shakeType { 0 };        ///< "shaketype": does it shake the screen (and how)?
+	float shakeDelay { 0.0f };    ///< "shakedelay", in seconds.
+	float shakeDuration { 0.0f }; ///< "shakeduration", in seconds.
+
 	bool isDuration() const { return type == 'D'; }
 	bool isBeam() const { return type == 'B'; }
 };
 
 /** Read row @p id of visualeffects.2da. False if there's no such row. */
 bool loadVisualEffect(const Aurora::TwoDAFile &visualEffects, int id, VisualEffectInfo &info);
+
+/** Does the effect shake the camera, and for how long and how hard?
+ *
+ *  As in the Aurora visualeffects.2da, the "shaketype"/"shakeduration" columns
+ *  make an effect shake the screen (PlayExplosion's VFX_IMP_SCREEN_SHAKE); a
+ *  table without them still shakes for a row labelled as a screen shake.
+ */
+bool getVisualEffectShake(const VisualEffectInfo &info, float &duration, float &intensity);
 
 /** The root model of a visual effect for a creature of appearance.2da
  *  "sizecategory" @p sizeCategory (1 tiny, 2 small, 3 medium, 4 large, 5 huge). */

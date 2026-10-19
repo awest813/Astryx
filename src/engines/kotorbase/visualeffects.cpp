@@ -70,6 +70,30 @@ bool loadVisualEffect(const Aurora::TwoDAFile &visualEffects, int id, VisualEffe
 	info.rootModels[3]  = row.getString("imp_root_h_node");
 	info.impactSound    = row.getString("soundimpact");
 
+	info.label          = row.getString("label");
+	info.shakeType      = row.getInt("shaketype");
+	info.shakeDelay     = row.getFloat("shakedelay");
+	info.shakeDuration  = row.getFloat("shakeduration");
+
+	return true;
+}
+
+/** How long a screen shake without a duration lasts, in seconds. */
+static const float kDefaultShakeDuration = 1.0f;
+/** How far the camera moves about in a screen shake. */
+static const float kShakeIntensity = 0.25f;
+
+bool getVisualEffectShake(const VisualEffectInfo &info, float &duration, float &intensity) {
+	const bool shakeColumns = (info.shakeType > 0) || (info.shakeDuration > 0.0f);
+	const bool shakeLabel   = info.label.toLower().contains("shake");
+	if (!shakeColumns && !shakeLabel)
+		return false;
+
+	duration = (info.shakeDuration > 0.0f) ? info.shakeDuration : kDefaultShakeDuration;
+	if (duration > 30.0f)
+		duration /= 1000.0f; // In milliseconds, then.
+
+	intensity = kShakeIntensity * CLIP(info.shakeType, 1, 3);
 	return true;
 }
 
