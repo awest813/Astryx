@@ -448,6 +448,12 @@ void HUD::updateCombatModeMessage() {
 	if (Odyssey::WidgetCheckBox *pause = getCheckBox("TB_PAUSE"))
 		if (pause->getState() != paused)
 			pause->setState(paused);
+
+	// And the stealth button the leader's stealth mode (attacking ends it).
+	const bool stealthy = _module.isLeaderStealthy();
+	if (Odyssey::WidgetCheckBox *stealth = getCheckBox("TB_STEALTH"))
+		if (stealth->getState() != stealthy)
+			stealth->setState(stealthy);
 }
 
 void HUD::update(float dt) {
@@ -568,6 +574,11 @@ void HUD::callbackActive(Widget &widget) {
 
 	if (widget.getTag() == "TB_PAUSE") {
 		_module.toggleGamePaused();
+		return;
+	}
+
+	if (widget.getTag() == "TB_STEALTH") {
+		_module.toggleLeaderStealth();
 		return;
 	}
 

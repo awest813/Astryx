@@ -329,6 +329,11 @@ public:
 	int absorbDamage(int damage, int damageType);
 	/** Is the creature invisible (EffectInvisibility)? */
 	bool isInvisible() const { return _invisibility > 0; }
+	/** Does the creature see the invisible (EffectTrueSeeing / EffectSeeInvisible)? */
+	bool canSeeInvisible() const { return _seeInvisible > 0; }
+	/** Does the creature see @p target, @p distance metres away? Invisible and
+	 *  stealthy enemies can go unseen (see PerceptionRules). */
+	bool canPerceive(const Creature &target, float distance) const;
 	/** Damage bonus (or penalty) of EffectDamageIncrease/Decrease. */
 	int getDamageModifier() const { return _damageModifier; }
 	/** Force push: knock the creature back by up to @p distance metres away from
@@ -598,6 +603,7 @@ private:
 	int _armorClassModifier { 0 };
 	int _damageModifier { 0 };
 	int _invisibility { 0 };
+	int _seeInvisible { 0 };
 	int _nextEffectLinkId { 0 };
 	std::array<int, kSkillMAX> _skillModifiers {{}};
 	std::array<int, kAbilityCharisma + 1> _abilityModifiers {{}};

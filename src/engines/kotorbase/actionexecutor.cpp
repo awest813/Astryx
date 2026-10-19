@@ -994,6 +994,10 @@ bool ActionExecutor::castSpell(const Action &action, const ExecutionContext &ctx
 	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->setLastForcePowerUsed(action.actionID);
 
+	// Using the Force on someone gives a sneaking caster away.
+	if (harmful && caster->getStealthMode())
+		caster->setStealthMode(false);
+
 	// The item casting the spell (GetSpellCastItem), used up when it's a consumable.
 	Object *castItem = nullptr;
 	if (!action.item.empty()) {

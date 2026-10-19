@@ -1936,6 +1936,16 @@ void Module::updateCombatAI() {
 			// If in combat, ensure we're either attacking or chasing the target.
 			if (c->isInCombat()) {
 				Object *t = c->getAttackTarget();
+
+				// A target that turned invisible (or slipped into stealth) is lost.
+				Creature *tc = ObjectContainer::toCreature(t);
+				if (tc && !tc->isDead() && !c->canPerceive(*tc, c->getDistanceTo(tc))) {
+					if (currentAction && (currentAction->type == kActionAttackObject) && (currentAction->object == t))
+						c->clearActions();
+					c->cancelCombat();
+					continue;
+				}
+
 				if (t && !t->isDead()) {
 					// Target is alive — chase if out of range and idle.
 					bool outOfRange = c->getDistanceTo(t) > c->getMaxAttackRange();
@@ -1967,8 +1977,9 @@ void Module::updateCombatAI() {
 				float dist = c->getDistanceTo(pm);
 				if (dist > kNPCNoticeRange)
 					continue;
-				// Can't engage what it can't see (e.g. behind a closed door).
-				if (!_area->hasLineOfSight(c, pm))
+				// Can't engage what it can't see (e.g. behind a closed door,
+				// invisible or sneaking past).
+				if (!_area->hasLineOfSight(c, pm) || !c->canPerceive(*pm, dist))
 					continue;
 				if (!ReputationMan.isHostile(static_cast<int>(c->getFaction()),
 				                             static_cast<int>(pm->getFaction())))
@@ -2246,6 +2257,22 @@ void Module::unpauseGame() {
 		command();
 }
 
+void Module::toggleLeaderStealth() {
+	Creature *leader = getPartyLeader();
+	if (!leader || leader->isDead() || !_area)
+		return;
+
+	leader->setStealthMode(!leader->getStealthMode());
+
+	// The enemies around may lose sight of the leader, or spot them again.
+	_area->notifyObjectMoved(*leader);
+}
+
+bool Module::isLeaderStealthy() const {
+	Creature *leader = getPartyLeader();
+	return leader && leader->getStealthMode();
+}
+
 void Module::toggleGamePaused() {
 	if (_pause.isPaused())
 		unpauseGame();
@@ -2322,7 +2349,8 @@ void Module::updateAutoPause() {
 			continue;
 		if (leader->getDistanceTo(creature) > kPerceptionRange)
 			continue;
-		if (!_area->hasLineOfSight(leader, creature))
+		if (!_area->hasLineOfSight(leader, creature) ||
+		    !leader->canPerceive(*creature, leader->getDistanceTo(creature)))
 			continue;
 
 		hostiles.push_back(creature->getID());

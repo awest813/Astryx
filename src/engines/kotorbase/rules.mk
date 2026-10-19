@@ -73,6 +73,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/store.h \
     src/engines/kotorbase/actionmenu.h \
     src/engines/kotorbase/pause.h \
+    src/engines/kotorbase/perception.h \
     $(EMPTY)
 
 src_engines_kotorbase_libkotorbase_la_SOURCES += \
@@ -125,6 +126,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/store.cpp \
     src/engines/kotorbase/actionmenu.cpp \
     src/engines/kotorbase/pause.cpp \
+    src/engines/kotorbase/perception.cpp \
     $(EMPTY)
 
 include src/engines/kotorbase/script/rules.mk

@@ -30,6 +30,8 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/situated.h"
+#include "src/engines/kotorbase/perception.h"
+#include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/creaturesearch.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 #include "src/engines/kotorbase/levelup.h"
@@ -940,22 +942,39 @@ static const int kAnimationForcePushed = 84;
 			}
 			_model->getTooltipAnchor(x, y, z);
 		}
+		bool Creature::canPerceive(const Creature &target, float distance) const {
+			PerceptionRules::SightCheck check;
+			check.hostile         = ReputationMan.isHostile(static_cast<int>(getFaction()),
+			                                                static_cast<int>(target.getFaction()));
+			check.targetInvisible = target.isInvisible();
+			check.seesInvisible   = canSeeInvisible();
+			check.targetStealthy  = target.getStealthMode();
+			check.targetStealth   = target.getSkillRank(kSkillStealth);
+			check.awareness       = getSkillRank(kSkillAwareness);
+			check.distance        = distance;
+
+			return PerceptionRules::canSee(check);
+		}
 		void Creature::updatePerception(Creature &object) {
-			const
-			float kPerceptionRange = 16.0f;
 			float distance = glm::distance(		glm::make_vec3(_position),		glm::make_vec3(object._position));
-			if (distance <= kPerceptionRange) {
-				handleObjectSeen(object);
+			// Hearing goes by distance; sight can be fooled (invisibility, stealth).
+			if (distance <= PerceptionRules::kPerceptionRange) {
 				handleObjectHeard(object);
-				object.handleObjectSeen(*this);
 				object.handleObjectHeard(*this);
-			}
-			else {
-				handleObjectVanished(object);
+			} else {
 				handleObjectInaudible(object);
-				object.handleObjectVanished(*this);
 				object.handleObjectInaudible(*this);
 			}
+
+			if (canPerceive(object, distance))
+				handleObjectSeen(object);
+			else
+				handleObjectVanished(object);
+
+			if (object.canPerceive(*this, distance))
+				object.handleObjectSeen(*this);
+			else
+				object.handleObjectVanished(*this);
 		}
 		bool Creature::isInCombat()
 		const {
@@ -1594,6 +1613,9 @@ static const int kAnimationForcePushed = 84;
 				case kKotOREffectInvisibility:
 					_invisibility += sign;
 					break;
+				case kKotOREffectSeeInvisible:
+					_seeInvisible += sign;
+					break;
 				default:
 					// Damage resistance/reduction and Force shields act in absorbDamage().
 					break;
@@ -1747,6 +1769,7 @@ static const int kAnimationForcePushed = 84;
 				case kKotOREffectSavingThrowIncrease:
 				case kKotOREffectSavingThrowDecrease:
 				case kKotOREffectInvisibility:
+				case kKotOREffectSeeInvisible:
 				case kKotOREffectDamageImmunityDecrease:
 					modifier(effect.getAmount(), effect.getDamageType(), 0);
 					break;
@@ -1882,6 +1905,9 @@ static const int kAnimationForcePushed = 84;
 				cancelCombat();
 				return;
 			}
+			// Attacking gives a sneaking creature away.
+			if (_stealthMode)
+				setStealthMode(false);
 			// Track hostility for NWScript callers (GetLastHostileActor/GetLastAttacker).
 			if (targetCreature) {
 				targetCreature->_lastHostileActor = this;

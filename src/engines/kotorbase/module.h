@@ -426,6 +426,10 @@ public:
 	void unpauseGame();
 	/** Pause or unpause, as the pause key does. */
 	void toggleGamePaused();
+	/** Toggle the party leader's stealth mode (the HUD's stealth button). */
+	void toggleLeaderStealth();
+	/** Is the party leader sneaking? */
+	bool isLeaderStealthy() const;
 
 	// Action menus
 

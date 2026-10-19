@@ -20,7 +20,8 @@
 
 /** @file
  *  Unit tests for KotOR world interactions: bashing locked doors and
- *  containers open, computer terminals, setting mines.
+ *  containers open, computer terminals, setting mines, seeing invisible
+ *  and stealthy creatures.
  */
 
 #include <cmath>
@@ -33,6 +34,7 @@
 #include "src/aurora/2dafile.h"
 
 #include "src/engines/kotorbase/inventory.h"
+#include "src/engines/kotorbase/perception.h"
 #include "src/engines/kotorbase/situated.h"
 #include "src/engines/kotorbase/trap.h"
 #include "src/engines/kotorbase/gui/dialog.h"
@@ -137,4 +139,53 @@ GTEST_TEST(KotORInteraction, mineItemsAndTrapTypes) {
 	EXPECT_EQ(TrapRules::getSetMineDC(0, 0), 10);
 	EXPECT_EQ(TrapRules::getSetMineDC(6, 5), 21);
 	EXPECT_EQ(TrapRules::getSetMineDC(-3, 0), 10);
+}
+
+GTEST_TEST(KotORInteraction, perceptionOfInvisibleCreatures) {
+	PerceptionRules::SightCheck check;
+	check.distance = 5.0f;
+	EXPECT_TRUE(PerceptionRules::canSee(check));
+
+	// Out of range: unseen, whatever.
+	check.distance = PerceptionRules::kPerceptionRange + 1.0f;
+	EXPECT_FALSE(PerceptionRules::canSee(check));
+	check.distance = 5.0f;
+
+	// Invisible: unseen by enemies without True Seeing.
+	check.targetInvisible = true;
+	EXPECT_FALSE(PerceptionRules::canSee(check));
+	check.seesInvisible = true;
+	EXPECT_TRUE(PerceptionRules::canSee(check));
+	check.seesInvisible = false;
+
+	// Friends always see each other.
+	check.hostile = false;
+	EXPECT_TRUE(PerceptionRules::canSee(check));
+}
+
+GTEST_TEST(KotORInteraction, perceptionOfStealthyCreatures) {
+	// Awareness against Stealth, both taking 10; distance helps the sneak.
+	EXPECT_TRUE(PerceptionRules::spotsStealthy(5, 5, 0.0f));
+	EXPECT_FALSE(PerceptionRules::spotsStealthy(4, 5, 0.0f));
+	EXPECT_TRUE(PerceptionRules::spotsStealthy(8, 5, 12.0f));  // +3 for 12 m.
+	EXPECT_FALSE(PerceptionRules::spotsStealthy(8, 5, 16.0f)); // +4 for 16 m.
+
+	PerceptionRules::SightCheck check;
+	check.targetStealthy = true;
+	check.targetStealth  = 8;
+	check.awareness      = 6;
+	check.distance       = 3.0f;
+	EXPECT_FALSE(PerceptionRules::canSee(check));
+
+	check.awareness = 9;
+	EXPECT_TRUE(PerceptionRules::canSee(check));
+
+	// True Seeing doesn't find the stealthy.
+	check.awareness     = 2;
+	check.seesInvisible = true;
+	EXPECT_FALSE(PerceptionRules::canSee(check));
+
+	// Not sneaking: seen.
+	check.targetStealthy = false;
+	EXPECT_TRUE(PerceptionRules::canSee(check));
 }
