@@ -132,6 +132,8 @@ public:
 	const Aurora::IFOFile &getIFO() const;
 	/** Return the module's name. */
 	const Common::UString &getName() const;
+	/** The resource name of the current module, e.g. "end_m01aa". */
+	const Common::UString &getResRef() const { return _module; }
 
 	// Elements of the current module
 
@@ -723,6 +725,13 @@ protected:
 	Object *_lastAoECreator { nullptr };
 
 	bool _moviePlaying { false }; ///< Is a full-screen movie currently playing?
+	/** Frame locks the module holds while updating the world and running
+	 *  scripts. A movie a script starts releases them while it plays: videos
+	 *  only advance while frames are rendered. */
+	uint32_t _frameLocksHeld { 0 };
+
+	void lockFrame();
+	void unlockFrame();
 
 	PauseState _pause;
 	AutoPauseMonitor _autoPauseMonitor;

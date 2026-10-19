@@ -75,9 +75,7 @@ namespace KotORBase {
 
 
 void Functions::playMovie(Aurora::NWScript::FunctionContext &ctx) {
-
-	playVideo(ctx.getParams()[0].getString());
-
+	_game->getModule().playMovie(ctx.getParams()[0].getString());
 }
 
 

@@ -387,6 +387,10 @@ void Object::saveState(Aurora::GFF3WriterStruct &gff) const {
 	gff.addUint32("CurrentHP", static_cast<uint32_t>(_currentHitPoints));
 	gff.addByte("Usable", _usable ? 1 : 0);
 
+	saveLocals(gff);
+}
+
+void Object::saveLocals(Aurora::GFF3WriterStruct &gff) const {
 	if (!_localInts.empty()) {
 		Aurora::GFF3WriterListPtr list = gff.addList("LocalVarInts");
 		for (const auto &entry : _localInts) {
@@ -419,6 +423,10 @@ void Object::loadState(const Aurora::GFF3Struct &gff) {
 	_currentHitPoints = gff.getUint("CurrentHP", _maxHitPoints);
 	_usable = gff.getBool("Usable", true);
 
+	loadLocals(gff);
+}
+
+void Object::loadLocals(const Aurora::GFF3Struct &gff) {
 	_localInts.clear();
 	if (gff.hasField("LocalVarInts")) {
 		for (const auto &entry : gff.getList("LocalVarInts")) {
@@ -445,6 +453,12 @@ void Object::loadState(const Aurora::GFF3Struct &gff) {
 			_localStrings[entry->getString("Name")] = entry->getString("Value");
 		}
 	}
+}
+
+void Object::clearLocals() {
+	_localInts.clear();
+	_localFloats.clear();
+	_localStrings.clear();
 }
 
 int32_t Object::getLocalInt(const Common::UString &name) const {

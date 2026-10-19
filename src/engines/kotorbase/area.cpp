@@ -197,6 +197,14 @@ Common::UString Area::getPlacedMinesKey() const {
 	return _resRef + ":@mines";
 }
 
+Common::UString Area::getAreaLocalsKey() const {
+	return _resRef + ":@area";
+}
+
+Common::UString Area::getModuleLocalsKey() const {
+	return _module->getResRef() + ":@module";
+}
+
 /** The GIT-like trigger instance of a laid mine (without its trap fields). */
 static void writeMineInstance(Aurora::GFF3WriterStruct &gff, const Common::UString &tag, uint32_t faction,
                               const Common::UString &script, const glm::vec3 &position) {
@@ -220,6 +228,20 @@ static void writeMineInstance(Aurora::GFF3WriterStruct &gff, const Common::UStri
 
 void Area::loadPersistence() {
 	assignPersistenceKeys();
+
+	/* The area's and the module's own script variables. Scripts keep "has this
+	 * run before" flags there (k_inc_end's HasNeverTriggered on the area), so
+	 * they must survive leaving and loading a save. A module entered for the
+	 * first time starts without any. */
+	std::shared_ptr<Aurora::GFF3File> areaLocals = _module->getAreaObjectSave(getAreaLocalsKey());
+	clearLocals();
+	if (areaLocals)
+		loadLocals(areaLocals->getTopLevel());
+
+	std::shared_ptr<Aurora::GFF3File> moduleLocals = _module->getAreaObjectSave(getModuleLocalsKey());
+	_module->clearLocals();
+	if (moduleLocals)
+		_module->loadLocals(moduleLocals->getTopLevel());
 
 	std::vector<Object *> destroyed;
 	for (auto &o : _objects) {
@@ -289,6 +311,17 @@ void Area::loadPersistence() {
 }
 
 void Area::savePersistence() {
+	{
+		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+		saveLocals(*writer.getTopLevel());
+		_module->setAreaObjectSave(getAreaLocalsKey(), finishStateGFF(writer));
+	}
+	{
+		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+		_module->saveLocals(*writer.getTopLevel());
+		_module->setAreaObjectSave(getModuleLocalsKey(), finishStateGFF(writer));
+	}
+
 	for (auto &object : _objects) {
 		if (!object->isPersistent() || object->getPersistenceKey().empty())
 			continue;

@@ -60,17 +60,13 @@ public:
 	void showDeathGUI() override;
 	void showTutorialWindow(int index) override;
 
-	void enter() override;
-
 	void signalEncounter(const Common::UString &id) override;
 
 protected:
-	bool deferIngameHUDOnEnter() const override;
 
 private:
 	void showIngameOptionsMenu();
 
-	bool _playOpeningBeat { false };
 };
 
 } // End of namespace KotOR

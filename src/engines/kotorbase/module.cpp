@@ -769,9 +769,14 @@ void Module::enter() {
 
 	_console->printf("Entering module \"%s\"", _name.c_str());
 
-	Common::UString startMovie = _ifo.getStartMovie();
-	if (!startMovie.empty() && !getGlobalBoolean("__endar_opening_played"))
-		playVideo(startMovie);
+	// The IFO start movie plays the first time the module is entered in a
+	// game, not again when coming back or loading a save made in it.
+	const Common::UString startMovie = _ifo.getStartMovie();
+	const Common::UString startMoviePlayed = "__startmovie_" + _module;
+	if (!startMovie.empty() && !_loadedFromSaveGame && !getGlobalBoolean(startMoviePlayed)) {
+		setGlobalBoolean(startMoviePlayed, true);
+		playMovie(startMovie);
+	}
 
 	float entryX, entryY, entryZ, _;
 	if (!getEntryObjectLocation(entryX, entryY, entryZ, _))
@@ -859,7 +864,7 @@ void Module::enterArea() {
 	// Creatures spawn (and set up their AI) before any OnEnter script runs.
 	_area->runPendingSpawnEvents();
 
-	GfxMan.lockFrame();
+	lockFrame();
 
 	_area->show();
 
@@ -877,7 +882,7 @@ void Module::enterArea() {
 	runScript(kScriptModuleStart, this, _pc);
 	runScript(kScriptEnter      , this, _pc);
 
-	GfxMan.unlockFrame();
+	unlockFrame();
 
 	if (_minigame)
 		_minigame->start();
@@ -1108,7 +1113,7 @@ void Module::runCinematicBeat(float duration) {
 		_prevTimestamp = now;
 		elapsed += _frameTime;
 
-		GfxMan.lockFrame();
+		lockFrame();
 
 		if (_area)
 			_area->processCreaturesActions(_frameTime);
@@ -1120,7 +1125,7 @@ void Module::runCinematicBeat(float duration) {
 		if (_ingame && !_inDialog)
 			_ingame->getHUD().update(_frameTime);
 
-		GfxMan.unlockFrame();
+		unlockFrame();
 		EventMan.delay(10);
 	}
 
@@ -1132,10 +1137,35 @@ void Module::playMovie(const Common::UString &resRef, bool allowSkip) {
 		return;
 
 	debugC(Common::kDebugEngineLogic, 1, "Playing Movie: %s (allowSkip: %d)", resRef.c_str(), allowSkip ? 1 : 0);
+
+	// A script may start a movie while the world update holds the frame lock
+	// (OnEnter scripts, actions). Release it, or the movie wouldn't advance.
+	// The game thread waits for the movie, so nothing changes the world meanwhile.
+	const uint32_t locksHeld = _frameLocksHeld;
+	for (uint32_t i = 0; i < locksHeld; i++)
+		GfxMan.unlockFrame();
+
 	_moviePlaying = true;
 	const int videoEffect = getGlobalNumber("__video_effect");
 	::Engines::playVideo(resRef, allowSkip, videoEffect >= 0 ? videoEffect : -1);
 	_moviePlaying = false;
+
+	for (uint32_t i = 0; i < locksHeld; i++)
+		GfxMan.lockFrame();
+
+	// The movie took a while; don't feed that time into the next frame.
+	updateFrameTimestamp();
+}
+
+void Module::lockFrame() {
+	GfxMan.lockFrame();
+	_frameLocksHeld++;
+}
+
+void Module::unlockFrame() {
+	assert(_frameLocksHeld > 0);
+	_frameLocksHeld--;
+	GfxMan.unlockFrame();
 }
 
 bool Module::isMoviePlaying() const {
@@ -1230,7 +1260,7 @@ void Module::processEventQueue() {
 		updateCombatAI();
 	}
 
-	GfxMan.lockFrame();
+	lockFrame();
 
 	if (!worldFrozen) {
 		_area->processCreaturesActions(_frameTime);
@@ -1255,7 +1285,7 @@ void Module::processEventQueue() {
 			_ingame->getHUD().update(_frameTime);
 	}
 
-	GfxMan.unlockFrame();
+	unlockFrame();
 
 	// The minigame drives the player and the camera (it runs scripts: outside the frame lock).
 	if (_minigame && !_inDialog)

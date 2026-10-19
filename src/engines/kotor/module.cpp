@@ -100,23 +100,6 @@ KotORBase::CharacterGenerationInfo *Module::createCharGenInfo(const KotORBase::C
 	return new CharacterGenerationInfo(info);
 }
 
-bool Module::deferIngameHUDOnEnter() const {
-	return _playOpeningBeat;
-}
-
-void Module::enter() {
-	_playOpeningBeat = getGlobalBoolean("__endar_opening_pending");
-	if (_playOpeningBeat)
-		setGlobalBoolean("__endar_opening_pending", false);
-
-	KotORBase::Module::enter();
-
-	if (_playOpeningBeat) {
-		KotOR::performEndarSpireOpeningBeat(*this);
-		_playOpeningBeat = false;
-	}
-}
-
 void Module::showMenu() {
 	showIngameOptionsMenu();
 }
@@ -147,15 +130,30 @@ void Module::showDeathGUI() {
 	updateFrameTimestamp();
 }
 
+/** KotOR I's ShowTutorialWindow numbers aren't tutorial.2da rows: the engine
+ *  maps them. Only these two are known (from KotOR.js); others are used as
+ *  the row directly. */
+static int getTutorialRow(int index) {
+	switch (index) {
+		case 0:
+			return 9;  // Start_Swoop_Race (tar_m03mg)
+		case 2:
+			return 42; // Movement_Keys (end_m01aa, k_pend_pctut)
+		default:
+			return index;
+	}
+}
+
 void Module::showTutorialWindow(int index) {
 	if (!_ingame || !_running)
 		return;
 
 	// tutorial.2da: one row per tutorial, the text as a talk table strref.
+	// KotOR I keeps it in "message0", KotOR II in "message_pc0".
 	Common::UString text;
 	try {
-		const Aurora::TwoDARow &row = TwoDAReg.get2DA("tutorial").getRow(index);
-		for (const char *column : { "message_pc", "message", "messagepc", "strref" }) {
+		const Aurora::TwoDARow &row = TwoDAReg.get2DA("tutorial").getRow(getTutorialRow(index));
+		for (const char *column : { "message0", "message_pc0", "message_pc", "message", "messagepc", "strref" }) {
 			const int strRef = row.getInt(column);
 			if (strRef > 0) {
 				text = TalkMan.getString(strRef);
@@ -237,10 +235,6 @@ void Module::showWorkbench() {
 void Module::signalEncounter(const Common::UString &id) {
 	if (id == "end_opening") {
 		KotOR::performEndarSpireOpening(*this);
-	} else if (id == "end_trask") {
-		KotOR::performTraskEncounter(*this);
-	} else if (id == "end_sith_board") {
-		KotOR::performSithBoarding(*this);
 	} else if (id == "tar_ambush") {
 		KotOR::performTarisAmbush(*this);
 	} else if (id == "tar_duel_intro") {

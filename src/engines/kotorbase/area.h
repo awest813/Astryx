@@ -218,6 +218,8 @@ public:
 	void releaseFromPersistence(Object &object);
 	Common::UString getSpawnedCreaturesKey() const;
 	Common::UString getPlacedMinesKey() const;
+	Common::UString getAreaLocalsKey() const;
+	Common::UString getModuleLocalsKey() const;
 	/** Add a mine laid at runtime, from its instance and trap state. */
 	Trigger *addMine(const Aurora::GFF3Struct &instance);
 	/** Save-state key of an object; tagCounts tracks repeated tags. */

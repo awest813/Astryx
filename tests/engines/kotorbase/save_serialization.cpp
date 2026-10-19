@@ -450,6 +450,30 @@ GTEST_TEST(KotORSaveSerialization, objectLocalVarsRoundTrip) {
 	EXPECT_EQ(loaded.getLocalString("OWNER"), Common::UString("end_trask"));
 }
 
+// Areas and the module keep only their script variables this way (e.g. the
+// "has never triggered" flag of the Endar Spire's OnEnter script).
+GTEST_TEST(KotORSaveSerialization, localsOnlyRoundTripReplacesAndClears) {
+	Object area(Engines::KotORBase::kObjectTypeArea);
+	area.setLocalInt("PLOT_BOOLEAN_10", 1);
+	area.setLocalString("NOTE", "seen");
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	area.saveLocals(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+	EXPECT_FALSE(gff.getTopLevel().hasField("CurrentHP"));
+
+	Object loaded(Engines::KotORBase::kObjectTypeArea);
+	loaded.setLocalInt("STALE", 7);
+	loaded.loadLocals(gff.getTopLevel());
+	EXPECT_EQ(loaded.getLocalInt("PLOT_BOOLEAN_10"), 1);
+	EXPECT_EQ(loaded.getLocalString("NOTE"), Common::UString("seen"));
+	EXPECT_EQ(loaded.getLocalInt("STALE"), 0);
+
+	loaded.clearLocals();
+	EXPECT_EQ(loaded.getLocalInt("PLOT_BOOLEAN_10"), 0);
+	EXPECT_EQ(loaded.getLocalString("NOTE"), Common::UString(""));
+}
+
 GTEST_TEST(KotORSaveSerialization, planetAvailabilityRoundTrip) {
 	Aurora::GFF3Writer writer(MKTAG('G', 'V', 'A', 'R'));
 	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();

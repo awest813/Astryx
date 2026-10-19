@@ -166,6 +166,12 @@ public:
 	virtual void saveState(Aurora::GFF3WriterStruct &gff) const;
 	virtual void loadState(const Aurora::GFF3Struct &gff);
 
+	/** Save/restore only the script local variables (part of saveState/loadState). */
+	void saveLocals(Aurora::GFF3WriterStruct &gff) const;
+	void loadLocals(const Aurora::GFF3Struct &gff);
+	/** Forget all script local variables. */
+	void clearLocals();
+
 	// Faction
 
 	/** Get the faction this object belongs to. */

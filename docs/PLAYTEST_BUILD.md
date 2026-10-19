@@ -119,6 +119,14 @@ new way:
   are unverified against the retail GUI. Leviathan is script-driven only.
 - **Ending:** `StartCreditSequence` is a no-op; `EndGame` returns to the
   main menu.
+- **Tutorial pop-ups:** KotOR I's `ShowTutorialWindow` numbers are not
+  `tutorial.2da` rows. Only two mappings are known (from KotOR.js): 2 →
+  row 42 (movement keys, Endar Spire) and 0 → row 9 (swoop race). Other
+  numbers are used as the row, which may show the wrong text. The text is
+  read from `message0` (KotOR II: `message_pc0`).
+- **Script variables of areas and modules** (e.g. the "has never
+  triggered" flags of OnEnter scripts) are now saved; saves from earlier
+  builds don't have them, so loading one may replay a module's opening.
 - **Script approximations:** `CutsceneAttack` damage lands when the
   attacker reaches its target and starts the swing, not at the animation's
   hit frame; SWMG bullet hit parts aren't tracked; many natives are simplified (see
