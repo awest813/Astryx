@@ -259,3 +259,63 @@ GTEST_TEST(KotOREffectRules, invisibilityLastsItsDuration) {
 	creature.updateEffects(7.0f);
 	EXPECT_FALSE(creature.isInvisible());
 }
+
+GTEST_TEST(KotOREffectRules, combatFeatModifiersForEveryTier) {
+	// feat.2da rows (nwscript FEAT_*).
+	EXPECT_EQ(static_cast<int>(kFeatPowerBlast), 29);
+	EXPECT_EQ(static_cast<int>(kFeatSniperShot), 31);
+	EXPECT_EQ(static_cast<int>(kFeatMasterPowerBlast), 82);
+	EXPECT_EQ(static_cast<int>(kFeatMasterSniperShot), 77);
+
+	// Power Blast: ranged, -3 attack, +5/+8/+10 damage.
+	const int powerBlast[] = { kFeatPowerBlast, kFeatImprovedPowerBlast, kFeatMasterPowerBlast };
+	const int blastDamage[] = { 5, 8, 10 };
+	for (int i = 0; i < 3; ++i) {
+		const CombatFeatModifiers mods = getCombatFeatModifiers(powerBlast[i]);
+		EXPECT_TRUE(mods.ranged);
+		EXPECT_FALSE(mods.melee);
+		EXPECT_EQ(mods.attack, -3);
+		EXPECT_EQ(mods.damage, blastDamage[i]);
+		EXPECT_EQ(mods.extraAttacks, 0);
+	}
+
+	// Sniper Shot: ranged critical threat range +1/+2/+3.
+	const int sniperShot[] = { kFeatSniperShot, kFeatImprovedSniperShot, kFeatMasterSniperShot };
+	for (int i = 0; i < 3; ++i) {
+		const CombatFeatModifiers mods = getCombatFeatModifiers(sniperShot[i]);
+		EXPECT_TRUE(mods.ranged);
+		EXPECT_EQ(mods.threatRange, i + 1);
+		EXPECT_EQ(mods.attack, 0);
+	}
+
+	// Power Attack mirrors Power Blast in melee; Critical Strike costs 5 Defense.
+	EXPECT_TRUE(getCombatFeatModifiers(kFeatMasterPowerAttack).melee);
+	EXPECT_EQ(getCombatFeatModifiers(kFeatMasterPowerAttack).damage, 10);
+	EXPECT_EQ(getCombatFeatModifiers(kFeatMasterCriticalStrike).threatRange, 3);
+	EXPECT_EQ(getCombatFeatModifiers(kFeatCriticalStrike).armorClass, -5);
+
+	// Flurry / Rapid Shot: one extra attack, -4/-2/-1 attack and Defense.
+	EXPECT_EQ(getCombatFeatModifiers(kFeatRapidShot).extraAttacks, 1);
+	EXPECT_EQ(getCombatFeatModifiers(kFeatRapidShot).attack, -4);
+	EXPECT_EQ(getCombatFeatModifiers(kFeatImprovedRapidShot).armorClass, -2);
+	EXPECT_EQ(getCombatFeatModifiers(kFeatMasterFlurry).attack, -1);
+	EXPECT_TRUE(getCombatFeatModifiers(kFeatMasterFlurry).melee);
+
+	// Other feats do nothing in combat.
+	const CombatFeatModifiers none = getCombatFeatModifiers(kFeatToughness);
+	EXPECT_FALSE(none.melee || none.ranged);
+	EXPECT_EQ(getCombatFeatModifiers(-1).damage, 0);
+}
+
+GTEST_TEST(KotOREffectRules, combatFeatDefensePenaltyLastsARound) {
+	TestCreature creature;
+	const int ac = creature.getAC();
+
+	// What the combat round applies for an activated Critical Strike.
+	const CombatFeatModifiers mods = getCombatFeatModifiers(kFeatCriticalStrike);
+	creature.applyEffect(Effect(kKotOREffectACDecrease, -mods.armorClass), kCombatFeatPenaltyDuration);
+	EXPECT_EQ(creature.getAC(), ac - 5);
+
+	creature.updateEffects(kCombatFeatPenaltyDuration + 0.1f);
+	EXPECT_EQ(creature.getAC(), ac);
+}

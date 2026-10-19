@@ -68,6 +68,7 @@
 #include "src/engines/aurora/flycamera.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/module.h"
@@ -1673,32 +1674,19 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 		for (int penalty = -5; bab + penalty > 0; penalty -= 5)
 			swings.push_back({penalty, 0});
 
-		// Feat: Flurry / Improved Flurry (melee only).
-		// All attacks (including the bonus one) take a -4 penalty (-2 for Improved).
-		// The extra attack is at the highest BAB (same as the primary swing).
-		const bool activatedFlurry = (activeFeat == kFeatFlurry || activeFeat == kFeatImprovedFlurry);
-		if (!ranged && activatedFlurry && (info.hasFeat(kFeatFlurry) || info.hasFeat(kFeatImprovedFlurry))) {
-			int penalty = (activeFeat == kFeatImprovedFlurry && info.hasFeat(kFeatImprovedFlurry)) ? -2 : -4;
-			// First apply the penalty to all existing swings, then add the bonus one
-			// (it is also at full BAB, i.e. penalty=0 relative to base, then shifted).
+		// Feats: Flurry (melee) and Rapid Shot (ranged), all tiers: an extra
+		// attack at full BAB, every attack of the round at the feat's penalty.
+		// Every combat feat's Defense penalty lasts the round.
+		const CombatFeatModifiers featMods = getCombatFeatModifiers(activeFeat);
+		const bool featApplies = (activeFeat >= 0) && (ranged ? featMods.ranged : featMods.melee);
+		if (featApplies && (featMods.extraAttacks > 0)) {
 			for (auto &s : swings)
-				s.babPenalty += penalty;
-			// Extra attack is at the same "post-penalty" BAB as the primary swing.
-			swings.push_back({penalty, 0});
+				s.babPenalty += featMods.attack;
+			for (int i = 0; i < featMods.extraAttacks; ++i)
+				swings.push_back({featMods.attack, 0});
 		}
-
-		// Feat: Rapid Shot (ranged only).
-		// All attacks (including the bonus one) take a -2 penalty (Improved: none).
-		const bool activatedRapidShot = (activeFeat == kFeatRapidShot || activeFeat == kFeatImprovedRapidShot);
-		if (ranged && activatedRapidShot && (info.hasFeat(kFeatRapidShot) || info.hasFeat(kFeatImprovedRapidShot))) {
-			int penalty = (activeFeat == kFeatImprovedRapidShot && info.hasFeat(kFeatImprovedRapidShot)) ? 0 : -2;
-			if (penalty != 0) {
-				for (auto &s : swings)
-					s.babPenalty += penalty;
-			}
-			// Extra ranged attack at the highest BAB (post-penalty).
-			swings.push_back({penalty, 0});
-		}
+		if (featApplies && (featMods.armorClass < 0))
+			c->applyEffect(Effect(kKotOREffectACDecrease, -featMods.armorClass), kCombatFeatPenaltyDuration);
 
 		// Feat: Two-Weapon Fighting (off-hand attack when wielding two weapons, melee)
 		if (!ranged && rightWeapon && leftWeapon) {

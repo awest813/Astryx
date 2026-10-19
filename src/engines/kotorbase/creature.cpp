@@ -1919,20 +1919,17 @@ static const int kAnimationForcePushed = 84;
 			// (Sneak Attack damage is rolled once, after the hit is confirmed —
 			//  see the "Sneak Attack" block further down.)
 
-			// caller may pass per-attack bonuses
-			const
-			bool hasActivePowerAttack = (activeFeat == kFeatPowerAttack || activeFeat == kFeatImprovedPowerAttack);
-			const
-			bool hasActiveCriticalStrike = (activeFeat == kFeatCriticalStrike || activeFeat == kFeatImprovedCriticalStrike);
-			if (!ranged && hasActivePowerAttack) {
-				if (activeFeat == kFeatImprovedPowerAttack && _info.hasFeat(kFeatImprovedPowerAttack)) {
-					featAttackMod -= 3;
-					featDamageMod += 6;
-				}
-				else
-				if (_info.hasFeat(kFeatPowerAttack)) {
-					featAttackMod -= 3;
-					featDamageMod += 3;
+			// The round's activated combat feat (Power Attack/Blast, Critical
+			// Strike, Sniper Shot...). Flurry and Rapid Shot penalties come in
+			// babPenalty with the round's extra attack.
+			int featThreatRange = 0;
+			if ((activeFeat >= 0) && _info.hasFeat(static_cast<uint32_t>(activeFeat))) {
+				const CombatFeatModifiers feat = getCombatFeatModifiers(activeFeat);
+				if (ranged ? feat.ranged : feat.melee) {
+					if (feat.extraAttacks == 0)
+						featAttackMod += feat.attack;
+					featDamageMod   += feat.damage;
+					featThreatRange += feat.threatRange;
 				}
 			}
 			// Weapon Focus / Specialization bonuses.
@@ -1940,6 +1937,10 @@ static const int kAnimationForcePushed = 84;
 				if (ranged) {
 					if (_info.hasFeat(kFeatWeaponFocusBlaster) || _info.hasFeat(kFeatWeaponFocusBlasterRifle))				featAttackMod += 1;
 					if (_info.hasFeat(kFeatWeaponSpecializationBlaster) || _info.hasFeat(kFeatWeaponSpecializationBlasterRifle))				featDamageMod += 2;
+				}
+				else if (hasLightsaberEquipped()) {
+					if (_info.hasFeat(kFeatWeaponFocusLightsaber))				featAttackMod += 1;
+					if (_info.hasFeat(kFeatWeaponSpecializationLightsaber))				featDamageMod += 2;
 				}
 				else {
 					if (_info.hasFeat(kFeatWeaponFocusMelee))				featAttackMod += 1;
@@ -1989,10 +1990,7 @@ static const int kAnimationForcePushed = 84;
 			}
 			// --- Critical hit system ---	// Threat on natural 20 (weapons may lower this, but 20 is the universal minimum).	// Critical Strike feat: threat on 19-20;
 			// Improved: 18-20.
-			int critThreat = 20;
-			if (hasActiveCriticalStrike && activeFeat == kFeatImprovedCriticalStrike && _info.hasFeat(kFeatImprovedCriticalStrike))		critThreat = 18;
-			else
-			if (hasActiveCriticalStrike && _info.hasFeat(kFeatCriticalStrike))		critThreat = 19;
+			int critThreat = 20 - featThreatRange;
 			bool isThreat = (d20 >= critThreat);
 			bool isCrit   = false;
 			if (isThreat) {
@@ -2489,6 +2487,62 @@ static const int kAnimationForcePushed = 84;
 		Object *Creature::getBlockingDoor() const {
 			return _blockingDoor;
 		}
+		CombatFeatModifiers getCombatFeatModifiers(int feat) {
+			// Penalties as KotOR.js TalentFeat applies them (attack and Defense for
+			// one round); Power Attack/Blast damage as KotOR.js CombatAttackData.
+			CombatFeatModifiers mods;
+			switch (feat) {
+				case kFeatFlurry:
+				case kFeatImprovedFlurry:
+				case kFeatMasterFlurry:
+				case kFeatRapidShot:
+				case kFeatImprovedRapidShot:
+				case kFeatMasterRapidShot: {
+					const bool flurry = (feat == kFeatFlurry) || (feat == kFeatImprovedFlurry) || (feat == kFeatMasterFlurry);
+					const int penalty = ((feat == kFeatFlurry) || (feat == kFeatRapidShot)) ? 4 :
+					                    (((feat == kFeatImprovedFlurry) || (feat == kFeatImprovedRapidShot)) ? 2 : 1);
+					mods.melee        = flurry;
+					mods.ranged       = !flurry;
+					mods.attack       = -penalty;
+					mods.armorClass   = -penalty;
+					mods.extraAttacks = 1;
+					break;
+				}
+				case kFeatPowerAttack:
+				case kFeatImprovedPowerAttack:
+				case kFeatMasterPowerAttack:
+				case kFeatPowerBlast:
+				case kFeatImprovedPowerBlast:
+				case kFeatMasterPowerBlast: {
+					const bool melee = (feat == kFeatPowerAttack) || (feat == kFeatImprovedPowerAttack) ||
+					                   (feat == kFeatMasterPowerAttack);
+					mods.melee  = melee;
+					mods.ranged = !melee;
+					mods.attack = -3;
+					mods.damage = ((feat == kFeatPowerAttack) || (feat == kFeatPowerBlast)) ? 5 :
+					              (((feat == kFeatImprovedPowerAttack) || (feat == kFeatImprovedPowerBlast)) ? 8 : 10);
+					break;
+				}
+				case kFeatCriticalStrike:
+				case kFeatImprovedCriticalStrike:
+				case kFeatMasterCriticalStrike:
+					mods.melee       = true;
+					mods.armorClass  = -5;
+					mods.threatRange = (feat == kFeatCriticalStrike) ? 1 : ((feat == kFeatImprovedCriticalStrike) ? 2 : 3);
+					break;
+				case kFeatSniperShot:
+				case kFeatImprovedSniperShot:
+				case kFeatMasterSniperShot:
+					// The ranged Critical Strike.
+					mods.ranged      = true;
+					mods.threatRange = (feat == kFeatSniperShot) ? 1 : ((feat == kFeatImprovedSniperShot) ? 2 : 3);
+					break;
+				default:
+					break;
+			}
+			return mods;
+		}
+
 		void Creature::think(Area *area) {
 			if (_aiArchetype == kAIArchetypeNone || isPC() || isDead() || !area)
 				return;

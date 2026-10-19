@@ -55,6 +55,23 @@ class Area;
 class Effect;
 struct CreatureSearchCriteria;
 
+/** What an activated combat feat does during its combat round. */
+struct CombatFeatModifiers {
+	bool melee  { false };    ///< Used with melee weapons (Flurry, Power Attack, Critical Strike).
+	bool ranged { false };    ///< Used with ranged weapons (Rapid Shot, Power Blast, Sniper Shot).
+	int  attack { 0 };        ///< Attack modifier on every attack of the round.
+	int  damage { 0 };        ///< Damage bonus on every hit.
+	int  armorClass { 0 };    ///< Defense modifier until the next round.
+	int  threatRange { 0 };   ///< Widens the critical threat range (20 - threatRange .. 20).
+	int  extraAttacks { 0 };  ///< Additional attacks this round.
+};
+
+/** The modifiers of combat feat @p feat (a FeatID), all zero for other feats. */
+CombatFeatModifiers getCombatFeatModifiers(int feat);
+
+/** Duration (s) of a combat feat's penalties: one combat round. */
+static const float kCombatFeatPenaltyDuration = 3.0f;
+
 class Creature : public Object {
 public:
 	/** Create a dummy creature instance. Not playable as it is.*/

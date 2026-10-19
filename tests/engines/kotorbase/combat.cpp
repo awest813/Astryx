@@ -30,10 +30,12 @@
 
 #include "gtest/gtest.h"
 
+#include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/types.h"
 
 using Engines::KotORBase::CreatureInfo;
+using Engines::KotORBase::getCombatFeatModifiers;
 using Engines::KotORBase::kAbilityDexterity;
 using Engines::KotORBase::kAbilityStrength;
 using Engines::KotORBase::kFeatCriticalStrike;
@@ -64,27 +66,27 @@ static bool rollHits(int d20, int attackMod, int targetAC) {
 	return (d20 + attackMod) >= targetAC;
 }
 
+// The activated feat counts only when the creature has that tier (Creature::executeAttack).
+static bool featUsable(int activeFeat, int feat, bool hasFeat, int improvedFeat, bool hasImproved) {
+	return ((activeFeat == feat) && hasFeat) || ((activeFeat == improvedFeat) && hasImproved);
+}
+
 static int powerAttackDamageBonus(int activeFeat, bool hasPowerAttack, bool hasImprovedPowerAttack) {
-	if (activeFeat == kFeatImprovedPowerAttack && hasImprovedPowerAttack)
-		return 6;
-	if (activeFeat == kFeatPowerAttack && hasPowerAttack)
-		return 3;
-	return 0;
+	if (!featUsable(activeFeat, kFeatPowerAttack, hasPowerAttack, kFeatImprovedPowerAttack, hasImprovedPowerAttack))
+		return 0;
+	return getCombatFeatModifiers(activeFeat).damage;
 }
 
 static int powerAttackAttackPenalty(int activeFeat, bool hasPowerAttack, bool hasImprovedPowerAttack) {
-	if ((activeFeat == kFeatPowerAttack && hasPowerAttack) ||
-	    (activeFeat == kFeatImprovedPowerAttack && hasImprovedPowerAttack))
-		return -3;
-	return 0;
+	if (!featUsable(activeFeat, kFeatPowerAttack, hasPowerAttack, kFeatImprovedPowerAttack, hasImprovedPowerAttack))
+		return 0;
+	return getCombatFeatModifiers(activeFeat).attack;
 }
 
 static int criticalThreatFloor(int activeFeat, bool hasCriticalStrike, bool hasImprovedCriticalStrike) {
-	if (activeFeat == kFeatImprovedCriticalStrike && hasImprovedCriticalStrike)
-		return 18;
-	if (activeFeat == kFeatCriticalStrike && hasCriticalStrike)
-		return 19;
-	return 20;
+	if (!featUsable(activeFeat, kFeatCriticalStrike, hasCriticalStrike, kFeatImprovedCriticalStrike, hasImprovedCriticalStrike))
+		return 20;
+	return 20 - getCombatFeatModifiers(activeFeat).threatRange;
 }
 
 // ---------------------------------------------------------------------------
@@ -207,13 +209,13 @@ GTEST_TEST(KotORCombat, powerAttackRequiresActivation) {
 }
 
 GTEST_TEST(KotORCombat, powerAttackActivationUsesSelectedTier) {
-	// Base Power Attack: -3 AB, +3 damage
+	// Base Power Attack: -3 AB, +5 damage
 	EXPECT_EQ(powerAttackAttackPenalty(kFeatPowerAttack, true, false), -3);
-	EXPECT_EQ(powerAttackDamageBonus(kFeatPowerAttack, true, false), 3);
+	EXPECT_EQ(powerAttackDamageBonus(kFeatPowerAttack, true, false), 5);
 
-	// Improved Power Attack: -3 AB, +6 damage
+	// Improved Power Attack: -3 AB, +8 damage
 	EXPECT_EQ(powerAttackAttackPenalty(kFeatImprovedPowerAttack, true, true), -3);
-	EXPECT_EQ(powerAttackDamageBonus(kFeatImprovedPowerAttack, true, true), 6);
+	EXPECT_EQ(powerAttackDamageBonus(kFeatImprovedPowerAttack, true, true), 8);
 }
 
 GTEST_TEST(KotORCombat, criticalThreatRangeRequiresActivation) {
