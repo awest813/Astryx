@@ -38,6 +38,11 @@ tests_engines_kotorbase_test_creatureinfo_SOURCES     = tests/engines/kotorbase/
 tests_engines_kotorbase_test_creatureinfo_LDADD       = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_creatureinfo_CXXFLAGS    = $(test_CXXFLAGS)
 
+check_PROGRAMS                                       += tests/engines/kotorbase/test_encounter
+tests_engines_kotorbase_test_encounter_SOURCES        = tests/engines/kotorbase/encounter.cpp
+tests_engines_kotorbase_test_encounter_LDADD          = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_encounter_CXXFLAGS       = $(test_CXXFLAGS)
+
 check_PROGRAMS                                       += tests/engines/kotorbase/test_combat
 tests_engines_kotorbase_test_combat_SOURCES           = tests/engines/kotorbase/combat.cpp
 tests_engines_kotorbase_test_combat_LDADD             = $(kotorbase_LIBS)

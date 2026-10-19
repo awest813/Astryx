@@ -35,6 +35,8 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/door.h \
     src/engines/kotorbase/module.h \
     src/engines/kotorbase/trigger.h \
+    src/engines/kotorbase/encounterrules.h \
+    src/engines/kotorbase/encounter.h \
     src/engines/kotorbase/waypoint.h \
     src/engines/kotorbase/location.h \
     src/engines/kotorbase/sound.h \
@@ -80,6 +82,8 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/door.cpp \
     src/engines/kotorbase/module.cpp \
     src/engines/kotorbase/trigger.cpp \
+    src/engines/kotorbase/encounterrules.cpp \
+    src/engines/kotorbase/encounter.cpp \
     src/engines/kotorbase/waypoint.cpp \
     src/engines/kotorbase/location.cpp \
     src/engines/kotorbase/sound.cpp \

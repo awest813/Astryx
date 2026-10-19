@@ -369,6 +369,8 @@ public:
 	void loadSavedGame(SavedGame *save);
 	void saveGame(const Common::UString &slot, const Common::UString &name);
 	bool isCutsceneMode() const { return _cutsceneMode; }
+	/** Seconds played in this game (kept in saves); a clock for game timers. */
+	float getPlayTime() const { return _playTime; }
 	/** Is a conversation running (encounter helpers must not take over the camera)? */
 	bool isInConversation() const { return _inDialog; }
 	/** ActionPauseConversation / ActionResumeConversation: hold the conversation while actors act. */

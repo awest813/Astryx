@@ -198,14 +198,6 @@ void Functions::eventActivateItem(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = Event(kEventUserDefined);
 }
 
-void Functions::setEncounterDifficulty(Aurora::NWScript::FunctionContext &ctx) {
-	_game->getModule().setGlobalNumber("__encounter_difficulty", ctx.getParams()[0].getInt());
-}
-
-void Functions::getEncounterDifficulty(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _game->getModule().getGlobalNumber("__encounter_difficulty");
-}
-
 void Functions::actionExamine(Aurora::NWScript::FunctionContext &ctx) {
 	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
@@ -277,11 +269,6 @@ void Functions::getIsDawn(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::getIsDusk(Aurora::NWScript::FunctionContext &ctx) {
 	int hour = currentHour();
 	ctx.getReturn() = (hour >= 17 && hour < 19) ? 1 : 0;
-}
-
-void Functions::getIsEncounterCreature(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	ctx.getReturn() = (creature && creature->isEnemy()) ? 1 : 0;
 }
 
 void Functions::getStartingLocation(Aurora::NWScript::FunctionContext &ctx) {

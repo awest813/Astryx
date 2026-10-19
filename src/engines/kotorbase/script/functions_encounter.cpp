@@ -26,6 +26,9 @@
 
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/objectcontainer.h"
+#include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/encounter.h"
+#include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/script/functions.h"
@@ -34,9 +37,9 @@ namespace Engines {
 
 namespace KotORBase {
 
-static const Common::UString kEncounterActiveKey("XOREOS_ENC_ACTIVE");
-static const Common::UString kEncounterSpawnMaxKey("XOREOS_ENC_SPAWN_MAX");
-static const Common::UString kEncounterSpawnCurKey("XOREOS_ENC_SPAWN_CUR");
+static Encounter *toEncounter(Aurora::NWScript::Object *object) {
+	return dynamic_cast<Encounter *>(object);
+}
 
 void Functions::showUpgradeScreen(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
@@ -44,39 +47,60 @@ void Functions::showUpgradeScreen(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getEncounterActive(Aurora::NWScript::FunctionContext &ctx) {
-	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 0));
-	ctx.getReturn() = (encounter && encounter->getLocalInt(kEncounterActiveKey) != 0) ? 1 : 0;
+	Encounter *encounter = toEncounter(getParamObject(ctx, 0));
+	ctx.getReturn() = (encounter && encounter->isActive()) ? 1 : 0;
 }
 
 void Functions::setEncounterActive(Aurora::NWScript::FunctionContext &ctx) {
-	int active = ctx.getParams()[0].getInt();
-	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 1));
+	const int active = ctx.getParams()[0].getInt();
+	Encounter *encounter = toEncounter(getParamObject(ctx, 1));
 	if (encounter)
-		encounter->setLocalInt(kEncounterActiveKey, active != 0 ? 1 : 0);
+		encounter->setActive(active != 0);
 }
 
 void Functions::getEncounterSpawnsMax(Aurora::NWScript::FunctionContext &ctx) {
-	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 0));
-	ctx.getReturn() = encounter ? encounter->getLocalInt(kEncounterSpawnMaxKey) : 0;
+	Encounter *encounter = toEncounter(getParamObject(ctx, 0));
+	ctx.getReturn() = encounter ? encounter->getSpawnsMax() : 0;
 }
 
 void Functions::setEncounterSpawnsMax(Aurora::NWScript::FunctionContext &ctx) {
-	int maxSpawns = ctx.getParams()[0].getInt();
-	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 1));
+	const int maxSpawns = ctx.getParams()[0].getInt();
+	Encounter *encounter = toEncounter(getParamObject(ctx, 1));
 	if (encounter)
-		encounter->setLocalInt(kEncounterSpawnMaxKey, maxSpawns);
+		encounter->setSpawnsMax(maxSpawns);
 }
 
 void Functions::getEncounterSpawnsCurrent(Aurora::NWScript::FunctionContext &ctx) {
-	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 0));
-	ctx.getReturn() = encounter ? encounter->getLocalInt(kEncounterSpawnCurKey) : 0;
+	Encounter *encounter = toEncounter(getParamObject(ctx, 0));
+	ctx.getReturn() = encounter ? encounter->getSpawnsCurrent() : 0;
 }
 
 void Functions::setEncounterSpawnsCurrent(Aurora::NWScript::FunctionContext &ctx) {
-	int current = ctx.getParams()[0].getInt();
-	Object *encounter = ObjectContainer::toObject(getParamObject(ctx, 1));
+	const int current = ctx.getParams()[0].getInt();
+	Encounter *encounter = toEncounter(getParamObject(ctx, 1));
 	if (encounter)
-		encounter->setLocalInt(kEncounterSpawnCurKey, current);
+		encounter->setSpawnsCurrent(current);
+}
+
+void Functions::setEncounterDifficulty(Aurora::NWScript::FunctionContext &ctx) {
+	// SetEncounterDifficulty(int nEncounterDifficulty, object oEncounter = OBJECT_SELF)
+	const int difficulty = ctx.getParams()[0].getInt();
+	Encounter *encounter = toEncounter(getParamObject(ctx, 1));
+	if (encounter)
+		encounter->setDifficultyIndex(difficulty);
+}
+
+void Functions::getEncounterDifficulty(Aurora::NWScript::FunctionContext &ctx) {
+	Encounter *encounter = toEncounter(getParamObject(ctx, 0));
+	ctx.getReturn() = encounter ? encounter->getDifficultyIndex() : 0;
+}
+
+void Functions::getIsEncounterCreature(Aurora::NWScript::FunctionContext &ctx) {
+	// Was the creature spawned by an encounter (and is it still counted by it)?
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	Area *area = _game->getModule().getCurrentArea();
+
+	ctx.getReturn() = (creature && area && area->findEncounterOwning(*creature)) ? 1 : 0;
 }
 
 } // End of namespace KotORBase
