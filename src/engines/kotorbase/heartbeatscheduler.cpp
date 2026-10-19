@@ -88,6 +88,11 @@ void HeartbeatScheduler::collectDue(uint32_t now, std::vector<uint32_t> &due) {
 	}
 }
 
+void HeartbeatScheduler::delay(uint32_t ms) {
+	for (auto &due : _due)
+		due.second += ms;
+}
+
 } // End of namespace KotORBase
 
 } // End of namespace Engines

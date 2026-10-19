@@ -2331,6 +2331,7 @@ static const int kAnimationForcePushed = 84;
 			return _actions.getCurrent();
 		}
 		void Creature::clearActions() {
+			_movePath.clear();
 			_actions.clear();
 		}
 		void Creature::addAction(

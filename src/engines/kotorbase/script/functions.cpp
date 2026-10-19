@@ -153,7 +153,7 @@ void Functions::giveGoldToCreature(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[1].getInt();
 
 	if (creature && amount > 0) {
-		creature->getInventory().addGold(amount);
+		_game->getModule().getInventoryOf(*creature).addGold(amount);
 		info("Gave %d gold to creature", amount);
 	}
 }
@@ -163,7 +163,7 @@ void Functions::takeGoldFromCreature(Aurora::NWScript::FunctionContext &ctx) {
 	int amount = ctx.getParams()[0].getInt();
 
 	if (creature && amount > 0) {
-		creature->getInventory().removeGold(amount);
+		_game->getModule().getInventoryOf(*creature).removeGold(amount);
 		info("Took %d gold from creature", amount);
 	}
 }
@@ -171,7 +171,7 @@ void Functions::takeGoldFromCreature(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::getGold(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
 	if (creature) {
-		ctx.getReturn() = static_cast<int32_t>(creature->getInventory().getGold());
+		ctx.getReturn() = static_cast<int32_t>(_game->getModule().getInventoryOf(*creature).getGold());
 	} else {
 		ctx.getReturn() = 0;
 	}

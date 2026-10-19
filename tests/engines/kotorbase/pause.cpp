@@ -135,9 +135,11 @@ GTEST_TEST(KotORBaseAutoPause, enemySightedOnlyWhenNewAndOutOfCombat) {
 	EXPECT_FALSE(monitor.updateSightedEnemies({ 7 }, false));
 	// A second enemy shows up while the leader already fights: no pause.
 	EXPECT_FALSE(monitor.updateSightedEnemies({ 7, 8 }, true));
-	// The enemy leaves sight and comes back.
+	// The enemy leaves sight and comes back: already seen, no new pause.
 	EXPECT_FALSE(monitor.updateSightedEnemies({ 8 }, false));
-	EXPECT_TRUE(monitor.updateSightedEnemies({ 7, 8 }, false));
+	EXPECT_FALSE(monitor.updateSightedEnemies({ 7, 8 }, false));
+	// A third enemy shows up out of combat.
+	EXPECT_TRUE(monitor.updateSightedEnemies({ 7, 8, 9 }, false));
 
 	monitor.reset();
 	EXPECT_TRUE(monitor.updateSightedEnemies({ 7, 8 }, false));

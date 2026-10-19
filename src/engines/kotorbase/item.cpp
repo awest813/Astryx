@@ -60,10 +60,31 @@ bool Item::hasItemProperty(int propertyType) const {
 	return false;
 }
 
+/** A Damage Bonus property's CostValue is a row of iprp_damagecost: dice
+ *  ("numdice" d "die"; their average here) or a flat bonus (the row label). */
+static int damageCostAmount(int costValue) {
+	try {
+		const Aurora::TwoDAFile &twoda = TwoDAReg.get2DA("iprp_damagecost");
+		const Aurora::TwoDARow &row = twoda.getRow(static_cast<size_t>(costValue));
+		if (!row.empty("numdice") && !row.empty("die"))
+			return (row.getInt("numdice") * (row.getInt("die") + 1)) / 2;
+		if (!row.empty("label"))
+			return row.getInt("label");
+	} catch (...) {
+	}
+
+	return costValue;
+}
+
 int Item::getPropertyBonusSum(int propertyType) const {
 	int sum = 0;
 	for (const ItemPropertyData &prop : _properties) {
-		if (prop.type == propertyType)
+		if (prop.type != propertyType)
+			continue;
+
+		if ((propertyType == kItemPropertyDamageBonus) && (prop.costValue > 0))
+			sum += damageCostAmount(prop.costValue);
+		else
 			sum += prop.amount();
 	}
 	return sum;

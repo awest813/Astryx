@@ -276,7 +276,8 @@ Action makeTalentSpellAction(const Creature &caster, const Talent &talent, Objec
 		return action;
 
 	// An item's spell: free, from the equipment first, then using up a consumable.
-	const Creature::ItemPower *power = findItemPower(caster.getEquippedItemPowers(), talent.getID(), talent.getItem());
+	const std::vector<Creature::ItemPower> equipped = caster.getEquippedItemPowers();
+	const Creature::ItemPower *power = findItemPower(equipped, talent.getID(), talent.getItem());
 	if (power) {
 		action.cheat = true;
 		action.item  = power->item;
