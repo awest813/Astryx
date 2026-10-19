@@ -349,6 +349,10 @@ namespace KotORBase {
 			// Usable
 			_usable = gff.getBool("Useable", _usable);
 
+			// Challenge rating (kill XP, GetChallengeRating)
+			if (gff.hasField("ChallengeRating"))
+				_challengeRating = static_cast<float>(gff.getDouble("ChallengeRating"));
+
 			// PC
 			_isPC = gff.getBool("IsPC", _isPC);
 
@@ -720,6 +724,12 @@ namespace KotORBase {
 				return item.get();
 			}
 			return nullptr;
+		}
+		float Creature::getChallengeRating()
+		const {
+			if (_challengeRating >= 0.0f)
+			return _challengeRating;
+			return static_cast<float>(getHitDice());
 		}
 		int Creature::getHitDice()
 		const {

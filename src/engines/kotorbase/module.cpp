@@ -23,6 +23,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <set>
 #include <utility>
@@ -1917,18 +1918,18 @@ void Module::updateXPOnKill() {
 		if (!isHostileToParty(c))
 			continue;
 
-		int hitDice = c->getHitDice();
-		if (hitDice <= 0)
+		if (c->getHitDice() <= 0)
 			continue;
 
-		// xptable.2da by party level and challenge rating (hit dice here, as in
-		// GetChallengeRating()); 25 x hit dice without game data.
-		const int xp = killExperience(_pc->getHitDice(), hitDice);
+		// xptable.2da by party level and the blueprint's challenge rating;
+		// 25 x the rating without game data.
+		const int challengeRating = static_cast<int>(std::lround(c->getChallengeRating()));
+		const int xp = killExperience(_pc->getHitDice(), challengeRating);
 		awardPartyXP(xp);
 
 		debugC(Common::kDebugEngineLogic, 1,
-		       "Module::updateXPOnKill(): awarded %d XP for killing \"%s\" (HD %d)",
-		       xp, c->getTag().c_str(), hitDice);
+		       "Module::updateXPOnKill(): awarded %d XP for killing \"%s\" (CR %d)",
+		       xp, c->getTag().c_str(), challengeRating);
 	}
 }
 

@@ -55,6 +55,9 @@ public:
 	int getMarkDown() const;
 	void setMarkDown(int markDown);
 
+	/** Extra percentages for one visit (OpenStore's nBonusMarkUp / nBonusMarkDown). */
+	void setBonusMarks(int bonusMarkUp, int bonusMarkDown);
+
 	/** Calculate the price at which the store sells an item to the PC. */
 	int getBuyPrice(const Item &item, const Creature &pc) const;
 	/** Calculate the price at which the store buys an item from the PC. */
@@ -68,6 +71,8 @@ private:
 
 	int _markUp;   ///< Purchase price multiplier (default 100%).
 	int _markDown; ///< Sale price multiplier (default 50%).
+	int _bonusMarkUp { 0 };
+	int _bonusMarkDown { 0 };
 };
 
 } // End of namespace KotORBase
