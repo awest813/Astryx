@@ -139,11 +139,9 @@ new way:
   Icons go on the target buttons and fill `LBL_ACTION0`-`3`; the up/down
   arrows cycle options and `LBL_ACTIONDESC` names the chosen one for 2 s.
   Not offered yet: bashing locked objects, security tunnelers, setting,
-  disarming or recovering mines. The combat rounds apply feats by the
-  engine's own feat numbers (`types.h` `FeatID`, e.g. Flurry 4), which are
-  not the retail `feat.2da` rows (Flurry 11, Power Attack 28): with game
-  data a feat from the menu starts an attack but its round modifiers may not
-  apply until those numbers are reconciled.
+  disarming or recovering mines. Feat IDs are K1's nwscript `FEAT_*`
+  values (`feat.2da` rows, e.g. Flurry 11, Power Attack 28); saves from
+  builds before this one stored the old invented numbers for the PC's feats.
 - **Pause:** Space (or `TB_PAUSE`) pauses; `PauseGame` pauses/unpauses.
   While paused, creature actions, combat rounds, heartbeats, effects,
   `DelayCommand` timers and model animation time stop (timers resume where
