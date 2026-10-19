@@ -96,6 +96,8 @@ private:
 	void refresh();
 	Object *findParticipant(const Common::UString &tag) const;
 	void updateCamera(const Aurora::DLGFile::Line &entry, Object *speaker, Object *listener);
+	/** The line's screen fade (FadeType, FadeDelay, FadeLength, FadeColor). */
+	void applyFade(const Aurora::DLGFile::Line &entry);
 	void playParticipantAnimations(const Aurora::DLGFile::Line &entry);
 	void armAutoAdvance(const Aurora::DLGFile::Line &entry,
 	                    const std::vector<const Aurora::DLGFile::Line *> &replies);

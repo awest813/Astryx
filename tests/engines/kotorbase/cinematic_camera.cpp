@@ -191,6 +191,10 @@ GTEST_TEST(CinematicCamera, dlgCutsceneFieldsAreParsed) {
 	entry->addUint16("CameraAnimation", 1205);
 	entry->addFloat("CamFieldOfView", 45.0f);
 	entry->addUint32("Delay", 4);
+	entry->addUint32("FadeType", 3);
+	entry->addFloat("FadeLength", 1.5f);
+	entry->addFloat("FadeDelay", 0.25f);
+	entry->addVector("FadeColor", glm::vec3(1.0f, 0.5f, 0.0f));
 	Aurora::GFF3WriterStructPtr anim = entry->addList("AnimList")->addStruct();
 	anim->addExoString("Participant", "OWNER");
 	anim->addUint16("Animation", 10010);
@@ -214,6 +218,12 @@ GTEST_TEST(CinematicCamera, dlgCutsceneFieldsAreParsed) {
 	EXPECT_EQ(line->cameraAnimation, 1205U);
 	EXPECT_FLOAT_EQ(line->camFieldOfView, 45.0f);
 	EXPECT_EQ(line->delay, 4U);
+	EXPECT_EQ(line->fadeType, 3U);
+	EXPECT_FLOAT_EQ(line->fadeLength, 1.5f);
+	EXPECT_FLOAT_EQ(line->fadeDelay, 0.25f);
+	EXPECT_FLOAT_EQ(line->fadeColor[0], 1.0f);
+	EXPECT_FLOAT_EQ(line->fadeColor[1], 0.5f);
+	EXPECT_FLOAT_EQ(line->fadeColor[2], 0.0f);
 	EXPECT_TRUE(line->listener.equalsIgnoreCase("PLAYER"));
 	ASSERT_EQ(line->animations.size(), 1U);
 	EXPECT_TRUE(line->animations[0].participant.equalsIgnoreCase("OWNER"));

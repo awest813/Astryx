@@ -352,6 +352,20 @@ void DLGFile::readEntry(const GFF3Struct &gff, Entry &entry) {
 	}
 	entry.line.camVidEffect= gff.getUint("CamVidEffect", 0);
 	entry.line.fadeType    = gff.getUint("FadeType", 0);
+	entry.line.fadeLength  = static_cast<float>(getOptionalNumber(gff, "FadeLength", 0.0));
+	entry.line.fadeDelay   = static_cast<float>(getOptionalNumber(gff, "FadeDelay", 0.0));
+	entry.line.fadeColor[0] = entry.line.fadeColor[1] = entry.line.fadeColor[2] = 0.0f;
+	if (gff.hasField("FadeColor")) {
+		try {
+			float r, g, b;
+			gff.getVector("FadeColor", r, g, b);
+			entry.line.fadeColor[0] = r;
+			entry.line.fadeColor[1] = g;
+			entry.line.fadeColor[2] = b;
+		} catch (...) {
+			// Not a vector: keep black.
+		}
+	}
 
 	entry.line.emotion     = gff.getUint("Emotion", 0);
 	entry.line.facialAnim  = gff.getUint("FacialAnim", 0);

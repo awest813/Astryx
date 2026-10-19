@@ -100,7 +100,10 @@ new way:
   one — if animated shots never play, try - 1199) on the model's `camerahook`; GIT static camera orientations are read as (w, x, y, z);
   DLG `AnimList` numbers from 10000 are treated as looping animations.
   Shots that can't be resolved fall back to speaker/listener framing.
-  DLG `FadeType` fades and stunt (`StuntList`) cutscenes are not played.
+  DLG line fades play as KotOR.js reads them (`FadeType` 1 cut to
+  `FadeColor`, 2 cut from it, 3 fade in, 4 fade out, over `FadeLength`
+  after `FadeDelay`) — check the 1/2 vs 3/4 meaning in play. Stunt
+  (`StuntList`) cutscenes are not played.
 - **Level-up and XP** come from the game tables, read the way KotOR.js
   reads them; confirm in play:
   - next-level XP from `exptable.2da`; kill XP from `xptable.2da` (column

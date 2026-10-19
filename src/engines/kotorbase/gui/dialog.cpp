@@ -271,6 +271,7 @@ void DialogGUI::refresh() {
 	}
 
 	updateCamera(*curEntry, speakerObj, listenerObj);
+	applyFade(*curEntry);
 	playParticipantAnimations(*curEntry);
 	armAutoAdvance(*curEntry, replies);
 
@@ -342,6 +343,27 @@ void DialogGUI::updateCamera(const Aurora::DLGFile::Line &entry, Object *speaker
 		_module.setShotFieldOfView(entry.camFieldOfView);
 }
 
+void DialogGUI::applyFade(const Aurora::DLGFile::Line &entry) {
+	// FadeType (as KotOR.js reads it): 1 cut to the color, 2 cut from it,
+	// 3 fade in from it over FadeLength, 4 fade out to it; after FadeDelay.
+	if ((entry.fadeType < 1) || (entry.fadeType > 4))
+		return;
+
+	Graphics::Aurora::FadeQuad &fade = _module.getFadeQuad();
+
+	const bool gradual = entry.fadeType >= 3;
+	const bool fadeIn  = (entry.fadeType == 2) || (entry.fadeType == 3);
+
+	fade.setColor(entry.fadeColor[0], entry.fadeColor[1], entry.fadeColor[2]);
+	fade.setWaitTime(MAX(entry.fadeDelay, 0.0f));
+	fade.setRunTime(gradual ? MAX(entry.fadeLength, 0.0f) : 0.0f);
+
+	if (fadeIn)
+		fade.fadeIn();
+	else
+		fade.fadeOut();
+}
+
 void DialogGUI::playParticipantAnimations(const Aurora::DLGFile::Line &entry) {
 	for (const Aurora::DLGFile::Animation &animation : entry.animations) {
 		Creature *creature = ObjectContainer::toCreature(findParticipant(animation.participant));
@@ -374,6 +396,10 @@ void DialogGUI::armAutoAdvance(const Aurora::DLGFile::Line &entry,
 	if (entry.delay != Aurora::DLGFile::kInvalidLine && entry.delay > 0) {
 		_autoAdvance = true;
 		_autoAdvanceDelay = static_cast<float>(entry.delay);
+
+		// Let the line's fade finish first.
+		if (entry.fadeType >= 3 && entry.fadeType <= 4)
+			_autoAdvanceDelay = MAX(_autoAdvanceDelay, entry.fadeDelay + entry.fadeLength);
 	} else if (_voice && SoundMan.isPlaying(*_voice)) {
 		// Continue shortly after the voice-over finishes (a missing VO
 		// resource leaves an empty handle: wait for the player then).

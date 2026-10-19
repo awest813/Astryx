@@ -87,6 +87,9 @@ public:
 		std::vector<Animation> animations; ///< KotOR: Participant animations during this line.
 		uint32_t        camVidEffect;///< KotOR: Camera video effect.
 		uint32_t        fadeType;    ///< KotOR: Screen fade type.
+		float           fadeLength { 0.0f };  ///< KotOR: Seconds the fade takes.
+		float           fadeDelay { 0.0f };   ///< KotOR: Seconds before the fade starts.
+		float           fadeColor[3] { 0.0f, 0.0f, 0.0f }; ///< KotOR: Color faded to/from (RGB, 0-1).
 
 		uint32_t        emotion;     ///< KotOR2: Emotion to display.
 		uint32_t        facialAnim;  ///< KotOR2: Facial animation to play.
