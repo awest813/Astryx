@@ -381,7 +381,7 @@ void Functions::getBlockingCreature(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::getChallengeRating(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	ctx.getReturn() = creature ? static_cast<float>(creature->getHitDice()) : 0.0f;
+	ctx.getReturn() = creature ? creature->getChallengeRating() : 0.0f;
 }
 
 void Functions::getFoundEnemyCreature(Aurora::NWScript::FunctionContext &ctx) {

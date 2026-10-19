@@ -219,6 +219,9 @@ public:
 	/** Return the total character level (sum of all class levels). */
 	int getHitDice() const;
 
+	/** The blueprint's "ChallengeRating", or the hit dice when it has none. */
+	float getChallengeRating() const;
+
 	/** Compute the maximum Force Points for this creature based on classes and modifiers. */
 	int computeMaxForcePoints() const;
 
@@ -510,6 +513,7 @@ private:
 	bool _inCombat { false };
 	Object *_attackTarget { nullptr };
 	int _attackRound { 0 };
+	float _challengeRating { -1.0f }; ///< From the blueprint; < 0 when unset.
 	Object *_attemptedAttackTarget { nullptr };
 	Object *_lastHostileActor { nullptr };
 	Object *_lastKiller { nullptr };

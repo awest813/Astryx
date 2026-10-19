@@ -93,7 +93,7 @@ new way:
 - **Level-up and XP** come from the game tables, read the way KotOR.js
   reads them; confirm in play:
   - next-level XP from `exptable.2da`; kill XP from `xptable.2da` (column
-    `cr<hit dice>`, row = PC level — the least certain part; if kills give
+    `cr<UTC ChallengeRating, rounded>`, row = PC level — the least certain part; if kills give
     0 or absurd XP, this is why);
   - feats/powers per level from `featgain.2da` / `classpowergain.2da`;
     automatic class feats from `feat.2da` `<featstable>_granted`;
