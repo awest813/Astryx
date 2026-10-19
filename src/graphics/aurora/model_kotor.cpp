@@ -319,6 +319,7 @@ bool Model_KotOR::readAnim(ParserContext &ctx, uint32_t offset) {
 	anim->setTransTime(transTime);
 
 	_animationMap.insert(std::make_pair(ctx.state->name, anim));
+	_animationNames.push_back(ctx.state->name);
 
 	for (std::list<ModelNode_KotOR *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
 		AnimNode *animnode = new AnimNode(*n);

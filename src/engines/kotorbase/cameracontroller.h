@@ -25,6 +25,7 @@
 #include <memory>
 
 #include "external/glm/vec3.hpp"
+#include "external/glm/mat4x4.hpp"
 
 #include "src/common/ustring.h"
 #include "src/events/types.h"
@@ -33,6 +34,7 @@
 namespace Graphics {
 	namespace Aurora {
 		class Model;
+		class ModelNode;
 	}
 }
 
@@ -43,6 +45,10 @@ namespace KotORBase {
 class Module;
 class Object;
 struct CinematicShot;
+
+/** A model node's transform within its model, composed from the node chain
+ *  (the node's cached absolute transform isn't refreshed every animation frame). */
+glm::mat4 composeNodeTransform(const Graphics::Aurora::ModelNode &node);
 
 class CameraController {
 public:

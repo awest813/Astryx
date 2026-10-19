@@ -59,6 +59,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/itemupgrades.h \
     src/engines/kotorbase/swoopminigame.h \
     src/engines/kotorbase/minigamedesc.h \
+    src/engines/kotorbase/minigameruntime.h \
     src/engines/kotorbase/creatureinfo.h \
     src/engines/kotorbase/engine.h \
     src/engines/kotorbase/console.h \
@@ -105,6 +106,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/itemupgrades.cpp \
     src/engines/kotorbase/swoopminigame.cpp \
     src/engines/kotorbase/minigamedesc.cpp \
+    src/engines/kotorbase/minigameruntime.cpp \
     src/engines/kotorbase/creatureinfo.cpp \
     src/engines/kotorbase/engine.cpp \
     src/engines/kotorbase/console.cpp \

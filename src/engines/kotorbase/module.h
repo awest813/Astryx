@@ -88,6 +88,7 @@ class Functions;
 class PartyLeaderController;
 class Creature;
 class LoadScreen;
+class MinigameRuntime;
 class Game;
 
 class Module : public Object, public ObjectContainer {
@@ -104,6 +105,8 @@ public:
 	bool isLoaded() const;
 	/** Is a module currently running? */
 	bool isRunning() const;
+	/** Is a swoop race or turret minigame running in the current area? */
+	bool isMinigameRunning() const;
 
 	/** Load a module. */
 	void load(const Common::UString &module,
@@ -623,6 +626,7 @@ protected:
 	ObjectType      _entryLocationType; ///< The type(s) of the object in the start location for this module.
 
 	std::unique_ptr<Area> _area; ///< The current module's area.
+	std::unique_ptr<MinigameRuntime> _minigame; ///< The area's running minigame, if any.
 
 	std::unique_ptr<Graphics::Aurora::FadeQuad> _fade;
 

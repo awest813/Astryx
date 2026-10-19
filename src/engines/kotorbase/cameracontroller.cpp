@@ -485,7 +485,7 @@ glm::vec3 CameraController::getEyes(const Object &object) const {
 /** World transform of a model node, composed from the node chain each call.
  *  (ModelNode's cached absolute transform is only refreshed when the
  *  model's bound is rebuilt, not on every animation frame.) */
-static glm::mat4 composeNodeTransform(const Graphics::Aurora::ModelNode &node) {
+glm::mat4 composeNodeTransform(const Graphics::Aurora::ModelNode &node) {
 	std::vector<const Graphics::Aurora::ModelNode *> chain;
 	for (const Graphics::Aurora::ModelNode *n = &node; n; n = n->getParent())
 		chain.push_back(n);

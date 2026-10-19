@@ -509,6 +509,22 @@ Animation *Model::getAnimation(const Common::UString &anim) {
 	return n->second;
 }
 
+const std::vector<Common::UString> &Model::getAnimationNames() const {
+	return _animationNames;
+}
+
+float Model::getAnimationLength(const Common::UString &anim) {
+	Animation *animation = getAnimation(anim);
+	return animation ? animation->getLength() : 0.0f;
+}
+
+void Model::getAbsoluteBound(float &minX, float &minY, float &minZ,
+                             float &maxX, float &maxY, float &maxZ) const {
+
+	_absoluteBoundBox.getMin(minX, minY, minZ);
+	_absoluteBoundBox.getMax(maxX, maxY, maxZ);
+}
+
 bool Model::hasAnimation(const Common::UString &anim) const {
 	return _animationMap.find(anim) != _animationMap.end();
 }

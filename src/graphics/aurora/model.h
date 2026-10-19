@@ -178,6 +178,15 @@ public:
 	                   float length = 0.0f,
 	                   float speed = 1.0f);
 
+	/** The names of this model's own animations, in file order. */
+	const std::vector<Common::UString> &getAnimationNames() const;
+	/** The length of an animation in seconds, or 0 if there's no such animation. */
+	float getAnimationLength(const Common::UString &anim);
+
+	/** The model's bounding box in world coordinates. */
+	void getAbsoluteBound(float &minX, float &minY, float &minZ,
+	                      float &maxX, float &maxY, float &maxZ) const;
+
 	/** Compute transformation matrices of model nodes. */
 	void computeNodeTransforms();
 
@@ -244,6 +253,7 @@ protected:
 	std::list<Common::UString> _stateNames; ///< All state names.
 
 	AnimationMap _animationMap; ///< Map of all animations in this model.
+	std::vector<Common::UString> _animationNames; ///< Names of all animations, in file order.
 
 	AnimationChannelMap _animationChannels;
 

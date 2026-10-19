@@ -74,6 +74,7 @@
 #include "src/engines/kotorbase/itemactions.h"
 #include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/minigameruntime.h"
 #include "src/engines/kotorbase/waypoint.h"
 
 #include "src/engines/kotorbase/gui/partyselection.h"
@@ -312,6 +313,10 @@ void Module::removeObject(Object &object) {
 
 bool Module::isLoaded() const {
 	return _hasModule && _area && _pc;
+}
+
+bool Module::isMinigameRunning() const {
+	return _minigame != nullptr;
 }
 
 bool Module::isRunning() const {
@@ -757,7 +762,7 @@ void Module::enter() {
 	_running = true;
 	_exit    = false;
 
-	if (!deferIngameHUDOnEnter())
+	if (!deferIngameHUDOnEnter() && !_minigame)
 		_ingame->show();
 
 	// Loading took a while; don't feed that time into the first frame.
@@ -826,10 +831,23 @@ void Module::enterArea() {
 
 	GfxMan.unlockFrame();
 
+	// Swoop race and turret areas run their minigame instead of the party.
+	if (_area->isMinigame()) {
+		_minigame = std::make_unique<MinigameRuntime>(*this, *_area);
+		if (_minigame->load()) {
+			_ingame->hide();
+			_minigame->start();
+		} else {
+			_minigame.reset();
+		}
+	}
+
 	_area->runScript(kScriptEnter, _area.get(), _pc);
 }
 
 void Module::leaveArea() {
+	_minigame.reset();
+
 	if (_area) {
 		_area->savePersistence();
 		_area->runScript(kScriptExit, _area.get(), _pc);
@@ -1014,19 +1032,30 @@ void Module::processEventQueue() {
 
 	_area->processCreaturesActions(_frameTime);
 	_area->updateEncounters();
-	_cameraController.processRotation(_frameTime);
 
-	if (!_cameraController.isFlyCamera())
-		_partyLeaderController.processMovement(_frameTime);
+	if (!_minigame) {
+		_cameraController.processRotation(_frameTime);
 
-	_cameraController.processMovement(_frameTime);
+		if (!_cameraController.isFlyCamera())
+			_partyLeaderController.processMovement(_frameTime);
+
+		_cameraController.processMovement(_frameTime);
+	}
+
 	updateSoundListener();
-	updateSelection();
 
-	if (!_inDialog)
-		_ingame->getHUD().update(_frameTime);
+	if (!_minigame) {
+		updateSelection();
+
+		if (!_inDialog)
+			_ingame->getHUD().update(_frameTime);
+	}
 
 	GfxMan.unlockFrame();
+
+	// The minigame drives the player and the camera (it runs scripts: outside the frame lock).
+	if (_minigame && !_inDialog)
+		_minigame->update(_frameTime);
 
 	if (getGlobalBoolean("__open_galaxymap")) {
 		setGlobalBoolean("__open_galaxymap", false);
@@ -1363,6 +1392,12 @@ void Module::handleEvents() {
 			}
 		}
 
+		// A minigame takes all the input the menu and console don't.
+		if (_minigame) {
+			_minigame->handleEvent(*event);
+			continue;
+		}
+
 		if (_partyController.handleEvent(*event))
 			continue;
 
@@ -1393,7 +1428,8 @@ void Module::handleEvents() {
 		if (!_dialog->isConversationActive()) {
 			_conversationPausedSince = 0;
 			_dialog->hide();
-			_ingame->show();
+			if (!_minigame)
+				_ingame->show();
 			_inDialog = false;
 			resetToOrbit();
 			updateFrameTimestamp();

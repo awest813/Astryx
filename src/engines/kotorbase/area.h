@@ -227,6 +227,8 @@ public:
 
 	bool isMinigame();
 	const Aurora::GFF3Struct& getMinigame();
+	/** The area layout, with the minigame tracks and obstacles. */
+	const Aurora::LYTFile &getLayout() const { return _lyt; }
 
 
 	Object *getActiveObject();
