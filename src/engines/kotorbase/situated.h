@@ -34,6 +34,7 @@
 #include "src/graphics/aurora/types.h"
 
 #include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/trap.h"
 
 namespace Engines {
 
@@ -105,6 +106,9 @@ public:
 	void setTrapDisabled();
 	void triggerTrap(Object *triggerer);
 
+	Trap &getTrap();
+	const Trap &getTrap() const;
+
 	/** Lock/Unlock the situated object. */
 	virtual void setLocked(bool locked);
 
@@ -153,19 +157,7 @@ protected:
 	Object *_lastClosedBy; ///< The object that last closed this situated object.
 	Object *_lastUsedBy;   ///< The object that last used this situated object.
 
-	bool _trapFlag { false };
-	bool _trapDetectable { true };
-	bool _trapDisarmable { true };
-	bool _trapRecoverable { false };
-	bool _trapOneShot { true };
-	bool _trapActive { false };
-	bool _trapFlagged { false };
-	uint8_t _trapType { 0 };
-	uint8_t _trapDetectDC { 15 };
-	uint8_t _trapDisarmDC { 15 };
-	Common::UString _trapKeyTag;
-	Object *_trapDetectedBy { nullptr };
-	uint32_t _trapCreatedBy { 0 };
+	Trap _trap; ///< The trap on the object, if any.
 
 	std::unique_ptr<Graphics::Aurora::Model> _model; ///< The situated object's model.
 
@@ -183,8 +175,6 @@ private:
 	void loadProperties(const Aurora::GFF3Struct &gff);
 	void loadPortrait(const Aurora::GFF3Struct &gff);
 	void loadSounds();
-	void loadTrapState(const Aurora::GFF3Struct &gff);
-	void saveTrapState(Aurora::GFF3WriterStruct &gff) const;
 };
 
 } // End of namespace KotORBase

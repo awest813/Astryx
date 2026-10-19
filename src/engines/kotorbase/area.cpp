@@ -32,6 +32,7 @@
 #include "src/common/error.h"
 #include "src/common/readstream.h"
 #include "src/common/maths.h"
+#include "src/common/debug.h"
 
 #include "src/aurora/resman.h"
 #include "src/aurora/gff3file.h"
@@ -68,6 +69,8 @@
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/actionexecutor.h"
 #include "src/engines/kotorbase/creaturesearch.h"
+#include "src/engines/kotorbase/reputation.h"
+#include "src/engines/kotorbase/trap.h"
 
 #include "src/engines/kotorbase/path/pathfinding.h"
 #include "src/engines/kotorbase/path/objectwalkmesh.h"
@@ -77,6 +80,9 @@ namespace Engines {
 
 namespace KotORBase {
 
+/** The event number k_ai_master handles as a party member's heartbeat (KOTOR_HENCH_EVENT_ON_HEARTBEAT). */
+static const int kHenchmanHeartbeatEvent = 2001;
+
 Area::Area(Module &module, const Common::UString &resRef) :
 		Object(kObjectTypeArea),
 		_module(&module),
@@ -85,7 +91,6 @@ Area::Area(Module &module, const Common::UString &resRef) :
 		_activeObject(0),
 		_highlightAll(false),
 		_triggersVisible(false),
-		_activeTrigger(0),
 		_walkmeshInvisible(true) {
 
 	_pathfinding = new Pathfinding(_module->getWalkableSurfaces());
@@ -130,6 +135,8 @@ void Area::load() {
 	loadGIT(git.getTopLevel());
 
 	loadPersistence();
+
+	seedTriggerOccupants();
 }
 
 Common::UString Area::getPersistenceKey(const Object &object, std::map<Common::UString, int> &tagCounts) const {
@@ -157,9 +164,18 @@ static std::shared_ptr<Aurora::GFF3File> finishStateGFF(Aurora::GFF3Writer &writ
 
 void Area::assignPersistenceKeys() {
 	std::map<Common::UString, int> tagCounts;
-	for (auto &object : _objects)
-		if (object->isPersistent())
+	std::map<Common::UString, int> triggerTagCounts;
+	for (auto &object : _objects) {
+		if (!object->isPersistent())
+			continue;
+
+		// Triggers have keys of their own, so that saves made before triggers
+		// were kept still find their doors and placeables.
+		if (object->getType() == kObjectTypeTrigger)
+			object->setPersistenceKey("trigger@" + getPersistenceKey(*object, triggerTagCounts));
+		else
 			object->setPersistenceKey(getPersistenceKey(*object, tagCounts));
+	}
 }
 
 Common::UString Area::getSpawnedCreaturesKey() const {
@@ -284,7 +300,9 @@ void Area::clear() {
 	_encounters.clear();
 	_situatedObjects.clear();
 	_staticWalkmeshes.clear();
-	_activeTrigger = 0;
+	_pendingTriggerChecks.clear();
+	_lastTrapDetected.clear();
+	_heartbeats.clear();
 }
 
 const Common::UString &Area::getResRef() {
@@ -740,6 +758,19 @@ void Area::loadObject(std::unique_ptr<Object> &&object) {
 	if (!_objects.back()->isStatic())
 		addToObjectMap(_objects.back().get());
 
+	// Creatures, placeables, doors and triggers get an OnHeartbeat every round.
+	// (Encounters run their own.)
+	switch (_objects.back()->getType()) {
+		case kObjectTypeCreature:
+		case kObjectTypePlaceable:
+		case kObjectTypeDoor:
+		case kObjectTypeTrigger:
+			_heartbeats.add(_objects.back()->getID(), EventMan.getTimestamp());
+			break;
+		default:
+			break;
+	}
+
 	notifyObjectMoved(*_objects.back());
 
 	// Objects added after the area went visible (scripts spawning things)
@@ -836,7 +867,10 @@ void Area::loadTriggers(const Aurora::GFF3List &list) {
 		if (trigger) {
 			loadObject(std::make_unique<Trigger>(*trigger));
 
-			_triggers.push_back(static_cast<Trigger *>(_objects.back().get()));
+			Trigger *obj = static_cast<Trigger *>(_objects.back().get());
+			// Scripts keep state on triggers (fire-once flags), and mines get disarmed.
+			obj->setPersistent(true);
+			_triggers.push_back(obj);
 		}
 	}
 }
@@ -1084,32 +1118,220 @@ void Area::toggleTriggers() {
 		encounter->setVisible(_triggersVisible);
 }
 
-void Area::evaluateTriggers(float x, float y, bool allowTransitions) {
-	Trigger *trigger = 0;
+const std::vector<Trigger *> &Area::getTriggers() const {
+	return _triggers;
+}
 
-	for (std::vector<Trigger *>::iterator it = _triggers.begin();
-			it != _triggers.end();
-			++it) {
-		Trigger *t = *it;
-		if (t->contains(x, y)) {
-			trigger = t;
-			break;
-		}
+Trigger *Area::findTrigger(uint32_t id) const {
+	for (Trigger *trigger : _triggers)
+		if (trigger->getID() == id)
+			return trigger;
+
+	return nullptr;
+}
+
+Creature *Area::findCreature(uint32_t id) const {
+	for (Creature *creature : _creatures)
+		if (creature->getID() == id)
+			return creature;
+
+	return nullptr;
+}
+
+void Area::queueTriggerCheck(const Object &creature, bool allowTransitions) {
+	if (creature.getType() != kObjectTypeCreature)
+		return;
+
+	// A creature teleported into a transition this frame must not use it,
+	// however else it moved.
+	auto pending = _pendingTriggerChecks.find(creature.getID());
+	if (pending != _pendingTriggerChecks.end())
+		pending->second = pending->second && allowTransitions;
+	else
+		_pendingTriggerChecks.emplace(creature.getID(), allowTransitions);
+}
+
+void Area::seedTriggerOccupants() {
+	// As in KotOR.js: creatures the GIT placed inside a trigger are simply in
+	// it. Only walking in later runs OnEnter. (The party arrives afterwards,
+	// and does get OnEnter for the triggers it lands in.)
+	for (Creature *creature : _creatures) {
+		if (creature->isDead())
+			continue;
+
+		float x, y, z;
+		creature->getPosition(x, y, z);
+
+		for (Trigger *trigger : _triggers)
+			if (trigger->contains(x, y))
+				trigger->getOccupancy().addSilently(creature->getID());
+
+		_pendingTriggerChecks.erase(creature->getID());
+	}
+}
+
+void Area::forgetTriggerOccupant(uint32_t id) {
+	// Destroyed, or gone to another area: no OnExit, as there is no object
+	// left for GetExitingObject() to return.
+	for (Trigger *trigger : _triggers)
+		trigger->getOccupancy().removeSilently(id);
+}
+
+void Area::processTriggerChecks() {
+	// A script run from here that moves creatures queues more checks; they
+	// are done by the loop below, not by a nested call.
+	if (_processingTriggers)
+		return;
+
+	_processingTriggers = true;
+
+	// Scripts teleporting creatures back and forth between triggers must not
+	// hang the game: stop after a few rounds, the rest waits for the next frame.
+	static const int kMaxRounds = 8;
+	for (int round = 0; (round < kMaxRounds) && !_pendingTriggerChecks.empty(); ++round) {
+		std::map<uint32_t, bool> pending;
+		pending.swap(_pendingTriggerChecks);
+
+		for (const auto &check : pending)
+			checkTriggers(check.first, check.second);
 	}
 
-	if (_activeTrigger != trigger) {
-		if (_activeTrigger)
-			_activeTrigger->runScript(kScriptExit, _activeTrigger, _module->getPC());
-		_activeTrigger = trigger;
-		if (_activeTrigger) {
-			_activeTrigger->runScript(kScriptEnter, _activeTrigger, _module->getPC());
+	_processingTriggers = false;
+}
 
-			// Area transition triggers (map edges) move the party on. The OnEnter
-			// script may already have moved it or destroyed the trigger.
-			if (allowTransitions && _activeTrigger == trigger && trigger->isTransition())
-				_module->moveParty(trigger->getLinkedToModule(), trigger->getLinkedTo(),
-				                   static_cast<ObjectType>(kObjectTypeDoor | kObjectTypeWaypoint));
+void Area::checkTriggers(uint32_t creatureID, bool allowTransitions) {
+	Creature *creature = findCreature(creatureID);
+	if (!creature || creature->isDead())
+		return; // The dead stay where they fell, inside or not.
+
+	if (!creature->isInCombat())
+		detectTraps(*creature, false);
+
+	// Scripts may destroy triggers or move the creature: work on IDs, look
+	// everything up again after every script.
+	std::vector<uint32_t> triggerIDs;
+	triggerIDs.reserve(_triggers.size());
+	for (Trigger *trigger : _triggers)
+		triggerIDs.push_back(trigger->getID());
+
+	// First the triggers it left, then those it entered, so that walking from
+	// one into an overlapping one exits the first before entering the second.
+	for (int pass = 0; pass < 2; ++pass) {
+		const bool entering = pass == 1;
+
+		for (uint32_t triggerID : triggerIDs) {
+			creature = findCreature(creatureID);
+			if (!creature || creature->isDead())
+				return;
+
+			Trigger *trigger = findTrigger(triggerID);
+			if (!trigger)
+				continue;
+
+			float x, y, z;
+			creature->getPosition(x, y, z);
+
+			const bool inside = trigger->contains(x, y);
+			if (inside != entering)
+				continue;
+
+			const TriggerOccupancy::Change change = trigger->getOccupancy().update(creatureID, inside);
+
+			if (change == TriggerOccupancy::kChangeExited) {
+				trigger->setLastExitedID(creatureID);
+				trigger->runScript(kScriptExit, trigger, creature);
+				continue;
+			}
+
+			if (change != TriggerOccupancy::kChangeEntered)
+				continue;
+
+			trigger->setLastEnteredID(creatureID);
+			trigger->runScript(kScriptEnter, trigger, creature);
+
+			// The OnEnter script may have destroyed the trigger or moved the creature.
+			trigger  = findTrigger(triggerID);
+			creature = findCreature(creatureID);
+			if (!trigger || !creature || creature->isDead())
+				continue;
+
+			if (trigger->isTrap())
+				enterTrap(*trigger, *creature);
+
+			// Area transition triggers (map edges) move the party on, when its
+			// leader walks in (not when it was teleported there).
+			trigger  = findTrigger(triggerID);
+			creature = findCreature(creatureID);
+			if (!trigger || !creature || !trigger->isTransition() || !allowTransitions)
+				continue;
+
+			if ((creature != _module->getPartyLeader()) ||
+			    !trigger->getOccupancy().contains(creatureID))
+				continue;
+
+			_module->moveParty(trigger->getLinkedToModule(), trigger->getLinkedTo(),
+			                   static_cast<ObjectType>(kObjectTypeDoor | kObjectTypeWaypoint));
+
+			// The party is somewhere else now; its new position was checked anew.
+			return;
 		}
+	}
+}
+
+void Area::enterTrap(Trigger &trigger, Creature &creature) {
+	// Mines go off for those their faction is hostile to: the party for the
+	// module's mines, the enemies for the mines the party laid.
+	if (!trigger.isTrapActive())
+		return;
+
+	if (!ReputationMan.isHostile(static_cast<int>(trigger.getFaction()), static_cast<int>(creature.getFaction())))
+		return;
+
+	debugC(Common::kDebugEngineLogic, 1, "Mine \"%s\" set off by \"%s\"",
+	       trigger.getTag().c_str(), creature.getTag().c_str());
+
+	trigger.fireTrap(&creature);
+}
+
+uint32_t Area::getLastTrapDetected(uint32_t creatureID) const {
+	auto it = _lastTrapDetected.find(creatureID);
+	return (it != _lastTrapDetected.end()) ? it->second : 0;
+}
+
+void Area::detectTraps(Creature &creature, bool rollDice) {
+	// Only the party looks out for mines (the enemies know where theirs are).
+	if (!creature.isPC() && !_module->isObjectPartyMember(&creature))
+		return;
+
+	const int awareness = creature.getSkillRank(kSkillAwareness);
+
+	float x, y, z;
+	creature.getPosition(x, y, z);
+
+	for (Trigger *trigger : _triggers) {
+		const Trap &trap = trigger->getTrap();
+		if (!trap.isActive() || !trap.isDetectable() || trap.isDetectedBy(creature.getID()))
+			continue;
+
+		float tx, ty, tz;
+		trigger->getPosition(tx, ty, tz);
+		if (glm::distance(glm::vec2(x, y), glm::vec2(tx, ty)) > TrapRules::kDetectRange)
+			continue;
+
+		const int roll = TrapRules::checkRoll(rollDice, 10, RNG.getNext(1, 21));
+		if (!TrapRules::detects(awareness, roll, trap.getDetectDC()))
+			continue;
+
+		debugC(Common::kDebugEngineLogic, 1, "\"%s\" spotted mine \"%s\" (Awareness %d + %d vs DC %d)",
+		       creature.getTag().c_str(), trigger->getTag().c_str(), awareness, roll, trap.getDetectDC());
+
+		const bool wasDetected = trigger->isTrapDetected();
+		trigger->detectTrap(&creature);
+		_lastTrapDetected[creature.getID()] = trigger->getID();
+
+		// The mine's model can now be clicked on.
+		if (!wasDetected)
+			addToObjectMap(trigger);
 	}
 }
 
@@ -1136,8 +1358,10 @@ void Area::notifyObjectMoved(Object &o) {
 	o.getPosition(x, y, _);
 	o.setRoom(_pathfinding->getRoomAt(x, y));
 
-	if (o.getType() == kObjectTypeCreature)
+	if (o.getType() == kObjectTypeCreature) {
 		updatePerception((Creature &)o);
+		queueTriggerCheck(o);
+	}
 }
 
 void Area::updatePerception(Creature &subject) {
@@ -1288,6 +1512,9 @@ const std::vector<Creature *> &Area::getCreatures() const {
 }
 
 void Area::processCreaturesActions(float dt) {
+	// Creatures moved by the player or by scripts since the last frame.
+	processTriggerChecks();
+
 	ActionExecutor::ExecutionContext ctx;
 	ctx.area = this;
 	ctx.frameTime = dt;
@@ -1316,6 +1543,9 @@ void Area::processCreaturesActions(float dt) {
 			ActionExecutor::execute(*const_cast<Action *>(action), ctx);
 		}
 	}
+
+	// Trigger scripts run here, outside of the loop over the creatures.
+	processTriggerChecks();
 }
 
 Creature *Area::findNearestEnemy(Creature *origin) {
@@ -1407,6 +1637,8 @@ void Area::handleCreaturesDeath() {
 	// Creature event scripts are queued by combat/effects and run here, never
 	// from inside a loop over _creatures. They may spawn creatures (so iterate
 	// by index); DestroyObject is deferred to the end of the frame.
+	runHeartbeats();
+
 	for (size_t i = 0; i < _creatures.size(); ++i) {
 		Creature *c = _creatures[i];
 
@@ -1432,12 +1664,23 @@ void Area::handleCreaturesDeath() {
 			c->runScript(kScriptDamaged, c, damager ? damager : c);
 		}
 
-		if (c->consumeHeartbeatEvent()) {
+		if (c->consumeHeartbeatEvent() && !c->isDead()) {
 			// Creature blueprints store it as "ScriptHeartbeat".
 			if (c->hasScript(kScriptHeartbeart))
 				c->runScript(kScriptHeartbeart, c, c);
 			else if (c->hasScript(kScriptHeartbeat))
 				c->runScript(kScriptHeartbeat, c, c);
+			else if (c->isPC() || _module->isObjectPartyMember(c)) {
+				// A party member without one (the player character made in
+				// character generation) runs what the companions' heartbeat
+				// (k_hen_heartbt01) does: the party AI, as a henchman heartbeat.
+				_module->setRunScriptVar(kHenchmanHeartbeatEvent);
+				c->runScript("k_ai_master", c, c);
+			}
+
+			// In combat, the party gets a fresh (rolled) chance to spot mines each round.
+			if (!c->isDead() && c->isInCombat())
+				detectTraps(*c, true);
 		}
 
 		// The scripts above may have spawned creatures (reallocating
@@ -1513,10 +1756,43 @@ void Area::runPendingSpawnEvents() {
 	}
 }
 
-void Area::queueCreatureHeartbeats() {
-	for (Creature *creature : _creatures)
-		if (!creature->isDead() && !creature->isPC() && !_module->isObjectPartyMember(creature))
+void Area::runHeartbeats() {
+	std::vector<uint32_t> due;
+	_heartbeats.collectDue(EventMan.getTimestamp(), due);
+
+	// Look every object up again: an earlier heartbeat may have destroyed it.
+	for (uint32_t id : due) {
+		Object *object = ObjectContainer::toObject(ObjectMan.findObject(id));
+		if (object)
+			runHeartbeat(*object);
+	}
+}
+
+void Area::runHeartbeat(Object &object) {
+	if (object.getType() == kObjectTypeCreature) {
+		// Runs with the creature's other events, in handleCreaturesDeath().
+		Creature *creature = findCreature(object.getID());
+		if (creature && !creature->isDead())
 			creature->queueHeartbeatEvent();
+
+		return;
+	}
+
+	// Only objects of this area.
+	bool ours = false;
+	if (object.getType() == kObjectTypeTrigger)
+		ours = findTrigger(object.getID()) != nullptr;
+	else
+		ours = std::find(_situatedObjects.begin(), _situatedObjects.end(), &object) != _situatedObjects.end();
+
+	if (!ours)
+		return;
+
+	// Trigger blueprints store it as "ScriptHeartbeat", doors and placeables as "OnHeartbeat".
+	if (object.hasScript(kScriptHeartbeart))
+		object.runScript(kScriptHeartbeart, &object, &object);
+	else if (object.hasScript(kScriptHeartbeat))
+		object.runScript(kScriptHeartbeat, &object, &object);
 }
 
 void Area::addToObjectMap(Object *object) {
@@ -1612,6 +1888,11 @@ void Area::removeObject(Object *object) {
 	if (tit != _triggers.end())
 		_triggers.erase(tit);
 
+	// It no longer stands in any trigger, and has no heartbeat any more.
+	forgetTriggerOccupant(object->getID());
+	_pendingTriggerChecks.erase(object->getID());
+	_heartbeats.remove(object->getID());
+
 	auto eit = std::find(_encounters.begin(), _encounters.end(), object);
 	if (eit != _encounters.end())
 		_encounters.erase(eit);
@@ -1626,9 +1907,6 @@ void Area::removeObject(Object *object) {
 		_localPathfinding->removeStaticObject(walkmesh->second);
 		_staticWalkmeshes.erase(walkmesh);
 	}
-
-	if (object == _activeTrigger)
-		_activeTrigger = 0;
 
 	if (!object->isStatic()) {
 		const std::list<uint32_t> &ids = object->getIDs();

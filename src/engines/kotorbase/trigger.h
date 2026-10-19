@@ -25,9 +25,19 @@
 #ifndef ENGINES_KOTORBASE_TRIGGER_H
 #define ENGINES_KOTORBASE_TRIGGER_H
 
+#include <memory>
+
 #include "src/engines/aurora/trigger.h"
 
 #include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/trap.h"
+#include "src/engines/kotorbase/triggeroccupancy.h"
+
+namespace Graphics {
+	namespace Aurora {
+		class Model;
+	}
+}
 
 namespace Engines {
 
@@ -35,7 +45,19 @@ namespace KotORBase {
 
 class Trigger : public ::Engines::Trigger, public Object {
 public:
+	/** The trigger kinds of the UTT "Type" field. */
+	enum Kind {
+		kKindGeneric    = 0,
+		kKindTransition = 1,
+		kKindTrap       = 2
+	};
+
 	Trigger(const Aurora::GFF3Struct &gff);
+	~Trigger();
+
+	// The script object's ID and tag, not the debug polygon's.
+	using Object::getID;
+	using Object::getTag;
 
 	// Basic visuals
 
@@ -52,14 +74,66 @@ public:
 	const Common::UString &getLinkedTo() const;
 	const Common::UString &getLinkedToModule() const;
 
+	// Occupants
+
+	/** The objects inside the trigger (by ID). */
+	TriggerOccupancy &getOccupancy();
+	const TriggerOccupancy &getOccupancy() const;
+
+	/** The object that last entered/exited the trigger (GetEnteringObject/GetExitingObject). */
+	uint32_t getLastEnteredID() const;
+	uint32_t getLastExitedID() const;
+	void setLastEnteredID(uint32_t id);
+	void setLastExitedID(uint32_t id);
+
+	// Traps (mines)
+
+	/** Is this a trap trigger (a mine) that is still there? */
+	bool isTrap() const;
+	/** Is the mine armed? */
+	bool isTrapActive() const;
+	/** Has anyone (in practice: the party) spotted the mine? */
+	bool isTrapDetected() const;
+	/** Can the mine be disarmed (and recovered)? */
+	bool isTrapDisarmable() const;
+
+	Trap &getTrap();
+	const Trap &getTrap() const;
+
+	/** Mark the mine as spotted by this creature, and show its model. */
+	void detectTrap(Object *detector);
+	/** The mine goes off for @p triggerer. Returns false if it was not armed. */
+	bool fireTrap(Object *triggerer);
+	/** The mine is gone (disarmed or recovered): disarm it and hide its model. */
+	void disableTrap();
+
+	// Persistence
+
+	void saveState(Aurora::GFF3WriterStruct &gff) const override;
+	void loadState(const Aurora::GFF3Struct &gff) override;
+
 protected:
 	void load(const Aurora::GFF3Struct &gff);
 	void loadBlueprint(const Aurora::GFF3Struct &gff);
 	void loadLinkedTo(const Aurora::GFF3Struct &gff);
+	void loadTrap(const Aurora::GFF3Struct &gff);
 
 private:
 	Common::UString _linkedTo;       ///< Tag of the waypoint/door this trigger leads to.
 	Common::UString _linkedToModule; ///< Module of that object (empty: this module).
+
+	uint32_t _kind { kKindGeneric };
+
+	TriggerOccupancy _occupancy;
+	uint32_t _lastEnteredID { 0 };
+	uint32_t _lastExitedID { 0 };
+
+	Trap _trap;
+	std::unique_ptr<Graphics::Aurora::Model> _trapModel; ///< Shown once the mine is spotted.
+	bool _shown { false }; ///< Is the trigger (and so its mine model) shown?
+
+	void loadTrapInfo();
+	void updateTrapModel();
 };
 
 } // End of namespace KotORBase

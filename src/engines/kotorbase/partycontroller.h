@@ -89,7 +89,6 @@ public:
 	const std::map<int, Common::UString> &getAvailableNPCs() const;
 
 	bool handleEvent(const Events::Event &e);
-	void raiseHeartbeatEvent();
 
 private:
 	Module *_module;

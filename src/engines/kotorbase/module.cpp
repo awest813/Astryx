@@ -1953,9 +1953,12 @@ void Module::updateCombatAI() {
 		if (!leader || c == leader)
 			continue;
 
-		// Non-leader: if idle, mirror the leader's attack target.
+		// Non-leader: if idle, mirror the leader's attack target. Following the
+		// leader counts as idle, whether Astryx queued it or the party AI's
+		// heartbeat did (ActionFollowLeader, ActionForceFollowObject).
 		const CombatAction *ca = c->getCurrentAction();
-		bool idle = (!ca || ca->type == kActionFollowLeader);
+		bool idle = (!ca || ca->type == kActionFollowLeader ||
+		             (ca->type == kActionFollow && ca->object == leader));
 		if (!idle)
 			continue;
 
@@ -2345,10 +2348,8 @@ void Module::movedPartyLeader() {
 	if (!leader || !_area)
 		return;
 
-	float x, y, _;
-	leader->getPosition(x, y, _);
-
-	_area->evaluateTriggers(x, y, !_teleportingParty);
+	// The triggers are checked at the next safe point of the frame.
+	_area->queueTriggerCheck(*leader, !_teleportingParty);
 	_area->notifyPartyLeaderMoved();
 
 	_cameraController.updateTarget();

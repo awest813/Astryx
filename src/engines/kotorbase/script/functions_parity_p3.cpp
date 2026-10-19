@@ -30,6 +30,7 @@
 #include "src/events/events.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
@@ -43,6 +44,7 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/sound.h"
+#include "src/engines/kotorbase/trigger.h"
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/action.h"
 
@@ -361,13 +363,52 @@ void Functions::getCreatureSize(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getLastTrapDetected(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
+	// GetLastTrapDetected(object oTarget=OBJECT_SELF): the mine oTarget spotted last.
 	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Area *area = _game->getModule().getCurrentArea();
+	if (!target || !area)
+		return;
+
+	const uint32_t id = area->getLastTrapDetected(target->getID());
+	if (id != 0)
+		ctx.getReturn() = ObjectMan.findObject(id);
 }
 
 void Functions::getNearestTrapToObject(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
+	// GetNearestTrapToObject(object oTarget=OBJECT_SELF, int nTrapDetected=TRUE):
+	// the nearest armed mine (with nTrapDetected, only those oTarget knows of).
 	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Area *area = _game->getModule().getCurrentArea();
+	if (!target || !area)
+		return;
+
+	const bool onlyDetected = ctx.getParams()[1].getInt() != 0;
+	const bool partyMember  = ObjectContainer::toPartyMember(target) != nullptr;
+
+	Trigger *nearest = nullptr;
+	float nearestDistance = 0.0f;
+	for (Trigger *trigger : area->getTriggers()) {
+		const Trap &trap = trigger->getTrap();
+		if (!trap.isActive())
+			continue;
+
+		// The party shares what it found.
+		if (onlyDetected && !trap.isDetectedBy(target->getID()) && !(partyMember && trap.isDetected()))
+			continue;
+
+		const float distance = target->getDistanceTo(trigger);
+		if (!nearest || (distance < nearestDistance)) {
+			nearest = trigger;
+			nearestDistance = distance;
+		}
+	}
+
+	if (nearest)
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(static_cast<Object *>(nearest));
 }
 
 void Functions::getAttemptedMovementTarget(Aurora::NWScript::FunctionContext &ctx) {
