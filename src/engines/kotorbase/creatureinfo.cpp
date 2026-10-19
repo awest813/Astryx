@@ -686,6 +686,10 @@ Inventory &CreatureInfo::getInventory() {
 	return _inventory;
 }
 
+const Inventory &CreatureInfo::getInventory() const {
+	return _inventory;
+}
+
 void CreatureInfo::addInventoryItem(const Common::UString &tag, int count) {
 	_inventory.addItem(tag, count);
 }

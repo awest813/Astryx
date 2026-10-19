@@ -3039,6 +3039,7 @@ void Module::setSpellScriptContext(int spellId, Object *caster, Object *target, 
 	_spellScriptSaveDC = saveDC > 0 ? saveDC : 12;
 	_spellScriptHarmful = harmful;
 	_spellScriptCastItem = castItem;
+	_spellScriptHasTargetLocation = false;
 }
 
 void Module::clearSpellScriptContext() {
@@ -3048,6 +3049,20 @@ void Module::clearSpellScriptContext() {
 	_spellScriptSaveDC = 12;
 	_spellScriptHarmful = false;
 	_spellScriptCastItem = nullptr;
+	_spellScriptHasTargetLocation = false;
+}
+
+void Module::setSpellScriptTargetLocation(const glm::vec3 &location) {
+	_spellScriptTargetLocation = location;
+	_spellScriptHasTargetLocation = true;
+}
+
+bool Module::getSpellScriptTargetLocation(glm::vec3 &location) const {
+	if (!_spellScriptHasTargetLocation)
+		return false;
+
+	location = _spellScriptTargetLocation;
+	return true;
 }
 
 int Module::getSpellScriptId() const {

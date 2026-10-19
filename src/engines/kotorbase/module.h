@@ -509,6 +509,10 @@ protected:
 	int getSpellScriptSaveDC() const;
 	bool getSpellScriptHarmful() const;
 	Object *getSpellScriptCastItem() const;
+	/** A spell cast at a location rather than an object (grenades, ActionCastSpellAtLocation). */
+	void setSpellScriptTargetLocation(const glm::vec3 &location);
+	/** The location the spell was cast at; false when it was cast at an object. */
+	bool getSpellScriptTargetLocation(glm::vec3 &location) const;
 
 	void setLastConversation(const Common::UString &name);
 	const Common::UString &getLastConversation() const;
@@ -678,6 +682,8 @@ protected:
 	int _spellScriptSaveDC { 12 };
 	bool _spellScriptHarmful { false };
 	Object *_spellScriptCastItem { nullptr };
+	bool _spellScriptHasTargetLocation { false };
+	glm::vec3 _spellScriptTargetLocation { 0.0f, 0.0f, 0.0f };
 	Common::UString _lastConversation;
 	Object *_lastAoECreator { nullptr };
 

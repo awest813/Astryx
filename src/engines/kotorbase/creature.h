@@ -138,10 +138,14 @@ public:
 
 	// Attributes
 
-	/** Get the current rank of the specified skill. */
-	int getSkillRank(Skill skill);
-	/** Get the current score of the specified ability. */
-	int getAbilityScore(Ability ability);
+	/** Get the current rank of the specified skill, with skill effects and ability changes. */
+	int getSkillRank(Skill skill) const;
+	/** Get the current score of the specified ability, with equipment and effects. */
+	int getAbilityScore(Ability ability) const;
+	/** The modifier of the current ability score: floor((score - 10) / 2). */
+	int getAbilityModifier(Ability ability) const;
+	/** Ability score bonus of the equipped items' Ability Bonus properties. */
+	int getEquipmentAbilityBonus(Ability ability) const;
 	/** Get the current Force Points. */
 	int getForcePoints() const;
 	/** Get the maximum Force Points. */
@@ -157,16 +161,17 @@ public:
 
 	/** Roll a d20 vs the specified DC. Return true if successful. */
 	bool rollSavingThrow(SavingThrow type, int dc);
-	/** Get the total bonus for the specified saving throw. */
-	int getSavingThrowBonus(SavingThrow type);
+	/** Get the total bonus for the specified saving throw, with effects. */
+	int getSavingThrowBonus(SavingThrow type) const;
 
 	// Combat AI
+	/** Built-in fallback AI for scripted encounters. Force users are run by
+	 *  their AI scripts (talents), not by an archetype. */
 	enum AIArchetype {
 		kAIArchetypeNone             = 0,
 		kAIArchetypeBeastMelee       = 1,
 		kAIArchetypeBeastPoison      = 2,
-		kAIArchetypeTacticalHumanoid = 3,
-		kAIArchetypeForceUser        = 4
+		kAIArchetypeTacticalHumanoid = 3
 	};
 
 	void setAIArchetype(AIArchetype archetype);
@@ -216,6 +221,17 @@ public:
 	Item *addScriptItem(const Common::UString &tag);
 	/** Find a live Item by tag in script items or equipment. Returns nullptr if not found. */
 	Item *findInventoryItemByTag(const Common::UString &tag) const;
+
+	/** A spell an item lets the creature cast. */
+	struct ItemPower {
+		int spellId { -1 };
+		Common::UString item; ///< The item's template (inventory tag).
+	};
+
+	/** Force powers of the equipped items' CastSpell properties (armbands, belts...). */
+	std::vector<ItemPower> getEquippedItemPowers() const;
+	/** Spells of the usable items in the inventory (medpacs, stims, grenades...). */
+	std::vector<ItemPower> getInventoryItemPowers() const;
 
 	/** Return the total character level (sum of all class levels). */
 	int getHitDice() const;
@@ -270,6 +286,14 @@ public:
 		int   spellId { -1 };
 		float nextTick { 1.0f };
 		bool  expired { false };
+		/** kEffectModifier: the KotOREffectType, and its subtype (ability, skill,
+		 *  saving throw or damage type) and limit (damage absorbed before it ends). */
+		int   kotorType { -1 };
+		int   subType { 0 };
+		int   limit { 0 };
+		/** Effects linked by EffectLinkEffects share a non-zero id and are removed together. */
+		int   linkId { 0 };
+		bool  permanent { false };
 	};
 
 	void applyEffect(EffectType type, float duration, int value = 0, int spellId = -1);
@@ -280,7 +304,19 @@ public:
 	bool isIncapacitated() const;
 	const std::vector<ActiveEffect> &getActiveEffects() const { return _effects; }
 	void clearActiveEffects();
+	/** Remove the active effect at @p index and every effect linked to it. */
 	bool removeActiveEffectAt(size_t index);
+
+	/** Reduce @p damage of @p damageType by damage resistance, damage reduction and
+	 *  Force shields, using up their limits. Returns the damage that gets through. */
+	int absorbDamage(int damage, int damageType);
+	/** Is the creature invisible (EffectInvisibility)? */
+	bool isInvisible() const { return _invisibility > 0; }
+	/** Damage bonus (or penalty) of EffectDamageIncrease/Decrease. */
+	int getDamageModifier() const { return _damageModifier; }
+	/** Force push: knock the creature back by up to @p distance metres away from
+	 *  (fromX, fromY), stopping where the walkmesh ends. Returns the distance moved. */
+	float knockBack(Area &area, float fromX, float fromY, float distance);
 
 	void performCutsceneAttack(Object *target, int flags, int damage = 0);
 
@@ -543,7 +579,13 @@ private:
 	int _forceResistance { 0 };
 	int _attackModifier { 0 };
 	int _armorClassModifier { 0 };
+	int _damageModifier { 0 };
+	int _invisibility { 0 };
+	int _nextEffectLinkId { 0 };
 	std::array<int, kSkillMAX> _skillModifiers {{}};
+	std::array<int, kAbilityCharisma + 1> _abilityModifiers {{}};
+	/** Saving throw effects, indexed by SAVING_THROW_* (0 all, 1 Fortitude, 2 Reflex, 3 Will). */
+	std::array<int, 4> _savingThrowModifiers {{}};
 
 	// Perception state — updated by handleObjectSeen/Vanished/Heard/Inaudible.
 	Object *_lastPerceived { nullptr };
@@ -634,6 +676,13 @@ private:
 	bool addItemToEquipment(const Common::UString &tag, InventorySlot slot);
 
 	int getWeaponAnimationNumber() const;
+
+	/** Apply one part of an Effect (linked effects are applied part by part). */
+	void applyEffectPart(const Effect &effect, float durationOverride, int linkId);
+	/** Store and apply an active effect. */
+	void addActiveEffect(const ActiveEffect &effect);
+	/** Add (@p sign 1) or take away (@p sign -1) the modifiers of a kEffectModifier effect. */
+	void adjustEffectModifiers(const ActiveEffect &effect, int sign);
 	int computeWeaponDamage(const Item *weapon) const;
 
 	int _influence { 50 };

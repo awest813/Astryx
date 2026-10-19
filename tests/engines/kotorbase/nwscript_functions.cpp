@@ -385,7 +385,8 @@ GTEST_TEST(KotORNWScriptFuncs, talentTracksTypeAndID) {
 	Talent featTalent(kTalentTypeFeat, 15);
 	EXPECT_TRUE(featTalent.isValid());
 	EXPECT_EQ(featTalent.getType(), kTalentTypeFeat);
-	EXPECT_EQ(featTalent.getCategory(), kTalentTypeFeat);
+	// The category is feat.2da's "category" column; there is no game data here.
+	EXPECT_EQ(featTalent.getCategory(), -1);
 	EXPECT_EQ(featTalent.getID(), 15);
 
 	Talent invalid;

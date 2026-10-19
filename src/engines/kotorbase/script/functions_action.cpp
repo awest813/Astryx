@@ -1030,6 +1030,18 @@ void Functions::actionUseTalentOnObject(Aurora::NWScript::FunctionContext &ctx) 
 
 
 
+	// Force powers and item spells are cast like ActionCastSpellAtObject.
+
+	if (talent->getType() == kTalentTypeSpell) {
+
+		caller->addAction(makeTalentSpellAction(*caller, *talent, target ? target : caller));
+
+		return;
+
+	}
+
+
+
 	if (talent->getType() == kTalentTypeFeat) {
 
 		caller->setLastCombatFeatUsed(talent->getID());
@@ -1083,6 +1095,24 @@ void Functions::actionUseTalentAtLocation(Aurora::NWScript::FunctionContext &ctx
 	if (!caller || !talent || !talent->isValid() || !target)
 
 		return;
+
+
+
+	if (talent->getType() == kTalentTypeSpell) {
+
+		Action spell = makeTalentSpellAction(*caller, *talent, nullptr);
+
+		float sx, sy, sz;
+
+		target->getPosition(sx, sy, sz);
+
+		spell.location = glm::vec3(sx, sy, sz);
+
+		caller->addAction(spell);
+
+		return;
+
+	}
 
 
 

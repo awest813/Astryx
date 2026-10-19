@@ -56,10 +56,17 @@ public:
 		int cost;
 		Common::UString impactScript;
 		bool hostile;
+		Common::UString goodEvil; ///< spells.2da "goodevil": G (light side), E (dark side) or -.
 	};
 
 	static const SpellInfo *getSpellInfo(uint32_t id);
 	static void loadSpells();
+
+	/** Cast the spell of a kActionCastSpell right away: pay its Force points (unless
+	 *  bCheat), use up the casting item if asked to, and run the spells.2da impact
+	 *  script (or the built-in fallback). Returns false when the spell couldn't be
+	 *  cast (not enough Force points, no line of sight, unknown spell). */
+	static bool castSpell(const Action &action, const ExecutionContext &ctx);
 
 private:
 	static std::map<uint32_t, SpellInfo> _spells;

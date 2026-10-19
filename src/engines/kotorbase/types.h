@@ -444,7 +444,8 @@ enum EffectType {
 	kEffectKnockdown = 6,
 	kEffectDamage = 7,
 	kEffectConfusion = 8,
-	kEffectDazed = 9
+	kEffectDazed = 9,
+	kEffectModifier = 10 ///< A KotOR effect kept active for its duration (AC, attack, ability, shield...).
 };
 
 /** Item property types (rows in itempropdef.2da — matches Aurora engine IDs). */

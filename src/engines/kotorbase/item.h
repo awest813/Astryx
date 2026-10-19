@@ -30,11 +30,22 @@
 
 #include "src/graphics/aurora/types.h"
 
+#include "src/engines/kotorbase/types.h"
+
 #include "src/engines/kotorbase/object.h"
+
+namespace Aurora {
+	class TwoDAFile;
+}
 
 namespace Engines {
 
 namespace KotORBase {
+
+/** The spells.2da row a CastSpell item property's subtype names. @p subtypeTable is
+ *  the property's subtype 2DA when it is an iprp_spells.2da style table (with a
+ *  "spellindex" column), or nullptr when the subtype is the spells.2da row itself. */
+int resolveCastSpellSubtype(int subtype, const Aurora::TwoDAFile *subtypeTable);
 
 class Item : public Object {
 public:
@@ -67,6 +78,14 @@ public:
 	/** Returns Subtype for the first property of @p propertyType, or @p fallback. */
 	int getItemPropertySubtype(int propertyType, int fallback = 0) const;
 
+	/** Bonus the item's Ability Bonus properties give to @p ability. */
+	int getAbilityBonus(Ability ability) const;
+	/** The spells.2da rows the item's CastSpell properties cast. */
+	std::vector<int> getCastSpells() const;
+	/** The spells the consumable item template @p resRef (medpac, stim, grenade...) casts
+	 *  when used, cached. Empty for equipment and when the template can't be loaded. */
+	static const std::vector<int> &getConsumableSpells(const Common::UString &resRef);
+
 	int  getStackSize() const;
 	void setStackSize(int size);
 
@@ -93,6 +112,11 @@ private:
 		int subtype { 0 };
 		int param1 { 0 };
 		int param1Value { 0 };
+		int costValue { 0 };
+
+		/** The bonus a property gives: its cost table value (iprp_bonuscost rows are
+		 *  the bonus itself), or Param1Value for properties that store it there. */
+		int amount() const { return (costValue > 0) ? costValue : param1Value; }
 	};
 
 	int _baseItem;

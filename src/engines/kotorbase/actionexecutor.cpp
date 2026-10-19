@@ -49,6 +49,7 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/script/container.h"
 #include "src/engines/kotorbase/animationnames.h"
+#include "src/engines/kotorbase/talent.h"
 
 static const float kWalkDistance = 2.0f;
 /** Closer than this counts as arrived; a range of 0 is never hit exactly. */
@@ -513,53 +514,67 @@ void ActionExecutor::executeWait(Action &action, const ExecutionContext &ctx) {
 }
 
 void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionContext &ctx) {
-	Creature *caster = ctx.creature;
-
 	// Casting always consumes the action. Pop it before anything runs: impact
 	// scripts and effects (stun, ClearAllActions, ...) may clear the queue.
 	const Action action = queuedAction;
-	caster->popAction();
+	ctx.creature->popAction();
+
+	castSpell(action, ctx);
+}
+
+/** The live item object of an equipped or carried item template. */
+static Object *findCastItem(Creature &caster, const Common::UString &item) {
+	for (int slot = 0; slot < kInventorySlotMAX; ++slot) {
+		const InventorySlot inventorySlot = static_cast<InventorySlot>(slot);
+		if (caster.getCreatureInfo().isInventorySlotEquipped(inventorySlot) &&
+		    (caster.getCreatureInfo().getEquippedItem(inventorySlot) == item))
+			return caster.getEquipedItem(inventorySlot);
+	}
+
+	Item *found = caster.findInventoryItemByTag(item);
+	return found ? found : caster.addScriptItem(item);
+}
+
+bool ActionExecutor::castSpell(const Action &action, const ExecutionContext &ctx) {
+	Creature *caster = ctx.creature;
+	if (!caster || !ctx.area)
+		return false;
+
 	int cost = 0;
 
 	if (!_spellsLoaded)
 		loadSpells();
 
+	// Powers of the side of the Force opposite to the caster's cost more.
+	// bCheat and spells cast by items are free.
 	const SpellInfo *spell = getSpellInfo(action.actionID);
-	if (spell && !action.cheat) // bCheat: cast for free
-		cost = spell->cost;
-
-	// Alignment adjustments (KotOR rule: Opposite side costs more)
-	int alignment = caster->getAlignment(); // 0-100, 100 is Light, 0 is Dark
-	if (spell) {
-		// Simplified heuristic: Hostile powers are Dark (category 3), 
-		// Non-hostile are Light (category 2). In real game we use category column.
-		if (spell->hostile) {
-			// Dark Side Power
-			if (alignment > 60)      cost = (cost * 3) / 2; // +50% for Light side users
-			else if (alignment < 40) cost = (cost * 3) / 4; // -25% for Dark side users
-		} else {
-			// Light Side / Neutral (Simplified)
-			if (alignment < 40)      cost = (cost * 3) / 2; // +50% for Dark side users
-			else if (alignment > 60) cost = (cost * 3) / 4; // -25% for Light side users
-		}
-	}
+	if (spell && !action.cheat)
+		cost = getForcePowerCost(spell->cost, spell->goodEvil, caster->getAlignment());
 
 	if (caster->getForcePoints() < cost) {
 		debugC(Common::kDebugEngineLogic, 1, "Not enough Force Points to cast power %d", action.actionID);
-		return;
+		return false;
 	}
 
-	int saveDC = 10 + caster->getHitDice() + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+	int saveDC = 10 + caster->getHitDice() + caster->getAbilityModifier(kAbilityWisdom);
 	bool harmful = spell ? spell->hostile : false;
 
 	// Hostile targeted powers need line of sight past closed doors (before spending FP).
-	if (harmful && action.object && ctx.area && !ctx.area->hasLineOfSight(caster, action.object)) {
+	if (harmful && action.object && !ctx.area->hasLineOfSight(caster, action.object)) {
 		debugC(Common::kDebugEngineLogic, 1, "Force power %d blocked by cover", action.actionID);
-		return;
+		return false;
 	}
 
 	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->setLastForcePowerUsed(action.actionID);
+
+	// The item casting the spell (GetSpellCastItem), used up when it's a consumable.
+	Object *castItem = nullptr;
+	if (!action.item.empty()) {
+		castItem = findCastItem(*caster, action.item);
+		if (action.consumeItem)
+			caster->getCreatureInfo().removeInventoryItem(action.item, 1);
+	}
 
 	// A hostile power makes the caster the target's last hostile actor, so a
 	// kill by the power is credited to the caster (XP, GetLastKiller).
@@ -568,7 +583,9 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 		if (targetCreature && targetCreature != caster)
 			targetCreature->setLastHostileActor(caster);
 	}
-	ctx.area->_module->setSpellScriptContext(action.actionID, caster, action.object, saveDC, harmful);
+	ctx.area->_module->setSpellScriptContext(action.actionID, caster, action.object, saveDC, harmful, castItem);
+	if (!action.object)
+		ctx.area->_module->setSpellScriptTargetLocation(action.location);
 	ctx.area->_module->setGlobalNumber("__force_unsuccessful", 0);
 
 	// Prefer data-driven impact scripts from spells.2da when available.
@@ -580,8 +597,10 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 		ScriptContainer::runScript(spell->impactScript, owner, triggerer);
 		// The impact script has resolved; don't leak its context into later scripts.
 		ctx.area->_module->clearSpellScriptContext();
-		return;
+		return true;
 	}
+
+	bool handled = true;
 
 	// Apply power effects
 	switch (action.actionID) {
@@ -600,7 +619,7 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 				if (target) {
 					caster->playAnimation("castout", false);
 					int level = caster->getHitDice();
-					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					int dc = 10 + level + caster->getAbilityModifier(kAbilityWisdom);
 					if (!target->rollSavingThrow(kSavingThrowWill, dc)) {
 						target->applyEffect(kEffectStun, 9.0f, 0, action.actionID);
 						debugC(Common::kDebugEngineLogic, 1, "Force Stun SUCCESS on %s", target->getTag().c_str());
@@ -617,7 +636,7 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 				if (target) {
 					caster->playAnimation("castout", false);
 					int level = caster->getHitDice();
-					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					int dc = 10 + level + caster->getAbilityModifier(kAbilityWisdom);
 					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
 						target->applyEffect(kEffectKnockdown, 3.0f, 0, action.actionID);
 						target->applyEffect(kEffectDamage, 0.0f, level, action.actionID);
@@ -645,7 +664,7 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 					int level = caster->getHitDice();
 					int damage = level * 3; // Simplified 1d6 per level approx
 					
-					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					int dc = 10 + level + caster->getAbilityModifier(kAbilityWisdom);
 					bool saved = target->rollSavingThrow(kSavingThrowWill, dc);
 					if (saved) {
 						damage /= 2;
@@ -677,7 +696,7 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 				if (target) {
 					caster->playAnimation("castout", false);
 					int level = caster->getHitDice();
-					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					int dc = 10 + level + caster->getAbilityModifier(kAbilityWisdom);
 					
 					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
 						target->applyEffect(kEffectStun, 6.0f, 0, action.actionID);
@@ -699,11 +718,13 @@ void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionConte
 			break;
 
 		default:
-			warning("ActionExecutor::executeCastSpell(): Unknown power ID %d", action.actionID);
+			warning("ActionExecutor::castSpell(): Unknown power ID %d", action.actionID);
+			handled = false;
 			break;
 	}
 
 	ctx.area->_module->clearSpellScriptContext();
+	return handled;
 }
 
 void ActionExecutor::executeRest(Action &UNUSED(action), const ExecutionContext &ctx) {
@@ -790,6 +811,7 @@ void ActionExecutor::loadSpells() {
 			info.cost = row.getInt("forcepoints");
 			info.impactScript = row.getString("impactscript");
 			info.hostile = row.getInt("hostile") != 0;
+			info.goodEvil = row.getString("goodevil");
 			
 			_spells[info.id] = info;
 		}

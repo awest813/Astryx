@@ -56,6 +56,9 @@ struct Action {
 	float startTime { -1.0f }; ///< Time the action started (for timed actions).
 	bool  initialized { false };
 	bool  cheat { false };     ///< CastSpell: bCheat, cast without spending Force points.
+	/** CastSpell: template (inventory tag) of the item casting the spell, if any. */
+	Common::UString item;
+	bool  consumeItem { false }; ///< CastSpell: use up one of @c item from the inventory.
 
 	/** kActionDoCommand: the script closure to run when the action is reached. */
 	Common::UString script;

@@ -28,11 +28,12 @@ namespace Engines {
 
 namespace KotORBase {
 
-Effect::Effect(KotOREffectType type, int amount, int damageType, int spellId) :
+Effect::Effect(KotOREffectType type, int amount, int damageType, int spellId, int limit) :
 		_type(type),
 		_amount(amount),
 		_damageType(damageType),
-		_spellId(spellId) {
+		_spellId(spellId),
+		_limit(limit) {
 }
 
 KotOREffectType Effect::getType() const {
@@ -47,16 +48,52 @@ int Effect::getDamageType() const {
 	return _damageType;
 }
 
+int Effect::getLimit() const {
+	return _limit;
+}
+
 int Effect::getSpellId() const {
 	return _spellId;
 }
 
 void Effect::setSpellId(int spellId) {
 	_spellId = spellId;
+
+	for (Effect &linked : _linked)
+		linked._spellId = spellId;
+}
+
+const std::vector<Effect> &Effect::getLinkedEffects() const {
+	return _linked;
+}
+
+void Effect::linkEffect(const Effect &effect) {
+	Effect part(effect);
+	part._linked.clear();
+	_linked.push_back(part);
+
+	_linked.insert(_linked.end(), effect._linked.begin(), effect._linked.end());
+}
+
+bool Effect::hasPart(KotOREffectType type) const {
+	if (_type == type)
+		return true;
+
+	for (const Effect &linked : _linked)
+		if (linked._type == type)
+			return true;
+
+	return false;
 }
 
 Aurora::NWScript::EngineType *Effect::clone() const {
-	return new Effect(_type, _amount, _damageType, _spellId);
+	return new Effect(*this);
+}
+
+Effect linkEffects(const Effect &child, const Effect &parent) {
+	Effect link(parent);
+	link.linkEffect(child);
+	return link;
 }
 
 } // End of namespace KotORBase
