@@ -554,8 +554,8 @@ void Module::unload(bool completeUnload) {
 	// A dialog script may have changed the module mid-conversation; its owner
 	// and the cinematic camera targets are about to be destroyed.
 	if (_inDialog) {
-		_dialog->stopConversation();
-		_dialog->hide();
+		getConversationGUI().stopConversation();
+		getConversationGUI().hide();
 		_inDialog = false;
 	}
 	_conversationPausedSince = 0;
@@ -1528,7 +1528,7 @@ void Module::handleEvents() {
 
 		// Conversation/cutscene
 		if (_inDialog) {
-			_dialog->addEvent(*event);
+			getConversationGUI().addEvent(*event);
 			continue;
 		}
 
@@ -1609,12 +1609,13 @@ void Module::handleEvents() {
 			_conversationPausedSince = 0;
 		}
 
-		_dialog->processEventQueue();
+		DialogGUI &conversation = getConversationGUI();
+		conversation.processEventQueue();
 		if (_conversationPausedSince == 0)
-			_dialog->update(_frameTime);
-		if (!_dialog->isConversationActive()) {
+			conversation.update(_frameTime);
+		if (!conversation.isConversationActive()) {
 			_conversationPausedSince = 0;
-			_dialog->hide();
+			conversation.hide();
 			if (!_minigame)
 				_ingame->show();
 			_inDialog = false;
@@ -2444,7 +2445,7 @@ void Module::setPartyLeaderByIndex(int index) {
 
 void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 	if (_inDialog) {
-		_dialog->hide();
+		getConversationGUI().hide();
 	} else {
 		_ingame->hide();
 		_ingame->hideSelection();
@@ -2471,7 +2472,7 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 	config = _partySelection->getConfiguration();
 
 	if (_inDialog) {
-		_dialog->show();
+		getConversationGUI().show();
 	} else {
 		_ingame->show();
 	}
@@ -3020,7 +3021,11 @@ bool Module::isConversationActive() const {
 }
 
 bool Module::isObjectInConversation(Aurora::NWScript::Object *object) const {
-	return _dialog && _dialog->isObjectInConversation(object);
+	return (_dialog || _computer) && getConversationGUI().isObjectInConversation(object);
+}
+
+DialogGUI &Module::getConversationGUI() const {
+	return _conversationGUI ? *_conversationGUI : *_dialog;
 }
 
 void Module::startConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
@@ -3044,16 +3049,22 @@ void Module::startConversation(const Common::UString &name, Aurora::NWScript::Ob
 
 	_lastConversation = finalName;
 	_conversationPausedSince = 0;
-	_dialog->startConversation(finalName, owner);
 
-	if (_dialog->isConversationActive()) {
+	// Computer terminals run in their own GUI, without the cinematic camera.
+	_conversationGUI = _dialog.get();
+	if (_computer && DialogGUI::isComputerConversation(DialogGUI::getConversationType(finalName)))
+		_conversationGUI = _computer.get();
+
+	_conversationGUI->startConversation(finalName, owner);
+
+	if (_conversationGUI->isConversationActive()) {
 		_cameraController.stopMovement();
 		_partyLeaderController.clearUserInput();
 		_partyLeaderController.stopMovement();
 
 		_ingame->hide();
 		_ingame->hideSelection();
-		_dialog->show();
+		_conversationGUI->show();
 		_inDialog = true;
 		releaseWorldFadeInForDialog();
 

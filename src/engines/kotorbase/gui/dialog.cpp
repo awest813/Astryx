@@ -39,6 +39,7 @@
 #include "src/engines/odyssey/scrollbar.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/aurora/nwscript/objectman.h"
 #include "src/engines/kotorbase/area.h"
@@ -54,10 +55,27 @@ namespace Engines {
 
 namespace KotORBase {
 
-DialogGUI::DialogGUI(Module &module) :
+DialogGUI::DialogGUI(Module &module, bool computer) :
 		_module(module),
+		_computer(computer),
 		_isActive(false),
 		_frame(new Graphics::Aurora::KotORDialogFrame()) {
+}
+
+bool DialogGUI::isComputerConversation(uint32_t conversationType) {
+	return conversationType == kConversationTypeComputer;
+}
+
+uint32_t DialogGUI::getConversationType(const Common::UString &name) {
+	try {
+		return Aurora::DLGFile(name, nullptr).getConversationType();
+	} catch (...) {
+		return 0;
+	}
+}
+
+bool DialogGUI::isComputer() const {
+	return _computer;
 }
 
 void DialogGUI::startConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
@@ -109,7 +127,10 @@ bool DialogGUI::isObjectInConversation(Aurora::NWScript::Object *object) const {
 void DialogGUI::show() {
 	CursorMan.setGroup("default");
 	GUI::show();
-	_frame->show();
+
+	// A terminal fills the screen itself: no letterbox.
+	if (!_computer)
+		_frame->show();
 }
 
 void DialogGUI::hide() {
@@ -197,6 +218,31 @@ void DialogGUI::preprocessEntry(Common::UString &text) {
 }
 
 void DialogGUI::update(int width, int height) {
+	if (_computer) {
+		// The computer GUI keeps the layout of its GUI file.
+		float r, g, b;
+		getTextColor(r, g, b);
+
+		Odyssey::WidgetListBox *lbMessage = getListBox("LB_MESSAGE");
+		if (lbMessage) {
+			lbMessage->setAdjustHeight(true);
+			lbMessage->setItemSelectionEnabled(false);
+			lbMessage->setItemTextColor(r, g, b, 1.0f);
+			lbMessage->createItemWidgets(1);
+		}
+
+		Odyssey::WidgetListBox *lbReplies = getListBox("LB_REPLIES");
+		if (lbReplies) {
+			lbReplies->setAdjustHeight(true);
+			lbReplies->setSoundHoverItem("gui_actscroll");
+			lbReplies->setSoundClickItem("gui_actuse");
+			lbReplies->setItemTextColor(r, g, b, 1.0f);
+			lbReplies->createItemWidgets(9);
+		}
+
+		return;
+	}
+
 	const int w = width;
 	const float hh = height / 2.0f;
 	const float rh = hh / 2.0f; // quarter of window height
@@ -257,10 +303,7 @@ void DialogGUI::refresh() {
 
 	_isActive = true;
 
-	Common::UString text;
-	Odyssey::WidgetLabel *lblMessage = getLabel("LBL_MESSAGE");
-
-	text = curEntry->text.getString();
+	Common::UString text = curEntry->text.getString();
 	preprocessEntry(text);
 
 	if (curEntry->speaker.empty())
@@ -276,12 +319,17 @@ void DialogGUI::refresh() {
 		playTalkAnimations(_curSpeaker);
 	}
 
-	updateCamera(*curEntry, speakerObj, listenerObj);
+	// A computer terminal keeps the camera where it is.
+	if (!_computer)
+		updateCamera(*curEntry, speakerObj, listenerObj);
+	else
+		updateComputerCounters();
+
 	applyFade(*curEntry);
 	playParticipantAnimations(*curEntry);
 	armAutoAdvance(*curEntry, replies);
 
-	lblMessage->setText(text);
+	setMessage(text);
 	_replyIds.clear();
 	Odyssey::WidgetListBox *lbReplies = getListBox("LB_REPLIES");
 	lbReplies->removeAllItems();
@@ -313,6 +361,44 @@ void DialogGUI::refresh() {
 		lbReplies->addItem(text);
 	}
 	lbReplies->refreshItemWidgets();
+}
+
+void DialogGUI::setMessage(const Common::UString &text) {
+	if (Odyssey::WidgetLabel *lblMessage = getLabel("LBL_MESSAGE")) {
+		lblMessage->setText(text);
+		return;
+	}
+
+	Odyssey::WidgetListBox *lbMessage = getListBox("LB_MESSAGE");
+	if (!lbMessage)
+		return;
+
+	lbMessage->removeAllItems();
+	lbMessage->addItem(text);
+	lbMessage->refreshItemWidgets();
+}
+
+void DialogGUI::updateComputerCounters() {
+	Creature *leader = _module.getPartyLeader();
+	Creature *pc = _module.getPC();
+
+	// The party shares the PC's inventory.
+	const Inventory *inventory = pc ? &pc->getInventory() : (leader ? &leader->getInventory() : nullptr);
+
+	const int spikes = inventory ? inventory->countItems(kComputerSpikeTag) : 0;
+	const int parts  = inventory ? inventory->countItems(kRepairPartTag) : 0;
+
+	const int computerUse = leader ? leader->getSkillRank(kSkillComputerUse) : 0;
+	const int repair      = leader ? leader->getSkillRank(kSkillRepair) : 0;
+
+	if (Odyssey::WidgetLabel *label = getLabel("LBL_COMP_SPIKES_VAL"))
+		label->setText(Common::composeString(spikes));
+	if (Odyssey::WidgetLabel *label = getLabel("LBL_COMP_SKILL_VAL"))
+		label->setText(Common::composeString(computerUse));
+	if (Odyssey::WidgetLabel *label = getLabel("LBL_REP_UNITS_VAL"))
+		label->setText(Common::composeString(parts));
+	if (Odyssey::WidgetLabel *label = getLabel("LBL_REP_SKILL_VAL"))
+		label->setText(Common::composeString(repair));
 }
 
 Object *DialogGUI::findParticipant(const Common::UString &tag) const {
@@ -536,6 +622,10 @@ void DialogGUI::makeLookAtPC(const Common::UString &tag) {
 
 	if (!pc->isLockOrientationInDialog())
 		pc->makeLookAt(o);
+
+	// A computer terminal keeps the camera where it is.
+	if (_computer)
+		return;
 
 	float x, y, z, a;
 	pc->getOrientation(x, y, z, a);

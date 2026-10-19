@@ -20,12 +20,14 @@
 
 /** @file
  *  Unit tests for KotOR world interactions: bashing locked doors and
- *  containers open.
+ *  containers open, computer terminals.
  */
 
 #include "gtest/gtest.h"
 
+#include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/situated.h"
+#include "src/engines/kotorbase/gui/dialog.h"
 
 using namespace Engines::KotORBase;
 
@@ -51,4 +53,28 @@ GTEST_TEST(KotORInteraction, bashDamageAgainstHardness) {
 	EXPECT_EQ(BashRules::hitPointsAfterDamage(5, 7, false), 0);  // Breaks.
 	EXPECT_EQ(BashRules::hitPointsAfterDamage(5, 7, true), 1);   // Min1HP holds.
 	EXPECT_EQ(BashRules::hitPointsAfterDamage(5, -3, false), 5); // No healing by blows.
+}
+
+GTEST_TEST(KotORInteraction, computerConversationDetection) {
+	EXPECT_FALSE(DialogGUI::isComputerConversation(0)); // Spoken conversation.
+	EXPECT_TRUE(DialogGUI::isComputerConversation(kConversationTypeComputer));
+	EXPECT_FALSE(DialogGUI::isComputerConversation(2));
+
+	// A DLG that can't be read is an ordinary conversation.
+	EXPECT_EQ(DialogGUI::getConversationType("no_such_dlg"), 0u);
+}
+
+GTEST_TEST(KotORInteraction, computerCountersCountItemsByTag) {
+	Inventory inventory;
+	inventory.addItem("k_computer_spike", 3);
+	inventory.addItem("K_REPAIR_PART", 2);
+	inventory.addItem("g_i_medeqpmnt01");
+
+	// Item tags are matched whatever their case (scripts use "K_COMPUTER_SPIKE").
+	EXPECT_EQ(inventory.countItems(kComputerSpikeTag), 3);
+	EXPECT_EQ(inventory.countItems(kRepairPartTag), 2);
+	EXPECT_EQ(inventory.countItems("g_i_adrnaline001"), 0);
+
+	inventory.removeItem("k_computer_spike", 1);
+	EXPECT_EQ(inventory.countItems(kComputerSpikeTag), 2);
 }

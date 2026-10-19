@@ -547,6 +547,11 @@ protected:
 protected:
 	std::unique_ptr<IngameGUI> _ingame; ///< The ingame GUI.
 	std::unique_ptr<DialogGUI> _dialog; ///< Conversation/cutscene GUI.
+	std::unique_ptr<DialogGUI> _computer; ///< Computer terminal GUI (optional).
+	DialogGUI *_conversationGUI { nullptr }; ///< The GUI running the current conversation.
+
+	/** The GUI running the current (or last) conversation. */
+	DialogGUI &getConversationGUI() const;
 	std::unique_ptr<PartySelectionGUI> _partySelection; ///< The party selection GUI.
 
 	// Object creation

@@ -62,6 +62,8 @@ public:
 	const std::map<Common::UString, ItemGroup> &getItems() const;
 
 	bool hasItem(const Common::UString &tag) const;
+	/** How many items of this tag (or template), ignoring case, are there? */
+	int countItems(const Common::UString &tag) const;
 
 	void addItem(const Common::UString &tag, int count = 1);
 	void removeItem(const Common::UString &tag, int count = 1);

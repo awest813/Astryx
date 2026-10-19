@@ -25,6 +25,7 @@
 #include <algorithm>
 
 #include "src/common/strutil.h"
+#include "src/common/error.h"
 
 #include "src/engines/kotor/module.h"
 #include "src/engines/kotor/game.h"
@@ -68,6 +69,14 @@ namespace KotOR {
 Module::Module(Game &game, ::Engines::Console &console) : KotORBase::Module(game, console) {
 	_ingame = std::make_unique<IngameGUI>(*this);
 	_dialog = std::make_unique<DialogGUI>(*this);
+
+	// Computer terminals; without the GUI they run in the normal dialog GUI.
+	try {
+		_computer = std::make_unique<ComputerGUI>(*this);
+	} catch (...) {
+		Common::exceptionDispatcherWarning("No computer terminal GUI");
+		_computer.reset();
+	}
 	_partySelection = std::make_unique<PartySelectionGUI>();
 }
 

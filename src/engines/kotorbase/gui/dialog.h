@@ -47,9 +47,25 @@ namespace KotORBase {
 class Module;
 class Object;
 
+/** DLG "ConversationType": a computer terminal rather than a spoken conversation. */
+static const uint32_t kConversationTypeComputer = 1;
+
+/** Item tags of the computer GUI's counters. */
+static const char * const kComputerSpikeTag = "K_COMPUTER_SPIKE";
+static const char * const kRepairPartTag    = "K_REPAIR_PART";
+
 class DialogGUI : public GUI, Events::Notifyable {
 public:
-	DialogGUI(Module &module);
+	/** @param computer Run computer terminals (the "computer" GUI): the text in a
+	 *                  list box, no letterbox frame and no cinematic camera. */
+	DialogGUI(Module &module, bool computer = false);
+
+	/** Is a DLG of this ConversationType run on a computer terminal? */
+	static bool isComputerConversation(uint32_t conversationType);
+	/** The ConversationType of a DLG, or 0 when it can't be read. */
+	static uint32_t getConversationType(const Common::UString &name);
+
+	bool isComputer() const;
 
 	// Basic visuals
 
@@ -81,6 +97,7 @@ protected:
 
 private:
 	Module &_module;
+	bool _computer { false };
 	bool _isActive;
 	bool _pickedReply { false }; ///< Has the player picked a reply in this conversation?
 	bool  _autoAdvance { false };     ///< Continue by itself (voice-over / delay)?
@@ -95,6 +112,10 @@ private:
 	Common::UString _curSpeaker;
 
 	void refresh();
+	/** Show the current line: in LBL_MESSAGE, or the computer GUI's LB_MESSAGE. */
+	void setMessage(const Common::UString &text);
+	/** The computer GUI's spike, repair part and skill counters. */
+	void updateComputerCounters();
 	Object *findParticipant(const Common::UString &tag) const;
 	void updateCamera(const Aurora::DLGFile::Line &entry, Object *speaker, Object *listener);
 	/** Give the conversation's stunt actors their stunt models' animations. */
