@@ -638,6 +638,7 @@ void Module::unload(bool completeUnload) {
 		_globalNumbers.clear();
 		_globalBooleans.clear();
 		_globalStrings.clear();
+		_globalLocations.clear();
 		_loadedFromSaveGame = false;
 		resetSessionState();
 		_queuedUserDefinedEvents.clear();
@@ -2616,6 +2617,9 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 			config.slotTemplate[i] = _partyController.getAvailableNPCTemplate(i);
 	}
 
+	for (int i = 0; i < 10; ++i)
+		config.slotSelectable[i] = isNPCSelectable(i);
+
 	// The current companions start out ticked
 	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
 		const int npc = _partyController.getPartyMemberByIndex(static_cast<int>(i)).first;
@@ -2725,8 +2729,30 @@ void Module::setSoloMode(bool enabled) {
 	_soloMode = enabled;
 }
 
+int Module::getPartyAIStyle() const {
+	return getGlobalNumber("__party_ai_style");
+}
+
 void Module::setPartyAIStyle(int style) {
-	// TODO: Module::setPartyAIStyle()
+	setGlobalNumber("__party_ai_style", style);
+}
+
+void Module::saveNPCState(int npc) {
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+		const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+		if ((member.first == npc) && member.second) {
+			rememberNPCState(npc, *member.second);
+			return;
+		}
+	}
+}
+
+bool Module::isNPCSelectable(int npc) const {
+	return !getGlobalBoolean(Common::String::format("__npc_unselectable_%d", npc));
+}
+
+void Module::setNPCSelectable(int npc, bool selectable) {
+	setGlobalBoolean(Common::String::format("__npc_unselectable_%d", npc), !selectable);
 }
 
 void Module::addPartyMember(int npc, Creature *creature) {
@@ -2856,6 +2882,21 @@ void Module::onFrameUpdate(float UNUSED(frameTime)) {
 
 void Module::setGlobalString(const Common::UString &id, const Common::UString &value) {
 	_globalStrings[id] = value;
+}
+
+bool Module::getGlobalLocation(const Common::UString &id, Location &location) const {
+	auto it = _globalLocations.find(id);
+	if (it == _globalLocations.end())
+		return false;
+
+	location = it->second;
+	// KotOR has one area per module: a location is in the current area.
+	location.setArea(_area.get());
+	return true;
+}
+
+void Module::setGlobalLocation(const Common::UString &id, const Location &location) {
+	_globalLocations[id] = location;
 }
 
 Common::UString Module::getGlobalString(const Common::UString &id) const {
@@ -3699,6 +3740,19 @@ void Module::saveState(Aurora::GFF3WriterStruct &gff) const {
 		item->addExoString("Value", entry.second);
 	}
 
+	Aurora::GFF3WriterListPtr locationList = gff.addList("ValLocation");
+	for (const auto &entry : _globalLocations) {
+		float x, y, z;
+		entry.second.getPosition(x, y, z);
+
+		Aurora::GFF3WriterStructPtr item = locationList->addStruct();
+		item->addExoString("Name", entry.first);
+		item->addDouble("X", x);
+		item->addDouble("Y", y);
+		item->addDouble("Z", z);
+		item->addDouble("Facing", entry.second.getFacing());
+	}
+
 	Aurora::GFF3WriterListPtr journalList = gff.addList("JournalEntries");
 	for (const auto &entry : _journal) {
 		Aurora::GFF3WriterStructPtr item = journalList->addStruct();
@@ -3781,6 +3835,19 @@ void Module::loadState(const Aurora::GFF3Struct &gff) {
 			if (!entry)
 				continue;
 			_globalStrings[entry->getString("Name")] = entry->getString("Value");
+		}
+	}
+
+	_globalLocations.clear();
+	if (gff.hasField("ValLocation")) {
+		for (const auto &entry : gff.getList("ValLocation")) {
+			if (!entry)
+				continue;
+
+			Location location;
+			location.setPosition(entry->getDouble("X"), entry->getDouble("Y"), entry->getDouble("Z"));
+			location.setFacing(entry->getDouble("Facing"));
+			_globalLocations[entry->getString("Name")] = location;
 		}
 	}
 

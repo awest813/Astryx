@@ -113,7 +113,8 @@ void PartySelectionGUI::callbackActive(Widget &widget) {
 			return;
 
 		if ((_activeSlot != _config.forceNPC1) &&
-		    (_activeSlot != _config.forceNPC2)) {;
+		    (_activeSlot != _config.forceNPC2) &&
+		    _config.slotSelectable[_activeSlot]) {
 			if (!_config.slotSelected[_activeSlot]) {
 				if (_numSelectedSlots < 2) {
 					_config.slotSelected[_activeSlot] = true;

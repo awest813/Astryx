@@ -292,13 +292,13 @@ void Functions::getLastSpeaker(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getPartyAIStyle(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	ctx.getReturn() = _game->getModule().getPartyAIStyle();
 }
 
 void Functions::getNPCAIStyle(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	// k_inc_generic picks companions' tactics by this (NPC_AISTYLE_*)
+	const Object *object = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = object ? object->getLocalInt("__npc_ai_style") : 0;
 }
 
 void Functions::shipBuild(Aurora::NWScript::FunctionContext &ctx) {
@@ -630,7 +630,7 @@ void Functions::isCreditSequenceInProgress(Aurora::NWScript::FunctionContext &ct
 }
 
 void Functions::saveNPCState(Aurora::NWScript::FunctionContext &ctx) {
-	debugC(Common::kDebugEngineLogic, 1, "SaveNPCState");
+	_game->getModule().saveNPCState(ctx.getParams()[0].getInt());
 }
 
 

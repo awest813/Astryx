@@ -1392,9 +1392,19 @@ void Functions::setEffectIcon(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = ctx.getParams()[0].getEngineType();
 }
 void Functions::getFactionLeader(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
-void Functions::setNPCAIStyle(Aurora::NWScript::FunctionContext &ctx) {}
-void Functions::setNPCSelectability(Aurora::NWScript::FunctionContext &ctx) {}
-void Functions::getNPCSelectability(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 1; }
+void Functions::setNPCAIStyle(Aurora::NWScript::FunctionContext &ctx) {
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (creature)
+		creature->setLocalInt("__npc_ai_style", ctx.getParams()[1].getInt());
+}
+
+void Functions::setNPCSelectability(Aurora::NWScript::FunctionContext &ctx) {
+	_game->getModule().setNPCSelectable(ctx.getParams()[0].getInt(), ctx.getParams()[1].getInt() != 0);
+}
+
+void Functions::getNPCSelectability(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = _game->getModule().isNPCSelectable(ctx.getParams()[0].getInt()) ? 1 : 0;
+}
 void Functions::getIsDebilitated(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
 	if (!creature)

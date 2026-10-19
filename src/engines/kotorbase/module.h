@@ -54,6 +54,7 @@ class GFF3WriterStruct;
 
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/objectcontainer.h"
+#include "src/engines/kotorbase/location.h"
 #include "src/engines/kotorbase/savedgame.h"
 #include "src/engines/kotorbase/partyleader.h"
 #include "src/engines/kotorbase/partycontroller.h"
@@ -300,7 +301,14 @@ public:
 	void setPartyLeaderByIndex(int index);
 	/** Enable or disable solo mode. */
 	void setSoloMode(bool enabled);
+	/** The party's AI style (Get/SetPartyAIStyle, read by k_inc_generic). */
+	int getPartyAIStyle() const;
 	void setPartyAIStyle(int style);
+	/** Record a companion's current state in the party table (SaveNPCState). */
+	void saveNPCState(int npc);
+	/** Can the player pick this companion in party selection (Get/SetNPCSelectability)? */
+	bool isNPCSelectable(int npc) const;
+	void setNPCSelectable(int npc, bool selectable);
 
 	/** Show the party selection GUI. */
 	void showPartySelectionGUI(int forceNPC1, int forceNPC2);
@@ -347,6 +355,9 @@ public:
 	Common::UString getGlobalString(const Common::UString &id) const;
 	/** Set a global string. */
 	void setGlobalString(const Common::UString &id, const Common::UString &value);
+	/** A global location (Get/SetGlobalLocation); false if it was never set. */
+	bool getGlobalLocation(const Common::UString &id, Location &location) const;
+	void setGlobalLocation(const Common::UString &id, const Location &location);
 
 	// Galaxy map
 
@@ -604,6 +615,7 @@ private:
 	std::map<Common::UString, bool> _globalBooleans;
 	std::map<Common::UString, int> _globalNumbers;
 	std::map<Common::UString, Common::UString> _globalStrings;
+	std::map<Common::UString, Location> _globalLocations;
 
 	// Journal: key = quest tag, value = entry ID
 	std::map<Common::UString, uint32_t> _journal;

@@ -34,6 +34,8 @@ namespace KotORBase {
 struct PartyConfiguration {
 	Common::UString slotTemplate[10];
 	bool slotSelected[10] { false, false, false, false, false, false, false, false, false, false };
+	/** SetNPCSelectability: the player can't change an unselectable slot. */
+	bool slotSelectable[10] { true, true, true, true, true, true, true, true, true, true };
 	int forceNPC1 { -1 };
 	int forceNPC2 { -1 };
 	bool canCancel { true };
