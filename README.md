@@ -65,17 +65,29 @@ Endar→Star Forge playthrough. Live smoke still needs game data. Supported slic
 
 ## Quick start
 
-### Windows 10/11 (PowerShell)
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/bootstrap_windows.ps1
-powershell -ExecutionPolicy Bypass -File scripts/run_xoreos_windows.ps1
+You need your own copy of KotOR; no game data is included. Prerequisite
+install commands for each OS, and details on both build paths, are in
+[BUILDDEP.md](BUILDDEP.md).
+
+### Linux (system packages, fastest)
+```bash
+scripts/build_ci_linux.sh --install-deps --test   # apt/dnf/pacman; drop --install-deps if already installed
 ```
 
-### Linux (Bash)
+### Linux / macOS (self-contained vcpkg build; slow first run)
 ```bash
-./scripts/bootstrap_linux.sh
-./scripts/run_xoreos_linux.sh
+scripts/bootstrap_linux.sh --test
 ```
+
+### Windows 10/11 (PowerShell, needs Git, CMake and Visual Studio C++ tools)
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\bootstrap_windows.ps1 -Test
+```
+
+Each script prints the binary location and the exact launch command when it
+finishes. Re-run the unit tests at any time with
+`cmake --build <build-dir> --target check`. If CMake stops because a library is
+missing, its message names the package to install.
 
 ## Links
 

@@ -104,23 +104,23 @@ Makefile.in
 # Windows binary
 /src/xoreos.exe
 
-# CMake build directory
-/build/
-/build-vcpkg-linux/
-/build-vcpkg-portable/
-/build-vcpkg-release/
-build-linux/
-
-# Out-of-tree build directories (CMake presets / helper scripts)
+# CMake build directories (scripts, presets and ad-hoc builds)
 /build/
 /build-*/
 /builds/
+/out/
+/.vs/
+/CMakeUserPresets.json
+
+# Repo-local vcpkg checkout (scripts/bootstrap_*)
 /.deps/
 
-# Local logs and caches
+# Runtime logs from the launch scripts
 /logs/
+
+# Python bytecode (scripts/*.py)
 __pycache__/
-*.pyc
+*.py[co]
 
 # Per-user Claude Code settings
 /.claude/settings.local.json
