@@ -69,21 +69,24 @@ static void stubEngineTypeReturn(Aurora::NWScript::FunctionContext &ctx) {
 
 	if (isEffectPassThroughStub(name)) {
 		const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
-		ctx.getReturn() = effect ? effect->clone() : new Effect(kKotOREffectVisual, 0);
+		if (effect)
+			ctx.getReturn() = *effect;
+		else
+			ctx.getReturn() = Effect(kKotOREffectVisual, 0);
 		return;
 	}
 
 	if (isLocationStub(name)) {
-		ctx.getReturn() = new Location();
+		ctx.getReturn() = Location();
 		return;
 	}
 
 	if (isEventStub(name)) {
-		ctx.getReturn() = new Event(kEventUserDefined);
+		ctx.getReturn() = Event(kEventUserDefined);
 		return;
 	}
 
-	ctx.getReturn() = new Effect(kKotOREffectVisual, 0);
+	ctx.getReturn() = Effect(kKotOREffectVisual, 0);
 }
 
 static void applyStubReturn(Aurora::NWScript::FunctionContext &ctx, bool useSmartIntDefaults) {

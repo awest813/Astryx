@@ -57,9 +57,21 @@ void PartySelectionGUI::loadConfiguration(const PartyConfiguration &config) {
 		++_numSelectedSlots;
 	}
 
-	if (_config.forceNPC2 != -1) {
+	if ((_config.forceNPC2 != -1) && (_config.forceNPC2 != _config.forceNPC1)) {
 		_config.slotSelected[_config.forceNPC2] = true;
 		++_numSelectedSlots;
+	}
+
+	// Members already ticked (the current party) count too, after the forced
+	// ones and up to the two companions a party can have.
+	for (int i = 0; i < 10; ++i) {
+		if (!_config.slotSelected[i] || (i == _config.forceNPC1) || (i == _config.forceNPC2))
+			continue;
+
+		if (_numSelectedSlots < 2)
+			++_numSelectedSlots;
+		else
+			_config.slotSelected[i] = false;
 	}
 
 	for (int i = 0; i < _slotCount; ++i) {
@@ -97,8 +109,12 @@ void PartySelectionGUI::callbackActive(Widget &widget) {
 		onSelectionChanged();
 
 	} else if (tag == "BTN_ACCEPT") {
+		if (_activeSlot < 0 || _activeSlot >= _slotCount || _config.slotTemplate[_activeSlot].empty())
+			return;
+
 		if ((_activeSlot != _config.forceNPC1) &&
-		    (_activeSlot != _config.forceNPC2)) {;
+		    (_activeSlot != _config.forceNPC2) &&
+		    _config.slotSelectable[_activeSlot]) {
 			if (!_config.slotSelected[_activeSlot]) {
 				if (_numSelectedSlots < 2) {
 					_config.slotSelected[_activeSlot] = true;

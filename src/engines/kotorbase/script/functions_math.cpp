@@ -148,15 +148,15 @@ void Functions::vectorNormalize(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::roundsToSeconds(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = ctx.getParams()[0].getInt() * 6;
+	ctx.getReturn() = static_cast<float>(ctx.getParams()[0].getInt()) * 6.0f;
 }
 
 void Functions::hoursToSeconds(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = ctx.getParams()[0].getInt() * 3600;
+	ctx.getReturn() = static_cast<float>(ctx.getParams()[0].getInt()) * 3600.0f;
 }
 
 void Functions::turnsToSeconds(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = ctx.getParams()[0].getInt() * 60;
+	ctx.getReturn() = static_cast<float>(ctx.getParams()[0].getInt()) * 60.0f;
 }
 
 void Functions::feetToMeters(Aurora::NWScript::FunctionContext &ctx) {

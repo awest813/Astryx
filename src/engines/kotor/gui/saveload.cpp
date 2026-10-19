@@ -22,6 +22,8 @@
  *  Load/save game menu.
  */
 
+#include <memory>
+
 #include "src/aurora/talkman.h"
 
 #include "src/common/error.h"
@@ -40,6 +42,9 @@
 #include "src/engines/odyssey/label.h"
 #include "src/engines/odyssey/listbox.h"
 #include "src/engines/odyssey/scrollbar.h"
+
+#include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/area.h"
 
 #include "src/engines/kotor/savedgame.h"
 
@@ -88,11 +93,9 @@ SaveLoadMenu::SaveLoadMenu(KotORBase::Module &module,
 		if (saveLoad)
 			saveLoad->setText(TalkMan.getString(1589)); // Load
 
-	} else
-		lbGames->addItem(TalkMan.getString(1590));
+	}
 
-	addSavedGameItems(lbGames);
-	lbGames->refreshItemWidgets();
+	fillSavedGames();
 }
 
 void SaveLoadMenu::callbackActive(Widget &widget) {
@@ -130,6 +133,27 @@ void SaveLoadMenu::callbackKeyInput(const Events::Key &key, const Events::EventT
 	}
 }
 
+void SaveLoadMenu::show() {
+	// The menu can outlive saves made since it was built (the HUD keeps one).
+	fillSavedGames();
+	KotORBase::GUI::show();
+}
+
+void SaveLoadMenu::fillSavedGames() {
+	Odyssey::WidgetListBox *lbGames = getListBox("LB_GAMES");
+	if (!lbGames)
+		return;
+
+	lbGames->removeAllItems();
+	_saveDirs.clear();
+
+	if (_type != kSaveLoadMenuTypeLoad)
+		lbGames->addItem(TalkMan.getString(1590)); // New save
+
+	addSavedGameItems(lbGames);
+	lbGames->refreshItemWidgets();
+}
+
 void SaveLoadMenu::addSavedGameItems(Odyssey::WidgetListBox *listBox) {
 	Common::FileList dirs;
 	Common::UString savesDir = Common::FilePath::normalize(ConfigMan.getString("path") + "/saves");
@@ -153,8 +177,17 @@ void SaveLoadMenu::addSavedGameItems(Odyssey::WidgetListBox *listBox) {
 		if (_type == kSaveLoadMenuTypeSave && !baseName.contains("Game"))
 			continue;
 
+		std::unique_ptr<KotORBase::SavedGame> save;
+		try {
+			save = std::make_unique<SavedGame>(saveDir);
+		} catch (Common::Exception &e) {
+			// A broken or half-written save must not take the whole menu down.
+			e.add("Failed to read saved game \"%s\"", saveDir.c_str());
+			printException(e, "WARNING: ");
+			continue;
+		}
+
 		_saveDirs.push_back(saveDir);
-		KotORBase::SavedGame *save = new SavedGame(saveDir);
 		uint32_t timePlayed = save->getTimePlayed();
 		Common::UString slotText(slotTextFormat);
 
@@ -165,7 +198,6 @@ void SaveLoadMenu::addSavedGameItems(Odyssey::WidgetListBox *listBox) {
 		if (baseName.contains("Game"))
 			slotText += "\r\n" + save->getName();
 
-		delete save;
 		listBox->addItem(slotText);
 	}
 }
@@ -179,13 +211,21 @@ void SaveLoadMenu::tryLoadGame(const Common::UString &dir) {
 		_returnCode = 2;
 	} catch (Common::Exception &e) {
 		warning("Failed to load saved game: %s %s", dir.c_str(), e.what());
+		show(); // Stay usable: the menu was hidden for the load.
 	}
 }
 
 void SaveLoadMenu::trySaveGame(const Common::UString &dir) {
 	try {
-		// Use the module's actual name or a generic "Saved Game"
-		Common::UString saveName = "Saved Game";
+		// Name the save after where it was made, so saves can be told apart.
+		Common::UString saveName;
+		if (KotORBase::Area *area = _module->getCurrentArea())
+			saveName = area->getName();
+		if (saveName.empty())
+			saveName = _module->getName();
+		if (saveName.empty())
+			saveName = "Saved Game";
+
 		_module->saveGame(dir, saveName);
 		
 		_returnCode = 1; // Return to the previous menu

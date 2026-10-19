@@ -45,6 +45,9 @@ public:
 	void bindInventories(KotORBase::Inventory &container, KotORBase::Inventory &party);
 	void fillFromInventory(const KotORBase::Inventory &inv);
 
+	/** Items taken out of / given to the container, in order (OnInventoryDisturbed). */
+	const std::vector<KotORBase::InventoryDisturbance> &getDisturbances() const { return _disturbances; }
+
 protected:
 	void callbackActive(Widget &widget);
 	void callbackKeyInput(const Events::Key &key, const Events::EventType &type);
@@ -52,10 +55,17 @@ protected:
 private:
 	void takeSelectedItem();
 	void takeAllItems();
+	/** Give one of the selected party items to the container. */
+	void giveSelectedItem();
+	/** Switch between taking items and giving the party's items (BTN_GIVEITEMS). */
+	void setGiveMode(bool give);
+	void refreshList();
 
 	KotORBase::Inventory *_container { nullptr };
 	KotORBase::Inventory *_party { nullptr };
 	std::vector<Common::UString> _itemTags;
+	std::vector<KotORBase::InventoryDisturbance> _disturbances;
+	bool _giveMode { false };
 };
 
 } // End of namespace KotOR

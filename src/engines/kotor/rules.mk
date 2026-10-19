@@ -32,10 +32,7 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/module.h \
     src/engines/kotor/creature.h \
     src/engines/kotor/savedgame.h \
-    src/engines/kotor/encounters_dan.h \
     src/engines/kotor/encounters_end.h \
-    src/engines/kotor/encounters_tar.h \
-    src/engines/kotor/encounters_ebon.h \
     src/engines/kotor/pazaak.h \
     $(EMPTY)
 
@@ -49,10 +46,7 @@ src_engines_kotor_libkotor_la_SOURCES += \
     src/engines/kotor/module.cpp \
     src/engines/kotor/creature.cpp \
     src/engines/kotor/savedgame.cpp \
-    src/engines/kotor/encounters_dan.cpp \
     src/engines/kotor/encounters_end.cpp \
-    src/engines/kotor/encounters_tar.cpp \
-    src/engines/kotor/encounters_ebon.cpp \
     src/engines/kotor/pazaak.cpp \
     $(EMPTY)
 

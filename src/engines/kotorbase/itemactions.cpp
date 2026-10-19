@@ -25,8 +25,13 @@
 #include <cmath>
 #include <cfloat>
 
+#include "external/glm/vec3.hpp"
+
 #include "src/common/error.h"
 
+#include "src/aurora/resman.h"
+
+#include "src/engines/kotorbase/action.h"
 #include "src/engines/kotorbase/actionexecutor.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
@@ -42,6 +47,49 @@ namespace KotORBase {
 
 static bool itemClassIs(const Item &item, const char *itemClass) {
 	return item.getItemClass().equalsIgnoreCase(itemClass);
+}
+
+const ActionExecutor::SpellInfo *findItemSpellScript(const Item &item) {
+	for (int spellId : item.getCastSpells()) {
+		const ActionExecutor::SpellInfo *spell = ActionExecutor::getSpellInfo(spellId);
+		if (!spell || spell->impactScript.empty())
+			continue;
+
+		if (!ResMan.hasResource(spell->impactScript, Aurora::kFileTypeNCS))
+			continue;
+
+		return spell;
+	}
+
+	return nullptr;
+}
+
+/** Cast the scripted spell of @p item (by @p user, for free, with the item as the
+ *  spell's source) at @p target, or at @p location when there's no target.
+ *  Returns false when the item has no spell script to run. */
+static bool castItemSpell(Creature &user, const Item &item, const Common::UString &tag, Module &module,
+                          Object *target, const glm::vec3 *location) {
+	Area *area = module.getCurrentArea();
+	if (!area)
+		return false;
+
+	const ActionExecutor::SpellInfo *spell = findItemSpellScript(item);
+	if (!spell)
+		return false;
+
+	Action action(kActionCastSpell);
+	action.actionID = static_cast<int>(spell->id);
+	action.object   = target;
+	action.cheat    = true;
+	action.item     = tag;
+	if (location)
+		action.location = *location;
+
+	ActionExecutor::ExecutionContext ctx;
+	ctx.creature = &user;
+	ctx.area     = area;
+
+	return ActionExecutor::castSpell(action, ctx);
 }
 
 static int healAmountForSpell(uint32_t spellId, int propertyValue) {
@@ -71,7 +119,8 @@ static int healAmountForSpell(uint32_t spellId, int propertyValue) {
 static int healAmountForItem(const Item &item) {
 	if (item.hasItemProperty(kItemPropertyCastSpell)) {
 		const int propertyValue = item.getItemPropertyValue(kItemPropertyCastSpell, 0);
-		const int spellId = item.getItemPropertySubtype(kItemPropertyCastSpell, 0);
+		const std::vector<int> spells = item.getCastSpells();
+		const int spellId = spells.empty() ? 0 : spells.front();
 		const int spellHeal = healAmountForSpell(spellId, propertyValue);
 		if (spellHeal > 0)
 			return spellHeal;
@@ -215,6 +264,16 @@ ItemActionResult throwGrenadeAt(Creature &inventoryOwner, const Common::UString 
 		if (leader)
 			leader->playAnimation("g8g1", false, 0.8f);
 
+		// The grenade's spell script (spells.2da impactscript) decides what it does.
+		const glm::vec3 location(x, y, z);
+		if (castItemSpell(leader ? *leader : inventoryOwner, item, tag, module, nullptr, &location)) {
+			inventoryOwner.getCreatureInfo().removeInventoryItem(tag, 1);
+			result.success = true;
+			result.message = "Grenade thrown.";
+			return result;
+		}
+
+		// No script: a plain explosion.
 		const int damage = grenadeDamageForItem(item);
 		const bool friendlyFire = grenadeHasFriendlyFire(item);
 		int targetsHit = 0;
@@ -276,11 +335,22 @@ ItemActionResult useInventoryItem(Creature &target, Creature &inventoryOwner, co
 		}
 
 		const int heal = healAmountForItem(item);
+		if ((heal > 0) && (target.getCurrentHitPoints() >= target.getMaxHitPoints())) {
+			result.message = "Vitality is already at maximum.";
+			return result;
+		}
+
+		// Medpacs, stims, adrenals, antidotes...: the item's spell script decides.
+		if (module && !isEquipableItem(item) && castItemSpell(target, item, tag, *module, &target, nullptr)) {
+			inventoryOwner.getCreatureInfo().removeInventoryItem(tag, 1);
+			module->playSound("gui_actuse");
+			result.success = true;
+			result.message = "Item used.";
+			return result;
+		}
+
+		// No script: the built-in effects.
 		if (heal > 0) {
-			if (target.getCurrentHitPoints() >= target.getMaxHitPoints()) {
-				result.message = "Vitality is already at maximum.";
-				return result;
-			}
 
 			target.applyEffect(Effect(kKotOREffectHeal, heal));
 			inventoryOwner.getCreatureInfo().removeInventoryItem(tag, 1);

@@ -23,17 +23,26 @@
  */
 
 #include <cmath>
+#include <vector>
 #include <cstdint>
 
 #include "src/common/maths.h"
 #include "src/common/util.h"
 #include "src/common/random.h"
 
+#include "external/glm/geometric.hpp"
+
 #include "src/graphics/camera.h"
+#include "src/graphics/graphics.h"
+#include "src/graphics/aurora/model.h"
+#include "src/graphics/aurora/modelnode.h"
+
+#include "src/engines/aurora/model.h"
 
 #include "src/engines/aurora/flycamera.h"
 
 #include "src/engines/kotorbase/cameracontroller.h"
+#include "src/engines/kotorbase/cinematicshot.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/objectcontainer.h"
@@ -80,6 +89,8 @@ void CameraController::setDistance(float value) {
 void CameraController::updateTarget() {
 	float x, y, z;
 	Creature *partyLeader = _module->getPartyLeader();
+	if (!partyLeader)
+		return;
 
 	partyLeader->getPosition(x, y, z);
 
@@ -147,7 +158,7 @@ void CameraController::processRotation(float frameTime) {
 		if (t >= 1.0f) {
 			t = 1.0f;
 			_restoringGameplay = false;
-			resetToOrbit();
+			resetToOrbit(true);
 			return;
 		}
 
@@ -166,41 +177,9 @@ void CameraController::processRotation(float frameTime) {
 		return;
 	}
 
-	if (_cinematic) {
-		// Priority 1: Transition Blending
-		Object *lookAt = _cameraTarget ? _cameraTarget : _cinematicFocus;
-		if (lookAt && _transitionDuration > 0.0f && _transitionTime < _transitionDuration) {
-			_transitionTime += frameTime;
-			float t = _transitionTime / _transitionDuration;
-			if (t >= 1.0f) {
-				t = 1.0f;
-				_transitionDuration = 0.0f; // Done
-			}
-
-			float tx, ty, tz;
-			lookAt->getPosition(tx, ty, tz);
-			float dx = tx - CameraMan.getPosition()[0];
-			float dy = ty - CameraMan.getPosition()[1];
-			float destYaw = atan2(dy, dx);
-			
-			// Simple lerp (normalized for wrap-around)
-			float diff = destYaw - _sourceYaw;
-			while (diff < -M_PI) diff += 2.0f * M_PI;
-			while (diff > M_PI) diff -= 2.0f * M_PI;
-			
-			_yaw = _sourceYaw + diff * t;
-		} else if (lookAt) {
-			// Instant Look-at
-			float tx, ty, tz;
-			lookAt->getPosition(tx, ty, tz);
-			float dx = tx - CameraMan.getPosition()[0];
-			float dy = ty - CameraMan.getPosition()[1];
-			_yaw = atan2(dy, dx);
-		}
-		
-		CameraMan.setOrientation(_pitch, 0.0f, Common::rad2deg(_yaw));
+	// Cinematic shots are placed (position and orientation) in processMovement().
+	if (_cinematic)
 		return;
-	}
 
 	if (shouldMoveClockwise()) {
 		_yaw -= kRotationSpeed * frameTime;
@@ -241,65 +220,7 @@ void CameraController::processMovement(float frameTime) {
 	}
 
 	if (_cinematic) {
-		if (_holding) {
-			_holdTime -= frameTime;
-			if (_holdTime <= 0.0f)
-				_holding = false;
-			return;
-		}
-
-		Object *focus = _cameraTarget ? _cameraTarget : _cinematicFocus;
-		if (focus) {
-			float fx, fy, fz;
-			focus->getPosition(fx, fy, fz);
-			_target = glm::vec3(fx, fy, fz);
-			if (Creature *creature = ObjectContainer::toCreature(focus))
-				_target.z += creature->getCameraHeight();
-		}
-
-		if (_pathEnd && _pathStart) {
-			_pathTime += frameTime;
-			float t = _pathTime / _pathDuration;
-			if (t >= 1.0f) {
-				t = 1.0f;
-				float ex, ey, ez;
-				_pathEnd->getPosition(ex, ey, ez);
-				_target = glm::vec3(ex, ey, ez);
-				_pathEnd = nullptr;
-			} else {
-				float x1, y1, z1, x2, y2, z2;
-				_pathStart->getPosition(x1, y1, z1);
-				_pathEnd->getPosition(x2, y2, z2);
-
-				float smooth_t = t * t * (3.0f - 2.0f * t);
-
-				_target.x = x1 + (x2 - x1) * smooth_t;
-				_target.y = y1 + (y2 - y1) * smooth_t;
-				_target.z = z1 + (z2 - z1) * smooth_t;
-			}
-			_dirty = true;
-			CameraMan.setPosition(_target.x, _target.y, _target.z);
-		} else if (_distance > 0.0f && focus) {
-			glm::vec3 camPos = getCameraPosition(_distance);
-			if (_shakeTime > 0.0f) {
-				_shakeTime -= frameTime;
-				camPos.x += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
-				camPos.y += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
-				camPos.z += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
-			}
-			CameraMan.setPosition(camPos.x, camPos.y, camPos.z);
-		} else {
-			glm::vec3 camPos(_target.x, _target.y, _target.z);
-			if (_shakeTime > 0.0f) {
-				_shakeTime -= frameTime;
-				camPos.x += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
-				camPos.y += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
-				camPos.z += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
-			}
-			CameraMan.setPosition(camPos.x, camPos.y, camPos.z);
-		}
-
-		CameraMan.update();
+		updateCinematic(frameTime);
 		return;
 	}
 
@@ -371,57 +292,173 @@ void CameraController::syncOrbitingCamera() {
 	processMovement(0.0f);
 }
 
-void CameraController::setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel) {
-	_cinematic = true;
-	_cinematicFocus = nullptr;
-	_cinematicID = cameraID;
-	_cinematicAngle = cameraAngle;
-	_cinematicModel = cameraModel;
+void CameraController::beginCinematic() {
+	if (_cinematic)
+		return;
 
-	Area *area = _module->getCurrentArea();
-	if (area) {
-		const Area::Camera *staticCam = area->getCamera(cameraID);
-		if (staticCam) {
-			_target = glm::vec3(staticCam->position[0], staticCam->position[1], staticCam->position[2]);
-			
-			// Extract yaw/pitch if possible. 
-			_yaw = Common::deg2rad(cameraAngle); 
-			_pitch = staticCam->pitch;
-			_distance = 0.0f;
-			_dirty = true;
-			return;
-		}
+	// Remember the gameplay camera to return to.
+	_orbitYaw = _yaw;
+	_cinematic = true;
+	_restoringGameplay = false;
+}
+
+void CameraController::startShot(ShotType type, float blendTime) {
+	beginCinematic();
+
+	if (type != kShotAnimated)
+		releaseAnimatedCamera();
+
+	// A new shot supersedes a running restore to the gameplay camera.
+	_restoringGameplay = false;
+
+	// Paths only drive scripted focus shots.
+	if (type != kShotFocus) {
+		_pathStart = nullptr;
+		_pathEnd = nullptr;
 	}
 
-	_yaw = Common::deg2rad(cameraAngle);
+	// Coming from the gameplay camera: blend from what is on screen.
+	if (!_haveView) {
+		const float *position = CameraMan.getPosition();
+		const float pitch = Common::deg2rad(_pitch);
+
+		_viewPosition  = glm::vec3(position[0], position[1], position[2]);
+		_viewDirection = glm::vec3(-std::sin(_yaw) * std::sin(pitch),
+		                            std::cos(_yaw) * std::sin(pitch),
+		                           -std::cos(pitch));
+		_haveView = true;
+	}
+
+	// A field of view belongs to the shot that set it.
+	if (_shotFieldOfView != 0.0f)
+		setShotFieldOfView(0.0f);
+
+	_shotType = type;
+	_holding = false;
+
+	_blendTime = 0.0f;
+	_blendDuration = (_haveView && blendTime > 0.0f) ? blendTime : 0.0f;
+	_blendFromPosition  = _viewPosition;
+	_blendFromDirection = _viewDirection;
+
 	_dirty = true;
 }
 
-void CameraController::setCameraMode(CameraMode mode, Object *target) {
-	_cinematic = true;
-	_cinematicFocus = target;
-	_dirty = true;
+void CameraController::setDialogShot(int cameraAngle, Object *speaker, Object *listener) {
+	startShot(kShotDialog);
 
+	_dialogAngle    = cameraAngle;
+	_dialogSpeaker  = speaker;
+	_dialogListener = listener;
+}
+
+bool CameraController::setStaticShot(uint32_t cameraID) {
+	Area *area = _module->getCurrentArea();
+	const Area::Camera *camera = area ? area->getCamera(cameraID) : nullptr;
+	if (!camera)
+		return false;
+
+	startShot(kShotStatic);
+
+	const CinematicShot shot = computeStaticShot(camera->position, camera->orientation,
+	                                             camera->height, camera->pitch);
+	_staticPosition  = shot.position;
+	_staticDirection = shot.direction;
+
+	setShotFieldOfView(camera->fieldOfView);
+	return true;
+}
+
+bool CameraController::setAnimatedShot(const Common::UString &cameraModel, uint32_t cameraAnimation) {
+	if (cameraModel.empty() || cameraAnimation == 0)
+		return false;
+
+	try {
+		if (!_animatedCamera || !_animatedCameraName.equalsIgnoreCase(cameraModel)) {
+			releaseAnimatedCamera();
+
+			_animatedCamera.reset(loadModelObject(cameraModel));
+			_animatedCameraName = cameraModel;
+		}
+
+		// Camera animations are named after their DLG number.
+		Common::UString animation;
+		if (_animatedCamera)
+			for (const Common::UString &name : cutsceneAnimationNames(cameraAnimation))
+				if (_animatedCamera->hasAnimation(name)) {
+					animation = name;
+					break;
+				}
+
+		if (!_animatedCamera || animation.empty() || !_animatedCamera->getNode("camerahook")) {
+			releaseAnimatedCamera();
+			return false;
+		}
+
+		startShot(kShotAnimated);
+
+		_animatedCamera->setPosition(0.0f, 0.0f, 0.0f);
+		_animatedCamera->show();
+		_animatedCamera->playAnimation(animation, true);
+	} catch (...) {
+		warning("CameraController::setAnimatedShot(): Failed to load camera \"%s\"", cameraModel.c_str());
+		releaseAnimatedCamera();
+		return false;
+	}
+
+	return true;
+}
+
+void CameraController::releaseAnimatedCamera() {
+	if (_animatedCamera)
+		_animatedCamera->hide();
+
+	_animatedCamera.reset();
+	_animatedCameraName.clear();
+}
+
+void CameraController::setShotFieldOfView(float fov) {
+	_shotFieldOfView = fov;
+
+	if (fov > 1.0f && fov < 179.0f) {
+		GfxMan.setPerspective(fov, 0.1f, 10000.0f);
+	} else if (Area *area = _module->getCurrentArea()) {
+		const Area::CameraStyle &style = area->getCameraStyle();
+		GfxMan.setPerspective(style.viewAngle, 0.1f, 10000.0f);
+	}
+}
+
+void CameraController::setCinematicCamera(uint32_t cameraID, float UNUSED(cameraAngle), const Common::UString &UNUSED(cameraModel)) {
+	setStaticShot(cameraID);
+}
+
+void CameraController::setCameraMode(CameraMode mode, Object *target) {
+	// Keep a running transition (CameraTransitionToTarget) blending.
+	if (!_cinematic || _shotType != kShotFocus)
+		startShot(kShotFocus);
+	_cinematicFocus = target;
+
+	// Distance (m) and elevation (degrees) of the shot around the focus.
 	switch (mode) {
 	case kCameraModeCloseup:
-		_pitch = -0.5f;
-		_distance = 1.0f;
+		_focusDistance = 1.2f;
+		_focusElevation = 5.0f;
 		break;
 	case kCameraModeMedium:
-		_pitch = -0.3f;
-		_distance = 4.0f;
+		_focusDistance = 3.5f;
+		_focusElevation = 10.0f;
 		break;
 	case kCameraModeWide:
-		_pitch = -0.2f;
-		_distance = 8.0f;
+		_focusDistance = 7.0f;
+		_focusElevation = 15.0f;
 		break;
 	case kCameraModeIsometric:
-		_pitch = -1.0f;
-		_distance = 15.0f;
+		_focusDistance = 15.0f;
+		_focusElevation = 45.0f;
 		break;
 	case kCameraModeReveal:
-		_pitch = -0.15f;
-		_distance = 25.0f;
+		_focusDistance = 25.0f;
+		_focusElevation = 20.0f;
 		break;
 	}
 }
@@ -437,10 +474,196 @@ void CameraController::setCameraTarget(Object *target) {
 }
 
 void CameraController::cameraTransitionToTarget(float duration) {
-	_sourceYaw = _yaw;
-	_sourcePitch = _pitch;
-	_transitionTime = 0.0f;
-	_transitionDuration = duration > 0.0f ? duration : 0.001f;
+	// Ease from the current view to the focus shot instead of cutting.
+	startShot(kShotFocus, duration > 0.0f ? duration : 0.001f);
+}
+
+glm::vec3 CameraController::getEyes(const Object &object) const {
+	float x, y, z;
+	object.getPosition(x, y, z);
+
+	const Creature *creature = ObjectContainer::toCreature(const_cast<Object *>(&object));
+	return glm::vec3(x, y, z + (creature ? creature->getCameraHeight() : 1.0f));
+}
+
+/** World transform of a model node, composed from the node chain each call.
+ *  (ModelNode's cached absolute transform is only refreshed when the
+ *  model's bound is rebuilt, not on every animation frame.) */
+glm::mat4 composeNodeTransform(const Graphics::Aurora::ModelNode &node) {
+	std::vector<const Graphics::Aurora::ModelNode *> chain;
+	for (const Graphics::Aurora::ModelNode *n = &node; n; n = n->getParent())
+		chain.push_back(n);
+
+	glm::mat4 transform(1.0f);
+	for (auto n = chain.rbegin(); n != chain.rend(); ++n) {
+		float x, y, z, a;
+
+		(*n)->getPosition(x, y, z);
+		transform = glm::translate(transform, glm::vec3(x, y, z));
+
+		(*n)->getOrientation(x, y, z, a);
+		const glm::vec3 axis(x, y, z);
+		if (glm::length(axis) > 0.0001f && a != 0.0f)
+			transform = glm::rotate(transform, Common::deg2rad(a), glm::normalize(axis));
+
+		(*n)->getRotation(x, y, z);
+		transform = glm::rotate(transform, Common::deg2rad(x), glm::vec3(1.0f, 0.0f, 0.0f));
+		transform = glm::rotate(transform, Common::deg2rad(y), glm::vec3(0.0f, 1.0f, 0.0f));
+		transform = glm::rotate(transform, Common::deg2rad(z), glm::vec3(0.0f, 0.0f, 1.0f));
+	}
+
+	return transform;
+}
+
+bool CameraController::computeShot(CinematicShot &shot) const {
+	switch (_shotType) {
+		case kShotAnimated:
+			if (_animatedCamera) {
+				const Graphics::Aurora::ModelNode *hook = _animatedCamera->getNode("camerahook");
+				if (hook) {
+					const glm::mat4 transform = composeNodeTransform(*hook);
+					shot.position  = glm::vec3(transform[3]);
+					shot.direction = lookDirectionFromTransform(transform);
+					return true;
+				}
+			}
+			break;
+
+		case kShotStatic:
+			shot.position  = _staticPosition;
+			shot.direction = _staticDirection;
+			return true;
+
+		case kShotDialog:
+			if (_dialogSpeaker || _dialogListener) {
+				const Object &speaker = _dialogSpeaker ? *_dialogSpeaker : *_dialogListener;
+
+				float x, y, z, facing;
+				speaker.getOrientation(x, y, z, facing);
+
+				const glm::vec3 speakerEyes = getEyes(speaker);
+				glm::vec3 listenerEyes;
+				if (_dialogListener && _dialogListener != &speaker)
+					listenerEyes = getEyes(*_dialogListener);
+
+				shot = computeDialogShot(_dialogAngle, speakerEyes, facing,
+				                         (_dialogListener && _dialogListener != &speaker) ? &listenerEyes : nullptr);
+				return true;
+			}
+			break;
+
+		case kShotFocus:
+			break;
+	}
+
+	// Scripted cutscenes: along a path, or around the focus object.
+	const Object *focus = _cameraTarget ? _cameraTarget : _cinematicFocus;
+
+	if (_pathStart && _pathEnd) {
+		float x1, y1, z1, x2, y2, z2;
+		_pathStart->getPosition(x1, y1, z1);
+		_pathEnd->getPosition(x2, y2, z2);
+
+		float t = (_pathDuration > 0.0f) ? (_pathTime / _pathDuration) : 1.0f;
+		t = CLIP(t, 0.0f, 1.0f);
+		t = t * t * (3.0f - 2.0f * t);
+
+		const glm::vec3 start(x1, y1, z1), end(x2, y2, z2);
+		shot.position  = start + (end - start) * t;
+		shot.direction = focus ? (getEyes(*focus) - shot.position) : (end - start);
+		if (glm::length(shot.direction) < 0.001f)
+			shot.direction = _viewDirection;
+		return true;
+	}
+
+	if (focus) {
+		shot = computeFocusShot(getEyes(*focus), _yaw, _focusDistance, _focusElevation);
+		return true;
+	}
+
+	return false;
+}
+
+void CameraController::applyView(const glm::vec3 &position, const glm::vec3 &direction) {
+	float pitch, yaw;
+	directionToOrientation(direction, pitch, yaw);
+
+	_viewPosition  = position;
+	_viewDirection = direction;
+	_haveView      = true;
+
+	// Keep the orbit parameters in step, so restoreGameplayCamera() blends
+	// from what is actually on screen.
+	_pitch = pitch;
+	_yaw   = yaw;
+	_distance = 2.0f;
+	_target = position + glm::vec3(-std::sin(yaw), std::cos(yaw), 0.0f) * _distance - glm::vec3(0.0f, 0.0f, _height);
+
+	glm::vec3 shaken = position;
+	if (_shakeTime > 0.0f) {
+		shaken.x += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+		shaken.y += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+		shaken.z += RNG.getNext(-1.0f, 1.0f) * _shakeIntensity;
+	}
+
+	CameraMan.setPosition(shaken.x, shaken.y, shaken.z);
+	CameraMan.setOrientation(pitch, 0.0f, Common::rad2deg(yaw));
+	CameraMan.update();
+}
+
+void CameraController::updateCinematic(float frameTime) {
+	if (_shakeTime > 0.0f)
+		_shakeTime -= frameTime;
+
+	if (_holding) {
+		_holdTime -= frameTime;
+		if (_holdTime <= 0.0f)
+			_holding = false;
+
+		CameraMan.update();
+		return;
+	}
+
+	if (_pathStart && _pathEnd)
+		_pathTime += frameTime;
+
+	CinematicShot shot;
+	if (!computeShot(shot)) {
+		CameraMan.update();
+		return;
+	}
+
+	if (_shotType == kShotFocus && _pathStart && _pathEnd && _pathTime >= _pathDuration) {
+		// Stay where the path ended.
+		_staticPosition  = shot.position;
+		_staticDirection = shot.direction;
+		_shotType = kShotStatic;
+		_pathStart = nullptr;
+		_pathEnd = nullptr;
+	}
+
+	glm::vec3 position  = shot.position;
+	glm::vec3 direction = shot.direction;
+
+	if (_blendDuration > 0.0f) {
+		_blendTime += frameTime;
+
+		float t = CLIP(_blendTime / _blendDuration, 0.0f, 1.0f);
+		const float smooth = t * t * (3.0f - 2.0f * t);
+
+		const glm::vec3 fromDirection = glm::normalize(_blendFromDirection);
+		const glm::vec3 toDirection   = glm::normalize(direction);
+
+		position  = _blendFromPosition + (position - _blendFromPosition) * smooth;
+		direction = fromDirection + (toDirection - fromDirection) * smooth;
+		if (glm::length(direction) < 0.001f)
+			direction = toDirection;
+
+		if (t >= 1.0f)
+			_blendDuration = 0.0f;
+	}
+
+	applyView(position, direction);
 }
 
 void CameraController::cameraMoveAlongPath(Object *start, Object *end, float duration) {
@@ -505,32 +728,61 @@ void CameraController::restoreGameplayCamera(float blendTime) {
 }
 
 void CameraController::enterCinematicMode() {
-	_cinematic = true;
+	if (_cinematic && _shotType == kShotFocus)
+		return;
 
-	if (_distance <= 0.0f) {
-		if (Area *area = _module->getCurrentArea()) {
-			const Area::CameraStyle &style = area->getCameraStyle();
-			_distance = style.distance > 0.0f ? style.distance : 4.0f;
-			_pitch = style.pitch;
-			_height = style.height;
-		} else {
-			_distance = 4.0f;
-		}
-	}
-
-	_dirty = true;
+	startShot(kShotFocus);
 }
 
-void CameraController::resetToOrbit() {
+void CameraController::forgetObject(const Object *object) {
+	if (_dialogSpeaker == object)
+		_dialogSpeaker = nullptr;
+	if (_dialogListener == object)
+		_dialogListener = nullptr;
+	if (_cinematicFocus == object)
+		_cinematicFocus = nullptr;
+	if (_cameraTarget == object)
+		_cameraTarget = nullptr;
+	if (_pathStart == object || _pathEnd == object) {
+		_pathStart = nullptr;
+		_pathEnd = nullptr;
+	}
+}
+
+void CameraController::resetToOrbit(bool keepView) {
+	const bool wasCinematic = _cinematic;
+
 	_restoringGameplay = false;
 	_cinematic = false;
+	_shotType = kShotFocus;
 	_cinematicFocus = nullptr;
 	_cameraTarget = nullptr;
+	_dialogSpeaker = nullptr;
+	_dialogListener = nullptr;
 	_pathStart = nullptr;
 	_pathEnd = nullptr;
-	_transitionDuration = 0.0f;
+	_blendDuration = 0.0f;
 	_holding = false;
-	
+	_haveView = false;
+
+	releaseAnimatedCamera();
+
+	if (wasCinematic) {
+		// Back to the gameplay camera's distance, pitch and field of view.
+		if (!keepView)
+			_yaw = _orbitYaw;
+
+		if (Area *area = _module->getCurrentArea()) {
+			const Area::CameraStyle &style = area->getCameraStyle();
+			_distance = style.distance;
+			_actualDistance = style.distance;
+			_pitch = style.pitch;
+			_height = style.height;
+		}
+
+		setShotFieldOfView(0.0f);
+	}
+
 	updateTarget();
 	_dirty = true;
 }

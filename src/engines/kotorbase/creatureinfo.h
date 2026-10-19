@@ -158,6 +158,7 @@ public:
 	// Inventory
 
 	Inventory &getInventory();
+	const Inventory &getInventory() const;
 
 	void addInventoryItem(const Common::UString &tag, int count = 1);
 	void removeInventoryItem(const Common::UString &tag, int count = 1);
@@ -212,6 +213,8 @@ private:
 	void loadClassLevels(const Aurora::GFF3Struct &gff);
 	void loadFeats(const Aurora::GFF3Struct &gff);
 	void loadForcePowers(const Aurora::GFF3Struct &gff);
+	/** Known Force powers from a blueprint's ClassList[].KnownList0[].Spell. */
+	void loadKnownPowers(const Aurora::GFF3Struct &gff);
 };
 
 } // End of namespace KotORBase

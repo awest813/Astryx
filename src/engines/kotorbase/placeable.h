@@ -74,6 +74,9 @@ public:
 	/** The unlocker object unlocks this placeable. */
 	bool unlock(Object *unlocker);
 
+	/** Bashed open: the container stays unlocked and open for the taking. */
+	void breakOpen(Object *breaker) override;
+
 	// Inventory
 
 	bool hasInventory();

@@ -94,6 +94,7 @@ void MenuJournal::fillJournal() {
 	if (!list)
 		return;
 
+	list->createItemWidgets(10); // No-op once created.
 	list->removeAllItems();
 	_questTags.clear();
 	_worldTags.clear();

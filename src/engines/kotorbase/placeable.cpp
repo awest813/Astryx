@@ -62,10 +62,12 @@ void Placeable::load(const Aurora::GFF3Struct &placeable) {
 
 	Situated::load(placeable, utp ? &utp->getTopLevel() : 0);
 
-	if (!utp)
+	if (utp)
+		readScripts(utp->getTopLevel());
+	else {
 		warning("Placeable \"%s\" has no blueprint", _tag.c_str());
-
-	readScripts(utp->getTopLevel());
+		readScripts(placeable);
+	}
 }
 
 void Placeable::hide() {
@@ -93,10 +95,10 @@ void Placeable::loadObject(const Aurora::GFF3Struct &gff) {
 
 	// Hit Points
 
-	_currentHitPoints = gff.getSint("CurrentHP");
-	_maxHitPoints = gff.getSint("HP");
+	_maxHitPoints     = gff.getSint("HP", _maxHitPoints);
+	_currentHitPoints = gff.getSint("CurrentHP", _currentHitPoints);
 
-	_minOneHitPoint = gff.getBool("Min1HP");
+	_minOneHitPoint = gff.getBool("Min1HP", _minOneHitPoint);
 }
 
 void Placeable::loadAppearance() {
@@ -245,6 +247,24 @@ bool Placeable::unlock(Object *UNUSED(unlocker)) {
 	return false;
 }
 
+void Placeable::breakOpen(Object *breaker) {
+	// Situated::takeDamage() marks the object broken as soon as it dies; this
+	// runs once, after its OnDeath script.
+	Situated::breakOpen(breaker);
+
+	_lastOpenedBy = breaker;
+
+	if (_hasInventory)
+		_state = kStateOpen;
+
+	if (_model) {
+		if (_model->hasAnimation("die"))
+			_model->playAnimation("die");
+		else if (_hasInventory)
+			_model->playAnimation("open");
+	}
+}
+
 bool Placeable::hasInventory() {
 	return _hasInventory;
 }
@@ -290,7 +310,9 @@ void Placeable::loadState(const Aurora::GFF3Struct &gff) {
 	if (!_model)
 		return;
 
-	if (_state == kStateOpen)
+	if (_broken && _model->hasAnimation("dead"))
+		_model->playAnimation("dead");
+	else if (_state == kStateOpen)
 		_model->playAnimation("opened");
 	else if (_state == kStateActivated)
 		_model->playAnimation("on");

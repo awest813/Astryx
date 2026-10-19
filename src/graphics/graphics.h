@@ -176,6 +176,8 @@ public:
 	void pauseAnimations();
 	/** Resume animation thread. */
 	void resumeAnimations();
+	/** Stop (or restart) the time of all model animations, e.g. while the game is paused. */
+	void setAnimationTimeFrozen(bool frozen);
 
 	/** Register a model with the animation thread. */
 	void registerAnimatedModel(Aurora::Model *model);

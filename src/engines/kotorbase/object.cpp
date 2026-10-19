@@ -41,6 +41,7 @@
 #include "src/engines/aurora/util.h"
 
 #include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/location.h"
 #include "src/aurora/gff3file.h"
 #include "src/aurora/gff3writer.h"
@@ -129,6 +130,19 @@ const std::vector<int> Object::getPossibleActions() const {
 	return std::vector<int>();
 }
 
+void Object::setInventoryDisturbance(int type, Object *item) {
+	_inventoryDisturbType = type;
+	_inventoryDisturbItem = item;
+}
+
+int Object::getInventoryDisturbType() const {
+	return _inventoryDisturbType;
+}
+
+Object *Object::getInventoryDisturbItem() const {
+	return dynamic_cast<Object *>(*_inventoryDisturbItem);
+}
+
 bool Object::isStatic() const {
 	return _static;
 }
@@ -184,13 +198,15 @@ void Object::makeLookAt(Object *target) {
 
 Location Object::getLocation() const {
 	// TODO: Object::getLocation(): Area
-	// TODO: Object::getLocation(): Facing
 
 	Location location;
 
 	location.setArea(nullptr);
 	location.setPosition(_position[0], _position[1], _position[2]);
-	location.setFacing(0.0f);
+
+	float x, y, z, angle;
+	getOrientation(x, y, z, angle);
+	location.setFacing(angle);
 
 	return location;
 }
@@ -245,9 +261,8 @@ void Object::setFaction(Faction faction) {
 }
 
 bool Object::isEnemy() const {
-	return _faction == kFactionHostile1 ||
-	       _faction == kFactionHostile2 ||
-	       _faction == kFactionEndarSpire;
+	// Hostile to the player's faction.
+	return ReputationMan.isHostile(static_cast<int>(kFactionPlayer), static_cast<int>(_faction));
 }
 
 int Object::getGoodEvilValue() const {
@@ -385,6 +400,10 @@ void Object::saveState(Aurora::GFF3WriterStruct &gff) const {
 	gff.addUint32("CurrentHP", static_cast<uint32_t>(_currentHitPoints));
 	gff.addByte("Usable", _usable ? 1 : 0);
 
+	saveLocals(gff);
+}
+
+void Object::saveLocals(Aurora::GFF3WriterStruct &gff) const {
 	if (!_localInts.empty()) {
 		Aurora::GFF3WriterListPtr list = gff.addList("LocalVarInts");
 		for (const auto &entry : _localInts) {
@@ -417,6 +436,10 @@ void Object::loadState(const Aurora::GFF3Struct &gff) {
 	_currentHitPoints = gff.getUint("CurrentHP", _maxHitPoints);
 	_usable = gff.getBool("Usable", true);
 
+	loadLocals(gff);
+}
+
+void Object::loadLocals(const Aurora::GFF3Struct &gff) {
 	_localInts.clear();
 	if (gff.hasField("LocalVarInts")) {
 		for (const auto &entry : gff.getList("LocalVarInts")) {
@@ -443,6 +466,12 @@ void Object::loadState(const Aurora::GFF3Struct &gff) {
 			_localStrings[entry->getString("Name")] = entry->getString("Value");
 		}
 	}
+}
+
+void Object::clearLocals() {
+	_localInts.clear();
+	_localFloats.clear();
+	_localStrings.clear();
 }
 
 int32_t Object::getLocalInt(const Common::UString &name) const {

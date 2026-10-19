@@ -158,6 +158,9 @@ constexpr std::size_t ARRAYSIZE(const T (&)[N]) {
  *  Automatically prepends the text "ERROR: " and appends
  *  an exclamation mark and a newline.
  *
+ *  If enabled, the error is also shown in a dialog window
+ *  (see Common::showFatalErrorDialog()).
+ *
  *  Additionally, the program will immediately quit with
  *  return code 1.
  */

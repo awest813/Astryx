@@ -145,7 +145,7 @@ void GraphicsManager::init() {
 	ImGuiFreeType::BuildFontAtlas(ImGui::GetIO().Fonts);
 
 	if (!setupSDLGL())
-		throw Common::Exception("Failed initializing the OpenGL renderer");
+		throw Common::Exception("Could not create an OpenGL %s context", _rendererExperimental ? "3.2" : "2.1");
 
 	switch (_renderType) {
 		case WindowManager::kOpenGL21:
@@ -1395,6 +1395,10 @@ void GraphicsManager::pauseAnimations() {
 
 void GraphicsManager::resumeAnimations() {
 	_animationThread.resume();
+}
+
+void GraphicsManager::setAnimationTimeFrozen(bool frozen) {
+	_animationThread.setTimeFrozen(frozen);
 }
 
 void GraphicsManager::registerAnimatedModel(Aurora::Model *model) {

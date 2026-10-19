@@ -32,6 +32,7 @@
 
 namespace Common {
 	class SeekableReadStream;
+	class StreamTokenizer;
 }
 
 namespace Aurora {
@@ -47,9 +48,11 @@ namespace Aurora {
  *  - Door hooks: coordinates where doors can be placed
  *  - Art placeables: simple placeable objects
  *
+ *  - Tracks and obstacles: minigame (swoop, turret) track models and
+ *    obstacle models
+ *
  *  As well as these fields we don't support yet:
  *  - File dependencies
- *  - Obstacles
  *  - Walk mesh rooms
  */
 class LYTFile {
@@ -75,9 +78,16 @@ public:
 		float unk1, unk2, unk3, unk4, unk5;
 	};
 
+	/** A minigame track or obstacle: a model placed at a position. */
+	struct PlacedModel {
+		Common::UString model;
+		float x, y, z;
+	};
+
 	typedef std::vector<Room> RoomArray;
 	typedef std::vector<ArtPlaceable> ArtPlaceableArray;
 	typedef std::vector<DoorHook> DoorHookArray;
+	typedef std::vector<PlacedModel> PlacedModelArray;
 
 	LYTFile();
 	~LYTFile();
@@ -100,6 +110,12 @@ public:
 	/** Get all door hooks in this layout. */
 	const DoorHookArray &getDoorHooks() const;
 
+	/** Get all minigame tracks in this layout. */
+	const PlacedModelArray &getTracks() const;
+
+	/** Get all minigame obstacles in this layout. */
+	const PlacedModelArray &getObstacles() const;
+
 	/** Get the file dependency in this layout. */
 	Common::UString getFileDependency() const;
 
@@ -107,7 +123,13 @@ private:
 	RoomArray _rooms;
 	ArtPlaceableArray _artPlaceables;
 	DoorHookArray _doorHooks;
+	PlacedModelArray _tracks;
+	PlacedModelArray _obstacles;
 	Common::UString _fileDependency;
+
+	void readPlacedModels(Common::SeekableReadStream &lyt, Common::StreamTokenizer &tokenizer,
+	                      std::vector<Common::UString> &strings, PlacedModelArray &models,
+	                      const Common::UString &name);
 
 	void assertTokenCount(const std::vector<Common::UString> &tokens, size_t n,
 	                      const Common::UString &name);

@@ -860,6 +860,12 @@ void LocalPathfinding::addObjects(const std::vector<float> &vertices, const std:
 	}
 }
 
+void LocalPathfinding::removeStaticObject(const ObjectWalkmesh *objectWalkmesh) {
+	_staticObjects.remove_if([objectWalkmesh](const std::unique_ptr<ObjectWalkmesh> &o) {
+		return o.get() == objectWalkmesh;
+	});
+}
+
 void LocalPathfinding::addStaticObjects(ObjectWalkmesh *objectWalkmesh) {
 	_staticObjects.emplace_back(objectWalkmesh);
 }

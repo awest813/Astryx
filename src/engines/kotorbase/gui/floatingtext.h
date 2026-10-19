@@ -33,6 +33,8 @@
 #include "src/graphics/aurora/fonthandle.h"
 #include "src/graphics/aurora/text.h"
 
+#include "src/aurora/nwscript/objectref.h"
+
 namespace Engines {
 
 namespace KotORBase {
@@ -46,7 +48,9 @@ public:
 
 private:
 	struct Entry {
-		Object *object;
+		/** A reference, not a pointer: the object may be destroyed (or its
+		 *  module unloaded) while its text is still up. */
+		Aurora::NWScript::ObjectReference object;
 		std::unique_ptr<Graphics::Aurora::Text> label;
 		float remaining;
 	};

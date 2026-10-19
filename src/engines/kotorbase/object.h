@@ -30,6 +30,7 @@
 #include <memory>
 
 #include "src/aurora/nwscript/object.h"
+#include "src/aurora/nwscript/objectref.h"
 
 namespace Aurora {
 class SSFFile;
@@ -103,7 +104,7 @@ public:
 	/** Can the object be used by the PC? */
 	bool isUsable() const;
 	/** Can the player click the object? */
-	bool isClickable() const;
+	virtual bool isClickable() const;
 
 	/** Toggle usability of this object. */
 	virtual void setUsable(bool usable);
@@ -159,9 +160,18 @@ public:
 	bool isPersistent() const;
 	/** Set whether this object should be persisted. */
 	void setPersistent(bool persistent);
+	/** The key this object's state is saved under (assigned when the area loads). */
+	const Common::UString &getPersistenceKey() const { return _persistenceKey; }
+	void setPersistenceKey(const Common::UString &key) { _persistenceKey = key; }
 
 	virtual void saveState(Aurora::GFF3WriterStruct &gff) const;
 	virtual void loadState(const Aurora::GFF3Struct &gff);
+
+	/** Save/restore only the script local variables (part of saveState/loadState). */
+	void saveLocals(Aurora::GFF3WriterStruct &gff) const;
+	void loadLocals(const Aurora::GFF3Struct &gff);
+	/** Forget all script local variables. */
+	void clearLocals();
 
 	// Faction
 
@@ -249,6 +259,14 @@ public:
 	const Common::UString &getListenPattern(int number) const;
 	void clearListenPatterns();
 
+	// Inventory disturbance (GetInventoryDisturbType / GetInventoryDisturbItem)
+
+	/** Record what fires OnInventoryDisturbed next: INVENTORY_DISTURB_TYPE_* and the item. */
+	void setInventoryDisturbance(int type, Object *item);
+	int getInventoryDisturbType() const;
+	/** The item, or nullptr if it no longer exists. */
+	Object *getInventoryDisturbItem() const;
+
 protected:
 	Common::UString _templateResRef;
 	ObjectType _type; ///< The object's type.
@@ -273,6 +291,7 @@ protected:
 	bool _minOneHitPoint;  ///< If the object should have at least one hitpoint.
 	bool _plotFlag;        ///< If true, this object is plot-critical and immune to permanent death.
 	bool _persistent;      ///< If true, this object's state should be persisted across area reloads.
+	Common::UString _persistenceKey; ///< Save-state key (area resref, tag, repeat index).
 
 	float _position[3];    ///< The object's position.
 	float _orientation[4]; ///< The object's orientation.
@@ -283,6 +302,9 @@ protected:
 	std::unique_ptr<Aurora::SSFFile> _ssf; ///< Loaded KotOR soundset.
 
 	void loadSSF();
+
+	int _inventoryDisturbType { 0 };
+	Aurora::NWScript::ObjectReference _inventoryDisturbItem;
 
 	std::map<Common::UString, int32_t> _localInts;
 	std::map<Common::UString, float>   _localFloats;

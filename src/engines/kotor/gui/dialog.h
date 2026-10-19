@@ -39,6 +39,17 @@ protected:
 	void getTextColor(float &r, float &g, float &b) const;
 };
 
+/** Computer terminals (DLG ConversationType 1): the "computer" GUI, with the
+ *  conversation's text in LB_MESSAGE and the replies in LB_REPLIES, over the
+ *  terminal background, as KotOR.js' InGameComputer. */
+class ComputerGUI : public KotORBase::DialogGUI {
+public:
+	ComputerGUI(KotORBase::Module &module);
+
+protected:
+	void getTextColor(float &r, float &g, float &b) const;
+};
+
 } // End of namespace KotOR
 
 } // End of namespace Engines

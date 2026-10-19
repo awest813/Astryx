@@ -27,9 +27,12 @@
 #include "external/glm/vec3.hpp"
 #include "external/glm/gtc/type_ptr.hpp"
 
+#include "src/common/util.h"
 #include "src/common/maths.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/aurora/nwscript/objectman.h"
+
 #include "src/engines/kotorbase/actionexecutor.h"
 #include "src/common/random.h"
 #include "src/common/debug.h"
@@ -46,8 +49,49 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/script/container.h"
 #include "src/engines/kotorbase/animationnames.h"
+#include "src/engines/kotorbase/trigger.h"
+#include "src/engines/kotorbase/trap.h"
+#include "src/engines/kotorbase/talent.h"
 
 static const float kWalkDistance = 2.0f;
+/** Closer than this counts as arrived; a range of 0 is never hit exactly. */
+static const float kMinMoveRange = 0.1f;
+/** Give up on a blocked movement after this many seconds. */
+static const float kMaxBlockedMoveTime = 3.0f;
+/** A chased goal that moved this far (m) gets a new route. */
+static const float kRepathDistance = 1.0f;
+/** Routes are redone this often (s), so they follow doors opening and closing. */
+static const float kRepathTime = 3.0f;
+/** A blocked route is redone after this long (s). */
+static const float kRepathWhenBlocked = 0.5f;
+/** A waypoint closer than this (m) counts as reached. */
+static const float kWaypointReach = 0.3f;
+
+/** How long (s) picking a lock takes. */
+static const float kUnlockTime = 1.5f;
+/** How close (m) a creature walks up to a door or container to lock it. */
+static const float kLockRange = 2.0f;
+/** ActionForceFollowObject never comes closer than this (m). */
+static const float kMinFollowDistance = 1.0f;
+
+/** ActionRandomWalk: destinations lie this far (m) from where the walk started. */
+static const float kRandomWalkMinDistance = 2.0f;
+static const float kRandomWalkMaxDistance = 8.0f;
+/** ActionRandomWalk: pause (s) between two walks. */
+static const float kRandomWalkMinPause = 1.0f;
+static const float kRandomWalkMaxPause = 4.0f;
+/** ActionRandomWalk: destinations tried per walk. */
+static const int   kRandomWalkAttempts = 4;
+/** ActionRandomWalk: closer than this (m) to the destination counts as there. */
+static const float kRandomWalkReach = 0.5f;
+
+/** A power is cast from this far (m) inside its range, so a target that moves a little stays in it. */
+static const float kCastRangeMargin = 1.0f;
+/** In range but out of sight (a closed door, a corner): walk up this close (m). */
+static const float kCastSightApproach = 2.0f;
+
+/** Item property: Thieves' Tools (security tunnelers), itempropdef.2da. */
+static const int kItemPropertyThievesTools = 37;
 
 namespace Engines {
 
@@ -73,6 +117,24 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 		case kActionOpenLock:
 			executeOpenLock(action, ctx);
 			break;
+		case kActionLock:
+			executeLock(action, ctx);
+			break;
+		case kActionFollow:
+			executeFollow(action, ctx);
+			break;
+		case kActionRandomWalk:
+			executeRandomWalk(action, ctx);
+			break;
+		case kActionSetTrap:
+			executeSetTrap(action, ctx);
+			break;
+		case kActionDisableTrap:
+		case kActionRecoverTrap:
+		case kActionFlagTrap:
+		case kActionExamineTrap:
+			executeTrapAction(action, ctx);
+			break;
 		case kActionUseObject:
 			executeUseObject(action, ctx);
 			break;
@@ -90,6 +152,9 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 			break;
 		case kActionCastSpell:
 			executeCastSpell(action, ctx);
+			break;
+		case kActionRest:
+			executeRest(action, ctx);
 			break;
 		case kActionCutsceneAttack:
 			executeCutsceneAttack(action, ctx);
@@ -109,6 +174,14 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 		case kActionTakeItem:
 			ctx.creature->popAction();
 			break;
+		case kActionDoCommand:
+			executeDoCommand(action, ctx);
+			break;
+		case kActionPauseConversation:
+		case kActionResumeConversation:
+			ctx.area->_module->setConversationPaused(action.type == kActionPauseConversation);
+			ctx.creature->popAction();
+			break;
 		default:
 			ctx.creature->popAction();
 			debugC(Common::kDebugEngineLogic, 1, "ActionExecutor: unhandled action type %u", (uint)action.type);
@@ -116,13 +189,70 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 	}
 }
 
+void ActionExecutor::executeDoCommand(Action &action, const ExecutionContext &ctx) {
+	// Pop first: the command commonly queues more actions or clears the queue.
+	const Common::UString script = action.script;
+	std::shared_ptr<Aurora::NWScript::ScriptState> state = action.scriptState;
+	Creature *creature = ctx.creature;
+	creature->popAction();
+
+	if (!script.empty() && state)
+		ScriptContainer::runScript(script, *state, creature, creature);
+}
+
 void ActionExecutor::executeMoveToPoint(Action &action, const ExecutionContext &ctx) {
-	if (moveTo(action.location, action.range, ctx, action.choreographyFlags != 0))
-		ctx.creature->popAction();
+	// Put the creature right there (a force move that ran out of time).
+	auto jumpCreatureTo = [](const glm::vec3 &location, const ExecutionContext &context) {
+		const float z = context.area->evaluateElevation(location.x, location.y);
+
+		context.creature->getMovePath().clear();
+		context.creature->resetBlockedMoveTime();
+		context.creature->setPosition(location.x, location.y, (z != FLT_MIN) ? z : location.z);
+		context.creature->playDefaultAnimation();
+
+		if (context.creature == context.area->_module->getPartyLeader())
+			context.area->_module->movedPartyLeader();
+		else
+			context.area->notifyObjectMoved(*context.creature);
+	};
+
+	// ActionForceMove*: a creature that doesn't get there in time jumps there.
+	if (action.timeout > 0.0f) {
+		action.startTime += ctx.frameTime;
+		if (action.startTime >= action.timeout) {
+			jumpCreatureTo(action.location, ctx);
+			ctx.creature->popAction();
+			return;
+		}
+	}
+
+	const glm::vec2 location(action.location.x, action.location.y);
+	if (!moveTo(location, action.range, ctx,
+	            action.choreographyFlags == kMoveRun, action.choreographyFlags == kMoveWalk))
+		return;
+
+	// A force move that gave up on a blocked way jumps the rest.
+	if ((action.timeout > 0.0f) && !isLocationReached(location, MAX(action.range, kMinMoveRange) + 0.01f, ctx))
+		jumpCreatureTo(action.location, ctx);
+
+	ctx.creature->popAction();
 }
 
 void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext &ctx) {
+	// A creature that left the party (RemovePartyMember) stops following.
 	Creature *partyLeader = ctx.area->_module->getPartyLeader();
+	if (!partyLeader || partyLeader == ctx.creature ||
+	    !ctx.area->_module->isObjectPartyMember(ctx.creature)) {
+		ctx.creature->popAction();
+		return;
+	}
+
+	// Following never finishes on its own; give way to anything queued after
+	// it (e.g. an ActionDoCommand from a cutscene script).
+	if (ctx.creature->getActionCount() > 1) {
+		ctx.creature->popAction();
+		return;
+	}
 
 	float x, y, _;
 	partyLeader->getPosition(x, y, _);
@@ -130,66 +260,389 @@ void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext 
 	moveTo(glm::vec2(x, y), action.range, ctx);
 }
 
+/** The inventory a party member's finds go to (the party's), or the creature's own. */
+static Inventory &getLootInventory(Module &module, Creature &creature) {
+	return module.getInventoryOf(creature);
+}
+
+/** The Thieves' Tools bonus of a security tunneler, which is used up. */
+static int useSecurityTunneler(const Common::UString &tag, Inventory &inventory) {
+	if (tag.empty())
+		return 0;
+
+	if (!inventory.hasItem(tag))
+		return 0;
+
+	int bonus = 0;
+	try {
+		Item item(tag);
+		bonus = item.getItemPropertyValue(kItemPropertyThievesTools, 0);
+	} catch (...) {
+		warning("Cannot use security tunneler \"%s\"", tag.c_str());
+		return 0;
+	}
+
+	if (bonus > 0)
+		inventory.removeItem(tag, 1);
+
+	return bonus;
+}
+
+/** Turn the creature towards an object it works on. */
+static void faceObject(Creature &creature, Object &target) {
+	float x, y, _;
+	target.getPosition(x, y, _);
+	creature.makeLookAt(x, y);
+}
+
 void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(action.object);
+	if (!situated) {
+		if (action.object)
+			warning("Cannot unlock an object that is not a door or a placeable");
+
+		ctx.creature->popAction();
+		return;
+	}
+
+	Door *door = ObjectContainer::toDoor(situated);
+
+	if (action.step == 0) {
+		float x, y, _;
+		situated->getPosition(x, y, _);
+
+		if (!moveTo(glm::vec2(x, y), action.range, ctx))
+			return;
+
+		// Work on the lock for a moment, as in the original and KotOR.js.
+		faceObject(*ctx.creature, *situated);
+		ctx.creature->playAnimation(door ? "unlockdr" : "unlockcntr", false);
+
+		action.step = 1;
+		action.startTime = 0.0f;
+		return;
+	}
+
+	action.startTime += ctx.frameTime;
+	if (action.startTime < kUnlockTime)
+		return;
+
+	// popAction() destroys the action, so keep what we still need.
+	const Common::UString tunneler = action.item;
+	Creature *creature = ctx.creature;
+	creature->popAction();
+	creature->playDefaultAnimation();
+
+	if (!situated->isLocked()) {
+		if (door)
+			door->open(creature);
+		return;
+	}
+
+	bool unlocked = false;
+
+	if (situated->isKeyRequired()) {
+		// Only the key opens it; no skill check.
+		const Common::UString &keyTag = situated->getKeyTag();
+		unlocked = getLootInventory(*ctx.area->_module, *creature).hasItem(keyTag) || creature->getInventory().hasItem(keyTag);
+		if (!unlocked)
+			status("ActionSpeakString [%s]: A specific key is required to open this.", creature->getTag().c_str());
+
+	} else {
+		// d20 + Security against the lock DC. Out of combat a failed attempt
+		// costs nothing, so the check takes 20 (as in KotOR.js).
+		const int security = creature->getSkillRank(kSkillSecurity) + useSecurityTunneler(tunneler, getLootInventory(*ctx.area->_module, *creature));
+		const int roll     = TrapRules::checkRoll(creature->isInCombat(), 20, RNG.getNext(1, 21));
+		const int dc       = situated->getLockDC();
+
+		unlocked = TrapRules::unlocks(security, roll, dc);
+		debugC(Common::kDebugEngineLogic, 1, "Security check by \"%s\": %d + %d vs DC %d: %s",
+		       creature->getTag().c_str(), roll, security, dc, unlocked ? "success" : "failure");
+	}
+
+	if (!unlocked) {
+		situated->runScript(kScriptFailToOpen, situated, creature);
+		return;
+	}
+
+	const uint32_t targetID = situated->getID();
+	situated->setLocked(false);
+	situated->runScript(kScriptUnlock, situated, creature);
+
+	// The OnUnlock script may have destroyed the object.
+	if (door && (ObjectMan.findObject(targetID) == static_cast<Aurora::NWScript::Object *>(door)))
+		door->open(creature);
+}
+
+void ActionExecutor::executeLock(Action &action, const ExecutionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(action.object);
+	if (!situated) {
+		ctx.creature->popAction();
+		return;
+	}
+
+	float x, y, _;
+	situated->getPosition(x, y, _);
+
+	if (!moveTo(glm::vec2(x, y), MAX(action.range, kLockRange), ctx))
+		return;
+
+	Creature *creature = ctx.creature;
+	creature->popAction();
+
+	faceObject(*creature, *situated);
+
+	// Close it first, then lock it; no skill check (as in KotOR.js).
+	if (Door *door = ObjectContainer::toDoor(situated))
+		door->close(creature);
+	else if (Placeable *placeable = ObjectContainer::toPlaceable(situated))
+		placeable->close(creature);
+
+	situated->setLocked(true);
+	situated->runScript(kScriptLock, situated, creature);
+}
+
+void ActionExecutor::executeFollow(Action &action, const ExecutionContext &ctx) {
+	// ActionForceFollowObject: keep up with the target until the actions are cleared.
+	if (!action.object || (action.object == ctx.creature)) {
+		ctx.creature->popAction();
+		return;
+	}
+
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
-	if (!moveTo(glm::vec2(x, y), action.range, ctx))
-		return;
+	moveTo(glm::vec2(x, y), MAX(action.range, kMinFollowDistance), ctx);
+}
 
-	ctx.creature->popAction();
+void ActionExecutor::executeRandomWalk(Action &action, const ExecutionContext &ctx) {
+	// ActionRandomWalk: stroll between random reachable points near where the
+	// walk started, pausing in between, until the actions are cleared.
+	Creature *creature = ctx.creature;
 
-	if (ctx.creature != ctx.area->_module->getPartyLeader()) {
-		warning("ActionExecutor::executeOpenLock(): Creature is not the party leader");
-		return;
-	}
+	float cx, cy, cz;
+	creature->getPosition(cx, cy, cz);
 
-	Door *door = ObjectContainer::toDoor(action.object);
-	Placeable *placeable = ObjectContainer::toPlaceable(action.object);
-	Situated *situated = door ? (Situated *)door : (Situated *)placeable;
+	switch (action.step) {
+		case 0: // Start
+			action.origin = glm::vec3(cx, cy, cz);
+			action.step = 1;
+			// fall through
 
-	if (!situated) {
-		warning("Cannot unlock an object that is not a door or a placeable");
-		return;
-	}
+		case 1: { // Pick a destination
+			std::vector<glm::vec2> route;
+			for (int attempt = 0; attempt < kRandomWalkAttempts; ++attempt) {
+				const float angle    = RNG.getNext(0.0f, 2.0f * static_cast<float>(M_PI));
+				const float distance = RNG.getNext(kRandomWalkMinDistance, kRandomWalkMaxDistance);
 
-	if (situated->isKeyRequired()) {
-		Common::UString keyTag = situated->getKeyTag();
-		if (ctx.creature->getInventory().hasItem(keyTag)) {
-			ctx.creature->playAnimation(door ? "unlockdr" : "unlockcntr", false);
-			situated->setLocked(false);
-			if (door) door->open(ctx.creature);
-			info("Object unlocked with key: %s", keyTag.c_str());
-		} else {
-			status("ActionSpeakString [%s]: A specific key is required to open this.", ctx.creature->getTag().c_str());
+				const glm::vec2 goal(action.origin.x + distance * std::cos(angle),
+				                     action.origin.y + distance * std::sin(angle));
+
+				// Somewhere on the walkmesh that can be walked to.
+				if (ctx.area->evaluateElevation(goal.x, goal.y) == FLT_MIN)
+					continue;
+				if (!ctx.area->findPath(glm::vec2(cx, cy), goal, route))
+					continue;
+
+				action.location = glm::vec3(goal.x, goal.y, 0.0f);
+				action.step = 2;
+				return;
+			}
+
+			// Nowhere to go from here right now; try again after a pause.
+			action.step = 3;
+			action.startTime = 0.0f;
+			action.range = RNG.getNext(kRandomWalkMinPause, kRandomWalkMaxPause);
+			return;
 		}
-		return;
-	}
 
-	// Security skill check: d20 + Security Rank vs LockDC
-	int securityRank = ctx.creature->getSkillRank(kSkillSecurity);
-	int d20Roll = RNG.getNext(1, 21);
-	int total = d20Roll + securityRank;
-	int dc = situated->getLockDC();
+		case 2: // Walk there
+			if (!moveTo(glm::vec2(action.location.x, action.location.y), kRandomWalkReach, ctx, false, true))
+				return;
 
-	if (total >= dc) {
-		ctx.creature->playAnimation(door ? "unlockdr" : "unlockcntr", false);
-		situated->setLocked(false);
-		if (door) door->open(ctx.creature);
-		info("Security Check SUCCESS: %d + %d = %d vs DC %d", d20Roll, securityRank, total, dc);
-	} else {
-		status("ActionSpeakString [%s]: Security check failed.", ctx.creature->getTag().c_str());
-		info("Security Check FAILURE: %d + %d = %d vs DC %d", d20Roll, securityRank, total, dc);
+			creature->playDefaultAnimation();
+			action.step = 3;
+			action.startTime = 0.0f;
+			action.range = RNG.getNext(kRandomWalkMinPause, kRandomWalkMaxPause);
+			return;
+
+		default: // Pause
+			action.startTime += ctx.frameTime;
+			if (action.startTime >= action.range)
+				action.step = 1;
+			return;
 	}
 }
 
+void ActionExecutor::executeTrapAction(Action &action, const ExecutionContext &ctx) {
+	Creature *creature = ctx.creature;
+	Object *target = action.object;
+
+	Trigger *mine = dynamic_cast<Trigger *>(target);
+	Situated *situated = ObjectContainer::toSituated(target);
+
+	Trap *trap = mine ? &mine->getTrap() : (situated ? &situated->getTrap() : nullptr);
+	if (!trap || !trap->isTrapped()) {
+		creature->popAction();
+		return;
+	}
+
+	// Flagging only needs the trap to have been seen.
+	if (action.type == kActionFlagTrap) {
+		creature->popAction();
+
+		trap->setFlagged(true);
+		if (mine)
+			mine->detectTrap(creature);
+		else
+			trap->setDetectedBy(creature->getID());
+
+		return;
+	}
+
+	float x, y, _;
+	target->getPosition(x, y, _);
+
+	if (!moveTo(glm::vec2(x, y), MAX(action.range, TrapRules::kDisarmRange), ctx))
+		return;
+
+	const ActionType type = action.type;
+	creature->popAction();
+
+	faceObject(*creature, *target);
+
+	if (type == kActionExamineTrap)
+		return;
+
+	if (!trap->isActive() || !trap->isDisarmable()) {
+		status("ActionSpeakString [%s]: This cannot be disarmed.", creature->getTag().c_str());
+		return;
+	}
+
+	const bool recover = type == kActionRecoverTrap;
+
+	// d20 + Demolitions against the disarm DC. Failure has consequences, so
+	// out of combat the check takes 10 rather than 20.
+	const int demolitions = creature->getSkillRank(kSkillDemolitions);
+	const int roll = TrapRules::checkRoll(creature->isInCombat(), 10, RNG.getNext(1, 21));
+	const TrapRules::DisarmResult result = TrapRules::disarm(demolitions, roll, trap->getDisarmDC(), recover);
+
+	debugC(Common::kDebugEngineLogic, 1, "%s check by \"%s\" on \"%s\": %d + %d vs DC %d: %d",
+	       recover ? "Recover" : "Disarm", creature->getTag().c_str(), target->getTag().c_str(),
+	       roll, demolitions, recover ? TrapRules::getRecoverDC(trap->getDisarmDC()) : trap->getDisarmDC(),
+	       (int)result);
+
+	if (result == TrapRules::kDisarmSetOff) {
+		if (mine)
+			mine->fireTrap(creature);
+		else
+			situated->triggerTrap(creature);
+		return;
+	}
+
+	if (result == TrapRules::kDisarmFailed) {
+		status("ActionSpeakString [%s]: Failed to disarm the mine.", creature->getTag().c_str());
+		return;
+	}
+
+	const Common::UString item = trap->getItemResRef();
+	if (recover && !item.empty() && (item != "****"))
+		getLootInventory(*ctx.area->_module, *creature).addItem(item);
+
+	if (mine)
+		mine->disableTrap();
+	else
+		situated->setTrapDisabled();
+
+	target->runScript(kScriptDisarm, target, creature);
+
+	// A mine is gone for good once disarmed.
+	if (mine)
+		ctx.area->destroyObjectDeferred(mine);
+}
+
+/** The animation of setting a mine: animations.2da row 52 (KotOR.js' SET_MINE). */
+static Common::UString getSetMineAnimation() {
+	try {
+		const Aurora::TwoDAFile &animations = TwoDAReg.get2DA("animations");
+		const Common::UString name = animations.getRow(52).getString("name");
+		if (!name.empty())
+			return name;
+	} catch (...) {
+	}
+
+	return "setmine";
+}
+
+void ActionExecutor::executeSetTrap(Action &action, const ExecutionContext &ctx) {
+	Creature *creature = ctx.creature;
+
+	if (action.step == 0) {
+		const Common::UString animation = getSetMineAnimation();
+		if (creature->hasModelAnimation(animation))
+			creature->playAnimation(animation, false);
+
+		action.step = 1;
+		action.startTime = 0.0f;
+		return;
+	}
+
+	action.startTime += ctx.frameTime;
+	if (action.startTime < TrapRules::kSetMineTime)
+		return;
+
+	// popAction() destroys the action, so keep what we still need.
+	const Common::UString item = action.item;
+	creature->popAction();
+	creature->playDefaultAnimation();
+
+	Inventory &inventory = ctx.area->_module->getInventoryOf(*creature);
+	if (!inventory.hasItem(item))
+		return;
+
+	int trapType = -1;
+	try {
+		const Item mine(item);
+		trapType = TrapRules::findTrapType(TwoDAReg.get2DA("traps"), item,
+		                                   mine.getItemPropertySubtype(TrapRules::kItemPropertyTrap, -1));
+	} catch (...) {
+		trapType = -1;
+	}
+
+	if (trapType < 0) {
+		warning("Cannot set mine \"%s\": no traps.2da row", item.c_str());
+		return;
+	}
+
+	float x, y, z, ox, oy, oz, angle;
+	creature->getPosition(x, y, z);
+	creature->getOrientation(ox, oy, oz, angle);
+
+	const glm::vec2 place = TrapRules::getMinePlacement(glm::vec2(x, y), angle, TrapRules::kMinePlaceDistance);
+
+	// Not into a wall: lay it at the creature's feet then.
+	glm::vec3 at(place.x, place.y, ctx.area->evaluateElevation(place.x, place.y));
+	if ((at.z == FLT_MIN) || !ctx.area->walkable(glm::vec3(x, y, z + 0.1f), glm::vec3(at.x, at.y, at.z + 0.1f)))
+		at = glm::vec3(x, y, z);
+
+	if (ctx.area->placeMine(trapType, at, *creature))
+		inventory.removeItem(item, 1);
+}
+
 void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ctx) {
+	if (!action.object) {
+		ctx.creature->popAction();
+		return;
+	}
+
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
 	if (!moveTo(glm::vec2(x, y), action.range, ctx))
 		return;
 
+	// popAction() destroys the action, so keep what we still need.
+	Object *target = action.object;
 	ctx.creature->popAction();
 
 	Module *module = ctx.area->_module;
@@ -199,9 +652,25 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 		return;
 	}
 
-	action.object->click(module->getPartyLeader());
+	// The dead don't talk, but what they carried is left for the taking.
+	Creature *corpse = ObjectContainer::toCreature(target);
+	if (corpse && corpse->isDead()) {
+		// SetIsDestroyable(FALSE, ..., bSelectableWhenDead = FALSE): not lootable.
+		if (corpse->isClickable() && !corpse->isPC() && !module->isObjectPartyMember(corpse) &&
+		    !corpse->getInventory().getItems().empty())
+			module->delayContainer(corpse);
 
-	Creature *creatureObject = ObjectContainer::toCreature(action.object);
+		return;
+	}
+
+	const uint32_t targetID = target->getID();
+	target->click(module->getPartyLeader());
+
+	// The click scripts (OnUsed, OnDialog, ...) may have destroyed the target.
+	if (ObjectMan.findObject(targetID) != target)
+		return;
+
+	Creature *creatureObject = ObjectContainer::toCreature(target);
 	if (creatureObject) {
 		const Common::UString conversation = creatureObject->getConversation();
 		if (!conversation.empty())
@@ -210,7 +679,7 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 		return;
 	}
 
-	Situated *situated = ObjectContainer::toSituated(action.object);
+	Situated *situated = ObjectContainer::toSituated(target);
 	if (situated) {
 		const Common::UString conversation = situated->getConversation();
 		if (!conversation.empty()) {
@@ -218,7 +687,7 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 			return;
 		}
 
-		Placeable *placeable = ObjectContainer::toPlaceable(action.object);
+		Placeable *placeable = ObjectContainer::toPlaceable(target);
 		if (placeable && placeable->hasInventory()) {
 			module->delayContainer(placeable);
 			return;
@@ -227,18 +696,42 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 }
 
 void ActionExecutor::executeAttackObject(Action &action, const ExecutionContext &ctx) {
+	if (!action.object || action.object->isDead()) {
+		ctx.creature->popAction();
+		return;
+	}
+
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
-	if (!moveTo(glm::vec2(x, y), ctx.creature->getMaxAttackRange(), ctx))
+	const float range = ctx.creature->getMaxAttackRange() +
+	                    (ObjectContainer::toSituated(action.object) ? BashRules::kExtraReach : 0.0f);
+	if (!moveTo(glm::vec2(x, y), range, ctx))
 		return;
 
+	// popAction() destroys the action, so keep what we still need.
+	Object *target = action.object;
+	const int choreographyFlags = action.choreographyFlags;
+	const int damage = action.damage;
 	ctx.creature->popAction();
-	
-	if (action.choreographyFlags > 0)
-		ctx.creature->performCutsceneAttack(action.object, action.choreographyFlags);
-	else
-		ctx.creature->startCombat(action.object, ctx.area->_module->getNextCombatRound());
+
+	if (choreographyFlags > 0) {
+		ctx.creature->performCutsceneAttack(target, choreographyFlags, damage);
+		return;
+	}
+
+	// moveTo() also "arrives" when it gives up on a blocked path. Fighting an
+	// unreachable target would never land a blow, so drop it instead; the AI
+	// picks a (possibly different) target again.
+	if (!isLocationReached(glm::vec2(x, y), MAX(range, kMinMoveRange) + 0.01f, ctx)) {
+		debugC(Common::kDebugEngineLogic, 1, "Creature \"%s\" cannot reach \"%s\"; dropping the attack",
+		       ctx.creature->getTag().c_str(), target->getTag().c_str());
+		if (ctx.creature->getAttackTarget() == target)
+			ctx.creature->cancelCombat();
+		return;
+	}
+
+	ctx.creature->startCombat(target, ctx.area->_module->getNextCombatRound());
 }
 
 void ActionExecutor::executePickUpItem(Action &action, const ExecutionContext &ctx) {
@@ -316,25 +809,53 @@ bool ActionExecutor::isLocationReached(const glm::vec2 &location, float range, c
 	return glm::distance(glm::vec2(x, y), location) <= range;
 }
 
-bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx, bool forceRun) {
-	if (isLocationReached(location, range, ctx))
-		return true;
+bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx,
+                            bool forceRun, bool forceWalk) {
+	range = MAX(range, kMinMoveRange);
 
-	ctx.creature->makeLookAt(location.x, location.y);
+	MovePath &path = ctx.creature->getMovePath();
+
+	if (isLocationReached(location, range, ctx)) {
+		ctx.creature->resetBlockedMoveTime();
+		path.clear();
+		return true;
+	}
 
 	float oX, oY, oZ;
 	ctx.creature->getPosition(oX, oY, oZ);
 	glm::vec2 origin(oX, oY);
 
-	glm::vec2 diff = location - origin;
-	glm::vec2 dir = glm::normalize(diff);
+	// Walk a walkmesh route around walls rather than straight into them. A
+	// goal that moved a lot (a chased creature) or an old route is redone.
+	path.age += ctx.frameTime;
+	if (!path.valid || (glm::length(path.goal - location) > kRepathDistance) || (path.age > kRepathTime)) {
+		path.clear();
+		path.valid = true;
+		if (!ctx.area->findPath(origin, location, path.waypoints))
+			path.waypoints.assign(1, location); // No known route: straight on.
+	}
+	path.goal = location;
+	path.waypoints.back() = location;
 
+	const glm::vec2 target = nextWaypoint(path.waypoints, origin, kWaypointReach);
+
+	glm::vec2 diff = target - origin;
 	float dist = glm::length(diff);
-	bool run = forceRun || dist > kWalkDistance;
+	if (dist < 0.0001f)
+		return false;
+
+	ctx.creature->makeLookAt(target.x, target.y);
+
+	const glm::vec2 dir = diff / dist;
+
+	bool run = forceRun || (!forceWalk && (glm::length(location - origin) > kWalkDistance));
 	float moveRate = run ? ctx.creature->getRunRate() : ctx.creature->getWalkRate();
 
-	float x = origin.x + moveRate * dir.x * ctx.frameTime;
-	float y = origin.y + moveRate * dir.y * ctx.frameTime;
+	// Don't overshoot the waypoint.
+	const float step = MIN(moveRate * ctx.frameTime, dist);
+
+	float x = origin.x + step * dir.x;
+	float y = origin.y + step * dir.y;
 	float z = ctx.area->evaluateElevation(x, y);
 
 	bool haveMovement = (z != FLT_MIN) &&
@@ -342,6 +863,7 @@ bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const Execut
 	                                        glm::vec3(x, y, z + 0.1f));
 
 	if (haveMovement) {
+		ctx.creature->resetBlockedMoveTime();
 		ctx.creature->playAnimation(run ? "run" : "walk", false, -1.0f);
 		ctx.creature->setPosition(x, y, z);
 
@@ -350,16 +872,28 @@ bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const Execut
 		else
 			ctx.area->notifyObjectMoved(*ctx.creature);
 
-		diff = location - glm::vec2(x, y);
-		dist = glm::length(diff);
-
-		if (dist <= range) {
+		if (glm::length(location - glm::vec2(x, y)) <= range) {
 			ctx.creature->playDefaultAnimation();
+			path.clear();
 			return true;
 		}
 
 	} else {
 		ctx.creature->playDefaultAnimation();
+
+		// Something (a door, a placeable) is in the way: look for another route.
+		if (path.age > kRepathWhenBlocked)
+			path.valid = false;
+
+		// Rather than stall the action queue (and any cutscene waiting on it)
+		// forever, give up after a while and let the action proceed from here.
+		if (ctx.creature->addBlockedMoveTime(ctx.frameTime) >= kMaxBlockedMoveTime) {
+			debugC(Common::kDebugEngineLogic, 1, "Creature \"%s\" is stuck; abandoning movement",
+			       ctx.creature->getTag().c_str());
+			ctx.creature->resetBlockedMoveTime();
+			path.clear();
+			return true;
+		}
 	}
 
 	return false;
@@ -372,52 +906,166 @@ void ActionExecutor::executeWait(Action &action, const ExecutionContext &ctx) {
 		ctx.creature->popAction();
 }
 
-void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ctx) {
+ActionExecutor::CastApproach ActionExecutor::approachCastTarget(Action &action, const ExecutionContext &ctx) {
 	Creature *caster = ctx.creature;
+
+	// Scripted casts with bCheat (cutscenes) happen where the caster stands.
+	if (action.cheat && action.item.empty())
+		return kCastNow;
+
+	Object *target = action.object;
+	if (target == caster)
+		return kCastNow;
+
+	// A power cast at nothing (no object, no location) is cast on oneself.
+	glm::vec2 goal(action.location.x, action.location.y);
+	if (target) {
+		float x, y, _;
+		target->getPosition(x, y, _);
+		goal = glm::vec2(x, y);
+	} else if (action.location == glm::vec3(0.0f))
+		return kCastNow;
+
+	const SpellInfo *spell = getSpellInfo(action.actionID);
+	if (!spell || (spell->range < 0.0f))
+		return kCastNow;
+
+	const bool needSight = spell->hostile && target;
+
+	const bool inRange = isLocationReached(goal, spell->range, ctx);
+	if (inRange && (!needSight || ctx.area->hasLineOfSight(caster, target)))
+		return kCastNow;
+
+	// Out of range: walk until well inside it. In range but out of sight: walk closer.
+	const float approach = inRange ? MIN(kCastSightApproach, spell->range)
+	                               : MAX(spell->range - kCastRangeMargin, kMinMoveRange);
+	if (!moveTo(goal, approach, ctx))
+		return kCastWalking;
+
+	// moveTo() also "arrives" when it gives up on a blocked path.
+	if (!isLocationReached(goal, spell->range, ctx))
+		return kCastAbandon;
+
+	// Arrived at the edge of the range, but still out of sight: get closer first.
+	if (needSight && (approach > kCastSightApproach) && !ctx.area->hasLineOfSight(caster, target))
+		return kCastWalking;
+
+	// castSpell() refuses a hostile power without line of sight.
+	return kCastNow;
+}
+
+void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionContext &ctx) {
+	// ActionCastFakeSpell*: the casting motions where the caster stands, no effect.
+	if (queuedAction.fake) {
+		const Action action = queuedAction;
+		ctx.creature->popAction();
+
+		if (action.object)
+			ctx.creature->makeLookAt(action.object);
+		else
+			ctx.creature->makeLookAt(action.location.x, action.location.y);
+
+		ctx.creature->setLastForcePowerUsed(action.actionID);
+		ctx.creature->playSpellCastVisuals(action.actionID);
+		ctx.creature->playAnimation("castout", false);
+		return;
+	}
+
+	// The dead are past any Force power cast at them.
+	Creature *targetCreature = ObjectContainer::toCreature(queuedAction.object);
+	if (targetCreature && (targetCreature != ctx.creature) && targetCreature->isDead()) {
+		ctx.creature->popAction();
+		return;
+	}
+
+	const CastApproach approach = approachCastTarget(queuedAction, ctx);
+	if (approach == kCastWalking)
+		return;
+
+	// Casting always consumes the action. Pop it before anything runs: impact
+	// scripts and effects (stun, ClearAllActions, ...) may clear the queue.
+	const Action action = queuedAction;
+	ctx.creature->popAction();
+
+	if (approach == kCastAbandon) {
+		debugC(Common::kDebugEngineLogic, 1, "\"%s\" cannot get into range of power %d",
+		       ctx.creature->getTag().c_str(), action.actionID);
+		return;
+	}
+
+	castSpell(action, ctx);
+}
+
+/** The live item object of an equipped or carried item template. */
+static Object *findCastItem(Creature &caster, const Common::UString &item) {
+	for (int slot = 0; slot < kInventorySlotMAX; ++slot) {
+		const InventorySlot inventorySlot = static_cast<InventorySlot>(slot);
+		if (caster.getCreatureInfo().isInventorySlotEquipped(inventorySlot) &&
+		    (caster.getCreatureInfo().getEquippedItem(inventorySlot) == item))
+			return caster.getEquipedItem(inventorySlot);
+	}
+
+	Item *found = caster.findInventoryItemByTag(item);
+	return found ? found : caster.addScriptItem(item);
+}
+
+bool ActionExecutor::castSpell(const Action &action, const ExecutionContext &ctx) {
+	Creature *caster = ctx.creature;
+	if (!caster || !ctx.area)
+		return false;
+
 	int cost = 0;
 
 	if (!_spellsLoaded)
 		loadSpells();
 
+	// Powers of the side of the Force opposite to the caster's cost more.
+	// bCheat and spells cast by items are free.
 	const SpellInfo *spell = getSpellInfo(action.actionID);
-	if (spell)
-		cost = spell->cost;
-
-	// Alignment adjustments (KotOR rule: Opposite side costs more)
-	int alignment = caster->getAlignment(); // 0-100, 100 is Light, 0 is Dark
-	if (spell) {
-		// Simplified heuristic: Hostile powers are Dark (category 3), 
-		// Non-hostile are Light (category 2). In real game we use category column.
-		if (spell->hostile) {
-			// Dark Side Power
-			if (alignment > 60)      cost = (cost * 3) / 2; // +50% for Light side users
-			else if (alignment < 40) cost = (cost * 3) / 4; // -25% for Dark side users
-		} else {
-			// Light Side / Neutral (Simplified)
-			if (alignment < 40)      cost = (cost * 3) / 2; // +50% for Dark side users
-			else if (alignment > 60) cost = (cost * 3) / 4; // -25% for Light side users
-		}
-	}
+	if (spell && !action.cheat)
+		cost = getForcePowerCost(spell->cost, spell->goodEvil, caster->getAlignment());
 
 	if (caster->getForcePoints() < cost) {
 		debugC(Common::kDebugEngineLogic, 1, "Not enough Force Points to cast power %d", action.actionID);
-		caster->popAction();
-		return;
+		return false;
 	}
 
-	int saveDC = 10 + caster->getHitDice() + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+	int saveDC = 10 + caster->getHitDice() + caster->getAbilityModifier(kAbilityWisdom);
 	bool harmful = spell ? spell->hostile : false;
 
 	// Hostile targeted powers need line of sight past closed doors (before spending FP).
-	if (harmful && action.object && ctx.area && !ctx.area->hasLineOfSight(caster, action.object)) {
+	if (harmful && action.object && !ctx.area->hasLineOfSight(caster, action.object)) {
 		debugC(Common::kDebugEngineLogic, 1, "Force power %d blocked by cover", action.actionID);
-		caster->popAction();
-		return;
+		return false;
 	}
 
 	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->setLastForcePowerUsed(action.actionID);
-	ctx.area->_module->setSpellScriptContext(action.actionID, caster, action.object, saveDC, harmful);
+	caster->setLastAttackAction(kActionCastSpell);
+	caster->playSpellCastVisuals(action.actionID);
+
+	// Using the Force on someone gives a sneaking caster away.
+	if (harmful && caster->getStealthMode())
+		caster->setStealthMode(false);
+
+	// The item casting the spell (GetSpellCastItem), used up when it's a consumable.
+	Object *castItem = nullptr;
+	if (!action.item.empty()) {
+		castItem = findCastItem(*caster, action.item);
+		if (action.consumeItem)
+			caster->getCreatureInfo().removeInventoryItem(action.item, 1);
+	}
+
+	// A hostile power makes the caster the target's last hostile actor, so a
+	// kill by the power is credited to the caster (XP, GetLastKiller).
+	if (harmful) {
+		Creature *targetCreature = ObjectContainer::toCreature(action.object);
+		if (targetCreature && targetCreature != caster)
+			targetCreature->setLastHostileActor(caster);
+	}
+	ctx.area->_module->setSpellScriptContext(action.actionID, caster, action.object, saveDC, harmful, castItem);
+	if (!action.object)
+		ctx.area->_module->setSpellScriptTargetLocation(action.location);
 	ctx.area->_module->setGlobalNumber("__force_unsuccessful", 0);
 
 	// Prefer data-driven impact scripts from spells.2da when available.
@@ -427,9 +1075,12 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 		Object *owner = caster;
 		Object *triggerer = action.object ? action.object : caster;
 		ScriptContainer::runScript(spell->impactScript, owner, triggerer);
-		caster->popAction();
-		return;
+		// The impact script has resolved; don't leak its context into later scripts.
+		ctx.area->_module->clearSpellScriptContext();
+		return true;
 	}
+
+	bool handled = true;
 
 	// Apply power effects
 	switch (action.actionID) {
@@ -448,7 +1099,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 				if (target) {
 					caster->playAnimation("castout", false);
 					int level = caster->getHitDice();
-					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					int dc = 10 + level + caster->getAbilityModifier(kAbilityWisdom);
 					if (!target->rollSavingThrow(kSavingThrowWill, dc)) {
 						target->applyEffect(kEffectStun, 9.0f, 0, action.actionID);
 						debugC(Common::kDebugEngineLogic, 1, "Force Stun SUCCESS on %s", target->getTag().c_str());
@@ -465,7 +1116,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 				if (target) {
 					caster->playAnimation("castout", false);
 					int level = caster->getHitDice();
-					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					int dc = 10 + level + caster->getAbilityModifier(kAbilityWisdom);
 					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
 						target->applyEffect(kEffectKnockdown, 3.0f, 0, action.actionID);
 						target->applyEffect(kEffectDamage, 0.0f, level, action.actionID);
@@ -493,7 +1144,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 					int level = caster->getHitDice();
 					int damage = level * 3; // Simplified 1d6 per level approx
 					
-					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					int dc = 10 + level + caster->getAbilityModifier(kAbilityWisdom);
 					bool saved = target->rollSavingThrow(kSavingThrowWill, dc);
 					if (saved) {
 						damage /= 2;
@@ -525,7 +1176,7 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 				if (target) {
 					caster->playAnimation("castout", false);
 					int level = caster->getHitDice();
-					int dc = 10 + level + caster->getCreatureInfo().getAbilityModifier(kAbilityWisdom);
+					int dc = 10 + level + caster->getAbilityModifier(kAbilityWisdom);
 					
 					if (!target->rollSavingThrow(kSavingThrowFortitude, dc)) {
 						target->applyEffect(kEffectStun, 6.0f, 0, action.actionID);
@@ -547,48 +1198,109 @@ void ActionExecutor::executeCastSpell(Action &action, const ExecutionContext &ct
 			break;
 
 		default:
-			warning("ActionExecutor::executeCastSpell(): Unknown power ID %d", action.actionID);
+			warning("ActionExecutor::castSpell(): Unknown power ID %d", action.actionID);
+			handled = false;
 			break;
 	}
 
-	caster->popAction();
+	ctx.area->_module->clearSpellScriptContext();
+	return handled;
+}
+
+void ActionExecutor::executeRest(Action &UNUSED(action), const ExecutionContext &ctx) {
+	Creature *creature = ctx.creature;
+	creature->popAction();
+
+	Module *module = ctx.area->_module;
+
+	// As in the original, resting restores the whole party, and only when
+	// nobody in the party is fighting.
+	std::vector<Creature *> resting;
+	if (module->isObjectPartyMember(creature)) {
+		for (int i = 0; i < module->getPartyMemberCount(); ++i) {
+			Creature *member = module->getPartyMemberByIndex(i);
+			if (member)
+				resting.push_back(member);
+		}
+	} else
+		resting.push_back(creature);
+
+	for (Creature *c : resting)
+		if (c->isInCombat())
+			return;
+
+	for (Creature *c : resting)
+		c->restoreFully();
 }
 
 void ActionExecutor::executePlayAnimation(Action &action, const ExecutionContext &ctx) {
-	const Common::UString animName = getAnimationNameById(action.actionID);
-	if (animName.empty()) {
-		ctx.creature->popAction();
-		return;
-	}
+	// action.actionID: the script ANIMATION_* constant; action.range: the speed;
+	// action.startTime: the requested duration, then the time left to wait.
+	if (action.step == 0) {
+		const Common::UString animName = ctx.creature->getScriptAnimationName(action.actionID);
+		if (animName.empty()) {
+			ctx.creature->popAction();
+			return;
+		}
 
-	if (action.startTime < 0.0f) {
-		float speed = action.range > 0.0f ? action.range : 1.0f;
-		float length = -action.startTime;
-		ctx.creature->playAnimation(animName, true, length, speed);
-		action.startTime = length;
+		const float speed    = action.range > 0.0f ? action.range : 1.0f;
+		const float duration = action.startTime;
+
+		const PlayAnimationTiming timing =
+			getPlayAnimationTiming(action.actionID, duration, speed,
+			                       ctx.creature->getModelAnimationLength(animName));
+
+		ctx.creature->playAnimation(animName, true, timing.modelLength, speed);
+
+		if (timing.wait <= 0.0f) {
+			// Looping for good: done queueing, the animation plays on.
+			ctx.creature->popAction();
+			return;
+		}
+
+		action.step = timing.backToDefault ? 1 : 2;
+		action.startTime = timing.wait;
 	}
 
 	action.startTime -= ctx.frameTime;
 	if (action.startTime <= 0.0f) {
-		ctx.creature->playDefaultAnimation();
+		if (action.step == 1)
+			ctx.creature->playDefaultAnimation();
 		ctx.creature->popAction();
 	}
 }
 
 void ActionExecutor::executeCutsceneAttack(Action &action, const ExecutionContext &ctx) {
+	if (!action.object) {
+		ctx.creature->popAction();
+		return;
+	}
+
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
 	if (!moveTo(glm::vec2(x, y), ctx.creature->getMaxAttackRange(), ctx))
 		return;
 
+	// popAction() destroys the action, so keep what we still need.
+	Object *target = action.object;
+	const int choreographyFlags = action.choreographyFlags;
+	const int damage = action.damage;
+	const int animation = action.actionID;
 	ctx.creature->popAction();
-	ctx.creature->performCutsceneAttack(action.object, action.choreographyFlags);
+	ctx.creature->performCutsceneAttack(target, choreographyFlags, damage, animation);
 }
 
 void ActionExecutor::loadSpells() {
 	if (_spellsLoaded)
 		return;
+
+	const Aurora::TwoDAFile *ranges = nullptr;
+	try {
+		ranges = &TwoDAReg.get2DA("ranges");
+	} catch (...) {
+		ranges = nullptr;
+	}
 
 	try {
 		const Aurora::TwoDAFile &twoda = TwoDAReg.get2DA("spells");
@@ -603,6 +1315,8 @@ void ActionExecutor::loadSpells() {
 			info.cost = row.getInt("forcepoints");
 			info.impactScript = row.getString("impactscript");
 			info.hostile = row.getInt("hostile") != 0;
+			info.goodEvil = row.getString("goodevil");
+			info.range = getSpellRangeFromTable(row.getString("range"), ranges);
 			
 			_spells[info.id] = info;
 		}

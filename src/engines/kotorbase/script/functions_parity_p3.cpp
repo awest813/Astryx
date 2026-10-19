@@ -30,6 +30,7 @@
 #include "src/events/events.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
@@ -43,6 +44,7 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/sound.h"
+#include "src/engines/kotorbase/trigger.h"
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/action.h"
 
@@ -55,11 +57,11 @@ namespace KotORBase {
 
 namespace {
 
-Aurora::NWScript::EngineType *passThroughEffect(Aurora::NWScript::FunctionContext &ctx) {
+Effect passThroughEffect(Aurora::NWScript::FunctionContext &ctx) {
 	const Effect *effect = 0;
 	if (!ctx.getParams().empty())
 		effect = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
-	return effect ? effect->clone() : new Effect(kKotOREffectVisual, 0);
+	return effect ? *effect : Effect(kKotOREffectVisual, 0);
 }
 
 int currentHour() {
@@ -189,21 +191,18 @@ void Functions::getModuleItemLostBy(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::eventConversation(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = new Event(kEventUserDefined);
+	ctx.getReturn() = Event(kEventConversation);
 }
 
 void Functions::eventActivateItem(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = new Event(kEventUserDefined);
-}
+	// EventActivateItem(object oItem, location lTarget, object oTarget=OBJECT_INVALID)
+	Event e(kEventActivateItem);
 
-void Functions::setEncounterDifficulty(Aurora::NWScript::FunctionContext &ctx) {
-	_game->getModule().setGlobalNumber("__encounter_difficulty", ctx.getParams()[0].getInt());
-}
+	const Location *location = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
+	e.setActivateItem(getParamObject(ctx, 0), ctx.getCaller(), getParamObject(ctx, 2),
+	                  location ? *location : Location());
 
-void Functions::getEncounterDifficulty(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _game->getModule().getGlobalNumber("__encounter_difficulty");
+	ctx.getReturn() = e;
 }
 
 void Functions::actionExamine(Aurora::NWScript::FunctionContext &ctx) {
@@ -252,11 +251,12 @@ void Functions::versusTrapEffect(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::addMultiClass(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	// AddMultiClass(int nClassType, object oSource)
+	const int classId = ctx.getParams()[0].getInt();
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
 	if (!creature)
 		return;
 
-	const int classId = ctx.getParams()[1].getInt();
 	creature->getCreatureInfo().incrementClassLevel(static_cast<Class>(classId));
 	creature->setMaxForcePoints(creature->computeMaxForcePoints());
 }
@@ -278,19 +278,14 @@ void Functions::getIsDusk(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = (hour >= 17 && hour < 19) ? 1 : 0;
 }
 
-void Functions::getIsEncounterCreature(Aurora::NWScript::FunctionContext &ctx) {
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	ctx.getReturn() = (creature && creature->isEnemy()) ? 1 : 0;
-}
-
 void Functions::getStartingLocation(Aurora::NWScript::FunctionContext &ctx) {
-	Location *loc = new Location();
+	Location loc;
 	Area *area = _game->getModule().getCurrentArea();
 	if (area)
-		loc->setArea(area);
+		loc.setArea(area);
 	Creature *pc = _game->getModule().getPC();
 	if (pc)
-		*loc = pc->getLocation();
+		loc = pc->getLocation();
 	ctx.getReturn() = loc;
 }
 
@@ -304,46 +299,46 @@ void Functions::musicBackgroundSetDelay(Aurora::NWScript::FunctionContext &ctx) 
 }
 
 void Functions::getItemActivatedTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Location();
+	ctx.getReturn() = _itemActivatedEvent ? _itemActivatedEvent->getTargetLocation() : Location();
 }
 
 void Functions::getItemActivatedTarget(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	ctx.getReturn() = _itemActivatedEvent ? _itemActivatedEvent->getTarget() : nullptr;
 }
 
 void Functions::effectDisguise(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectVisual, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectVisual, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectTrueSeeing(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
-	ctx.getReturn() = new Effect(kKotOREffectSeeInvisible);
+	ctx.getReturn() = Effect(kKotOREffectSeeInvisible);
 }
 
 void Functions::effectTimeStop(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
-	ctx.getReturn() = new Effect(kKotOREffectParalyze);
+	ctx.getReturn() = Effect(kKotOREffectParalyze);
 }
 
 void Functions::effectHorrified(Aurora::NWScript::FunctionContext &ctx) {
 	(void)ctx;
-	ctx.getReturn() = new Effect(kKotOREffectStunned);
+	ctx.getReturn() = Effect(kKotOREffectStunned);
 }
 
 void Functions::effectSpellLevelAbsorption(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectSpellImmunity, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectSpellImmunity, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectDispelMagicBest(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectDispelMagicAll, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectDispelMagicAll, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectMissChance(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectConcealment, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectConcealment, ctx.getParams()[0].getInt());
 }
 
 void Functions::effectDamageShield(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = new Effect(kKotOREffectForceShield, ctx.getParams()[0].getInt());
+	ctx.getReturn() = Effect(kKotOREffectForceShield, ctx.getParams()[0].getInt());
 }
 
 void Functions::getMaxStealthXP(Aurora::NWScript::FunctionContext &ctx) {
@@ -373,13 +368,52 @@ void Functions::getCreatureSize(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getLastTrapDetected(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
+	// GetLastTrapDetected(object oTarget=OBJECT_SELF): the mine oTarget spotted last.
 	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Area *area = _game->getModule().getCurrentArea();
+	if (!target || !area)
+		return;
+
+	const uint32_t id = area->getLastTrapDetected(target->getID());
+	if (id != 0)
+		ctx.getReturn() = ObjectMan.findObject(id);
 }
 
 void Functions::getNearestTrapToObject(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
+	// GetNearestTrapToObject(object oTarget=OBJECT_SELF, int nTrapDetected=TRUE):
+	// the nearest armed mine (with nTrapDetected, only those oTarget knows of).
 	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	Area *area = _game->getModule().getCurrentArea();
+	if (!target || !area)
+		return;
+
+	const bool onlyDetected = ctx.getParams()[1].getInt() != 0;
+	const bool partyMember  = ObjectContainer::toPartyMember(target) != nullptr;
+
+	Trigger *nearest = nullptr;
+	float nearestDistance = 0.0f;
+	for (Trigger *trigger : area->getTriggers()) {
+		const Trap &trap = trigger->getTrap();
+		if (!trap.isActive())
+			continue;
+
+		// The party shares what it found.
+		if (onlyDetected && !trap.isDetectedBy(target->getID()) && !(partyMember && trap.isDetected()))
+			continue;
+
+		const float distance = target->getDistanceTo(trigger);
+		if (!nearest || (distance < nearestDistance)) {
+			nearest = trigger;
+			nearestDistance = distance;
+		}
+	}
+
+	if (nearest)
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(static_cast<Object *>(nearest));
 }
 
 void Functions::getAttemptedMovementTarget(Aurora::NWScript::FunctionContext &ctx) {
@@ -393,7 +427,7 @@ void Functions::getBlockingCreature(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::getChallengeRating(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	ctx.getReturn() = creature ? static_cast<float>(creature->getHitDice()) : 0.0f;
+	ctx.getReturn() = creature ? creature->getChallengeRating() : 0.0f;
 }
 
 void Functions::getFoundEnemyCreature(Aurora::NWScript::FunctionContext &ctx) {
@@ -427,8 +461,14 @@ void Functions::exportAllCharacters(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getCreatureMovmentType(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	// As KotOR.js: MOVEMENT_SPEED_IMMOBILE (1) for anything that can't move
+	// (k_inc_force won't Force push it), else MOVEMENT_SPEED_PC (0).
+	const Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	const bool immobile = !creature || creature->isDead() ||
+	                      creature->hasEffect(kEffectStun) || creature->hasEffect(kEffectKnockdown) ||
+	                      creature->hasEffect(kEffectConfusion) || creature->hasEffect(kEffectDazed);
+
+	ctx.getReturn() = immobile ? 1 : 0;
 }
 
 void Functions::musicBackgroundGetBattleTrack(Aurora::NWScript::FunctionContext &ctx) {

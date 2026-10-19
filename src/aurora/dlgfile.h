@@ -54,6 +54,12 @@ public:
 	static const uint32_t kEndLine     = 0xFFFFFFFE;
 	static const uint32_t kInvalidLine = 0xFFFFFFFF;
 
+	/** KotOR: an animation a conversation participant plays during a line. */
+	struct Animation {
+		Common::UString participant; ///< Tag of the participant ("OWNER" for the owner).
+		uint32_t        animation;   ///< DLG animation number.
+	};
+
 	struct Line {
 		uint32_t id; ///< ID of this line (entry-local).
 
@@ -69,11 +75,21 @@ public:
 		uint32_t        questEntry; ///< Entry ID to set the quest to.
 
 
+		Common::UString listener;    ///< KotOR: Tag of the listener, empty if default.
+
 		Common::UString cameraModel; ///< KotOR: Camera model to use.
 		uint32_t        cameraID;    ///< KotOR: Camera ID to use.
-		float           cameraAngle; ///< KotOR: Camera angle to use.
+		float           cameraAngle; ///< KotOR: Camera angle (shot type) to use.
+		uint32_t        cameraAnimation; ///< KotOR: Animation of the camera model (0: none).
+		float           camFieldOfView;  ///< KotOR: Field of view for this line (0: default).
+		uint32_t        delay;           ///< KotOR: Seconds to show the line (kInvalidLine: default).
+
+		std::vector<Animation> animations; ///< KotOR: Participant animations during this line.
 		uint32_t        camVidEffect;///< KotOR: Camera video effect.
 		uint32_t        fadeType;    ///< KotOR: Screen fade type.
+		float           fadeLength { 0.0f };  ///< KotOR: Seconds the fade takes.
+		float           fadeDelay { 0.0f };   ///< KotOR: Seconds before the fade starts.
+		float           fadeColor[3] { 0.0f, 0.0f, 0.0f }; ///< KotOR: Color faded to/from (RGB, 0-1).
 
 		uint32_t        emotion;     ///< KotOR2: Emotion to display.
 		uint32_t        facialAnim;  ///< KotOR2: Facial animation to play.
@@ -107,7 +123,21 @@ public:
 	bool isSkippable() const;
 
 	/** KotOR: Return the stunt list. */
-	Common::UString getStuntList() const;
+	/** A participant who plays a stunt model's animations in this cutscene. */
+	struct Stunt {
+		Common::UString participant; ///< Tag, "OWNER" or "PLAYER".
+		Common::UString stuntModel;  ///< Model whose animations the participant plays.
+	};
+
+	/** KotOR: the conversation's stunt actors ("StuntList"). */
+	const std::vector<Stunt> &getStunts() const;
+
+	/** KotOR: Camera model for animated camera shots. */
+	const Common::UString &getCameraModel() const;
+	/** KotOR: Conversation type (0: cinematic/human, 1: computer). */
+	uint32_t getConversationType() const;
+	/** KotOR: Is this an animated cutscene? */
+	bool isAnimatedCut() const;
 
 	bool hasEnded() const;
 
@@ -160,7 +190,10 @@ private:
 	bool _noZoomIn; ///< Starting the conversation does not zoom the camera onto the speaker.
 
 	bool            _skippable; ///< KotOR: Is the conversation skippable?
-	Common::UString _stuntList; ///< KotOR: Stunt list for the conversation.
+	std::vector<Stunt> _stunts; ///< KotOR: Stunt actors of the conversation.
+	Common::UString _cameraModel;      ///< KotOR: Camera model for animated shots.
+	uint32_t        _conversationType; ///< KotOR: Conversation type.
+	bool            _animatedCut;      ///< KotOR: Animated cutscene.
 
 	std::vector<Entry> _entriesNPC; ///< NPC dialog lines ("entries").
 	std::vector<Entry> _entriesPC;  ///< PC dialog lines ("replies").

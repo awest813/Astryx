@@ -50,6 +50,7 @@ private:
 	void updateLabels();
 	bool isFeatAvailable(uint32_t feat) const;
 	void callbackActive(Widget &widget);
+	void callbackKeyInput(const Events::Key &key, const Events::EventType &type);
 };
 
 } // End of namespace KotOR

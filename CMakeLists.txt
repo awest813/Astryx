@@ -58,6 +58,7 @@ include(GNUInstallDirs)
 include(CheckIncludeFileCXX)
 include(CMakeAM)
 include(SetCheckCompilerFlag)
+include(XoreosDependencies)
 
 
 # -------------------------------------------------------------------------
@@ -308,25 +309,36 @@ else()
   message(FATAL_ERROR "Could NOT find Iconv and no internal shim is available for this platform")
 endif()
 
-find_package(ZLIB REQUIRED)
+find_package(ZLIB)
+xoreos_check_dependency(ZLIB "${ZLIB_FOUND}" WHAT "compression"
+  DEBIAN zlib1g-dev FEDORA zlib-devel ARCH zlib VCPKG zlib)
 include_directories(${ZLIB_INCLUDE_DIRS})
 list(APPEND XOREOS_LIBRARIES ${ZLIB_LIBRARIES})
 
-find_package(Boost COMPONENTS system filesystem date_time locale REQUIRED)
+find_package(Boost COMPONENTS system filesystem date_time locale)
+xoreos_check_dependency(Boost "${Boost_FOUND}" WHAT "system, filesystem, date_time and locale libraries plus headers"
+  DEBIAN libboost-all-dev FEDORA boost-devel ARCH boost
+  VCPKG boost-filesystem boost-locale boost-date-time boost-system)
 
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 list(APPEND XOREOS_LIBRARIES ${Boost_LIBRARIES})
 
-find_package(SDL2 REQUIRED)
+find_package(SDL2)
+xoreos_check_dependency(SDL2 "${SDL2_FOUND}" WHAT "window, input and OpenGL context"
+  DEBIAN libsdl2-dev FEDORA SDL2-devel ARCH sdl2 VCPKG sdl2)
 include_directories(${SDL2_INCLUDE_DIR})
 list(APPEND XOREOS_LIBRARIES ${SDL2_LIBRARY})
 
-find_package(OpenAL REQUIRED)
+find_package(OpenAL)
+xoreos_check_dependency(OpenAL "${OPENAL_FOUND}" WHAT "OpenAL Soft, audio output"
+  DEBIAN libopenal-dev FEDORA openal-soft-devel ARCH openal VCPKG openal-soft)
 include_directories(${OPENAL_INCLUDE_DIR})
 list(APPEND XOREOS_LIBRARIES ${OPENAL_LIBRARY})
 
-find_package(Freetype REQUIRED)
+find_package(Freetype)
+xoreos_check_dependency(Freetype "${FREETYPE_FOUND}" WHAT "FreeType 2, font rendering"
+  DEBIAN libfreetype-dev FEDORA freetype-devel ARCH freetype2 VCPKG freetype)
 include_directories(${FREETYPE_INCLUDE_DIRS})
 link_directories(${FREETYPE_LIBRARY_DIRS})
 list(APPEND XOREOS_LIBRARIES ${FREETYPE_LIBRARIES})
@@ -340,6 +352,8 @@ if(ENABLE_MAD)
   else()
     set(ENABLE_MAD OFF)
   endif()
+  xoreos_check_dependency(libmad "${MAD_FOUND}" OPTIONAL WHAT "MP3 audio (KotOR music and voice-over)"
+    DEBIAN libmad0-dev FEDORA libmad-devel ARCH libmad VCPKG libmad)
 endif()
 
 if(ENABLE_FAAD)
@@ -351,6 +365,8 @@ if(ENABLE_FAAD)
   else()
     set(ENABLE_FAAD OFF)
   endif()
+  xoreos_check_dependency(libfaad "${FAAD_FOUND}" OPTIONAL WHAT "AAC audio"
+    DEBIAN libfaad-dev FEDORA faad2-devel ARCH faad2 VCPKG faad2)
 endif()
 
 if(ENABLE_VORBIS)
@@ -363,6 +379,14 @@ if(ENABLE_VORBIS)
   else()
     set(ENABLE_VORBIS OFF)
   endif()
+  if(OGG_FOUND AND VORBIS_FOUND)
+    set(_xoreos_vorbis_found TRUE)
+  else()
+    set(_xoreos_vorbis_found FALSE)
+  endif()
+  xoreos_check_dependency(libvorbis "${_xoreos_vorbis_found}" OPTIONAL WHAT "Ogg Vorbis audio"
+    DEBIAN libogg-dev libvorbis-dev FEDORA libogg-devel libvorbis-devel ARCH libogg libvorbis
+    VCPKG libogg libvorbis)
 endif()
 
 if(ENABLE_XVIDCORE)
@@ -374,6 +398,9 @@ if(ENABLE_XVIDCORE)
   else()
     set(ENABLE_XVIDCORE OFF)
   endif()
+  xoreos_check_dependency(xvidcore "${XVID_FOUND}" OPTIONAL
+    WHAT "XviD/H.263 video (Fedora: xvidcore-devel from RPM Fusion, no vcpkg port)"
+    DEBIAN libxvidcore-dev ARCH xvidcore)
 endif()
 
 if(ENABLE_VPX)
@@ -385,8 +412,11 @@ if(ENABLE_VPX)
   else()
     set(ENABLE_VPX OFF)
   endif()
+  xoreos_check_dependency(libvpx "${VPX_FOUND}" OPTIONAL WHAT "VP8/VP9 video"
+    DEBIAN libvpx-dev FEDORA libvpx-devel ARCH libvpx VCPKG libvpx)
 endif()
 
+set(ENABLE_LZMA_REQUESTED ${ENABLE_LZMA})
 if(ENABLE_LZMA)
   find_package(LibLZMA)
   if(LIBLZMA_FOUND)
@@ -398,6 +428,18 @@ if(ENABLE_LZMA)
   endif()
 endif()
 
+# KotOR (the engine this fork is about) needs liblzma. Rather than quietly
+# building a binary without KotOR, treat liblzma as required unless KotOR has
+# been switched off explicitly.
+if(NOT DEFINED ENABLE_KOTOR OR ENABLE_KOTOR)
+  xoreos_check_dependency(liblzma "${ENABLE_LZMA}"
+    WHAT "needed by KotOR (or build without it: -DENABLE_KOTOR=OFF -DENABLE_KOTOR2=OFF)"
+    DEBIAN liblzma-dev FEDORA xz-devel ARCH xz VCPKG liblzma)
+elseif(ENABLE_LZMA_REQUESTED AND NOT ENABLE_LZMA)
+  xoreos_check_dependency(liblzma FALSE OPTIONAL WHAT "LZMA decompression"
+    DEBIAN liblzma-dev FEDORA xz-devel ARCH xz VCPKG liblzma)
+endif()
+
 if(ENABLE_XML)
   find_package(LibXml2)
   if(LIBXML2_FOUND)
@@ -407,6 +449,8 @@ if(ENABLE_XML)
   else()
     set(ENABLE_XML OFF)
   endif()
+  xoreos_check_dependency(libxml2 "${LIBXML2_FOUND}" OPTIONAL WHAT "XML parsing (Dragon Age engines only)"
+    DEBIAN libxml2-dev FEDORA libxml2-devel ARCH libxml2 VCPKG libxml2)
 endif()
 
 if(ICONV_SECOND_ARGUMENT_IS_CONST)
@@ -439,9 +483,19 @@ endif()
 include_directories(${GLEW_INCLUDE_DIRS})
 list(APPEND XOREOS_LIBRARIES ${GLEW_LIBRARIES})
 
-find_package(OpenGL REQUIRED)
+# Keep CMake's historical libGL linking without the CMP0072 developer warning.
+if(NOT DEFINED OpenGL_GL_PREFERENCE)
+  set(OpenGL_GL_PREFERENCE LEGACY)
+endif()
+find_package(OpenGL)
+xoreos_check_dependency(OpenGL "${OPENGL_FOUND}" WHAT "OpenGL headers and library (always from the system)"
+  DEBIAN libgl-dev FEDORA mesa-libGL-devel ARCH mesa)
 include_directories(${OPENGL_INCLUDE_DIR})
 list(APPEND XOREOS_LIBRARIES ${OPENGL_LIBRARIES})
+
+# Stop here, with one message naming every missing required library, rather
+# than failing later with a wall of NOTFOUND errors.
+xoreos_report_missing_dependencies()
 
 # pthreads
 if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "MinGW")
@@ -651,8 +705,20 @@ set_property(SOURCE src/version/version.cpp APPEND PROPERTY COMPILE_DEFINITIONS 
 
 find_package(Git)
 if(GIT_FOUND)
-  execute_process(COMMAND ${GIT_EXECUTABLE} -C ${CMAKE_CURRENT_SOURCE_DIR} describe --long --match desc/* OUTPUT_VARIABLE XOREOS_REVDESC OUTPUT_STRIP_TRAILING_WHITESPACE)
-  string(REGEX REPLACE "desc/(.*)-([^-]*)-([^-]*)" "\\1+\\2.\\3" XOREOS_REVDESC "${XOREOS_REVDESC}")
+  execute_process(COMMAND ${GIT_EXECUTABLE} -C ${CMAKE_CURRENT_SOURCE_DIR} describe --long --match desc/* OUTPUT_VARIABLE XOREOS_REVDESC OUTPUT_STRIP_TRAILING_WHITESPACE
+                  RESULT_VARIABLE XOREOS_DESCRIBE_RESULT ERROR_QUIET)
+  if(XOREOS_DESCRIBE_RESULT EQUAL 0)
+    string(REGEX REPLACE "desc/(.*)-([^-]*)-([^-]*)" "\\1+\\2.\\3" XOREOS_REVDESC "${XOREOS_REVDESC}")
+  else()
+    # No desc/* tags (forks, shallow clones): fall back to the commit hash.
+    execute_process(COMMAND ${GIT_EXECUTABLE} -C ${CMAKE_CURRENT_SOURCE_DIR} rev-parse --short HEAD OUTPUT_VARIABLE XOREOS_HEAD_SHORT OUTPUT_STRIP_TRAILING_WHITESPACE
+                    RESULT_VARIABLE XOREOS_REVPARSE_RESULT ERROR_QUIET)
+    if(XOREOS_REVPARSE_RESULT EQUAL 0 AND XOREOS_HEAD_SHORT)
+      set(XOREOS_REVDESC "${xoreos_VERSION}+g${XOREOS_HEAD_SHORT}")
+    else()
+      set(XOREOS_REVDESC "${xoreos_VERSION}+unknown")
+    endif()
+  endif()
 
   execute_process(
     COMMAND ${GIT_EXECUTABLE} -C ${CMAKE_CURRENT_SOURCE_DIR} update-index --refresh --unmerged
@@ -719,3 +785,4 @@ message(STATUS "	libvpx: ${ENABLE_VPX}")
 message(STATUS "	liblzma: ${ENABLE_LZMA}")
 message(STATUS "	libxml2: ${ENABLE_XML}")
 message(STATUS "")
+xoreos_report_disabled_features()

@@ -22,6 +22,8 @@
  *  Handles the party management in KotOR games.
  */
 
+#include <algorithm>
+
 #include "src/common/error.h"
 
 #include "src/engines/kotorbase/partycontroller.h"
@@ -42,11 +44,11 @@ size_t PartyController::getPartyMemberCount() const {
 }
 
 Creature *PartyController::getPartyLeader() const {
-	return _party[0].second;
+	return _party.empty() ? nullptr : _party[0].second;
 }
 
 const std::pair<int, Creature *> &PartyController::getPartyMemberByIndex(int index) const {
-	if (index >= static_cast<int>(_party.size()))
+	if (index < 0 || index >= static_cast<int>(_party.size()))
 		throw Common::Exception("PartyController::getPartyMember(): Invalid index \"%d\"", index);
 
 	return _party[index];
@@ -87,9 +89,42 @@ void PartyController::addPartyMember(int npc, Creature *creature) {
 	_party.push_back(std::make_pair(npc, creature));
 
 	if (npc != -1) {
-		_module->getCurrentArea()->addCreature(creature);
+		// Scripts often add a creature that is already in the area
+		// (AddPartyMember(NPC_X, GetObjectByTag(...))). Adding it twice would
+		// give it two owners and delete it twice.
+		Area *area = _module ? _module->getCurrentArea() : nullptr;
+		if (area) {
+			const std::vector<Creature *> &creatures = area->getCreatures();
+			if (std::find(creatures.begin(), creatures.end(), creature) == creatures.end())
+				area->addCreature(creature);
+
+			// A recruited GIT creature now lives in the party; the area must
+			// not bring its GIT instance back on the next visit.
+			area->releaseFromPersistence(*creature);
+		}
 		creature->show();
 	}
+}
+
+bool PartyController::removePartyMember(Creature *creature) {
+	auto it = std::find_if(_party.begin(), _party.end(),
+	                       [creature](const std::pair<int, Creature *> &member) {
+		return member.second == creature;
+	});
+	if (!creature || (it == _party.end()))
+		return false;
+
+	const bool wasLeader = (it == _party.begin());
+	_party.erase(it);
+
+	// Only the controlled character can't be clicked on.
+	creature->setUsable(true);
+	if (wasLeader && !_party.empty() && _party[0].second) {
+		_party[0].second->setUsable(false);
+		_party[0].second->clearActions();
+	}
+
+	return true;
 }
 
 void PartyController::setPartyLeader(int npc) {
@@ -125,7 +160,8 @@ void PartyController::setPartyLeaderByIndex(int index) {
 	nextLeader.second->setUsable(false);
 	nextLeader.second->clearActions();
 
-	_module->notifyPartyLeaderChanged();
+	if (_module)
+		_module->notifyPartyLeaderChanged();
 }
 
 const Common::UString &PartyController::getAvailableNPCTemplate(int npc) const {
@@ -174,13 +210,6 @@ bool PartyController::handleEvent(const Events::Event &e) {
 
 		default:
 			return false;
-	}
-}
-
-void PartyController::raiseHeartbeatEvent() {
-	// ⚡ Bolt: Use const auto & to prevent unnecessary copies of std::pair<int, Creature *>
-	for (const auto &partyMember : _party) {
-		partyMember.second->runScript("k_ai_master", partyMember.second, _module->getCurrentArea());
 	}
 }
 

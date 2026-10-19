@@ -53,9 +53,10 @@ public:
 	/** Set the location's position. */
 	void setPosition(float  x, float  y, float  z);
 
-	/** Return the location's orientation. */
+	/** Return the location's orientation (an object orientation angle, see
+	 *  scriptFacingToOrientation()). */
 	float getFacing() const;
-	/** Set the location's orientation. */
+	/** Set the location's orientation (an object orientation angle). */
 	void setFacing(float facing);
 
 private:
@@ -64,6 +65,13 @@ private:
 	float _position[3] { 0.0f, 0.0f, 0.0f }; ///< The location's position.
 	float _facing { 0.0f };                  ///< The location's orientation.
 };
+
+/** Scripts give facings in degrees counter-clockwise from east (DIRECTION_EAST
+ *  is 0, DIRECTION_NORTH 90); an object's orientation angle is 0 when it faces
+ *  north, +Y (see Object::makeLookAt() and the area instance bearings). */
+float scriptFacingToOrientation(float facing);
+/** An object orientation angle as a script facing, in [0, 360). */
+float orientationToScriptFacing(float angle);
 
 } // End of namespace KotORBase
 

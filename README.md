@@ -57,6 +57,7 @@ Endar→Star Forge playthrough. Live smoke still needs game data. Supported slic
 - [x] Door/placeable visual restore on load; SWMG named object getters
 - [x] Audit polish: K1 NWScript signature table repair; Force LOS/FP order; effect instant duration
 - [x] Retail K1 IDs restored (`GetSkillRank` 315, `GetLastAttackType` 317, `GetIsInCombat` 320, `SetLocked` 324); creature GFF load/combat statements un-swallowed
+- [x] Playable-build audit: crash/softlock/save fixes across natives, module flow, combat, GUI (see [docs/PLAYTEST_BUILD.md](docs/PLAYTEST_BUILD.md))
 - [ ] Verified Endar Spire → Dantooine live smoke
 - [ ] SWMG / swoop / turret live progression fidelity
 - [ ] Full GFF save/load campaign round-trips
@@ -64,21 +65,47 @@ Endar→Star Forge playthrough. Live smoke still needs game data. Supported slic
 
 ## Quick start
 
-### Windows 10/11 (PowerShell)
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/bootstrap_windows.ps1
-powershell -ExecutionPolicy Bypass -File scripts/run_xoreos_windows.ps1
+You need your own copy of KotOR; no game data is included. Prerequisite
+install commands for each OS, and details on both build paths, are in
+[BUILDDEP.md](BUILDDEP.md).
+
+### Linux (system packages, fastest)
+```bash
+scripts/build_ci_linux.sh --install-deps --test   # apt/dnf/pacman; drop --install-deps if already installed
 ```
 
-### Linux (Bash)
+### Linux / macOS (self-contained vcpkg build; slow first run)
 ```bash
-./scripts/bootstrap_linux.sh
-./scripts/run_xoreos_linux.sh
+scripts/bootstrap_linux.sh --test
 ```
+
+### Windows 10/11 (PowerShell, needs Git, CMake and Visual Studio C++ tools)
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\bootstrap_windows.ps1 -Test
+```
+
+Each script prints the binary location and the exact launch command when it
+finishes. Re-run the unit tests at any time with
+`cmake --build <build-dir> --target check`. If CMake stops because a library is
+missing, its message names the package to install.
+
+## Playing
+
+```bash
+python3 scripts/xoreos_launcher_gui.py     # Windows: py -3 scripts\xoreos_launcher_gui.py
+```
+
+The launcher finds your Steam or GOG copy of KotOR, checks that the install is
+complete, remembers it, and starts the game. If the game stops with an error,
+the launcher shows the message. Without a window, use
+`scripts/run_xoreos_linux.sh` or `scripts\run_xoreos_windows.ps1`, or run
+`xoreos -p <game folder>` directly. See
+[docs/PLAYTEST_BUILD.md](docs/PLAYTEST_BUILD.md) for options and common errors.
 
 ## Links
 
 - [Detailed Roadmap](ROADMAP.md)
 - [Acceptance Criteria](MILESTONE.md)
 - [Full Parity Audit & Plan](docs/FULL_PARITY_AUDIT_AND_PLAN.md)
+- [Playtest Build Guide](docs/PLAYTEST_BUILD.md)
 - [Upstream xoreos](https://github.com/xoreos/xoreos)

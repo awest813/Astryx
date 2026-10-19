@@ -24,6 +24,8 @@
 
 #include <cassert>
 
+#include "src/common/util.h"
+
 #include "src/aurora/gff3file.h"
 #include "src/aurora/gff3writer.h"
 
@@ -144,6 +146,30 @@ const std::map<Common::UString, Inventory::ItemGroup> &Inventory::getItems() con
 
 bool Inventory::hasItem(const Common::UString &tag) const {
 	return _items.find(tag) != _items.end();
+}
+
+int Inventory::countItems(const Common::UString &tag) const {
+	int count = 0;
+	for (const auto &item : _items)
+		if (item.first.equalsIgnoreCase(tag))
+			count += MAX(item.second.count, 0);
+
+	return count;
+}
+
+int moveInventoryItems(Inventory &from, Inventory &to, const Common::UString &item, int count) {
+	const auto it = from.getItems().find(item);
+	if ((it == from.getItems().end()) || (count <= 0))
+		return 0;
+
+	// item may be the key of the entry the removal erases.
+	const Common::UString tag = item;
+	const int moved = MIN(count, MAX(it->second.count, 1));
+
+	from.removeItem(tag, moved);
+	to.addItem(tag, moved);
+
+	return moved;
 }
 
 } // End of namespace KotORBase

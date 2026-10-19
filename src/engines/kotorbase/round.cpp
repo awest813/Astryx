@@ -28,6 +28,8 @@
 
 #include "src/engines/kotorbase/round.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/creature.h"
 
 namespace Engines {
 
@@ -69,6 +71,10 @@ void RoundController::update() {
 	}
 }
 
+void RoundController::delay(uint32_t ms) {
+	_startTimestamp += ms;
+}
+
 inline bool RoundController::hasTimePassed(int ms) {
 	return EventMan.getTimestamp() > _startTimestamp + ms;
 }
@@ -82,8 +88,16 @@ inline void RoundController::raiseCombatRoundBegan() {
 }
 
 void RoundController::raiseHeartbeat() {
-	_module->_runScriptVar = 2001;
-	_module->_partyController.raiseHeartbeatEvent();
+	// Module and area heartbeats drive many plot checks. The heartbeats of the
+	// objects in the area (the party included) are spread over the round by
+	// the area itself (Area::runHeartbeats()).
+	Creature *pc = _module->getPC();
+	_module->runScript(kScriptHeartbeat, _module, pc);
+
+	if (Area *area = _module->getCurrentArea())
+		area->runScript(kScriptHeartbeat, area, pc);
+
+	_module->updateOutOfCombatRecovery();
 }
 
 } // End of namespace KotORBase

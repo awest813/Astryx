@@ -38,10 +38,35 @@ tests_engines_kotorbase_test_creatureinfo_SOURCES     = tests/engines/kotorbase/
 tests_engines_kotorbase_test_creatureinfo_LDADD       = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_creatureinfo_CXXFLAGS    = $(test_CXXFLAGS)
 
+check_PROGRAMS                                       += tests/engines/kotorbase/test_encounter
+tests_engines_kotorbase_test_encounter_SOURCES        = tests/engines/kotorbase/encounter.cpp
+tests_engines_kotorbase_test_encounter_LDADD          = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_encounter_CXXFLAGS       = $(test_CXXFLAGS)
+
 check_PROGRAMS                                       += tests/engines/kotorbase/test_combat
 tests_engines_kotorbase_test_combat_SOURCES           = tests/engines/kotorbase/combat.cpp
 tests_engines_kotorbase_test_combat_LDADD             = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_combat_CXXFLAGS          = $(test_CXXFLAGS)
+
+check_PROGRAMS                                       += tests/engines/kotorbase/test_combat_ai
+tests_engines_kotorbase_test_combat_ai_SOURCES        = tests/engines/kotorbase/combat_ai.cpp
+tests_engines_kotorbase_test_combat_ai_LDADD          = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_combat_ai_CXXFLAGS       = $(test_CXXFLAGS)
+
+check_PROGRAMS                                       += tests/engines/kotorbase/test_talent
+tests_engines_kotorbase_test_talent_SOURCES           = tests/engines/kotorbase/talent.cpp
+tests_engines_kotorbase_test_talent_LDADD             = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_talent_CXXFLAGS          = $(test_CXXFLAGS)
+
+check_PROGRAMS                                       += tests/engines/kotorbase/test_interaction
+tests_engines_kotorbase_test_interaction_SOURCES      = tests/engines/kotorbase/interaction.cpp
+tests_engines_kotorbase_test_interaction_LDADD        = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_interaction_CXXFLAGS     = $(test_CXXFLAGS)
+
+check_PROGRAMS                                       += tests/engines/kotorbase/test_effect_rules
+tests_engines_kotorbase_test_effect_rules_SOURCES     = tests/engines/kotorbase/effect_rules.cpp
+tests_engines_kotorbase_test_effect_rules_LDADD       = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_effect_rules_CXXFLAGS    = $(test_CXXFLAGS)
 
 check_PROGRAMS                                       += tests/engines/kotorbase/test_inventory
 tests_engines_kotorbase_test_inventory_SOURCES        = tests/engines/kotorbase/inventory.cpp
@@ -77,6 +102,11 @@ check_PROGRAMS                                           += tests/engines/kotorb
 tests_engines_kotorbase_test_endar_spire_golden_SOURCES   = tests/engines/kotorbase/endar_spire_golden.cpp
 tests_engines_kotorbase_test_endar_spire_golden_LDADD     = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_endar_spire_golden_CXXFLAGS  = $(test_CXXFLAGS)
+
+check_PROGRAMS                                            += tests/engines/kotorbase/test_endar_spire_effects
+tests_engines_kotorbase_test_endar_spire_effects_SOURCES   = tests/engines/kotorbase/endar_spire_effects.cpp
+tests_engines_kotorbase_test_endar_spire_effects_LDADD     = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_endar_spire_effects_CXXFLAGS  = $(test_CXXFLAGS)
 
 check_PROGRAMS                                           += tests/engines/kotorbase/test_levelup
 tests_engines_kotorbase_test_levelup_SOURCES                = tests/engines/kotorbase/levelup.cpp
@@ -132,3 +162,53 @@ check_PROGRAMS                                                 += tests/engines/
 tests_engines_kotorbase_test_lineofsight_SOURCES               = tests/engines/kotorbase/lineofsight.cpp
 tests_engines_kotorbase_test_lineofsight_LDADD                 = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_lineofsight_CXXFLAGS              = $(test_CXXFLAGS)
+
+check_PROGRAMS                                                 += tests/engines/kotorbase/test_nwscript_natives
+tests_engines_kotorbase_test_nwscript_natives_SOURCES          = tests/engines/kotorbase/nwscript_natives.cpp
+tests_engines_kotorbase_test_nwscript_natives_LDADD            = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_nwscript_natives_CXXFLAGS         = $(test_CXXFLAGS)
+
+check_PROGRAMS                                                 += tests/engines/kotorbase/test_cinematic_camera
+tests_engines_kotorbase_test_cinematic_camera_SOURCES          = tests/engines/kotorbase/cinematic_camera.cpp
+tests_engines_kotorbase_test_cinematic_camera_LDADD            = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_cinematic_camera_CXXFLAGS         = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_pathfollow
+tests_engines_kotorbase_test_pathfollow_SOURCES           = tests/engines/kotorbase/pathfollow.cpp
+tests_engines_kotorbase_test_pathfollow_LDADD             = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_pathfollow_CXXFLAGS          = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_actionmenu
+tests_engines_kotorbase_test_actionmenu_SOURCES           = tests/engines/kotorbase/actionmenu.cpp
+tests_engines_kotorbase_test_actionmenu_LDADD             = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_actionmenu_CXXFLAGS          = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_pause
+tests_engines_kotorbase_test_pause_SOURCES                = tests/engines/kotorbase/pause.cpp
+tests_engines_kotorbase_test_pause_LDADD                  = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_pause_CXXFLAGS               = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_worldscript
+tests_engines_kotorbase_test_worldscript_SOURCES          = tests/engines/kotorbase/worldscript.cpp
+tests_engines_kotorbase_test_worldscript_LDADD            = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_worldscript_CXXFLAGS         = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_animationevents
+tests_engines_kotorbase_test_animationevents_SOURCES      = tests/engines/kotorbase/animationevents.cpp
+tests_engines_kotorbase_test_animationevents_LDADD        = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_animationevents_CXXFLAGS     = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_creaturesounds
+tests_engines_kotorbase_test_creaturesounds_SOURCES       = tests/engines/kotorbase/creaturesounds.cpp
+tests_engines_kotorbase_test_creaturesounds_LDADD         = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_creaturesounds_CXXFLAGS      = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_endar_spire_flow
+tests_engines_kotorbase_test_endar_spire_flow_SOURCES     = tests/engines/kotorbase/endar_spire_flow.cpp
+tests_engines_kotorbase_test_endar_spire_flow_LDADD       = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_endar_spire_flow_CXXFLAGS    = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_k1_script_natives
+tests_engines_kotorbase_test_k1_script_natives_SOURCES    = tests/engines/kotorbase/k1_script_natives.cpp
+tests_engines_kotorbase_test_k1_script_natives_LDADD      = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_k1_script_natives_CXXFLAGS   = $(test_CXXFLAGS)

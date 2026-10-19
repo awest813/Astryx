@@ -58,19 +58,15 @@ public:
 	void showMenu() override;
 	void showGUIPanel(int panel) override;
 	void showDeathGUI() override;
-
-	void enter() override;
+	void showTutorialWindow(int index) override;
 
 	void signalEncounter(const Common::UString &id) override;
 
 protected:
-	bool deferIngameHUDOnEnter() const override;
-	void onFrameUpdate(float frameTime) override;
 
 private:
 	void showIngameOptionsMenu();
 
-	bool _playOpeningBeat { false };
 };
 
 } // End of namespace KotOR

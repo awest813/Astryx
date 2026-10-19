@@ -56,26 +56,55 @@ public:
 		int cost;
 		Common::UString impactScript;
 		bool hostile;
+		Common::UString goodEvil; ///< spells.2da "goodevil": G (light side), E (dark side) or -.
+		/** How far (m) the power reaches (spells.2da "range" via ranges.2da), or
+		 *  kSpellRangeUnlimited for personal and touch powers. */
+		float range { -1.0f };
 	};
 
 	static const SpellInfo *getSpellInfo(uint32_t id);
 	static void loadSpells();
 
+	/** Cast the spell of a kActionCastSpell right away: pay its Force points (unless
+	 *  bCheat), use up the casting item if asked to, and run the spells.2da impact
+	 *  script (or the built-in fallback). Returns false when the spell couldn't be
+	 *  cast (not enough Force points, no line of sight, unknown spell). */
+	static bool castSpell(const Action &action, const ExecutionContext &ctx);
+
 private:
+	/** What a queued cast does this frame. */
+	enum CastApproach {
+		kCastNow,     ///< In range (and sight): cast.
+		kCastWalking, ///< Still walking into range.
+		kCastAbandon  ///< The target can't be reached: give up.
+	};
+
 	static std::map<uint32_t, SpellInfo> _spells;
 	static bool _spellsLoaded;
 	/** Get if the current creature has reached a specified location. */
 	static bool isLocationReached(const glm::vec2 &location, float range, const ExecutionContext &ctx);
 
+	static void executeDoCommand(Action &action, const ExecutionContext &ctx);
 	static void executeMoveToPoint(Action &action, const ExecutionContext &ctx);
 	static void executeFollowLeader(Action &action, const ExecutionContext &ctx);
 	static void executeOpenLock(Action &action, const ExecutionContext &ctx);
+	static void executeLock(Action &action, const ExecutionContext &ctx);
+	static void executeFollow(Action &action, const ExecutionContext &ctx);
+	static void executeRandomWalk(Action &action, const ExecutionContext &ctx);
+	/** Disarm, recover, flag or examine a mine or a trapped door/placeable. */
+	static void executeTrapAction(Action &action, const ExecutionContext &ctx);
+	/** Lay the mine of the action's item just ahead of the creature. */
+	static void executeSetTrap(Action &action, const ExecutionContext &ctx);
 	static void executeUseObject(Action &action, const ExecutionContext &ctx);
 	static void executeAttackObject(Action &action, const ExecutionContext &ctx);
 	static void executePickUpItem(Action &action, const ExecutionContext &ctx);
 	static void executeDropItem(Action &action, const ExecutionContext &ctx);
 	static void executeWait(Action &action, const ExecutionContext &ctx);
 	static void executeCastSpell(Action &action, const ExecutionContext &ctx);
+	/** Walk the caster into the power's range (and line of sight, for a hostile
+	 *  power), as KotOR.js' ActionCastSpell does. */
+	static CastApproach approachCastTarget(Action &action, const ExecutionContext &ctx);
+	static void executeRest(Action &action, const ExecutionContext &ctx);
 	static void executeCutsceneAttack(Action &action, const ExecutionContext &ctx);
 	static void executePlayAnimation(Action &action, const ExecutionContext &ctx);
 
@@ -83,7 +112,8 @@ private:
 	 * Move the current creature towards a specified location. Returns
 	 * true if location is within a specified range.
 	 */
-	static bool moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx, bool forceRun = false);
+	static bool moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx,
+	                   bool forceRun = false, bool forceWalk = false);
 };
 
 } // End of namespace KotORBase

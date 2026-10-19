@@ -86,6 +86,7 @@
 #include "src/engines/kotorbase/action.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/area.h"
 
 #include "src/engines/kotorbase/talent.h"
@@ -192,7 +193,16 @@ void Functions::actionStartConversation(Aurora::NWScript::FunctionContext &ctx) 
 
 	const Common::UString &convName = ctx.getParams()[1].getString();
 
-	_game->getModule().startConversation(convName, ctx.getCaller());
+	// The NPC owns the conversation (its dialog when sDialog is empty, OBJECT_SELF
+	// of the dialog's scripts), even when the PC is told to start it (as KotOR.js).
+	Aurora::NWScript::Object *owner = ctx.getCaller();
+	Creature *caller = ObjectContainer::toCreature(owner);
+	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	if (caller && caller->isPC() && target && (target != caller) &&
+	    !(ObjectContainer::toCreature(target) && ObjectContainer::toCreature(target)->isPC()))
+		owner = target;
+
+	_game->getModule().startConversation(convName, owner);
 
 }
 
@@ -272,26 +282,23 @@ void Functions::actionMoveToObject(Aurora::NWScript::FunctionContext &ctx) {
 
 
 
-	float range = ctx.getParams()[2].getFloat();
-
-
+	// ActionMoveToObject(object oMoveTo, int bRun=FALSE, float fRange=1.0)
+	const bool  run   = ctx.getParams()[1].getInt() != 0;
+	const float range = ctx.getParams()[2].getFloat();
 
 	float x, y, z;
-
 	object->getPosition(x, y, z);
 
-
-
 	Action action(kActionMoveToPoint);
-
 	action.range = range;
-
 	action.location = glm::vec3(x, y, z);
+	action.choreographyFlags = run ? kMoveRun : kMoveWalk;
 
-
+	// ActionForceMoveToObject(..., float fTimeout=30.0): jump there after that.
+	if (ctx.getParams().size() > 3)
+		action.timeout = ctx.getParams()[3].getFloat();
 
 	caller->addAction(action);
-
 }
 
 
@@ -319,31 +326,29 @@ void Functions::actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx) {
 
 
 	float x, y, z;
-
 	dest->getPosition(x, y, z);
 
-
-
 	Action action(kActionMoveToPoint);
-
 	action.range = 0.1f; // arrive within 0.1 units of the target location
-
 	action.location = glm::vec3(x, y, z);
+	action.choreographyFlags = (ctx.getParams()[1].getInt() != 0) ? kMoveRun : kMoveWalk;
 
-
+	// ActionForceMoveToLocation(location, int bRun=FALSE, float fTimeout=30.0)
+	if (ctx.getParams().size() > 2)
+		action.timeout = ctx.getParams()[2].getFloat();
 
 	caller->addAction(action);
-
 }
 
 
 
 void Functions::actionRandomWalk(Aurora::NWScript::FunctionContext &ctx) {
+	// Wander about near here until the actions are cleared.
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller)
+		return;
 
-	(void)ctx;
-
-	// Graceful no-op for scripts that only request ambient movement.
-
+	caller->addAction(Action(kActionRandomWalk));
 }
 
 
@@ -394,6 +399,31 @@ void Functions::actionMoveAwayFromObject(Aurora::NWScript::FunctionContext &ctx)
 
 
 
+void Functions::actionMoveAwayFromLocation(Aurora::NWScript::FunctionContext &ctx) {
+	// ActionMoveAwayFromLocation(location lMoveAwayFrom, int bRun=FALSE,
+	//                            float fMoveAwayRange=40.0f)
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Location *from = ObjectContainer::toLocation(ctx.getParams()[0].getEngineType());
+	if (!caller || !from)
+		return;
+
+	float callerX, callerY, callerZ;
+	float fromX, fromY, fromZ;
+	caller->getPosition(callerX, callerY, callerZ);
+	from->getPosition(fromX, fromY, fromZ);
+
+	const float distance = MAX<float>(1.0f, ctx.getParams()[2].getFloat());
+	glm::vec3 away(callerX - fromX, callerY - fromY, callerZ - fromZ);
+	if (glm::length(away) < 0.001f)
+		away = glm::vec3(1.0f, 0.0f, 0.0f);
+	away = glm::normalize(away) * distance;
+
+	Action action(kActionMoveToPoint);
+	action.range = 0.1f;
+	action.location = glm::vec3(callerX, callerY, callerZ) + away;
+	caller->addAction(action);
+}
+
 void Functions::actionForceMoveToObject(Aurora::NWScript::FunctionContext &ctx) {
 
 	// Alias of ActionMoveToObject for our simple pathfinding
@@ -441,20 +471,19 @@ void Functions::actionFollowLeader(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::cancelCombat(Aurora::NWScript::FunctionContext &ctx) {
-
-	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
-
-	if (caller)
-
-		caller->cancelCombat();
-
+	// CancelCombat(object oidCreature): the creature given, not the caller
+	// (the Endar Spire's bridge helper placeable cancels Trask's and the PC's).
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	if (creature)
+		creature->cancelCombat();
 }
 
 
 
 void Functions::getAttemptedAttackTarget(Aurora::NWScript::FunctionContext &ctx) {
 
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	// GetAttemptedAttackTarget() takes no parameters: it queries the caller.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
 
 	if (creature)
 
@@ -510,7 +539,8 @@ void Functions::getLastAttackType(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::getAttemptedSpellTarget(Aurora::NWScript::FunctionContext &ctx) {
 
-	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	// GetAttemptedSpellTarget() takes no parameters: it queries the caller.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
 
 	if (creature)
 
@@ -549,17 +579,12 @@ void Functions::clearAllActions(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::setFacing(Aurora::NWScript::FunctionContext &ctx) {
-
-	float facing = ctx.getParams()[0].getFloat();
-
-
+	// SetFacing(float fDirection): degrees, DIRECTION_EAST 0, DIRECTION_NORTH 90.
+	const float facing = ctx.getParams()[0].getFloat();
 
 	Object *object = ObjectContainer::toObject(ctx.getCaller());
-
 	if (object)
-
-		object->setOrientation(0.0f, 0.0f, 1.0f, facing);
-
+		object->setOrientation(0.0f, 0.0f, 1.0f, scriptFacingToOrientation(facing));
 }
 
 
@@ -681,45 +706,54 @@ void Functions::actionAttack(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::cutsceneAttack(Aurora::NWScript::FunctionContext &ctx) {
+	// CutsceneAttack(object oTarget, int nAnimation, int nAttackResult, int nDamage)
+	//
+	// nAttackResult uses the retail ATTACK_RESULT_* script constants:
+	// 1 hit, 2 critical hit, 3 automatic hit, 4 miss, 5 resisted, 6 failed,
+	// 8 parried, 9 deflected. nAnimation is the animations.2da row the attacker
+	// plays (KotOR.js); without it, the attack of the weapon held.
+	static const int kScriptAttackResultMiss      = 4;
+	static const int kScriptAttackResultResisted  = 5;
+	static const int kScriptAttackResultFailed    = 6;
+	static const int kScriptAttackResultParried   = 8;
+	static const int kScriptAttackResultDeflected = 9;
 
-	Object *target = ObjectContainer::toObject(ctx.getParams()[0].getObject());
-
-	int modifier = ctx.getParams()[2].getInt();
-
-	int miss = ctx.getParams()[3].getInt();
-
-
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
+	const int animation = ctx.getParams()[1].getInt();
+	const int attackResult = ctx.getParams()[2].getInt();
+	const int damage = ctx.getParams()[3].getInt();
 
 	Creature *attacker = ObjectContainer::toCreature(ctx.getCaller());
-
 	if (!attacker || !target)
-
 		return;
 
+	const bool miss = (attackResult == kScriptAttackResultMiss)     ||
+	                  (attackResult == kScriptAttackResultResisted) ||
+	                  (attackResult == kScriptAttackResultFailed)   ||
+	                  (attackResult == kScriptAttackResultParried)  ||
+	                  (attackResult == kScriptAttackResultDeflected);
 
-
-	int point = ctx.getParams()[1].getInt();
 	int flags = 0;
+	if (miss) {
+		flags |= kCutsceneAttackForceMiss | kCutsceneAttackNoDamage;
+	} else {
+		flags |= kCutsceneAttackForceHit | kCutsceneAttackPlayReaction;
 
-	if (miss)
-		flags |= kCutsceneAttackForceMiss;
-	else
-		flags |= kCutsceneAttackForceHit;
+		Creature *victim = ObjectContainer::toCreature(target);
+		if (damage <= 0 || !victim) {
+			flags |= kCutsceneAttackNoDamage;
+		} else {
+			if ((damage >= victim->getCurrentHitPoints()) && !victim->getMinOneHitPoints())
+				flags |= kCutsceneAttackFinishingBlow;
 
-	if (modifier == 1)
-		flags |= kCutsceneAttackKnockback | kCutsceneAttackFinishingBlow;
-	else if (modifier == 2)
-		flags |= kCutsceneAttackNoDamage;
-
-	if (point != 0)
-		flags |= kCutsceneAttackPlayReaction;
-
-
+			// Applied when the blow lands (Creature::performCutsceneAttack).
+		}
+	}
 
 	Action action(kActionCutsceneAttack, target, flags);
-
+	action.actionID = animation;
+	action.damage = (miss || (flags & kCutsceneAttackNoDamage)) ? 0 : damage;
 	attacker->addAction(action);
-
 }
 
 
@@ -756,11 +790,15 @@ void Functions::cutsceneMove(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::getLastAttacker(Aurora::NWScript::FunctionContext &ctx) {
 
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();
 
-	ctx.getReturn() = creature ? creature->getLastHostileActor()
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
 
-	                           : static_cast<Aurora::NWScript::Object *>(nullptr);
+	// A door or container being bashed knows who hit it, too.
+	if (Creature *creature = ObjectContainer::toCreature(object))
+		ctx.getReturn() = creature->getLastHostileActor();
+	else if (Situated *situated = ObjectContainer::toSituated(object))
+		ctx.getReturn() = situated->getLastHostileActor();
 
 }
 
@@ -825,17 +863,18 @@ void Functions::actionPlayAnimation(Aurora::NWScript::FunctionContext &ctx) {
 	if (!caller)
 		return;
 
+	// ActionPlayAnimation(int nAnimation, float fSpeed=1.0, float fDurationSeconds=0.0)
 	const int animID = ctx.getParams()[0].getInt();
 
-	float speed  = ctx.getParams()[1].getFloat();
-	float length = ctx.getParams()[2].getFloat();
-	if (length <= 0.0f)
-		length = 1.0f;
+	const float speed  = ctx.getParams()[1].getFloat();
+	const float length = ctx.getParams()[2].getFloat();
 
+	// See ActionExecutor::executePlayAnimation() for what the duration means.
 	Action action(kActionPlayAnimation);
 	action.actionID = animID;
 	action.range = speed > 0.0f ? speed : 1.0f;
-	action.startTime = -length;
+	action.startTime = length;
+	action.step = 0;
 	caller->addAction(action);
 }
 
@@ -857,7 +896,7 @@ void Functions::playAnimation(Aurora::NWScript::FunctionContext &ctx) {
 
 	const int animID = ctx.getParams()[0].getInt();
 
-	const Common::UString animName = getAnimationNameById(animID);
+	const Common::UString animName = caller->getScriptAnimationName(animID);
 	if (animName.empty())
 		return;
 
@@ -900,17 +939,21 @@ void Functions::actionJumpToLocation(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionPauseConversation(Aurora::NWScript::FunctionContext &ctx) {
-
-	(void)ctx;
-
+	// Queued: the conversation holds once the actor reaches this point of its
+	// action queue, until a queued ActionResumeConversation.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (creature)
+		creature->addAction(Action(kActionPauseConversation));
+	else
+		_game->getModule().setConversationPaused(true);
 }
 
-
-
 void Functions::actionResumeConversation(Aurora::NWScript::FunctionContext &ctx) {
-
-	(void)ctx;
-
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (creature)
+		creature->addAction(Action(kActionResumeConversation));
+	else
+		_game->getModule().setConversationPaused(false);
 }
 
 
@@ -991,6 +1034,18 @@ void Functions::actionUseTalentOnObject(Aurora::NWScript::FunctionContext &ctx) 
 
 
 
+	// Force powers and item spells are cast like ActionCastSpellAtObject.
+
+	if (talent->getType() == kTalentTypeSpell) {
+
+		caller->addAction(makeTalentSpellAction(*caller, *talent, target ? target : caller));
+
+		return;
+
+	}
+
+
+
 	if (talent->getType() == kTalentTypeFeat) {
 
 		caller->setLastCombatFeatUsed(talent->getID());
@@ -1044,6 +1099,24 @@ void Functions::actionUseTalentAtLocation(Aurora::NWScript::FunctionContext &ctx
 	if (!caller || !talent || !talent->isValid() || !target)
 
 		return;
+
+
+
+	if (talent->getType() == kTalentTypeSpell) {
+
+		Action spell = makeTalentSpellAction(*caller, *talent, nullptr);
+
+		float sx, sy, sz;
+
+		target->getPosition(sx, sy, sz);
+
+		spell.location = glm::vec3(sx, sy, sz);
+
+		caller->addAction(spell);
+
+		return;
+
+	}
 
 
 
@@ -1157,6 +1230,8 @@ void Functions::actionCastSpellAtObject(Aurora::NWScript::FunctionContext &ctx) 
 	Action action(kActionCastSpell);
 	action.object = target;
 	action.actionID = spellID;
+	// ActionCastSpellAtObject(nSpell, oTarget, nMetaMagic, bCheat, ...)
+	action.cheat = (ctx.getParams().size() > 3) && (ctx.getParams()[3].getInt() != 0);
 	caller->addAction(action);
 }
 
@@ -1175,6 +1250,8 @@ void Functions::actionCastSpellAtLocation(Aurora::NWScript::FunctionContext &ctx
 	Action action(kActionCastSpell);
 	action.location = glm::vec3(x, y, z);
 	action.actionID = spellID;
+	// ActionCastSpellAtLocation(nSpell, lTargetLocation, nMetaMagic, bCheat, ...)
+	action.cheat = (ctx.getParams().size() > 3) && (ctx.getParams()[3].getInt() != 0);
 	caller->addAction(action);
 }
 
@@ -1256,7 +1333,7 @@ void Functions::actionGiveItem(Aurora::NWScript::FunctionContext &ctx) {
 
 
 
-	target->getInventory().addItem(resRef);
+	_game->getModule().getInventoryOf(*target).addItem(resRef);
 
 
 
@@ -1264,7 +1341,7 @@ void Functions::actionGiveItem(Aurora::NWScript::FunctionContext &ctx) {
 
 	if (caller)
 
-		caller->getInventory().removeItem(resRef);
+		_game->getModule().getInventoryOf(*caller).removeItem(resRef);
 
 }
 
@@ -1304,13 +1381,13 @@ void Functions::actionTakeItem(Aurora::NWScript::FunctionContext &ctx) {
 
 
 
-	source->getInventory().removeItem(resRef);
+	_game->getModule().getInventoryOf(*source).removeItem(resRef);
 
 
 
 	if (caller)
 
-		caller->getInventory().addItem(resRef);
+		_game->getModule().getInventoryOf(*caller).addItem(resRef);
 
 }
 
@@ -1339,27 +1416,25 @@ void Functions::giveItem(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionDoCommand(Aurora::NWScript::FunctionContext &ctx) {
-
-	// ActionDoCommand(action aAction)
-
-	// The script state (closure) in aAction is executed immediately as part of
-
-	// the caller's action queue. We execute it synchronously here since our
-
-	// action queue does not model deferred closures.
-
+	// ActionDoCommand(action aAction): run the closure once the caller's
+	// earlier queued actions are done (e.g. walk somewhere, then destroy self).
 	Common::UString script = ctx.getScriptName();
-
 	if (script.empty())
-
 		return;
-
-
 
 	const Aurora::NWScript::ScriptState &state = ctx.getParams()[0].getScriptState();
 
-	_game->getModule().delayScript(script, state, ctx.getCaller(), ctx.getTriggerer(), 0);
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (!creature) {
+		// Only creatures have an action queue; others run it right away.
+		_game->getModule().delayScript(script, state, ctx.getCaller(), ctx.getTriggerer(), 0);
+		return;
+	}
 
+	Action action(kActionDoCommand);
+	action.script = script;
+	action.scriptState = std::make_shared<Aurora::NWScript::ScriptState>(state);
+	creature->addAction(action);
 }
 
 
@@ -1373,29 +1448,51 @@ void Functions::actionDoCommand(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionUseSkill(Aurora::NWScript::FunctionContext &ctx) {
-
 	// ActionUseSkill(int nSkill, object oTarget, int nSubSkill=0, object oItemUsed=OBJECT_INVALID)
-
-	// Queue a UseObject action — skill check is handled by the object's OnUsed script.
-
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
-
 	Object   *target = ObjectContainer::toObject(ctx.getParams()[1].getObject());
-
 	if (!caller || !target)
-
 		return;
 
+	const int skill    = ctx.getParams()[0].getInt();
+	const int subSkill = ctx.getParams()[2].getInt();
 
+	// SUBSKILL_FLAGTRAP, SUBSKILL_RECOVERTRAP, SUBSKILL_EXAMINETRAP
+	static const int kSubSkillFlagTrap    = 100;
+	static const int kSubSkillRecoverTrap = 101;
+	static const int kSubSkillExamineTrap = 102;
 
+	Situated *situated = ObjectContainer::toSituated(target);
+
+	if ((skill == kSkillSecurity) && situated && situated->isLocked()) {
+		// Pick the lock, with a security tunneler if one is given.
+		Action action(kActionOpenLock, target);
+		action.range = 1.5f;
+		if (Item *item = ObjectContainer::toItem(ctx.getParams()[3].getObject()))
+			action.item = item->getTemplateResRef().empty() ? item->getTag() : item->getTemplateResRef();
+
+		caller->addAction(action);
+		return;
+	}
+
+	if (skill == kSkillDemolitions) {
+		ActionType type = kActionDisableTrap;
+		if (subSkill == kSubSkillFlagTrap)
+			type = kActionFlagTrap;
+		else if (subSkill == kSubSkillRecoverTrap)
+			type = kActionRecoverTrap;
+		else if (subSkill == kSubSkillExamineTrap)
+			type = kActionExamineTrap;
+
+		caller->addAction(Action(type, target));
+		return;
+	}
+
+	// Anything else: use the object; its OnUsed script does the skill check.
 	Action action(kActionUseObject);
-
 	action.object = target;
-
 	action.range  = 1.5f;
-
 	caller->addAction(action);
-
 }
 
 
@@ -1409,47 +1506,20 @@ void Functions::actionUseSkill(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::setFacingPoint(Aurora::NWScript::FunctionContext &ctx) {
-
-	// SetFacingPoint(vector vTarget)
-
-	// Rotate the calling object so it faces vTarget.
-
+	// SetFacingPoint(vector vTarget): turn the caller towards vTarget.
 	Object *caller = ObjectContainer::toObject(ctx.getCaller());
-
 	if (!caller)
-
 		return;
 
-
-
 	float tx, ty, tz;
-
 	ctx.getParams()[0].getVector(tx, ty, tz);
 
-	(void)tz;
-
-
-
 	float cx, cy, cz;
-
 	caller->getPosition(cx, cy, cz);
+	if ((std::fabs(tx - cx) < 0.0001f) && (std::fabs(ty - cy) < 0.0001f))
+		return;
 
-	(void)cz;
-
-
-
-	float dx = tx - cx;
-
-	float dy = ty - cy;
-
-
-
-	// Compute the yaw angle and apply it.
-
-	float angle = Common::rad2deg(std::atan2(dy, dx));
-
-	caller->setOrientation(0.0f, 0.0f, 1.0f, angle);
-
+	caller->makeLookAt(tx, ty);
 }
 
 
@@ -1556,37 +1626,65 @@ void Functions::actionCircleObject(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionLockObject(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
-	if (object) {
-		// Logic to lock the object would go here
-		debugC(Common::kDebugEngineLogic, 1, "ActionLockObject: %s", object->getTag().c_str());
-	}
+	// ActionLockObject(object oTarget): walk up to it, close and lock it.
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Situated *target = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	if (!caller || !target)
+		return;
+
+	Action action(kActionLock, target);
+	action.range = 2.0f;
+	caller->addAction(action);
 }
 
 void Functions::actionUnlockObject(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
-	if (object) {
-		// Logic to unlock the object would go here
-		debugC(Common::kDebugEngineLogic, 1, "ActionUnlockObject: %s", object->getTag().c_str());
-	}
+	// ActionUnlockObject(object oTarget): walk up to it and pick the lock (Security).
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Situated *target = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	if (!caller || !target)
+		return;
+
+	Action action(kActionOpenLock, target);
+	action.range = 1.5f;
+	caller->addAction(action);
 }
 
 void Functions::actionCastFakeSpellAtObject(Aurora::NWScript::FunctionContext &ctx) {
-	int spellId = ctx.getParams()[0].getInt();
-	Aurora::NWScript::Object *target = getParamObject(ctx, 1);
+	// ActionCastFakeSpellAtObject(int nSpell, object oTarget, int nProjectilePathType=0):
+	// the caster goes through the motions of casting, with no effect.
+	const int spellId = ctx.getParams()[0].getInt();
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 1));
 
 	Creature *caster = ObjectContainer::toCreature(ctx.getCaller());
-	if (caster)
-		caster->setLastForcePowerUsed(spellId);
+	if (!caster || !target)
+		return;
 
-	if (target) {
-		debugC(Common::kDebugEngineLogic, 1, "ActionCastFakeSpellAtObject: spell %d on %s", spellId, target->getTag().c_str());
-	}
+	Action action(kActionCastSpell);
+	action.object = target;
+	action.actionID = spellId;
+	action.cheat = true;
+	action.fake = true;
+	caster->addAction(action);
 }
 
 void Functions::actionCastFakeSpellAtLocation(Aurora::NWScript::FunctionContext &ctx) {
-	int spellId = ctx.getParams()[0].getInt();
-	debugC(Common::kDebugEngineLogic, 1, "ActionCastFakeSpellAtLocation: spell %d", spellId);
+	// ActionCastFakeSpellAtLocation(int nSpell, location lTarget, int nProjectilePathType=0)
+	const int spellId = ctx.getParams()[0].getInt();
+	const Location *target = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
+
+	Creature *caster = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caster || !target)
+		return;
+
+	float x, y, z;
+	target->getPosition(x, y, z);
+
+	Action action(kActionCastSpell);
+	action.location = glm::vec3(x, y, z);
+	action.actionID = spellId;
+	action.cheat = true;
+	action.fake = true;
+	caster->addAction(action);
 }
 
 } // End of namespace KotORBase

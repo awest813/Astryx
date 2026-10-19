@@ -23,6 +23,7 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/path/doorwalkmesh.h \
     src/engines/kotorbase/path/objectwalkmesh.h \
     src/engines/kotorbase/path/pathfinding.h \
+    src/engines/kotorbase/path/pathfollow.h \
     src/engines/kotorbase/path/walkmeshloader.h \
     $(EMPTY)
 
@@ -30,5 +31,6 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/path/doorwalkmesh.cpp \
     src/engines/kotorbase/path/objectwalkmesh.cpp \
     src/engines/kotorbase/path/pathfinding.cpp \
+    src/engines/kotorbase/path/pathfollow.cpp \
     src/engines/kotorbase/path/walkmeshloader.cpp \
     $(EMPTY)

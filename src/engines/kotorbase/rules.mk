@@ -35,6 +35,11 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/door.h \
     src/engines/kotorbase/module.h \
     src/engines/kotorbase/trigger.h \
+    src/engines/kotorbase/triggeroccupancy.h \
+    src/engines/kotorbase/trap.h \
+    src/engines/kotorbase/heartbeatscheduler.h \
+    src/engines/kotorbase/encounterrules.h \
+    src/engines/kotorbase/encounter.h \
     src/engines/kotorbase/waypoint.h \
     src/engines/kotorbase/location.h \
     src/engines/kotorbase/sound.h \
@@ -49,19 +54,28 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/partycontroller.h \
     src/engines/kotorbase/creaturesearch.h \
     src/engines/kotorbase/cameracontroller.h \
+    src/engines/kotorbase/cinematicshot.h \
+    src/engines/kotorbase/reputation.h \
     src/engines/kotorbase/levelup.h \
     src/engines/kotorbase/journal.h \
     src/engines/kotorbase/itemactions.h \
     src/engines/kotorbase/itemupgrades.h \
     src/engines/kotorbase/swoopminigame.h \
+    src/engines/kotorbase/minigamedesc.h \
+    src/engines/kotorbase/minigameruntime.h \
     src/engines/kotorbase/creatureinfo.h \
     src/engines/kotorbase/engine.h \
     src/engines/kotorbase/console.h \
     src/engines/kotorbase/actionqueue.h \
     src/engines/kotorbase/round.h \
+    src/engines/kotorbase/creaturesounds.h \
+    src/engines/kotorbase/visualeffects.h \
     src/engines/kotorbase/effect.h \
     src/engines/kotorbase/talent.h \
     src/engines/kotorbase/store.h \
+    src/engines/kotorbase/actionmenu.h \
+    src/engines/kotorbase/pause.h \
+    src/engines/kotorbase/perception.h \
     $(EMPTY)
 
 src_engines_kotorbase_libkotorbase_la_SOURCES += \
@@ -77,6 +91,11 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/door.cpp \
     src/engines/kotorbase/module.cpp \
     src/engines/kotorbase/trigger.cpp \
+    src/engines/kotorbase/triggeroccupancy.cpp \
+    src/engines/kotorbase/trap.cpp \
+    src/engines/kotorbase/heartbeatscheduler.cpp \
+    src/engines/kotorbase/encounterrules.cpp \
+    src/engines/kotorbase/encounter.cpp \
     src/engines/kotorbase/waypoint.cpp \
     src/engines/kotorbase/location.cpp \
     src/engines/kotorbase/sound.cpp \
@@ -90,19 +109,28 @@ src_engines_kotorbase_libkotorbase_la_SOURCES += \
     src/engines/kotorbase/partycontroller.cpp \
     src/engines/kotorbase/creaturesearch.cpp \
     src/engines/kotorbase/cameracontroller.cpp \
+    src/engines/kotorbase/cinematicshot.cpp \
+    src/engines/kotorbase/reputation.cpp \
     src/engines/kotorbase/levelup.cpp \
     src/engines/kotorbase/journal.cpp \
     src/engines/kotorbase/itemactions.cpp \
     src/engines/kotorbase/itemupgrades.cpp \
     src/engines/kotorbase/swoopminigame.cpp \
+    src/engines/kotorbase/minigamedesc.cpp \
+    src/engines/kotorbase/minigameruntime.cpp \
     src/engines/kotorbase/creatureinfo.cpp \
     src/engines/kotorbase/engine.cpp \
     src/engines/kotorbase/console.cpp \
     src/engines/kotorbase/actionqueue.cpp \
     src/engines/kotorbase/round.cpp \
+    src/engines/kotorbase/creaturesounds.cpp \
+    src/engines/kotorbase/visualeffects.cpp \
     src/engines/kotorbase/effect.cpp \
     src/engines/kotorbase/talent.cpp \
     src/engines/kotorbase/store.cpp \
+    src/engines/kotorbase/actionmenu.cpp \
+    src/engines/kotorbase/pause.cpp \
+    src/engines/kotorbase/perception.cpp \
     $(EMPTY)
 
 include src/engines/kotorbase/script/rules.mk

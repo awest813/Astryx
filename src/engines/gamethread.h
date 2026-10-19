@@ -27,7 +27,9 @@
 
 #include <list>
 #include <memory>
+#include <mutex>
 
+#include "src/common/ustring.h"
 #include "src/common/thread.h"
 
 namespace Engines {
@@ -45,8 +47,14 @@ public:
 
 	void run();
 
+	/** Return the error that stopped the game, or "" if there was none. */
+	Common::UString getFatalError() const;
+
 private:
 	std::unique_ptr<GameInstance> _game;
+
+	mutable std::mutex _fatalErrorMutex;
+	Common::UString _fatalError;
 
 	void threadMethod();
 };

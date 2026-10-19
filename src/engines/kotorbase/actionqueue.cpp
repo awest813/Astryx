@@ -44,8 +44,19 @@ void ActionQueue::add(const Action &action) {
 	_actions.push(action);
 }
 
+void ActionQueue::removeActionsTargeting(const Object *object) {
+	std::queue<Action> kept;
+	for (; !_actions.empty(); _actions.pop())
+		if (_actions.front().object != object)
+			kept.push(_actions.front());
+
+	_actions.swap(kept);
+}
+
 void ActionQueue::pop() {
-	_actions.pop();
+	// Scripts run by the current action may already have cleared the queue.
+	if (!_actions.empty())
+		_actions.pop();
 }
 
 } // End of namespace KotORBase

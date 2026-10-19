@@ -1,5 +1,16 @@
+<#
+.SYNOPSIS
+Bundle a built xoreos.exe, its DLLs and the launch scripts into a portable zip.
+
+.DESCRIPTION
+Build first, for example:
+  powershell -ExecutionPolicy Bypass -File scripts\bootstrap_windows.ps1 -Configuration Release
+then run this script. Without -BuildDir it looks in build-vcpkg-portable
+(the bootstrap default), then build-vcpkg.
+#>
 param(
-	[string]$BuildDir = "build-vcpkg",
+	[string]$BuildDir = "",
+	[ValidateSet("Debug", "Release", "RelWithDebInfo", "MinSizeRel")]
 	[string]$Configuration = "Release",
 	[string]$OutputRoot = "builds",
 	[string]$BundleName = ""
@@ -9,13 +20,39 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$buildRoot = Join-Path $repoRoot $BuildDir
-$binDir = Join-Path $buildRoot ("bin\" + $Configuration)
-$exePath = Join-Path $binDir "xoreos.exe"
 
-if (-not (Test-Path $exePath)) {
-	throw "xoreos executable not found: $exePath"
+if ($BuildDir) {
+	$buildDirCandidates = @($BuildDir)
+} else {
+	$buildDirCandidates = @("build-vcpkg-portable", "build-vcpkg")
 }
+
+# Multi-config generators put the exe in bin\<Configuration>, Ninja in bin\.
+$exePath = $null
+$searched = @()
+foreach ($candidate in $buildDirCandidates) {
+	if ([System.IO.Path]::IsPathRooted($candidate)) {
+		$candidateRoot = $candidate
+	} else {
+		$candidateRoot = Join-Path $repoRoot $candidate
+	}
+	foreach ($candidateExe in @((Join-Path $candidateRoot "bin\$Configuration\xoreos.exe"), (Join-Path $candidateRoot "bin\xoreos.exe"))) {
+		$searched += $candidateExe
+		if (-not $exePath -and (Test-Path $candidateExe)) {
+			$exePath = $candidateExe
+			$buildRoot = $candidateRoot
+		}
+	}
+}
+
+if (-not $exePath) {
+	throw ("xoreos.exe ($Configuration) not found. Looked in:`n  " + ($searched -join "`n  ") +
+		"`nBuild it first: powershell -ExecutionPolicy Bypass -File scripts\bootstrap_windows.ps1 -Configuration $Configuration" +
+		"`nor pass -BuildDir / -Configuration to match your build.")
+}
+
+$binDir = Split-Path -Parent $exePath
+Write-Host "Packaging $exePath"
 
 if (-not $BundleName) {
 	$BundleName = "xoreos-windows-x64-" + $Configuration.ToLowerInvariant() + "-portable"
@@ -48,7 +85,11 @@ foreach ($dll in $localBinDlls) {
 	Copy-Item -Path $dll.FullName -Destination $bundleBinDir -Force
 }
 
-$vcpkgBinDir = Join-Path $buildRoot "vcpkg_installed\x64-windows\bin"
+if ($Configuration -eq "Debug") {
+	$vcpkgBinDir = Join-Path $buildRoot "vcpkg_installed\x64-windows\debug\bin"
+} else {
+	$vcpkgBinDir = Join-Path $buildRoot "vcpkg_installed\x64-windows\bin"
+}
 $vcpkgDlls = @(Get-ChildItem -Path $vcpkgBinDir -Filter *.dll -File -ErrorAction SilentlyContinue)
 foreach ($dll in $vcpkgDlls) {
 	Copy-Item -Path $dll.FullName -Destination $bundleBinDir -Force
@@ -78,15 +119,40 @@ endlocal
 Set-Content -Path $batPath -Value $batContent -Encoding ASCII
 
 $guiBatPath = Join-Path $stagingDir "Launch_xoreos_GUI.bat"
+# Prefer pyw (no console window), then py, then python. The "python" on PATH
+# can be the Microsoft Store stub, so it is only the last resort.
 $guiBatContent = @"
 @echo off
 setlocal
 cd /d "%~dp0"
-python "%~dp0scripts\xoreos_launcher_gui.py"
-echo.
-echo GUI closed.
+set "GUI=%~dp0scripts\xoreos_launcher_gui.py"
+where pyw >nul 2>nul
+if not errorlevel 1 (
+	start "" pyw -3 "%GUI%"
+	exit /b 0
+)
+where py >nul 2>nul
+if not errorlevel 1 (
+	py -3 "%GUI%"
+	if errorlevel 1 goto failed
+	exit /b 0
+)
+where python >nul 2>nul
+if not errorlevel 1 (
+	python "%GUI%"
+	if errorlevel 1 goto failed
+	exit /b 0
+)
+echo Python 3 with Tk is needed for the GUI launcher - install it from python.org,
+echo or use Launch_xoreos.bat instead.
 pause
-endlocal
+exit /b 1
+:failed
+echo.
+echo The GUI launcher exited with an error. If Python is not installed, get Python 3
+echo with Tk from python.org, or use Launch_xoreos.bat instead.
+pause
+exit /b 1
 "@
 Set-Content -Path $guiBatPath -Value $guiBatContent -Encoding ASCII
 

@@ -1,4 +1,8 @@
 #include "src/common/util.h"
+#include "src/common/string.h"
+
+#include "src/aurora/2dareg.h"
+#include "src/aurora/2dafile.h"
 
 #include "src/engines/odyssey/button.h"
 #include "src/engines/kotorbase/module.h"
@@ -10,20 +14,36 @@ namespace KotOR {
 
 struct PlanetEntry {
 	const char *buttonTag;
-	int         planetIndex;
+	const char *label;        ///< Substring of the planet's planetary.2da label.
+	int         planetIndex;  ///< Retail PLANET_* constant, if planetary.2da can't be read.
 	const char *moduleResRef;
 };
 
+// Planet indices are the rows of planetary.2da, which is what the original
+// scripts pass to SetPlanetAvailable() / SetPlanetSelectable() (PLANET_*).
 static const PlanetEntry kPlanets[] = {
-	{ "BTN_TAT", 1, "tat_m17aa" },
-	{ "BTN_KAS", 2, "kas_m22aa" },
-	{ "BTN_MAN", 3, "manm26aa"  },
-	{ "BTN_KOR", 4, "korr_m33aa" },
-	{ "BTN_DAN", 5, "danm13"    },
+	{ "BTN_DAN", "dantooine",  3, "danm13"     },
+	{ "BTN_TAT", "tatooine",   4, "tat_m17aa"  },
+	{ "BTN_KAS", "kashyyyk",   5, "kas_m22aa"  },
+	{ "BTN_MAN", "manaan",     6, "manm26aa"   },
+	{ "BTN_KOR", "korriban",   7, "korr_m33aa" },
 	// Late-game destinations (buttons may be absent in GUI until scripts enable them).
-	{ "BTN_UNK", 6, "unk_m41aa" },
-	{ "BTN_STA", 7, "sta_m45aa" },
+	{ "BTN_UNK", "unknown",    9, "unk_m41aa"  },
+	{ "BTN_STA", "star",      10, "sta_m45aa"  },
 };
+
+/** The planet's row in planetary.2da, falling back to the retail constant. */
+static int getPlanetIndex(const PlanetEntry &planet) {
+	try {
+		const Aurora::TwoDAFile &twoda = TwoDAReg.get2DA("planetary");
+		for (size_t i = 0; i < twoda.getRowCount(); ++i)
+			if (twoda.getRow(i).getString("label").toLower().contains(planet.label))
+				return static_cast<int>(i);
+	} catch (...) {
+	}
+
+	return planet.planetIndex;
+}
 
 GalaxyMapMenu::GalaxyMapMenu(KotORBase::Module &module, ::Engines::Console *console) :
 		KotORBase::GUI(console),
@@ -36,6 +56,14 @@ GalaxyMapMenu::GalaxyMapMenu(KotORBase::Module &module, ::Engines::Console *cons
 GalaxyMapMenu::~GalaxyMapMenu() {
 }
 
+Odyssey::WidgetButton *GalaxyMapMenu::findPlanetButton(const char *tag, int index) {
+	// Our tag, or the planetary.2da row ("_<row>") style.
+	if (Odyssey::WidgetButton *button = getButton(tag))
+		return button;
+
+	return getButton(Common::String::format("_%d", index));
+}
+
 void GalaxyMapMenu::show() {
 	KotORBase::GUI::show();
 	fillPlanets();
@@ -44,19 +72,21 @@ void GalaxyMapMenu::show() {
 void GalaxyMapMenu::fillPlanets() {
 	bool anyConfigured = false;
 	for (size_t i = 0; i < ARRAYSIZE(kPlanets); ++i) {
-		if (_module.getPlanetAvailable(kPlanets[i].planetIndex))
+		if (_module.getPlanetAvailable(getPlanetIndex(kPlanets[i])))
 			anyConfigured = true;
 	}
 
 	for (size_t i = 0; i < ARRAYSIZE(kPlanets); ++i) {
-		Odyssey::WidgetButton *btn = getButton(kPlanets[i].buttonTag);
+		const int index = getPlanetIndex(kPlanets[i]);
+
+		Odyssey::WidgetButton *btn = findPlanetButton(kPlanets[i].buttonTag, index);
 		if (!btn)
 			continue;
 
 		const bool available = anyConfigured ?
-		                       _module.getPlanetAvailable(kPlanets[i].planetIndex) : true;
+		                       _module.getPlanetAvailable(index) : true;
 		const bool selectable = anyConfigured ?
-		                        _module.getPlanetSelectable(kPlanets[i].planetIndex) : true;
+		                        _module.getPlanetSelectable(index) : true;
 
 		if (!available) {
 			btn->hide();
@@ -87,8 +117,9 @@ void GalaxyMapMenu::callbackActive(Widget &widget) {
 	}
 
 	for (size_t i = 0; i < ARRAYSIZE(kPlanets); ++i) {
-		if (tag == kPlanets[i].buttonTag) {
-			jumpToPlanet(kPlanets[i].planetIndex, kPlanets[i].moduleResRef);
+		const int index = getPlanetIndex(kPlanets[i]);
+		if (tag == kPlanets[i].buttonTag || tag == Common::String::format("_%d", index)) {
+			jumpToPlanet(index, kPlanets[i].moduleResRef);
 			return;
 		}
 	}

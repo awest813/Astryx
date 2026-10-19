@@ -25,6 +25,10 @@
 #ifndef ENGINES_KOTOR_GUI_INGAME_STORE_H
 #define ENGINES_KOTOR_GUI_INGAME_STORE_H
 
+#include <vector>
+
+#include "src/common/ustring.h"
+
 #include "src/engines/kotorbase/gui/gui.h"
 
 namespace Engines {
@@ -48,6 +52,16 @@ public:
 private:
 	KotORBase::Module &_module;
 	KotORBase::Store  &_store;
+
+	/** Tags of the items actually listed, in list box order. */
+	std::vector<Common::UString> _storeTags;
+	std::vector<Common::UString> _playerTags;
+
+	/** Selection the price label was last computed for (-2: never). */
+	int _pricedStoreIdx { -2 };
+	int _pricedPlayerIdx { -2 };
+
+	static const Common::UString *getTag(const std::vector<Common::UString> &tags, int index);
 
 	void fillStoreInventory();
 	void fillPlayerInventory();

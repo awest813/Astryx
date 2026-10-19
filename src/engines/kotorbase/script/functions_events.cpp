@@ -40,9 +40,9 @@ namespace Engines {
 namespace KotORBase {
 
 void Functions::signalEvent(Aurora::NWScript::FunctionContext &ctx) {
-	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
 	if (!object)
-		object = _game->getModule().getPC();
+		return;
 
 	Event *e = static_cast<Event *>(ctx.getParams()[1].getEngineType());
 	if (!e) {
@@ -52,16 +52,29 @@ void Functions::signalEvent(Aurora::NWScript::FunctionContext &ctx) {
 
 	switch (e->getType()) {
 		case kEventUserDefined:
-			_game->getModule().signalUserDefinedEvent(object, e->getUserDefinedNumber());
+			_game->getModule().queueUserDefinedEvent(object, e->getUserDefinedNumber());
 			break;
 		case kEventSpellCastAt:
-			if (!object)
-				return;
 			_game->getModule().setSpellScriptContext(e->getSpellId(),
 			                                        ObjectContainer::toObject(ctx.getCaller()),
 			                                        object, 12, e->getSpellHarmful());
 			object->runScript(kScriptSpellCastAt, object, ctx.getCaller());
 			break;
+		case kEventConversation:
+			// The target's OnConversation script, as if spoken to by the caller.
+			object->runScript(kScriptDialogue, object, ctx.getCaller());
+			break;
+		case kEventActivateItem: {
+			// Signalled to the module: its OnActivateItem script, with the item
+			// for GetItemActivated() and friends (restored for nested events).
+			std::unique_ptr<Event> previous = std::move(_itemActivatedEvent);
+			_itemActivatedEvent.reset(static_cast<Event *>(e->clone()));
+
+			object->runScript(kScriptActivateItem, object, e->getActivator());
+
+			_itemActivatedEvent = std::move(previous);
+			break;
+		}
 		default:
 			warning("Functions::signalEvent(): Event type \"%d\" not implemented", e->getType());
 			break;

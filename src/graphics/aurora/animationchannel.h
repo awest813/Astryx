@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "src/common/mutex.h"
+#include "src/common/ustring.h"
 
 namespace Graphics {
 
@@ -93,6 +94,12 @@ private:
 	DefaultAnimations _defaultAnimations;
 	std::vector<ModelNode *> _modelNodeMap;
 	std::recursive_mutex _manageMutex;
+
+	std::vector<Common::UString> _firedEvents; ///< Scratch list for fireEvents().
+
+	/** Queue the events of the current animation between two frames on the model.
+	 *  Events in [lastFrame, nextFrame) fire; at the end of a loop, also those at nextFrame. */
+	void fireEvents(float lastFrame, float nextFrame, bool loopEnd);
 
 	void playDefaultAnimationInternal();
 	Animation *selectDefaultAnimation();

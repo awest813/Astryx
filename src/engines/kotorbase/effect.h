@@ -25,6 +25,8 @@
 #ifndef ENGINES_KOTORBASE_EFFECT_H
 #define ENGINES_KOTORBASE_EFFECT_H
 
+#include <vector>
+
 #include "src/aurora/nwscript/enginetype.h"
 
 namespace Engines {
@@ -93,15 +95,32 @@ enum KotOREffectType {
 	kKotOREffectBlasterDeflectionDecrease = 57  ///< Lower blaster deflection (amount).
 };
 
+/** An NWScript effect.
+ *
+ *  Besides its own type and amount, an effect carries the effects linked to it
+ *  with EffectLinkEffects(). Applying the effect applies every linked part with
+ *  the same duration, and removing any part removes them all.
+ */
 class Effect : public Aurora::NWScript::EngineType {
 public:
-	Effect(KotOREffectType type, int amount = 0, int damageType = 0, int spellId = -1);
+	/** @param damageType The effect's subtype: damage type, ability, skill or saving throw.
+	 *  @param limit      Damage resistance/reduction: total damage absorbed (0: unlimited). */
+	Effect(KotOREffectType type, int amount = 0, int damageType = 0, int spellId = -1, int limit = 0);
 
 	KotOREffectType getType() const;
 	int getAmount() const;
 	int getDamageType() const;
+	int getLimit() const;
 	int getSpellId() const;
+	/** Set the spell that created the effect, on the linked effects as well. */
 	void setSpellId(int spellId);
+
+	/** The effects linked to this one, flattened. */
+	const std::vector<Effect> &getLinkedEffects() const;
+	/** Link @p effect (and everything linked to it) to this effect. */
+	void linkEffect(const Effect &effect);
+	/** Does this effect, or one linked to it, have type @p type? */
+	bool hasPart(KotOREffectType type) const;
 
 	Aurora::NWScript::EngineType *clone() const;
 
@@ -110,7 +129,13 @@ private:
 	int _amount;
 	int _damageType;
 	int _spellId;
+	int _limit;
+
+	std::vector<Effect> _linked;
 };
+
+/** EffectLinkEffects(eChildEffect, eParentEffect): the parent with the child linked to it. */
+Effect linkEffects(const Effect &child, const Effect &parent);
 
 } // End of namespace KotORBase
 

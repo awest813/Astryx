@@ -25,9 +25,12 @@
 #ifndef ENGINES_KOTORBASE_GUI_HUD_H
 #define ENGINES_KOTORBASE_GUI_HUD_H
 
+#include <map>
 #include <vector>
 
 #include "src/engines/kotorbase/types.h"
+#include "src/engines/kotorbase/actionmenu.h"
+#include "src/engines/kotorbase/inventory.h"
 
 #include "src/engines/kotorbase/gui/gui.h"
 #include "src/engines/kotorbase/gui/floatingtext.h"
@@ -65,7 +68,8 @@ public:
 
 	// Container
 
-	virtual void showContainer(Inventory &inv);
+	/** Show the container menu (modal); return the items moved, in order. */
+	virtual std::vector<InventoryDisturbance> showContainer(Inventory &inv);
 
 	// Party management
 
@@ -101,6 +105,9 @@ protected:
 	void init();
 	virtual void callbackActive(Widget &widget);
 
+	/** Handle a click on the action menus' widgets. True if @p tag is one of them. */
+	bool handleActionMenuWidget(const Common::UString &tag);
+
 private:
 	// Hovered object
 
@@ -124,8 +131,47 @@ private:
 	Odyssey::WidgetButton      *_secondTargetButton { nullptr };
 	Odyssey::WidgetButton      *_thirdTargetButton { nullptr };
 
+	// Action menus (KotOR.js' ActionMenuManager)
 
-	ActionType _targetButtonActions[3];
+	struct ArrowWidget {
+		Odyssey::WidgetButton *button { nullptr };
+		float offsetX { 0.0f }; ///< Position relative to the panel's button.
+		float offsetY { 0.0f };
+	};
+
+	ActionMenuTargetPanels _targetPanels;
+	ActionMenuSelfPanels   _selfPanels;
+
+	ArrowWidget _targetUp[kActionMenuTargetPanels];
+	ArrowWidget _targetDown[kActionMenuTargetPanels];
+
+	Odyssey::WidgetButton *_selfButtons[kActionMenuSelfPanels] {};
+	Odyssey::WidgetLabel  *_selfLabels[kActionMenuSelfPanels] {};
+	Common::UString        _selfIcons[kActionMenuSelfPanels]; ///< Icon each label shows.
+
+	Odyssey::WidgetLabel *_actionDescription { nullptr };
+	Odyssey::WidgetLabel *_actionDescriptionBackground { nullptr };
+	float _actionDescriptionTime { 0.0f };
+
+	float _actionMenuRefreshTime { 0.0f };
+	std::map<Common::UString, ActionMenuItemEntry> _itemDescriptions;
+
+	Odyssey::WidgetButton *getTargetButton(size_t panel) const;
+	void initArrow(ArrowWidget &arrow, const Common::UString &tag, Odyssey::WidgetButton *button);
+	void placeArrow(ArrowWidget &arrow, Odyssey::WidgetButton *button, bool visible);
+	void setButtonIcon(Odyssey::WidgetButton *button, const Common::UString &icon);
+
+	ActionMenuInput gatherActionMenuInput();
+	void refreshActionMenus();
+	void updateSelfActionWidgets();
+
+	void useTargetAction(size_t panel);
+	void useSelfAction(size_t panel);
+	void cycleTargetPanel(size_t panel, bool forward);
+	void cycleSelfPanel(size_t panel, bool forward);
+
+	void showActionDescription(const ActionMenuOption *option);
+	void hideActionDescription();
 
 	void updateTargetObject();
 	void updateHoveredObject();
@@ -140,10 +186,7 @@ private:
 	void showTargetButtons();
 	void hideTargetButtons();
 
-	// Target button actions
-
-	void clearTargetButtonActions();
-	void fillTargetButtonActions();
+	bool hasTargetActions() const;
 
 	// Target information
 

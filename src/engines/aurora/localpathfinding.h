@@ -60,6 +60,8 @@ public:
 	bool buildWalkmeshAround(std::vector<glm::vec3> &path, float halfWidth = 0.f);
 	bool findPathTo(std::vector<glm::vec3> &path);
 	void addStaticObjects(ObjectWalkmesh *objectWalkmesh);
+	/** Remove (and delete) a walkmesh previously added with addStaticObjects(). */
+	void removeStaticObject(const ObjectWalkmesh *objectWalkmesh);
 
 protected:
 	uint32_t findFace(float x, float y, bool onlyWalkable);

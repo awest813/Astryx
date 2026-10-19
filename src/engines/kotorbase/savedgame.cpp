@@ -31,6 +31,7 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 
 namespace Engines {
@@ -83,6 +84,16 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 			continue;
 		}
 
+		if (res.name.equalsIgnoreCase("repute") && res.type == Aurora::kFileTypeFAC) {
+			try {
+				_repute = std::make_unique<Aurora::GFF3File>(erf.getResource(res.index));
+			} catch (Common::Exception &e) {
+				e.add("Failed to read the saved faction reputations");
+				printException(e, "WARNING: ");
+			}
+			continue;
+		}
+
 		if (res.name.equalsIgnoreCase("partytable") && res.type == Aurora::kFileTypeRES) {
 			Aurora::GFF3File partyGff(erf.getResource(res.index));
 			const Aurora::GFF3Struct &partyRoot = partyGff.getTopLevel();
@@ -93,29 +104,50 @@ void SavedGame::fillFromSAV(const Aurora::ERFFile &erf, const Common::UString &m
 				_hasSavedPCInfo = true;
 			}
 
+			if (partyRoot.hasField("PT_PC_IDENTITY")) {
+				const Aurora::GFF3Struct &identity = partyRoot.getStruct("PT_PC_IDENTITY");
+				_pcName   = identity.getString("Name");
+				_pcGender = identity.getUint("Gender", _pcGender);
+				_pcClass  = identity.getSint("Class", 0);
+				_pcSkin   = identity.getSint("Skin", 0);
+				_pcFace   = identity.getSint("Face", 0);
+				_hasPCIdentity = true;
+			}
+
 			if (partyRoot.hasField("PT_AVAIL_NPCS")) {
 				const Aurora::GFF3List &availList = partyRoot.getList("PT_AVAIL_NPCS");
-				for (Aurora::GFF3List::const_iterator it = availList.begin(); it != availList.end(); ++it) {
-					if (!*it)
+				for (Aurora::GFF3List::const_iterator npc = availList.begin(); npc != availList.end(); ++npc) {
+					if (!*npc)
 						continue;
-					const int index = (*it)->getSint("Index");
-					const Common::UString resRef = (*it)->getString("NPCResRef");
+					const int index = (*npc)->getSint("Index");
+					const Common::UString resRef = (*npc)->getString("NPCResRef");
 					if (!resRef.empty())
 						_savedAvailableNPCs[index] = resRef;
 				}
 			}
 
+			if (partyRoot.hasField("PT_NPC_STATES")) {
+				for (const Aurora::GFF3Struct *npc : partyRoot.getList("PT_NPC_STATES")) {
+					if (!npc || !npc->hasField("CreatureState"))
+						continue;
+
+					CreatureInfo info;
+					info.read(npc->getStruct("CreatureState"));
+					_savedNPCStates[npc->getSint("Index", -1)] = info;
+				}
+			}
+
 			if (partyRoot.hasField("PT_MEMBERS")) {
 				const Aurora::GFF3List &membersList = partyRoot.getList("PT_MEMBERS");
-				for (Aurora::GFF3List::const_iterator it = membersList.begin(); it != membersList.end(); ++it) {
-					if (!*it)
+				for (Aurora::GFF3List::const_iterator npc = membersList.begin(); npc != membersList.end(); ++npc) {
+					if (!*npc)
 						continue;
 
 					SavedPartyMemberState member;
-					member.npcSlot = (*it)->getSint("NPCSlot", -1);
-					member.templateResRef = (*it)->getString("TemplateResRef");
-					if ((*it)->hasField("CreatureState"))
-						member.info.read((*it)->getStruct("CreatureState"));
+					member.npcSlot = (*npc)->getSint("NPCSlot", -1);
+					member.templateResRef = (*npc)->getString("TemplateResRef");
+					if ((*npc)->hasField("CreatureState"))
+						member.info.read((*npc)->getStruct("CreatureState"));
 					_savedPartyMembers.push_back(member);
 				}
 				_savedPartyLeaderIndex = partyRoot.getUint("PT_LEADER_INDEX", 0);
@@ -176,6 +208,16 @@ void SavedGame::fillFromModuleIFO(const Aurora::GFF3File &gff) {
 	}
 }
 
+bool SavedGame::getPCPosition(float &x, float &y, float &z) const {
+	if (!_pcLoaded)
+		return false;
+
+	x = _pcPosition[0];
+	y = _pcPosition[1];
+	z = _pcPosition[2];
+	return true;
+}
+
 const Common::UString &SavedGame::getName() const {
 	return _name;
 }
@@ -199,12 +241,18 @@ void SavedGame::applyPersistedState(Module &module) const {
 	if (_areaState)
 		module.loadAreaObjectSaves(_areaState->getTopLevel());
 
+	if (_repute)
+		ReputationMan.load(_repute->getTopLevel());
+
 	if (_hasSavedPCInfo)
 		module.setSavedPCInfo(_savedPCInfo);
 	else if (_hasPartyGold) {
 		if (Creature *pc = module.getPC())
 			pc->getInventory().setGold(_partyGold);
 	}
+
+	if (!_savedNPCStates.empty())
+		module.setSavedNPCStates(_savedNPCStates);
 
 	if (_hasSavedPartyState)
 		module.setSavedPartyState(_savedAvailableNPCs, _savedPartyMembers, _savedPartyLeaderIndex);

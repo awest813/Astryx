@@ -24,6 +24,7 @@
 
 #include "src/common/configman.h"
 #include "src/common/strutil.h"
+#include "src/common/debug.h"
 
 #include "src/events/types.h"
 
@@ -39,10 +40,15 @@
 #include "src/engines/odyssey/scrollbar.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/aurora/nwscript/objectman.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/script/functions.h"
+#include "src/engines/kotorbase/animationnames.h"
+#include "src/engines/kotorbase/cinematicshot.h"
+#include "src/engines/kotorbase/objectcontainer.h"
 
 #include "src/engines/kotorbase/gui/dialog.h"
 
@@ -50,21 +56,51 @@ namespace Engines {
 
 namespace KotORBase {
 
-DialogGUI::DialogGUI(Module &module) :
+DialogGUI::DialogGUI(Module &module, bool computer) :
 		_module(module),
+		_computer(computer),
 		_isActive(false),
 		_frame(new Graphics::Aurora::KotORDialogFrame()) {
 }
 
+bool DialogGUI::isComputerConversation(uint32_t conversationType) {
+	return conversationType == kConversationTypeComputer;
+}
+
+uint32_t DialogGUI::getConversationType(const Common::UString &name) {
+	try {
+		return Aurora::DLGFile(name, nullptr).getConversationType();
+	} catch (...) {
+		return 0;
+	}
+}
+
+bool DialogGUI::isComputer() const {
+	return _computer;
+}
+
 void DialogGUI::startConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
 	try {
+		releaseStunts();
 		_dlg = std::make_unique<Aurora::DLGFile>(name, owner);
 		_dlg->startConversation();
 		_owner = owner ? owner->getTag() : "";
+		_pickedReply = false;
+		applyStunts();
 		refresh();
 	} catch (Common::Exception &e) {
 		warning("Failed to start conversation %s: %s", name.c_str(), e.what());
 	}
+}
+
+void DialogGUI::stopConversation() {
+	stopSounds();
+	releaseStunts();
+	_dlg.reset();
+	_replyIds.clear();
+	_owner.clear();
+	_curSpeaker.clear();
+	_isActive = false;
 }
 
 bool DialogGUI::isConversationActive() const {
@@ -92,7 +128,10 @@ bool DialogGUI::isObjectInConversation(Aurora::NWScript::Object *object) const {
 void DialogGUI::show() {
 	CursorMan.setGroup("default");
 	GUI::show();
-	_frame->show();
+
+	// A terminal fills the screen itself: no letterbox.
+	if (!_computer)
+		_frame->show();
 }
 
 void DialogGUI::hide() {
@@ -180,6 +219,31 @@ void DialogGUI::preprocessEntry(Common::UString &text) {
 }
 
 void DialogGUI::update(int width, int height) {
+	if (_computer) {
+		// The computer GUI keeps the layout of its GUI file.
+		float r, g, b;
+		getTextColor(r, g, b);
+
+		Odyssey::WidgetListBox *lbMessage = getListBox("LB_MESSAGE");
+		if (lbMessage) {
+			lbMessage->setAdjustHeight(true);
+			lbMessage->setItemSelectionEnabled(false);
+			lbMessage->setItemTextColor(r, g, b, 1.0f);
+			lbMessage->createItemWidgets(1);
+		}
+
+		Odyssey::WidgetListBox *lbReplies = getListBox("LB_REPLIES");
+		if (lbReplies) {
+			lbReplies->setAdjustHeight(true);
+			lbReplies->setSoundHoverItem("gui_actscroll");
+			lbReplies->setSoundClickItem("gui_actuse");
+			lbReplies->setItemTextColor(r, g, b, 1.0f);
+			lbReplies->createItemWidgets(9);
+		}
+
+		return;
+	}
+
 	const int w = width;
 	const float hh = height / 2.0f;
 	const float rh = hh / 2.0f; // quarter of window height
@@ -212,21 +276,35 @@ void DialogGUI::update(int width, int height) {
 
 void DialogGUI::refresh() {
 	const Aurora::DLGFile::Line *curEntry = _dlg->getCurrentEntry();
-	if (!curEntry)
+	if (!curEntry) {
+		_isActive = false;
+		releaseStunts();
 		return;
+	}
 
 	stopSounds();
 	playSounds();
 
 	const std::vector<const Aurora::DLGFile::Line *> replies = _dlg->getCurrentReplies();
-	_isActive = !replies.empty();
-	if (!_isActive)
+	if (replies.empty() && !_pickedReply) {
+		// A single reply-less line is a one-liner (a bark): show it over the
+		// speaker's head and end at once, still running EndConversation.
+		Common::UString bark = curEntry->text.getString();
+		preprocessEntry(bark);
+
+		Object *barker = findParticipant(curEntry->speaker);
+		if (barker && !bark.empty())
+			_module.showFloatingText(barker, bark, 4.0f);
+
+		_dlg->pickReply(Aurora::DLGFile::kEndLine);
+		_isActive = false;
+		releaseStunts();
 		return;
+	}
 
-	Common::UString text;
-	Odyssey::WidgetLabel *lblMessage = getLabel("LBL_MESSAGE");
+	_isActive = true;
 
-	text = curEntry->text.getString();
+	Common::UString text = curEntry->text.getString();
 	preprocessEntry(text);
 
 	if (curEntry->speaker.empty())
@@ -234,23 +312,38 @@ void DialogGUI::refresh() {
 	else
 		_curSpeaker = curEntry->speaker;
 
-	_module.setCinematicCamera(curEntry->cameraID, curEntry->cameraAngle, curEntry->cameraModel);
+	Object *speakerObj = findParticipant(_curSpeaker);
+	Object *listenerObj = curEntry->listener.empty() ? _module.getPartyLeader() : findParticipant(curEntry->listener);
 
-	if (!_curSpeaker.empty()) {
-		Object *speakerObj = _module.getCurrentArea()->getObjectByTag(_curSpeaker);
-		if (speakerObj) {
-			makeLookAtPC(_curSpeaker);
-			playTalkAnimations(_curSpeaker);
-			_module.setCinematicFocus(speakerObj);
-		}
-	} else {
-		_module.setCinematicFocus(nullptr);
+	if (speakerObj) {
+		makeLookAtPC(_curSpeaker);
+		playTalkAnimations(_curSpeaker);
 	}
 
-	lblMessage->setText(text);
+	// A computer terminal keeps the camera where it is.
+	if (!_computer)
+		updateCamera(*curEntry, speakerObj, listenerObj);
+	else
+		updateComputerCounters();
+
+	applyFade(*curEntry);
+	playParticipantAnimations(*curEntry);
+	armAutoAdvance(*curEntry, replies);
+
+	setMessage(text);
 	_replyIds.clear();
 	Odyssey::WidgetListBox *lbReplies = getListBox("LB_REPLIES");
 	lbReplies->removeAllItems();
+
+	if (replies.empty()) {
+		// The NPC's closing line: show it, and end the conversation (running
+		// its EndConversation script) once the player continues.
+		const uint32_t endLine = Aurora::DLGFile::kEndLine; // push_back() would ODR-use the constant
+		_replyIds.push_back(endLine);
+		lbReplies->addItem("1. [END DIALOGUE]");
+		lbReplies->refreshItemWidgets();
+		return;
+	}
 
 	int index = 1;
 	for (std::vector<const Aurora::DLGFile::Line *>::const_iterator it = replies.begin();
@@ -269,6 +362,210 @@ void DialogGUI::refresh() {
 		lbReplies->addItem(text);
 	}
 	lbReplies->refreshItemWidgets();
+}
+
+void DialogGUI::setMessage(const Common::UString &text) {
+	if (Odyssey::WidgetLabel *lblMessage = getLabel("LBL_MESSAGE")) {
+		lblMessage->setText(text);
+		return;
+	}
+
+	Odyssey::WidgetListBox *lbMessage = getListBox("LB_MESSAGE");
+	if (!lbMessage)
+		return;
+
+	lbMessage->removeAllItems();
+	lbMessage->addItem(text);
+	lbMessage->refreshItemWidgets();
+}
+
+void DialogGUI::updateComputerCounters() {
+	Creature *leader = _module.getPartyLeader();
+
+	// The party shares the PC's inventory.
+	const Inventory *inventory = leader ? &_module.getInventoryOf(*leader) : nullptr;
+
+	const int spikes = inventory ? inventory->countItems(kComputerSpikeTag) : 0;
+	const int parts  = inventory ? inventory->countItems(kRepairPartTag) : 0;
+
+	const int computerUse = leader ? leader->getSkillRank(kSkillComputerUse) : 0;
+	const int repair      = leader ? leader->getSkillRank(kSkillRepair) : 0;
+
+	if (Odyssey::WidgetLabel *label = getLabel("LBL_COMP_SPIKES_VAL"))
+		label->setText(Common::composeString(spikes));
+	if (Odyssey::WidgetLabel *label = getLabel("LBL_COMP_SKILL_VAL"))
+		label->setText(Common::composeString(computerUse));
+	if (Odyssey::WidgetLabel *label = getLabel("LBL_REP_UNITS_VAL"))
+		label->setText(Common::composeString(parts));
+	if (Odyssey::WidgetLabel *label = getLabel("LBL_REP_SKILL_VAL"))
+		label->setText(Common::composeString(repair));
+}
+
+Object *DialogGUI::findParticipant(const Common::UString &tag) const {
+	Area *area = _module.getCurrentArea();
+	if (!area)
+		return nullptr;
+
+	if (tag.empty() || tag.equalsIgnoreCase("OWNER"))
+		return _owner.empty() ? nullptr : area->getObjectByTag(_owner);
+
+	if (tag.equalsIgnoreCase("PLAYER"))
+		return _module.getPartyLeader();
+
+	return area->getObjectByTag(tag);
+}
+
+void DialogGUI::updateCamera(const Aurora::DLGFile::Line &entry, Object *speaker, Object *listener) {
+	const int angle = static_cast<int>(entry.cameraAngle);
+
+	// Static (GIT) and animated cameras; anything unavailable falls back to
+	// framing the speaker and listener.
+	bool placed = false;
+	if (angle == kDialogCameraStatic) {
+		placed = _module.setStaticShot(entry.cameraID);
+	} else if (angle == kDialogCameraAnimated || entry.cameraAnimation != 0) {
+		const Common::UString &model = entry.cameraModel.empty() ? _dlg->getCameraModel() : entry.cameraModel;
+		placed = _module.setAnimatedShot(model, entry.cameraAnimation);
+	}
+
+	if (!placed)
+		_module.setDialogShot(angle, speaker, listener);
+
+	if (angle != kDialogCameraStatic || !placed)
+		_module.setShotFieldOfView(entry.camFieldOfView);
+}
+
+void DialogGUI::applyFade(const Aurora::DLGFile::Line &entry) {
+	// FadeType (as KotOR.js reads it): 1 cut to the color, 2 cut from it,
+	// 3 fade in from it over FadeLength, 4 fade out to it; after FadeDelay.
+	if ((entry.fadeType < 1) || (entry.fadeType > 4))
+		return;
+
+	Graphics::Aurora::FadeQuad &fade = _module.getFadeQuad();
+
+	const bool gradual = entry.fadeType >= 3;
+	const bool fadeIn  = (entry.fadeType == 2) || (entry.fadeType == 3);
+
+	fade.setColor(entry.fadeColor[0], entry.fadeColor[1], entry.fadeColor[2]);
+	fade.setWaitTime(MAX(entry.fadeDelay, 0.0f));
+	fade.setRunTime(gradual ? MAX(entry.fadeLength, 0.0f) : 0.0f);
+
+	if (fadeIn)
+		fade.fadeIn();
+	else
+		fade.fadeOut();
+}
+
+void DialogGUI::applyStunts() {
+	if (!_dlg)
+		return;
+
+	for (const Aurora::DLGFile::Stunt &stunt : _dlg->getStunts()) {
+		Creature *creature = ObjectContainer::toCreature(findParticipant(stunt.participant));
+		if (!creature)
+			continue;
+
+		Graphics::Aurora::Model *model = _module.getStuntModel(stunt.stuntModel);
+		if (!model)
+			continue;
+
+		creature->setStuntModel(model);
+		_stuntActors.push_back(creature->getID());
+	}
+}
+
+void DialogGUI::releaseStunts() {
+	for (uint32_t id : _stuntActors) {
+		Creature *creature = ObjectContainer::toCreature(ObjectMan.findObject(id));
+		if (!creature)
+			continue;
+
+		creature->setStuntModel(nullptr);
+		creature->playDefaultAnimation();
+	}
+
+	_stuntActors.clear();
+}
+
+void DialogGUI::playParticipantAnimations(const Aurora::DLGFile::Line &entry) {
+	for (const Aurora::DLGFile::Animation &animation : entry.animations) {
+		Creature *creature = ObjectContainer::toCreature(findParticipant(animation.participant));
+		if (!creature)
+			continue;
+
+		// Cutscene animations (from 1200, usually a stunt model's) play once.
+		if (animation.animation >= 1200 && animation.animation < 10000) {
+			for (const Common::UString &name : cutsceneAnimationNames(animation.animation))
+				if (creature->hasModelAnimation(name)) {
+					creature->playAnimation(name, true, 0.0f);
+					break;
+				}
+
+			continue;
+		}
+
+		// Numbers from 10000 are looping conversation animations with their
+		// own numbering; the others are animations.2da rows and play once.
+		const bool looping = animation.animation >= 10000;
+		const int row = looping ? getDialogAnimationRow(static_cast<int>(animation.animation))
+		                        : static_cast<int>(animation.animation);
+		if (row < 0) {
+			debugC(Common::kDebugEngineLogic, 1, "Unknown DLG animation %u", animation.animation);
+			continue;
+		}
+
+		const Common::UString name = getAnimationNameById(row);
+		if (name.empty())
+			continue;
+
+		creature->playAnimation(name, true, looping ? -1.0f : 0.0f);
+	}
+}
+
+void DialogGUI::armAutoAdvance(const Aurora::DLGFile::Line &entry,
+                               const std::vector<const Aurora::DLGFile::Line *> &replies) {
+	_autoAdvance = false;
+	_autoAdvanceDelay = 0.0f;
+
+	// Only lines the player can merely continue from advance by themselves:
+	// a closing line, or a single reply without text.
+	const bool continueOnly = replies.empty() ||
+		(replies.size() == 1 && replies.front()->text.getString().empty());
+	if (!continueOnly)
+		return;
+
+	if (entry.delay != Aurora::DLGFile::kInvalidLine && entry.delay > 0) {
+		_autoAdvance = true;
+		_autoAdvanceDelay = static_cast<float>(entry.delay);
+
+		// Let the line's fade finish first.
+		if (entry.fadeType >= 3 && entry.fadeType <= 4)
+			_autoAdvanceDelay = MAX(_autoAdvanceDelay, entry.fadeDelay + entry.fadeLength);
+	} else if (_voice && SoundMan.isPlaying(*_voice)) {
+		// Continue shortly after the voice-over finishes (a missing VO
+		// resource leaves an empty handle: wait for the player then).
+		_autoAdvance = true;
+		_autoAdvanceDelay = -1.0f;
+	}
+}
+
+void DialogGUI::update(float frameTime) {
+	if (!_isActive || !_autoAdvance)
+		return;
+
+	if (_autoAdvanceDelay < 0.0f) {
+		if (_voice && SoundMan.isPlaying(*_voice))
+			return;
+
+		_autoAdvanceDelay = 0.5f;
+	}
+
+	_autoAdvanceDelay -= frameTime;
+	if (_autoAdvanceDelay > 0.0f)
+		return;
+
+	_autoAdvance = false;
+	pickReply(0);
 }
 
 void DialogGUI::playSounds() {
@@ -296,16 +593,22 @@ void DialogGUI::pickReply(int index) {
 	if ((int)_replyIds.size() <= index)
 		return;
 
+	// Actors are still acting out the line (ActionPauseConversation).
+	if (_module.isConversationPaused())
+		return;
+
 	if (!_curSpeaker.empty()) {
 		playDefaultAnimations(_curSpeaker);
 		_curSpeaker.clear();
 	}
 
+	_pickedReply = true;
 	_dlg->pickReply(_replyIds[index]);
 	if (_dlg->hasEnded()) {
 		stopSounds();
 		_module.resetToOrbit();
 		_isActive = false;
+		releaseStunts();
 	} else
 		refresh();
 }
@@ -326,6 +629,10 @@ void DialogGUI::makeLookAtPC(const Common::UString &tag) {
 
 	if (!pc->isLockOrientationInDialog())
 		pc->makeLookAt(o);
+
+	// A computer terminal keeps the camera where it is.
+	if (_computer)
+		return;
 
 	float x, y, z, a;
 	pc->getOrientation(x, y, z, a);

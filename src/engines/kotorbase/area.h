@@ -30,6 +30,8 @@
 #include <map>
 #include <set>
 
+#include "external/glm/vec2.hpp"
+
 #include "src/common/ustring.h"
 #include "src/common/mutex.h"
 #include <memory>
@@ -49,10 +51,12 @@ class GFF3WriterStruct;
 
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/trigger.h"
+#include "src/engines/kotorbase/heartbeatscheduler.h"
 
 namespace Engines {
 
 class LocalPathfinding;
+class ObjectWalkmesh;
 
 namespace KotORBase {
 
@@ -61,6 +65,9 @@ class Room;
 class Situated;
 class Creature;
 class Item;
+class Placeable;
+class Encounter;
+class WorldVisualEffects;
 class Pathfinding;
 struct CreatureSearchCriteria;
 
@@ -86,6 +93,8 @@ public:
 
 	/** Get the north axis id. */
 	int getNorthAxis();
+	/** The area's own Unescapable flag (ARE), before any SetAreaUnescapable. */
+	bool isUnescapable() const { return _unescapable; }
 	/** Get the first map point. */
 	void getMapPoint1(float &x, float &y);
 	/** Get the second map point. */
@@ -141,13 +150,37 @@ public:
 	float evaluateElevation(float x, float y);
 	bool getGroundPointAtScreen(int screenX, int screenY, float &outX, float &outY, float &outZ);
 	bool walkable(const glm::vec3 &orig, const glm::vec3 &dest) const;
+	/** A walkmesh route from @p from to @p to, as waypoints (the last one is @p to).
+	 *  False when either end is off the walkmesh or no route connects them. */
+	bool findPath(const glm::vec2 &from, const glm::vec2 &to, std::vector<glm::vec2> &waypoints);
+	/** Put every living creature into the triggers it stands in, without OnEnter. */
+	void seedTriggerOccupants();
 	void toggleWalkmesh();
 	bool rayTest(const glm::vec3 &orig, const glm::vec3 &dest, glm::vec3 &intersect) const;
 
 	// Triggers
 
 	void toggleTriggers();
-	void evaluateTriggers(float x, float y);
+	/** A creature moved: check the triggers for it at the next safe point (see
+	 *  processTriggerChecks()). @p allowTransitions is false when it arrived by
+	 *  teleport, so that an area transition it lands in doesn't move it on. */
+	void queueTriggerCheck(const Object &creature, bool allowTransitions = true);
+	/** Run the trigger OnExit/OnEnter (and mine) events of the creatures that
+	 *  moved. Call outside of any iteration over objects. */
+	void processTriggerChecks();
+	/** The triggers in the area, mines included. */
+	const std::vector<Trigger *> &getTriggers() const;
+	/** The creature tries to spot the mines around it (Awareness). */
+	void detectTraps(Creature &creature, bool rollDice);
+	/** The mine (trigger ID) the creature spotted last, or 0. */
+	uint32_t getLastTrapDetected(uint32_t creatureID) const;
+
+	// Encounters
+
+	/** Let the encounters see where the party is, and spawn. Once per frame. */
+	void updateEncounters();
+	/** The encounter that spawned this creature, if any. */
+	Encounter *findEncounterOwning(const Object &creature) const;
 
 	// Object management
 
@@ -157,12 +190,42 @@ public:
 
 	void addCreature(Creature *creature);
 	Item *spawnDroppedItem(const Common::UString &tag, float x, float y, float z);
+	/** Create a placeable from its blueprint (CreateObject). */
+	Placeable *spawnPlaceable(const Common::UString &templateResRef, float x, float y, float z, float facing);
+	/** Lay a mine of traps.2da row @p trapType at @p position, set by @p setter: a
+	 *  trap trigger of the setter's faction (it goes off for their enemies), that
+	 *  the party knows about. It's kept when the party leaves and comes back. */
+	Trigger *placeMine(int trapType, const glm::vec3 &position, Creature &setter);
 	void addToObjectMap(Object *object);
 	void removeObject(Object *object);
+	/** Destroy an object at the end of the frame (DestroyObject), after an optional delay. */
+	void destroyObjectDeferred(Object *object, float delay = 0.0f);
+	/** Run the OnHeartbeat of the creatures, placeables, doors and triggers that are due. */
+	void runHeartbeats();
+	/** Run queued OnSpawn scripts now (before the area's OnEnter, as in the original). */
+	void runPendingSpawnEvents();
+	/** Remove objects whose deferred destruction is due. Call outside object iteration. */
+	void processPendingDestruction();
+	/** The game was paused for @p ms: push deferred destructions back as long. */
+	void delayPendingDestruction(uint32_t ms);
+	/** Push every heartbeat back by @p ms (the game was paused). */
+	void delayHeartbeats(uint32_t ms);
 
 	// Persistence
 	void loadPersistence();
 	void savePersistence();
+	/** Give every persistent object its save-state key (GIT order). */
+	void assignPersistenceKeys();
+	/** The object leaves the area for good (destroyed, joined the party, ...). */
+	void releaseFromPersistence(Object &object);
+	Common::UString getSpawnedCreaturesKey() const;
+	Common::UString getPlacedMinesKey() const;
+	Common::UString getAreaLocalsKey() const;
+	Common::UString getModuleLocalsKey() const;
+	/** Add a mine laid at runtime, from its instance and trap state. */
+	Trigger *addMine(const Aurora::GFF3Struct &instance);
+	/** Save-state key of an object; tagCounts tracks repeated tags. */
+	Common::UString getPersistenceKey(const Object &object, std::map<Common::UString, int> &tagCounts) const;
 	void writePersistence(Aurora::GFF3WriterStruct &gff) const;
 
 	const std::vector<bool> &getMapExplored() const { return _mapExplored; }
@@ -193,6 +256,8 @@ public:
 	std::set<Common::UString> getRoomsVisibleByPartyLeader() const;
 
 	void showAllRooms();
+	/** PlayRoomAnimation: loop an animation of the room (LYT model name, any case). */
+	bool playRoomAnimation(const Common::UString &room, const Common::UString &anim);
 	void notifyObjectMoved(Object &o);
 	void notifyPartyLeaderMoved();
 
@@ -200,12 +265,23 @@ public:
 
 	bool isMinigame();
 	const Aurora::GFF3Struct& getMinigame();
+	/** The area layout, with the minigame tracks and obstacles. */
+	const Aurora::LYTFile &getLayout() const { return _lyt; }
 
 
 	Object *getActiveObject();
 
 	void processCreaturesActions(float dt);
 	void handleCreaturesDeath();
+	/** Run the OnMeleeAttacked/OnDamaged/OnDeath scripts of doors and containers
+	 *  being bashed, and break open those that fell to 0 hit points. */
+	void handleSituatedEvents();
+
+	/** The walkmesh surface (a surfacemat.2da row) at a point, UINT32_MAX if none. */
+	uint32_t getSurfaceAt(float x, float y) const;
+	/** Play visualeffects.2da effect @p id at a place (ApplyEffectAtLocation).
+	 *  @param duration How long a lasting effect lasts; 0 plays it once. */
+	void playVisualEffectAt(int id, float x, float y, float z, float duration = 0.0f);
 
 	Creature *findNearestEnemy(Creature *origin);
 
@@ -221,7 +297,8 @@ public:
 		float position[3];
 		float orientation[4];
 		float fieldOfView;
-		float pitch;
+		float pitch;  ///< Degrees, applied after the orientation (0 looks straight down).
+		float height; ///< Added to the position's z.
 	};
 
 	const Camera *getCamera(uint32_t id) const;
@@ -263,6 +340,7 @@ private:
 	float _worldPt1X, _worldPt1Y, _worldPt2X, _worldPt2Y;
 	float _mapPt1X, _mapPt1Y, _mapPt2X, _mapPt2Y;
 	int _northAxis;
+	bool _unescapable { false };
 
 	Sound::ChannelHandle _ambientSound; ///< Sound handle of the currently playing sound.
 	Sound::ChannelHandle _ambientMusic; ///< Sound handle of the currently playing music.
@@ -279,6 +357,12 @@ private:
 
 	Object *_activeObject; ///< The currently active (highlighted) object.
 
+	/** Objects queued by DestroyObject: (object ID, timestamp when due). */
+	std::vector<std::pair<uint32_t, uint32_t>> _pendingDestruction;
+
+	/** Static pathfinding walkmesh of each door/placeable (owned by the local pathfinding). */
+	std::map<const Object *, const Engines::ObjectWalkmesh *> _staticWalkmeshes;
+
 	bool _highlightAll; ///< Are we currently highlighting all objects?
 	std::vector<bool> _mapExplored;
 
@@ -290,7 +374,18 @@ private:
 
 	std::vector<Trigger *> _triggers;
 	bool _triggersVisible;
-	Trigger *_activeTrigger;
+
+	/** Creatures (ID) whose triggers need checking -> may they use area transitions. */
+	std::map<uint32_t, bool> _pendingTriggerChecks;
+	bool _processingTriggers { false };
+	/** Creature ID -> the mine (trigger ID) it spotted last. */
+	std::map<uint32_t, uint32_t> _lastTrapDetected;
+	/** Mines laid at runtime (trigger IDs), which the GIT doesn't know about. */
+	std::vector<uint32_t> _placedMines;
+
+	HeartbeatScheduler _heartbeats;
+
+	std::vector<Encounter *> _encounters;
 
 
 	std::vector<Camera> _cameras;
@@ -300,6 +395,9 @@ private:
 
 	Pathfinding *_pathfinding;
 	Engines::LocalPathfinding *_localPathfinding;
+
+	/** Visual effects played at places in the area. */
+	std::unique_ptr<WorldVisualEffects> _worldVisualEffects;
 
 	// Loading helpers
 
@@ -326,6 +424,7 @@ private:
 	void loadCreatures (const Aurora::GFF3List &list);
 	void loadSounds    (const Aurora::GFF3List &list);
 	void loadTriggers  (const Aurora::GFF3List &list);
+	void loadEncounters(const Aurora::GFF3List &list);
 	void loadCameras   (const Aurora::GFF3List &list);
 
 	// Highlight / active helpers
@@ -341,6 +440,19 @@ private:
 
 	void updateRoomsVisiblity();
 	void updatePerception(Creature &subject);
+
+	// Trigger helpers
+
+	Trigger *findTrigger(uint32_t id) const;
+	Creature *findCreature(uint32_t id) const;
+	/** Put the creatures standing in triggers at load time inside them, without events. */
+	/** Check the triggers for one creature. */
+	void checkTriggers(uint32_t creatureID, bool allowTransitions);
+	/** A creature entered a mine. */
+	void enterTrap(Trigger &trigger, Creature &creature);
+	/** The object leaves the area: it is no longer inside any trigger. */
+	void forgetTriggerOccupant(uint32_t id);
+	void runHeartbeat(Object &object);
 
 
 	friend class Console;

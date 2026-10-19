@@ -26,6 +26,7 @@
 #define ENGINES_KOTORBASE_CREATURE_H
 
 #include <set>
+#include <vector>
 #include <map>
 #include <array>
 #include <memory>
@@ -38,10 +39,13 @@
 #include "src/graphics/aurora/types.h"
 
 #include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/path/pathfollow.h"
 #include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/action.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/actionqueue.h"
+#include "src/engines/kotorbase/creaturesounds.h"
+#include "src/engines/kotorbase/visualeffects.h"
 
 namespace Engines {
 
@@ -52,6 +56,23 @@ class Item;
 class Area;
 class Effect;
 struct CreatureSearchCriteria;
+
+/** What an activated combat feat does during its combat round. */
+struct CombatFeatModifiers {
+	bool melee  { false };    ///< Used with melee weapons (Flurry, Power Attack, Critical Strike).
+	bool ranged { false };    ///< Used with ranged weapons (Rapid Shot, Power Blast, Sniper Shot).
+	int  attack { 0 };        ///< Attack modifier on every attack of the round.
+	int  damage { 0 };        ///< Damage bonus on every hit.
+	int  armorClass { 0 };    ///< Defense modifier until the next round.
+	int  threatRange { 0 };   ///< Widens the critical threat range (20 - threatRange .. 20).
+	int  extraAttacks { 0 };  ///< Additional attacks this round.
+};
+
+/** The modifiers of combat feat @p feat (a FeatID), all zero for other feats. */
+CombatFeatModifiers getCombatFeatModifiers(int feat);
+
+/** Duration (s) of a combat feat's penalties: one combat round. */
+static const float kCombatFeatPenaltyDuration = 3.0f;
 
 class Creature : public Object {
 public:
@@ -136,10 +157,14 @@ public:
 
 	// Attributes
 
-	/** Get the current rank of the specified skill. */
-	int getSkillRank(Skill skill);
-	/** Get the current score of the specified ability. */
-	int getAbilityScore(Ability ability);
+	/** Get the current rank of the specified skill, with skill effects and ability changes. */
+	int getSkillRank(Skill skill) const;
+	/** Get the current score of the specified ability, with equipment and effects. */
+	int getAbilityScore(Ability ability) const;
+	/** The modifier of the current ability score: floor((score - 10) / 2). */
+	int getAbilityModifier(Ability ability) const;
+	/** Ability score bonus of the equipped items' Ability Bonus properties. */
+	int getEquipmentAbilityBonus(Ability ability) const;
 	/** Get the current Force Points. */
 	int getForcePoints() const;
 	/** Get the maximum Force Points. */
@@ -155,16 +180,17 @@ public:
 
 	/** Roll a d20 vs the specified DC. Return true if successful. */
 	bool rollSavingThrow(SavingThrow type, int dc);
-	/** Get the total bonus for the specified saving throw. */
-	int getSavingThrowBonus(SavingThrow type);
+	/** Get the total bonus for the specified saving throw, with effects. */
+	int getSavingThrowBonus(SavingThrow type) const;
 
 	// Combat AI
+	/** Built-in fallback AI for scripted encounters. Force users are run by
+	 *  their AI scripts (talents), not by an archetype. */
 	enum AIArchetype {
 		kAIArchetypeNone             = 0,
 		kAIArchetypeBeastMelee       = 1,
 		kAIArchetypeBeastPoison      = 2,
-		kAIArchetypeTacticalHumanoid = 3,
-		kAIArchetypeForceUser        = 4
+		kAIArchetypeTacticalHumanoid = 3
 	};
 
 	void setAIArchetype(AIArchetype archetype);
@@ -215,8 +241,22 @@ public:
 	/** Find a live Item by tag in script items or equipment. Returns nullptr if not found. */
 	Item *findInventoryItemByTag(const Common::UString &tag) const;
 
+	/** A spell an item lets the creature cast. */
+	struct ItemPower {
+		int spellId { -1 };
+		Common::UString item; ///< The item's template (inventory tag).
+	};
+
+	/** Force powers of the equipped items' CastSpell properties (armbands, belts...). */
+	std::vector<ItemPower> getEquippedItemPowers() const;
+	/** Spells of the usable items in the inventory (medpacs, stims, grenades...). */
+	std::vector<ItemPower> getInventoryItemPowers() const;
+
 	/** Return the total character level (sum of all class levels). */
 	int getHitDice() const;
+
+	/** The blueprint's "ChallengeRating", or the hit dice when it has none. */
+	float getChallengeRating() const;
 
 	/** Compute the maximum Force Points for this creature based on classes and modifiers. */
 	int computeMaxForcePoints() const;
@@ -245,6 +285,31 @@ public:
 	                       float length = 0.0f,
 	                       float speed = 1.0f);
 
+	/** The model animation a script ANIMATION_* constant plays on this creature
+	 *  (its READY stance depends on the weapon held). */
+	Common::UString getScriptAnimationName(int animation) const;
+	/** The length of a model animation in seconds, 0 if the model lacks it. */
+	float getModelAnimationLength(const Common::UString &anim);
+
+	// Sounds and visual effects
+
+	/** Once a frame, for the dead as well: play the sounds of the animation
+	 *  events the model passed (footsteps, weapon swings and hits), delayed
+	 *  sounds, and advance the visual effects. */
+	void updatePresentation(float dt, Area *area);
+	/** Bark a soundset entry where the creature stands. Unless @p interrupt,
+	 *  nothing plays while an earlier bark still does. */
+	bool playSoundSetBark(SoundSetEntry entry, bool interrupt = false);
+	/** Bark one of @p count soundset entries from @p first on, at random. */
+	bool playRandomSoundSetBark(SoundSetEntry first, int count, bool interrupt = false);
+	/** Play visualeffects.2da effect @p id on the creature. With @p lasting,
+	 *  a duration effect plays until stopVisualEffect(). */
+	void playVisualEffect(int id, bool lasting = false);
+	/** Stop a lasting visual effect. */
+	void stopVisualEffect(int id);
+	/** Show the conjuring and casting visuals of spells.2da row @p spell. */
+	void playSpellCastVisuals(int spell);
+
 	// Actions
 
 	/** Get the current action that this creature is executing. */
@@ -256,6 +321,7 @@ public:
 	void addAction(const Action &action);
 	/** Remove the current action from the action queue of this creature. */
 	void popAction();
+	size_t getActionCount() const { return _actions.size(); }
 
 	struct ActiveEffect {
 		EffectType type;
@@ -264,17 +330,46 @@ public:
 		int   spellId { -1 };
 		float nextTick { 1.0f };
 		bool  expired { false };
+		/** kEffectModifier: the KotOREffectType, and its subtype (ability, skill,
+		 *  saving throw or damage type) and limit (damage absorbed before it ends). */
+		int   kotorType { -1 };
+		int   subType { 0 };
+		int   limit { 0 };
+		/** Effects linked by EffectLinkEffects share a non-zero id and are removed together. */
+		int   linkId { 0 };
+		bool  permanent { false };
 	};
 
 	void applyEffect(EffectType type, float duration, int value = 0, int spellId = -1);
 	void updateEffects(float dt);
 	bool hasEffect(EffectType type) const;
 	bool hasSpellEffect(int spellId) const;
+	/** Stunned, paralysed, asleep or knocked down: no actions, no attacks. */
+	bool isIncapacitated() const;
 	const std::vector<ActiveEffect> &getActiveEffects() const { return _effects; }
 	void clearActiveEffects();
+	/** Remove the active effect at @p index and every effect linked to it. */
 	bool removeActiveEffectAt(size_t index);
 
-	void performCutsceneAttack(Object *target, int flags);
+	/** Reduce @p damage of @p damageType by damage resistance, damage reduction and
+	 *  Force shields, using up their limits. Returns the damage that gets through. */
+	int absorbDamage(int damage, int damageType);
+	/** Is the creature invisible (EffectInvisibility)? */
+	bool isInvisible() const { return _invisibility > 0; }
+	/** Does the creature see the invisible (EffectTrueSeeing / EffectSeeInvisible)? */
+	bool canSeeInvisible() const { return _seeInvisible > 0; }
+	/** Does the creature see @p target, @p distance metres away? Invisible and
+	 *  stealthy enemies can go unseen (see PerceptionRules). */
+	bool canPerceive(const Creature &target, float distance) const;
+	/** Damage bonus (or penalty) of EffectDamageIncrease/Decrease. */
+	int getDamageModifier() const { return _damageModifier; }
+	/** Force push: knock the creature back by up to @p distance metres away from
+	 *  (fromX, fromY), stopping where the walkmesh ends. Returns the distance moved. */
+	float knockBack(Area &area, float fromX, float fromY, float distance);
+
+	/** CutsceneAttack: @p animation is the animations.2da row the attacker plays
+	 *  (-1: its usual attack animation). */
+	void performCutsceneAttack(Object *target, int flags, int damage = 0, int animation = -1);
 
 	// Tooltip
 
@@ -291,9 +386,14 @@ public:
 	int getAttackRound() const;
 	Object *getAttemptedAttackTarget() const;
 	Object *getLastHostileActor() const;
+	void setLastHostileActor(Object *actor) { _lastHostileActor = actor; }
 	int getLastCombatFeatUsed() const;
 	int getLastForcePowerUsed() const;
 	void setLastForcePowerUsed(int spellID);
+	/** GetLastAttackAction: ACTION_ATTACKOBJECT after a weapon attack,
+	 *  ACTION_CASTSPELL after a Force power or item spell, else ACTION_INVALID. */
+	int getLastAttackAction() const { return _lastAttackAction; }
+	void setLastAttackAction(int action) { _lastAttackAction = action; }
 	int getQueuedCombatFeat() const;
 
 	/** Record the last killer (set on death). */
@@ -321,6 +421,17 @@ public:
 
 	/** Cancel combat, clear actions, and optionally clear buffs; set surrender faction. */
 	void surrenderToEnemies(bool retainBuffs = false);
+
+	/** Make every creature in @p creatures that attacks @p target stop doing so.
+	 *  With @p clearQueuedActions, their action queues are cleared as well
+	 *  (surrender); otherwise only actions targeting @p target are dropped. */
+	static void stopAttacksOn(const std::vector<Creature *> &creatures, const Object *target,
+	                          bool clearQueuedActions);
+
+	/** Regenerate a fraction of the maximum Force points (out of combat). */
+	void regenerateForcePoints();
+	/** Full rest: restore hit points and Force points to their maximum. */
+	void restoreFully();
 
 	int getAILevel() const { return _aiLevel; }
 	void setAILevel(int level) { _aiLevel = level; }
@@ -364,6 +475,19 @@ public:
 
 	void startCombat(Object *target, int round);
 	void cancelCombat();
+	/** Drop every reference to an object that is about to be destroyed. */
+	void forgetObject(const Object *object);
+
+	/** Time (s) the current movement has been blocked; reset on progress. */
+	float addBlockedMoveTime(float dt) { return _blockedMoveTime += dt; }
+	void resetBlockedMoveTime() { _blockedMoveTime = 0.0f; }
+	/** Play animations from this model before the creature's own (dialog stunts). */
+	void setStuntModel(Graphics::Aurora::Model *stunt);
+	/** Does the creature's model (or its stunt model) have this animation? */
+	bool hasModelAnimation(const Common::UString &anim);
+
+	/** The walkmesh route the current movement follows. */
+	MovePath &getMovePath() { return _movePath; }
 
 	/** Apply an active effect tracking struct directly to this creature. */
 	void applyEffect(const ActiveEffect &effect);
@@ -409,8 +533,50 @@ public:
 
 	bool isDead() const override;
 
+	/** SetIsDestroyable(): a non-destroyable creature ignores DestroyObject and
+	 *  stays as a corpse; a non-raiseable one ignores EffectResurrection; a
+	 *  non-destroyable corpse can only be clicked if selectable when dead. */
+	void setDestroyable(bool destroyable, bool raiseable, bool selectableWhenDead);
+	bool isDestroyable() const { return _destroyable; }
+	bool isRaiseable() const { return _raiseable; }
+	bool isSelectableWhenDead() const { return _deadSelectable; }
+
+	/** Living creatures, destroyable corpses and corpses selectable when dead. */
+	bool isClickable() const override;
+
 	/** Handle creature's death. Return true if changed from alive to dead. */
 	bool handleDeath();
+
+	// Area persistence: alive/dead, position and facing on top of Object's state.
+	void saveState(Aurora::GFF3WriterStruct &gff) const override;
+	void loadState(const Aurora::GFF3Struct &gff) override;
+	/** Bring a dead creature back with the given hit points (at least 1). */
+	void resurrect(int hitPoints);
+	/** Return and clear whether OnDeath is due (set when the creature died). */
+	bool consumeDeathEvent();
+	/** Return and clear whether OnDamaged is due (set when damage was taken). */
+	bool consumeDamagedEvent();
+	/** Queue OnSpawn (when the creature enters an area) / OnHeartbeat. */
+	void queueSpawnEvent() { _spawnEventPending = true; }
+	/** A roster companion placed by SpawnAvailableNPC; never saved with the area. */
+	void setRosterSpawn(bool rosterSpawn) { _rosterSpawn = rosterSpawn; }
+	bool isRosterSpawn() const { return _rosterSpawn; }
+	void queueHeartbeatEvent() { _heartbeatEventPending = true; }
+	bool consumeSpawnEvent();
+	bool consumeHeartbeatEvent();
+	/** Queue OnEndCombatRound (creature was in combat when the round ended). */
+	void queueEndRoundEvent() { _endRoundEventPending = true; }
+	bool consumeEndRoundEvent();
+	/** Return and clear whether OnAttacked is due; @p attacker receives the attacker. */
+	bool consumeAttackedEvent(Object *&attacker);
+
+	/** A change in what this creature perceives, queued for OnPerception. */
+	struct PerceptionEvent {
+		Object *object { nullptr };
+		bool seen { false };   ///< true: object became visible; false: it vanished.
+	};
+	/** Pop the oldest pending perception event and make it the "last perceived" state. */
+	bool consumePerceptionEvent(PerceptionEvent &event);
 
 	/** Has kill XP for this creature already been awarded? */
 	bool isXPAwarded() const;
@@ -457,6 +623,7 @@ private:
 	bool _inCombat { false };
 	Object *_attackTarget { nullptr };
 	int _attackRound { 0 };
+	float _challengeRating { -1.0f }; ///< From the blueprint; < 0 when unset.
 	Object *_attemptedAttackTarget { nullptr };
 	Object *_lastHostileActor { nullptr };
 	Object *_lastKiller { nullptr };
@@ -467,6 +634,10 @@ private:
 	int _lastDamageTotal { 0 };
 	int _lastDamageType { 0 };
 	int _lastAttackResult { 0 };
+	int _lastAttackAction { kActionInvalid };
+	bool _destroyable { true };     ///< IsDestroyable (UTC) / SetIsDestroyable.
+	bool _raiseable { true };       ///< IsRaiseable.
+	bool _deadSelectable { true };  ///< DeadSelectable.
 	std::set<int> _immunities;
 	std::set<int> _spellImmunities;
 	std::map<int, int> _damageImmunityPercent;
@@ -478,7 +649,14 @@ private:
 	int _forceResistance { 0 };
 	int _attackModifier { 0 };
 	int _armorClassModifier { 0 };
+	int _damageModifier { 0 };
+	int _invisibility { 0 };
+	int _seeInvisible { 0 };
+	int _nextEffectLinkId { 0 };
 	std::array<int, kSkillMAX> _skillModifiers {{}};
+	std::array<int, kAbilityCharisma + 1> _abilityModifiers {{}};
+	/** Saving throw effects, indexed by SAVING_THROW_* (0 all, 1 Fortitude, 2 Reflex, 3 Will). */
+	std::array<int, 4> _savingThrowModifiers {{}};
 
 	// Perception state — updated by handleObjectSeen/Vanished/Heard/Inaudible.
 	Object *_lastPerceived { nullptr };
@@ -513,6 +691,17 @@ private:
 	std::vector<std::unique_ptr<Item>> _scriptItems;
 
 	ActionQueue _actions;
+	float _blockedMoveTime { 0.0f };
+	MovePath _movePath;
+	bool _deathEventPending { false };   ///< OnDeath queued; run outside creature iteration.
+	bool _damagedEventPending { false }; ///< OnDamaged queued; run outside creature iteration.
+	bool _spawnEventPending { false };     ///< OnSpawn queued; run outside creature iteration.
+	bool _rosterSpawn { false };           ///< Placed by SpawnAvailableNPC.
+	bool _heartbeatEventPending { false }; ///< OnHeartbeat queued; run outside creature iteration.
+	bool _endRoundEventPending { false };  ///< OnEndCombatRound queued.
+	bool _attackedEventPending { false };  ///< OnAttacked queued.
+	Object *_lastAttacker { nullptr };     ///< Attacker for the pending OnAttacked.
+	std::vector<PerceptionEvent> _perceptionEvents; ///< OnPerception queue.
 
 	float _walkRate;
 	float _runRate;
@@ -558,7 +747,57 @@ private:
 	bool addItemToEquipment(const Common::UString &tag, InventorySlot slot);
 
 	int getWeaponAnimationNumber() const;
+
+	/** Apply one part of an Effect (linked effects are applied part by part). */
+	void applyEffectPart(const Effect &effect, float durationOverride, int linkId);
+	/** Store and apply an active effect. */
+	void addActiveEffect(const ActiveEffect &effect);
+	/** Add (@p sign 1) or take away (@p sign -1) the modifiers of a kEffectModifier effect. */
+	void adjustEffectModifiers(const ActiveEffect &effect, int sign);
 	int computeWeaponDamage(const Item *weapon) const;
+
+	// Sounds and visual effects
+
+	/** A sound to play after a delay (a power's casting sound). */
+	struct DelayedSound {
+		float delay { 0.0f };
+		Common::UString sound;
+	};
+
+	/** A duration visual effect applied with a duration (EffectVisualEffect). */
+	struct LastingVisual {
+		int id { -1 };            ///< visualeffects.2da row.
+		int linkId { 0 };         ///< The effects it's linked to, 0 if none.
+		float timeLeft { 0.0f };
+		bool linkSeen { false };  ///< Have the linked effects been active?
+	};
+
+	/** The attack animation this creature faces this round, for its defense. */
+	Common::UString _incomingAttackAnimation;
+
+	CreatureVisualEffects _visualEffects;
+	std::vector<LastingVisual> _lastingVisuals;
+	Sound::ChannelHandle _barkSound;
+	std::vector<DelayedSound> _delayedSounds;
+	int _footstepType { -1 };       ///< footstepsounds.2da row.
+	int _sizeCategory { 3 };        ///< appearance.2da "sizecategory".
+	/** The appearance _footstepType and _sizeCategory were read for. */
+	uint32_t _appearanceSoundsFor { 0xFFFFFFFF };
+
+	/** End the lasting visual effects whose time or linked effects ran out. */
+	void updateLastingVisuals(float dt);
+	/** End all lasting visual effects. */
+	void stopLastingVisuals();
+	/** Read the footstep type and size category from appearance.2da. */
+	void loadAppearanceSounds();
+	/** Play the sound of an animation event. */
+	void handleAnimationEvent(const Common::UString &event, Area *area);
+	/** The weapon whose sounds the creature's attacks make. */
+	const Item *getSoundWeapon() const;
+	/** Play a sound where the creature stands. */
+	void playSoundHere(const Common::UString &sound, float minDistance, float maxDistance);
+	/** Show a spells.2da casting visual: a model, or a visualeffects.2da row when numeric. */
+	void playSpellVisual(const Common::UString &visual, VisualEffectHook hook, float delay);
 
 	int _influence { 50 };
 	int _skillPointBonus { 0 };

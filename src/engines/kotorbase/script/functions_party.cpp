@@ -34,6 +34,7 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/location.h"
 
 #include "src/engines/kotorbase/script/functions.h"
 
@@ -92,15 +93,25 @@ void Functions::isAvailableCreature(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::addAvailableNPCByTemplate(Aurora::NWScript::FunctionContext &ctx) {
+	// AddAvailableNPCByTemplate(int nNPC, string sTemplate) → int
 	const int slot = ctx.getParams()[0].getInt();
 	const Common::UString &templ = ctx.getParams()[1].getString();
 
+	ctx.getReturn() = 0;
+	if (templ.empty())
+		return;
+
 	_game->getModule().addAvailableNPCByTemplate(slot, templ);
+	ctx.getReturn() = _game->getModule().isAvailableCreature(slot) ? 1 : 0;
 }
 
 void Functions::setPartyLeader(Aurora::NWScript::FunctionContext &ctx) {
+	// SetPartyLeader(int nNPC) → int: TRUE if nNPC is in the active party.
 	int npc = ctx.getParams()[0].getInt();
-	_game->getModule().setPartyLeader(npc);
+	const bool inParty = _game->getModule().isNPCPartyMember(npc);
+	if (inParty)
+		_game->getModule().setPartyLeader(npc);
+	ctx.getReturn() = inParty ? 1 : 0;
 }
 
 void Functions::setCommandable(Aurora::NWScript::FunctionContext &ctx) {
@@ -129,24 +140,37 @@ void Functions::isNPCPartyMember(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::addPartyMember(Aurora::NWScript::FunctionContext &ctx) {
+	// AddPartyMember(int nNPC, object oCreature) → int
+	ctx.getReturn() = 0;
 	int npc = ctx.getParams()[0].getInt();
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
 	if (!creature)
 		return;
-	_game->getModule().addPartyMember(npc, creature);
+
+	if (!_game->getModule().isObjectPartyMember(creature))
+		_game->getModule().addPartyMember(npc, creature);
+
+	ctx.getReturn() = _game->getModule().isObjectPartyMember(creature) ? 1 : 0;
 }
 
 void Functions::removePartyMember(Aurora::NWScript::FunctionContext &ctx) {
+	// RemovePartyMember(int nNPC) → int: TRUE if nNPC was in the party.
 	int npc = ctx.getParams()[0].getInt();
-	_game->getModule().removePartyMember(npc);
+	const bool wasMember = _game->getModule().isNPCPartyMember(npc);
+	if (wasMember)
+		_game->getModule().removePartyMember(npc);
+	ctx.getReturn() = wasMember ? 1 : 0;
 }
 
 void Functions::addToParty(Aurora::NWScript::FunctionContext &ctx) {
-	// AddToParty(object oCreature, object oLeader) — KotOR companion add without NPC slot id.
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
-	if (!creature)
+	// AddToParty(object oPC, object oPartyMember): a party member without an
+	// NPC roster slot.
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
+	Module &module = _game->getModule();
+	if (!creature || creature == module.getPC() || module.isObjectPartyMember(creature))
 		return;
-	_game->getModule().addPartyMember(-1, creature);
+
+	module.addPartyMember(PartyController::kTemporarySlot, creature);
 }
 
 void Functions::removeFromParty(Aurora::NWScript::FunctionContext &ctx) {
@@ -156,20 +180,41 @@ void Functions::removeFromParty(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::addAvailableNPCByObject(Aurora::NWScript::FunctionContext &ctx) {
+	// AddAvailableNPCByObject(int nNPC, object oCreature) → int
+	ctx.getReturn() = 0;
 	int npc = ctx.getParams()[0].getInt();
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
+	if (!creature)
+		return;
+
 	_game->getModule().addAvailableNPCByObject(npc, creature);
+	ctx.getReturn() = _game->getModule().isAvailableCreature(npc) ? 1 : 0;
 }
 
 void Functions::removeAvailableNPC(Aurora::NWScript::FunctionContext &ctx) {
+	// RemoveAvailableNPC(int nNPC) → int: TRUE if nNPC was available.
 	int npc = ctx.getParams()[0].getInt();
-	_game->getModule().removeAvailableNPC(npc);
+	const bool wasAvailable = _game->getModule().isAvailableCreature(npc);
+	if (wasAvailable)
+		_game->getModule().removeAvailableNPC(npc);
+	ctx.getReturn() = wasAvailable ? 1 : 0;
 }
 
 void Functions::spawnAvailableNPC(Aurora::NWScript::FunctionContext &ctx) {
+	// SpawnAvailableNPC(int nNPC, location lPosition) → object
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
 	int npc = ctx.getParams()[0].getInt();
-	Common::UString waypointTag = ctx.getParams()[1].getString();
-	_game->getModule().spawnAvailableNPC(npc, waypointTag);
+	const Location *location = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
+
+	float x = 0.0f, y = 0.0f, z = 0.0f, angle = 0.0f;
+	if (location) {
+		location->getPosition(x, y, z);
+		angle = location->getFacing();
+	}
+
+	Creature *spawned = _game->getModule().spawnAvailableNPC(npc, x, y, z, angle);
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(spawned);
 }
 
 void Functions::getInfluence(Aurora::NWScript::FunctionContext &ctx) {

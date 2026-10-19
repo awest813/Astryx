@@ -28,6 +28,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <mutex>
 
 #include "external/glm/mat4x4.hpp"
 
@@ -160,6 +161,11 @@ public:
 
 	/** Does this model have this named animation? */
 	bool hasAnimation(const Common::UString &anim) const;
+	/** Look animations up in @p stunt first (KotOR dialog stunts); nullptr to stop.
+	 *  The stunt model must outlive any animation started from it. */
+	void setStuntModel(Model *stunt);
+	/** Can playAnimation() play this (own, stunt or super model animations)? */
+	bool canPlayAnimation(const Common::UString &anim);
 	/** Are position frames in animations relative to the node's base position? */
 	bool arePositionFramesRelative() const;
 	/** Does the model have skin nodes? */
@@ -177,6 +183,15 @@ public:
 	                   bool restart = true,
 	                   float length = 0.0f,
 	                   float speed = 1.0f);
+
+	/** The names of this model's own animations, in file order. */
+	const std::vector<Common::UString> &getAnimationNames() const;
+	/** The length of an animation in seconds, or 0 if there's no such animation. */
+	float getAnimationLength(const Common::UString &anim);
+
+	/** The model's bounding box in world coordinates. */
+	void getAbsoluteBound(float &minX, float &minY, float &minZ,
+	                      float &maxX, float &maxY, float &maxZ) const;
 
 	/** Compute transformation matrices of model nodes. */
 	void computeNodeTransforms();
@@ -196,6 +211,39 @@ public:
 
 	/** Add another model as a child to the named node. */
 	void attachModel(const Common::UString &nodeName, Model *model);
+
+	// Effect models
+
+	/** Attach a visual effect model to the named node of the current state, or
+	 *  to the model's root when @p nodeName is empty.
+	 *
+	 *  Unlike attachModel(), any number of effect models can share a node, and
+	 *  they don't replace the model attached there. The effect model is animated
+	 *  along with this model, which takes ownership of it.
+	 *
+	 *  @return false, having deleted @p model, if there's no such node.
+	 */
+	bool addEffectModel(const Common::UString &nodeName, Model *model);
+	/** Detach and delete an effect model added with addEffectModel(). */
+	void removeEffectModel(Model *model);
+	/** Is @p model one of this model's effect models? */
+	bool hasEffectModel(const Model *model) const;
+
+	// Animation events
+
+	/** An animation event the model's animations passed. */
+	struct FiredAnimationEvent {
+		Common::UString animation; ///< The animation the event belongs to.
+		Common::UString name;      ///< The event's name.
+	};
+
+	/** Queue the events animations pass, to be taken by takeAnimationEvents().
+	 *  Off by default, since the animation thread would otherwise queue events
+	 *  nobody takes. */
+	void setAnimationEventsEnabled(bool enabled);
+	/** Move the queued animation events, oldest first, into @p events.
+	 *  Thread-safe: the events are queued by the animation thread. */
+	void takeAnimationEvents(std::vector<FiredAnimationEvent> &events);
 
 
 	/** Change the environment map on this model. */
@@ -236,6 +284,7 @@ protected:
 
 	Common::UString _superModelName; ///< Name of the super model.
 	Model *_superModel; ///< The actual super model.
+	Model *_stuntModel { nullptr }; ///< Cutscene animations, looked up first.
 
 	StateList _stateList;   ///< All states within this model.
 	StateMap  _stateMap;    ///< All states within this model, index by name.
@@ -244,6 +293,7 @@ protected:
 	std::list<Common::UString> _stateNames; ///< All state names.
 
 	AnimationMap _animationMap; ///< Map of all animations in this model.
+	std::vector<Common::UString> _animationNames; ///< Names of all animations, in file order.
 
 	AnimationChannelMap _animationChannels;
 
@@ -290,11 +340,30 @@ protected:
 	glm::mat4 _boundTransform;
 
 private:
+	/** A visual effect model attached with addEffectModel(). */
+	struct EffectModel {
+		ModelNode *node; ///< The node it's attached to, or nullptr for the root.
+		Model *model;
+	};
+
 	bool _drawBound;
 	bool _drawSkeleton;
 	bool _drawSkeletonInvisible;
 
 	std::map<Common::UString, Model *> _attachedModels;
+
+	std::vector<EffectModel> _effectModels;
+	/** Protects _effectModels against the animation thread. */
+	mutable std::recursive_mutex _effectMutex;
+
+	bool _animationEventsEnabled { false };
+	std::vector<FiredAnimationEvent> _animationEvents; ///< Events not yet taken.
+	std::mutex _animationEventMutex;
+
+	/** Queue an animation event (called by the animation channels). */
+	void queueAnimationEvent(const Common::UString &animation, const Common::UString &name);
+	/** Render the effect models attached to the root. */
+	void renderRootEffects(RenderPass pass);
 
 	/** Create the list of all state names. */
 	void createStateNamesList(std::list<Common::UString> *stateNames = 0);

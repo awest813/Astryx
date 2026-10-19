@@ -25,12 +25,20 @@
 #include <algorithm>
 
 #include "src/common/strutil.h"
+#include "src/common/error.h"
 
 #include "src/engines/kotor/module.h"
 #include "src/engines/kotor/game.h"
 #include "src/engines/kotor/creature.h"
 #include "src/engines/kotorbase/creature.h"
 
+#include "src/common/debug.h"
+
+#include "src/aurora/2dareg.h"
+#include "src/aurora/2dafile.h"
+#include "src/aurora/talkman.h"
+#include "src/engines/kotor/gui/saveload.h"
+#include "src/engines/kotor/gui/dialogs/confirm.h"
 #include "src/engines/kotor/gui/dialog.h"
 
 #include "src/engines/kotor/gui/ingame/ingame.h"
@@ -43,13 +51,9 @@
 #include "src/engines/kotor/gui/ingame/menu_jou.h"
 #include "src/engines/kotor/gui/ingame/galaxymap.h"
 #include "src/engines/kotor/gui/ingame/workbench.h"
-#include "src/engines/kotor/encounters_dan.h"
 #include "src/engines/kotor/encounters_end.h"
-#include "src/engines/kotor/encounters_tar.h"
-#include "src/engines/kotor/encounters_ebon.h"
 #include "src/engines/kotor/pazaak.h"
 #include "src/engines/kotor/gui/ingame/pazaak.h"
-#include "src/engines/kotorbase/swoopminigame.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotor/gui/ingame/menu.h"
 
@@ -62,6 +66,14 @@ namespace KotOR {
 Module::Module(Game &game, ::Engines::Console &console) : KotORBase::Module(game, console) {
 	_ingame = std::make_unique<IngameGUI>(*this);
 	_dialog = std::make_unique<DialogGUI>(*this);
+
+	// Computer terminals; without the GUI they run in the normal dialog GUI.
+	try {
+		_computer = std::make_unique<ComputerGUI>(*this);
+	} catch (...) {
+		Common::exceptionDispatcherWarning("No computer terminal GUI");
+		_computer.reset();
+	}
 	_partySelection = std::make_unique<PartySelectionGUI>();
 }
 
@@ -85,29 +97,79 @@ KotORBase::CharacterGenerationInfo *Module::createCharGenInfo(const KotORBase::C
 	return new CharacterGenerationInfo(info);
 }
 
-bool Module::deferIngameHUDOnEnter() const {
-	return _playOpeningBeat;
-}
-
-void Module::enter() {
-	_playOpeningBeat = getGlobalBoolean("__endar_opening_pending");
-	if (_playOpeningBeat)
-		setGlobalBoolean("__endar_opening_pending", false);
-
-	KotORBase::Module::enter();
-
-	if (_playOpeningBeat) {
-		KotOR::performEndarSpireOpeningBeat(*this);
-		_playOpeningBeat = false;
-	}
-}
-
 void Module::showMenu() {
 	showIngameOptionsMenu();
 }
 
 void Module::showDeathGUI() {
-	showIngameOptionsMenu();
+	if (_inDialog || !_ingame || !_running)
+		return;
+
+	_cameraController.stopMovement();
+	_partyLeaderController.clearUserInput();
+	_partyLeaderController.stopMovement();
+	_ingame->hideSelection();
+
+	// As in the original, a defeated party can only load a game or quit;
+	// no saving, and no returning to the dead party.
+	SaveLoadMenu menu(*this, _console, kSaveLoadMenuTypeLoad, true);
+	menu.show();
+
+	updateFrameTimestamp();
+	const uint32_t ret = menu.run();
+	menu.hide();
+
+	if (ret == 2)
+		GfxMan.unlockFrame();
+	else
+		_exit = true;
+
+	updateFrameTimestamp();
+}
+
+/** KotOR I's ShowTutorialWindow numbers aren't tutorial.2da rows: the engine
+ *  maps them. Only these two are known (from KotOR.js); others are used as
+ *  the row directly. */
+static int getTutorialRow(int index) {
+	switch (index) {
+		case 0:
+			return 9;  // Start_Swoop_Race (tar_m03mg)
+		case 2:
+			return 42; // Movement_Keys (end_m01aa, k_pend_pctut)
+		default:
+			return index;
+	}
+}
+
+void Module::showTutorialWindow(int index) {
+	if (!_ingame || !_running)
+		return;
+
+	// tutorial.2da: one row per tutorial, the text as a talk table strref.
+	// KotOR I keeps it in "message0", KotOR II in "message_pc0".
+	Common::UString text;
+	try {
+		const Aurora::TwoDARow &row = TwoDAReg.get2DA("tutorial").getRow(getTutorialRow(index));
+		for (const char *column : { "message0", "message_pc0", "message_pc", "message", "messagepc", "strref" }) {
+			const int strRef = row.getInt(column);
+			if (strRef > 0) {
+				text = TalkMan.getString(strRef);
+				break;
+			}
+		}
+	} catch (...) {
+	}
+
+	if (text.empty()) {
+		debugC(Common::kDebugEngineLogic, 1, "Tutorial window %d has no text", index);
+		return;
+	}
+
+	ConfirmDialog dialog(_console);
+	dialog.setText(text);
+	dialog.show();
+	dialog.run();
+	dialog.hide();
 }
 
 void Module::showGUIPanel(int panel) {
@@ -145,56 +207,31 @@ void Module::showIngameOptionsMenu() {
 	menu.showMenu("BTN_OPT");
 
 	updateFrameTimestamp();
-	const uint32_t ret = menu.run();
-	if (ret == 1)
-		_exit = true;
-	else if (ret == 2)
-		GfxMan.unlockFrame();
+	// Closing the menu just returns to the game: "Exit Game" leaves the module
+	// itself, and loading a game already balanced its frame lock in Menu.
+	menu.run();
+	menu.hide();
 
 	updateFrameTimestamp();
 }
 
 void Module::showGalaxyMap() {
 	GalaxyMapMenu gui(*this, _console);
+	gui.show();
 	gui.run();
+	gui.hide();
 }
 
 void Module::showWorkbench() {
 	WorkbenchMenu gui(*this, _console);
+	gui.show();
 	gui.run();
+	gui.hide();
 }
 
 void Module::signalEncounter(const Common::UString &id) {
 	if (id == "end_opening") {
 		KotOR::performEndarSpireOpening(*this);
-	} else if (id == "end_trask") {
-		KotOR::performTraskEncounter(*this);
-	} else if (id == "end_sith_board") {
-		KotOR::performSithBoarding(*this);
-	} else if (id == "tar_ambush") {
-		KotOR::performTarisAmbush(*this);
-	} else if (id == "tar_duel_intro") {
-		KotOR::performDuelRingIntro(*this);
-	} else if (id == "dan14_mand") {
-		KotOR::performMandalorianAmbush(*this);
-	} else if (id == "dan14_kinrath") {
-		KotOR::performKinrathSwarm(*this);
-	} else if (id == "dan17_reveal") {
-		KotOR::performStarMapReveal(*this);
-	} else if (id == "ebon_galaxymap") {
-		showGalaxyMap();
-	} else if (id == "ebon_hyperspace") {
-		performHyperspaceJump(*this);
-	} else if (id == "ebon_arrival") {
-		performPlanetArrival(*this);
-	} else if (id == "ebon_turret") {
-		performTurretMinigame(*this);
-	} else if (id == "turret_combat_start") {
-		setGlobalBoolean("__swmg_gunbank_targeting", true);
-	} else if (id == "swmg_obstacle_hit") {
-		setGlobalNumber("__swmg_last_event", KotORBase::SwoopMinigame::get().getLastEvent());
-	} else if (id == "tar_brejik_post_race") {
-		KotOR::performBrejikShowdown(*this);
 	} else if (id == "pazaak_start") {
 		const int sideIndex = getGlobalNumber("__pazaak_side");
 		const std::vector<int> playerDeck = PazaakEngine::sideDeckForIndex(sideIndex);
@@ -204,7 +241,9 @@ void Module::signalEncounter(const Common::UString &id) {
 		engine.startMatch(playerDeck, opponentDeck);
 
 		PazaakGUI gui(engine, _console);
+		gui.show();
 		gui.run();
+		gui.hide();
 
 		const bool playerWon = engine.getWinner() == 1;
 		setGlobalNumber("__pazaak_result", playerWon ? 1 : 0);
@@ -220,16 +259,6 @@ void Module::signalEncounter(const Common::UString &id) {
 			}
 		}
 	}
-}
-
-void Module::onFrameUpdate(float frameTime) {
-	const bool swoopModule = _module.endsWith("mg");
-	const bool areaMinigame = _area && _area->isMinigame();
-	KotORBase::SwoopMinigame &swoop = KotORBase::SwoopMinigame::get();
-
-	swoop.setActive(swoopModule || areaMinigame);
-	if (swoop.isActive())
-		swoop.update(frameTime);
 }
 
 void Module::showJournal() {

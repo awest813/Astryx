@@ -167,6 +167,7 @@ enum SubRace {
 enum Faction {
 	kFactionInvalid = -1,
 
+	kFactionPlayer   = 0, ///< Row 0 of repute.2da.
 	kFactionHostile1 = 1,
 	kFactionFriendly1,
 	kFactionHostile2,
@@ -179,6 +180,7 @@ enum Faction {
 	kFactionSurrender2,
 	kFactionPredator,
 	kFactionPrey,
+	kFactionTrap,
 	kFactionEndarSpire,
 	kFactionRancor,
 	kFactionGizka1,
@@ -324,8 +326,18 @@ enum ActionType {
 	kActionCutsceneAttack = 42,
 	kActionGiveItem      = 43,
 	kActionTakeItem      = 44,
+	kActionPauseConversation  = 45,
+	kActionResumeConversation = 46,
+	kActionRandomWalk    = 47, ///< Engine-internal: ActionRandomWalk.
 	kActionQueueEmpty    = 65534,
 	kActionInvalid       = 65535
+};
+
+/** INVENTORY_DISTURB_TYPE_* (nwscript.nss): why OnInventoryDisturbed fired. */
+enum InventoryDisturbType {
+	kInventoryDisturbTypeAdded   = 0,
+	kInventoryDisturbTypeRemoved = 1,
+	kInventoryDisturbTypeStolen  = 2
 };
 
 enum CreatureType {
@@ -373,43 +385,59 @@ enum BaseItem {
 	kBaseItemShortLightsaber  = 11
 };
 
-/** KOTOR feat IDs (feats.2da row indices). */
+/** KotOR feat IDs: feat.2da rows, the values of K1's nwscript FEAT_* constants
+ *  (scripts and creature blueprints use these numbers). */
 enum FeatID {
-	kFeatAmbidexterity         =  0,
-	kFeatTwoWeaponFighting     =  1,
-	kFeatImprovedTwoWeapon     =  2,
-	kFeatMasterTwoWeapon       =  3,
-	kFeatFlurry                =  4,
-	kFeatImprovedFlurry        =  5,
-	kFeatPowerAttack           =  6,
-	kFeatImprovedPowerAttack   =  7,
-	kFeatCriticalStrike        =  8,
-	kFeatImprovedCriticalStrike =  9,
-	kFeatRapidShot             = 10,
-	kFeatImprovedRapidShot     = 11,
-	kFeatPowerBlast            = 12,
-	kFeatSniperShot            = 13,
-	kFeatSneakAttack1          = 14,
-	kFeatSneakAttack2          = 15,
-	kFeatSneakAttack3          = 16,
-	kFeatSneakAttack4          = 17,
-	kFeatSneakAttack5          = 18,
-	kFeatSneakAttack6          = 19,
-	kFeatSneakAttack7          = 20,
-	kFeatSneakAttack8          = 21,
-	kFeatSneakAttack9          = 22,
-	kFeatWeaponFocusMelee      = 25,
-	kFeatWeaponFocusBlaster    = 26,
-	kFeatWeaponFocusBlasterRifle = 27,
-	kFeatWeaponSpecializationMelee    = 28,
-	kFeatWeaponSpecializationBlaster  = 29,
-	kFeatWeaponSpecializationBlasterRifle = 30,
-	
-	kFeatJediDefense           = 149,
-	kFeatImprovedJediDefense   = 150,
-	kFeatMasterJediDefense     = 151,
-	kFeatConditioning          = 152,
-	kFeatToughness             = 153
+	kFeatImprovedJediDefense         =   1, ///< FEAT_ADVANCED_JEDI_DEFENSE
+	kFeatTwoWeaponFighting           =   3,
+	kFeatCriticalStrike              =   8,
+	kFeatImprovedTwoWeapon           =   9, ///< FEAT_TWO_WEAPON_ADVANCED
+	kFeatFlurry                      =  11,
+	kFeatConditioning                =  13,
+	kFeatImprovedPowerAttack         =  17,
+	kFeatImprovedPowerBlast          =  18,
+	kFeatImprovedCriticalStrike      =  19,
+	kFeatImprovedSniperShot          =  20,
+	kFeatImprovedConditioning        =  21,
+	kFeatMasterConditioning          =  22,
+	kFeatMasterJediDefense           =  24,
+	kFeatMasterRapidShot             =  26,
+	kFeatPowerAttack                 =  28,
+	kFeatPowerBlast                  =  29,
+	kFeatRapidShot                   =  30,
+	kFeatSniperShot                  =  31,
+	kFeatWeaponFocusBlaster          =  32,
+	kFeatWeaponFocusBlasterRifle     =  33,
+	kFeatWeaponFocusHeavyWeapons     =  35,
+	kFeatWeaponFocusLightsaber       =  36,
+	kFeatWeaponFocusMelee            =  37,
+	kFeatWeaponSpecializationBlaster      = 46,
+	kFeatWeaponSpecializationBlasterRifle = 47,
+	kFeatWeaponSpecializationHeavyWeapons = 49,
+	kFeatWeaponSpecializationLightsaber   = 50,
+	kFeatWeaponSpecializationMelee        = 51,
+	kFeatMasterFlurry                =  53,
+	kFeatJediDefense                 =  55,
+	kFeatSneakAttack1                =  60, ///< Sneak attack ranks are consecutive.
+	kFeatSneakAttack2                =  61,
+	kFeatSneakAttack3                =  62,
+	kFeatSneakAttack4                =  63,
+	kFeatSneakAttack5                =  64,
+	kFeatSneakAttack6                =  65,
+	kFeatSneakAttack7                =  66,
+	kFeatSneakAttack8                =  67,
+	kFeatSneakAttack9                =  68,
+	kFeatSneakAttack10               =  69,
+	kFeatMasterSniperShot            =  77,
+	kFeatMasterCriticalStrike        =  81,
+	kFeatMasterPowerBlast            =  82,
+	kFeatMasterPowerAttack           =  83,
+	kFeatToughness                   =  84,
+	kFeatMasterTwoWeapon             =  85, ///< FEAT_TWO_WEAPON_MASTERY
+	kFeatImprovedFlurry              =  91,
+	kFeatImprovedRapidShot           =  92,
+	kFeatImprovedToughness           = 123,
+	kFeatMasterToughness             = 124
 };
 
 enum CameraMode {
@@ -418,6 +446,13 @@ enum CameraMode {
 	kCameraModeWide      = 2,
 	kCameraModeIsometric = 3,
 	kCameraModeReveal    = 4
+};
+
+/** How a scripted move goes (Action::choreographyFlags of kActionMoveToPoint). */
+enum MoveSpeed {
+	kMoveAuto = 0, ///< Walk short distances, run longer ones.
+	kMoveRun  = 1, ///< bRun TRUE.
+	kMoveWalk = 2  ///< bRun FALSE.
 };
 
 enum CutsceneAttackFlag {
@@ -440,7 +475,8 @@ enum EffectType {
 	kEffectKnockdown = 6,
 	kEffectDamage = 7,
 	kEffectConfusion = 8,
-	kEffectDazed = 9
+	kEffectDazed = 9,
+	kEffectModifier = 10 ///< A KotOR effect kept active for its duration (AC, attack, ability, shield...).
 };
 
 /** Item property types (rows in itempropdef.2da — matches Aurora engine IDs). */

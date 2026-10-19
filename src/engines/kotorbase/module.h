@@ -25,12 +25,17 @@
 #ifndef ENGINES_KOTORBASE_MODULE_H
 #define ENGINES_KOTORBASE_MODULE_H
 
+#include <functional>
 #include <list>
 #include <map>
 #include <set>
 #include <utility>
+#include <vector>
 
 #include <memory>
+
+#include "external/glm/vec3.hpp"
+
 #include "src/common/ustring.h"
 #include "src/common/changeid.h"
 #include "src/common/configman.h"
@@ -49,6 +54,7 @@ class GFF3WriterStruct;
 
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/objectcontainer.h"
+#include "src/engines/kotorbase/location.h"
 #include "src/engines/kotorbase/savedgame.h"
 #include "src/engines/kotorbase/partyleader.h"
 #include "src/engines/kotorbase/partycontroller.h"
@@ -56,6 +62,8 @@ class GFF3WriterStruct;
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/partystate.h"
 #include "src/engines/kotorbase/round.h"
+#include "src/engines/kotorbase/pause.h"
+#include "src/engines/kotorbase/actionmenu.h"
 
 #include "src/engines/kotorbase/gui/ingame.h"
 #include "src/engines/kotorbase/gui/dialog.h"
@@ -84,6 +92,7 @@ class Functions;
 class PartyLeaderController;
 class Creature;
 class LoadScreen;
+class MinigameRuntime;
 class Game;
 
 class Module : public Object, public ObjectContainer {
@@ -100,6 +109,8 @@ public:
 	bool isLoaded() const;
 	/** Is a module currently running? */
 	bool isRunning() const;
+	/** Is a swoop race or turret minigame running in the current area? */
+	bool isMinigameRunning() const;
 
 	/** Load a module. */
 	void load(const Common::UString &module,
@@ -122,6 +133,8 @@ public:
 	const Aurora::IFOFile &getIFO() const;
 	/** Return the module's name. */
 	const Common::UString &getName() const;
+	/** The resource name of the current module, e.g. "end_m01aa". */
+	const Common::UString &getResRef() const { return _module; }
 
 	// Elements of the current module
 
@@ -133,10 +146,21 @@ public:
 	Game &getGame() const;
 	/** Return a map between surface type and whether it is walkable. */
 	const std::vector<bool> &getWalkableSurfaces() const;
+	/** A dialog stunt model (loaded once per area; nullptr if it can't be). */
+	Graphics::Aurora::Model *getStuntModel(const Common::UString &resRef);
+
 	/** Return the fade quad. */
 	Graphics::Aurora::FadeQuad &getFadeQuad();
 	void holdWorldFadeInForDialog();
 	void releaseWorldFadeInForDialog();
+
+	/** Whether the current area can't be left (GetAreaUnescapable): the area
+	 *  file's flag, unless a script set it for this area. */
+	bool getAreaUnescapable() const;
+	void setAreaUnescapable(bool unescapable);
+	/** Fade a freshly entered module in from black (seconds). */
+	static constexpr float kModuleFadeInTime = 1.0f;
+	void startModuleFadeIn();
 
 	void removeObject(Object &object);
 
@@ -146,6 +170,12 @@ public:
 	virtual void showMenu();
 	virtual void showGUIPanel(int panel);
 	virtual void showDeathGUI();
+	/** Show a tutorial.2da pop-up (blocks until dismissed). */
+	virtual void showTutorialWindow(int UNUSED(index)) { }
+
+	/** ShowTutorialWindow: queued, shown once per row, outside conversations/cutscenes. */
+	void requestTutorialWindow(int index);
+	void setTutorialWindowsEnabled(bool enabled) { _tutorialWindowsEnabled = enabled; }
 
 	/** Show the galaxy map menu. */
 	virtual void showGalaxyMap();
@@ -167,8 +197,14 @@ public:
 	                 const Aurora::NWScript::ScriptState &state,
 	                 Aurora::NWScript::Object *owner, Aurora::NWScript::Object *triggerer,
 	                 uint32_t delay);
+	/** Run the container's OnInventoryDisturbed for items taken from or given to it. */
+	void signalInventoryDisturbed(Object &container, const InventoryDisturbance &disturbance);
+	/** Is a delayed command (AssignCommand, DelayCommand) of this object due by then? */
+	bool hasDelayedScriptFor(const Aurora::NWScript::Object *owner, uint32_t until) const;
 
 	void signalUserDefinedEvent(Object *owner, int number);
+	/** Queue a user-defined event, as SignalEvent does in the original. */
+	void queueUserDefinedEvent(Object *owner, int number);
 	
 	/** Transition the camera to focus on a target object/waypoint. */
 	virtual void cameraTransitionToTarget(const Common::UString &target, float duration);
@@ -225,6 +261,8 @@ public:
 	void moveParty(const Common::UString &module, const Common::UString &object, ObjectType type = kObjectTypeAll);
 	/** Notify the module that the party leader was moved. */
 	void movedPartyLeader();
+	/** A script teleported an object (JumpTo*): update rooms, perception and camera. */
+	void notifyObjectTeleported(Object &object);
 
 	/** Shake the camera. */
 	void shakeCamera(float duration, float intensity);
@@ -247,8 +285,13 @@ public:
 	/** Get the count of party members including the leader. */
 	int getPartyMemberCount() const;
 
+	/** Where a creature's items and credits are: the shared party inventory (the
+	 *  PC's) for the PC and party members, else the creature's own. */
+	Inventory &getInventoryOf(Creature &creature);
 	/** Is a specified creature a party member? */
 	bool isObjectPartyMember(Creature *creature) const;
+	/** Give XP to the player and every companion met so far, benched ones included. */
+	void awardPartyXP(int xp);
 	/** Is a NPC slot in the active party? */
 	bool isNPCPartyMember(int npc) const;
 	/** Is a NPC in the list of available party members? */
@@ -262,7 +305,14 @@ public:
 	void setPartyLeaderByIndex(int index);
 	/** Enable or disable solo mode. */
 	void setSoloMode(bool enabled);
+	/** The party's AI style (Get/SetPartyAIStyle, read by k_inc_generic). */
+	int getPartyAIStyle() const;
 	void setPartyAIStyle(int style);
+	/** Record a companion's current state in the party table (SaveNPCState). */
+	void saveNPCState(int npc);
+	/** Can the player pick this companion in party selection (Get/SetNPCSelectability)? */
+	bool isNPCSelectable(int npc) const;
+	void setNPCSelectable(int npc, bool selectable);
 
 	/** Show the party selection GUI. */
 	void showPartySelectionGUI(int forceNPC1, int forceNPC2);
@@ -273,7 +323,8 @@ public:
 	/** Remove a NPC from the available party roster. */
 	void removeAvailableNPC(int npc);
 	/** Spawn an available NPC into the current area and add them to the active party. */
-	void spawnAvailableNPC(int npc, const Common::UString &waypointTag);
+	/** Spawn an available companion into the area (not into the party). */
+	Creature *spawnAvailableNPC(int npc, float x, float y, float z, float angle);
 	/** Add a creature directly to the active party. */
 	void addPartyMember(int npc, Creature *creature);
 	/** Remove a creature from the active party by NPC slot. */
@@ -308,6 +359,9 @@ public:
 	Common::UString getGlobalString(const Common::UString &id) const;
 	/** Set a global string. */
 	void setGlobalString(const Common::UString &id, const Common::UString &value);
+	/** A global location (Get/SetGlobalLocation); false if it was never set. */
+	bool getGlobalLocation(const Common::UString &id, Location &location) const;
+	void setGlobalLocation(const Common::UString &id, const Location &location);
 
 	// Galaxy map
 
@@ -351,8 +405,23 @@ public:
 
 	void loadSavedGame(SavedGame *save);
 	void saveGame(const Common::UString &slot, const Common::UString &name);
+	bool isCutsceneMode() const { return _cutsceneMode; }
+	/** Seconds played in this game (kept in saves); a clock for game timers. */
+	float getPlayTime() const { return _playTime; }
+	/** Is a conversation running (encounter helpers must not take over the camera)? */
+	bool isInConversation() const { return _inDialog; }
+	/** ActionPauseConversation / ActionResumeConversation: hold the conversation while actors act. */
+	void setConversationPaused(bool paused);
+	bool isConversationPaused() const { return _conversationPausedSince != 0; }
+	/** Request an autosave (DoSinglePlayerAutoSave); performed at the next safe frame. */
+	void requestAutoSave();
 
 	void setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel);
+	/** Conversation camera shots; see CameraController. */
+	void setDialogShot(int cameraAngle, Object *speaker, Object *listener);
+	bool setStaticShot(uint32_t cameraID);
+	bool setAnimatedShot(const Common::UString &cameraModel, uint32_t cameraAnimation);
+	void setShotFieldOfView(float fov);
 	void setCameraMode(CameraMode mode, Object *target = nullptr);
 	void setCinematicFocus(Object *target);
 	void cameraTransitionToTarget(float blendTime);
@@ -372,6 +441,30 @@ public:
 	void updateFrameTimestamp();
 	Common::UString getMinimapMapId() const;
 
+	// Pause
+
+	/** Is the world paused (by the player, a script or auto-pause)? */
+	bool isGamePaused() const;
+	/** Why the world is paused. */
+	PauseReason getPauseReason() const;
+	/** Pause for @p reason, if its auto-pause option is on and nothing forbids
+	 *  pausing (conversations, cutscenes, minigames). True if now paused. */
+	bool pauseGame(PauseReason reason = kPauseReasonGeneric);
+	/** Resume the world; actions queued while paused run from now on. */
+	void unpauseGame();
+	/** Pause or unpause, as the pause key does. */
+	void toggleGamePaused();
+	/** Toggle the party leader's stealth mode (the HUD's stealth button). */
+	void toggleLeaderStealth();
+	/** Is the party leader sneaking? */
+	bool isLeaderStealthy() const;
+
+	// Action menus
+
+	/** Have the party leader use an option of the HUD's action menus on @p target
+	 *  (nullptr: on the leader). Queued actions wait for the game to be unpaused. */
+	void useActionMenuOption(const ActionMenuOption &option, Object *target);
+
 protected:
 	/** Per-frame hook for game-specific systems (minigames, etc.). */
 	virtual void onFrameUpdate(float frameTime);
@@ -388,6 +481,8 @@ protected:
 	/** Returns true if the current module was entered via a save-game load. */
 	bool isLoadedFromSaveGame() const;
 
+	/** Restore the saved progression of every companion (benched ones included). */
+	void setSavedNPCStates(const std::map<int, CreatureInfo> &states);
 	/** Restore PC inventory/equipment/stats from a save before loadPC(). */
 	void setSavedPCInfo(const CreatureInfo &info);
 	/** Restore available/active party roster from a save before loadParty(). */
@@ -445,7 +540,8 @@ protected:
 	// Delayed object interactions
 
 	void delayConversation(const Common::UString &name, Aurora::NWScript::Object *owner = nullptr);
-	void delayContainer(Placeable *placeable);
+	/** Open the inventory of a placeable, or of a dead creature (its loot). */
+	void delayContainer(Object *container);
 
 
 	void addItemToActiveObject(const Common::UString &item, int count);
@@ -468,6 +564,10 @@ protected:
 	int getSpellScriptSaveDC() const;
 	bool getSpellScriptHarmful() const;
 	Object *getSpellScriptCastItem() const;
+	/** A spell cast at a location rather than an object (grenades, ActionCastSpellAtLocation). */
+	void setSpellScriptTargetLocation(const glm::vec3 &location);
+	/** The location the spell was cast at; false when it was cast at an object. */
+	bool getSpellScriptTargetLocation(glm::vec3 &location) const;
 
 	void setLastConversation(const Common::UString &name);
 	const Common::UString &getLastConversation() const;
@@ -479,6 +579,11 @@ protected:
 protected:
 	std::unique_ptr<IngameGUI> _ingame; ///< The ingame GUI.
 	std::unique_ptr<DialogGUI> _dialog; ///< Conversation/cutscene GUI.
+	std::unique_ptr<DialogGUI> _computer; ///< Computer terminal GUI (optional).
+	DialogGUI *_conversationGUI { nullptr }; ///< The GUI running the current conversation.
+
+	/** The GUI running the current (or last) conversation. */
+	DialogGUI &getConversationGUI() const;
 	std::unique_ptr<PartySelectionGUI> _partySelection; ///< The party selection GUI.
 
 	// Object creation
@@ -514,6 +619,7 @@ private:
 	std::map<Common::UString, bool> _globalBooleans;
 	std::map<Common::UString, int> _globalNumbers;
 	std::map<Common::UString, Common::UString> _globalStrings;
+	std::map<Common::UString, Location> _globalLocations;
 
 	// Journal: key = quest tag, value = entry ID
 	std::map<Common::UString, uint32_t> _journal;
@@ -527,14 +633,12 @@ private:
 	// Area Object Persistence: key = "areaTag:objectTag", value = state
 	std::map<Common::UString, std::shared_ptr<Aurora::GFF3File>> _areaObjectSaves;
 
-	// Inter-faction reputation store: key = (sourceFaction, targetFaction), value in [0, 100]
-	std::map<std::pair<int,int>, int> _reputations;
 
 	// Galaxy map planet state
 
 	std::map<int, bool> _planetSelectable; ///< Which planets are selectable on the galaxy map.
 	std::map<int, bool> _planetAvailable;  ///< Which planets are available (unlocked).
-	int _selectedPlanet;                   ///< The planet currently selected on the galaxy map.
+	int _selectedPlanet { -1 };            ///< The planet currently selected on the galaxy map.
 
 	// Delayed object interactions
 
@@ -546,7 +650,7 @@ private:
 	};
 
 	std::unique_ptr<DelayedConversation> _delayedConversation;
-	Placeable *_delayedContainer { nullptr };
+	Object *_delayedContainer { nullptr };
 
 	// Surface types
 
@@ -574,6 +678,14 @@ protected:
 
 	bool _exit;              ///< Should we exit the module?
 	bool _loadedFromSaveGame { false }; ///< Was this module entered via a save-game load?
+	bool _autoSavePending { false };    ///< DoSinglePlayerAutoSave requested, not yet written.
+	bool _teleportingParty { false };   ///< Inside moveParty(); suppresses transition triggers.
+	bool _loadingSavedGame { false };   ///< A save was loaded in-game; replaceModule() keeps its state.
+	uint32_t _conversationPausedSince { 0 }; ///< Timestamp of ActionPauseConversation, 0 if not paused.
+	bool _tutorialWindowsEnabled { true };
+	std::vector<int> _pendingTutorialWindows;
+	bool _hasSavedPCPosition { false }; ///< Place the party at _savedPCPosition on enter().
+	glm::vec3 _savedPCPosition { 0.0f, 0.0f, 0.0f };
 
 	Common::UString _module;    ///< The current module's name.
 	Common::UString _newModule; ///< The module we should change to.
@@ -581,7 +693,10 @@ protected:
 	Common::UString _entryLocation; ///< The tag of the object in the start location for this module.
 	ObjectType      _entryLocationType; ///< The type(s) of the object in the start location for this module.
 
+	/** Dialog stunt models, declared before the area so they outlive its creatures (creatures may still play their animations). */
+	std::map<Common::UString, std::unique_ptr<Graphics::Aurora::Model>, Common::UString::iless> _stuntModels;
 	std::unique_ptr<Area> _area; ///< The current module's area.
+	std::unique_ptr<MinigameRuntime> _minigame; ///< The area's running minigame, if any.
 
 	std::unique_ptr<Graphics::Aurora::FadeQuad> _fade;
 
@@ -603,15 +718,24 @@ protected:
 	bool _grenadeTargetingActive { false };
 
 	std::vector<SavedPartyMemberState> _savedPartyMembers;
+	/** Last known state of each companion (by NPC slot) for this session, so
+	 *  that rebuilding them from their template (module change, party
+	 *  selection) keeps their levels, XP, gear and HP. */
+	std::map<int, CreatureInfo> _npcStates;
+	/** AddToParty members (template, state) carried across a module change. */
+	std::vector<std::pair<Common::UString, CreatureInfo>> _temporaryPartyMembers;
 	std::map<int, Common::UString> _savedAvailableNPCs;
 	int _savedPartyLeaderIndex { 0 };
 	bool _hasSavedPartyState { false };
 	bool _playerInputEnabled { true };
 	bool _cutsceneMode { false };
 	int _userDefinedEventNumber { 0 };
+	/** SignalEvent(EventUserDefined) calls, delivered at the next frame. */
+	std::vector<std::pair<Aurora::NWScript::ObjectReference, int>> _queuedUserDefinedEvents;
 	float _playTime { 0.0f };
 	std::map<Common::UString, std::vector<bool>> _exploredMaps;
 	bool _inBattleMusic { false };  ///< Is the battle music track currently playing?
+	int _calmHeartbeats { 0 };      ///< Consecutive heartbeats without anyone in combat.
 	Object *_lastAcquiredItem { nullptr }; ///< Last item acquired via script events.
 	int _spellScriptId { -1 };
 	Object *_spellScriptCaster { nullptr };
@@ -619,10 +743,25 @@ protected:
 	int _spellScriptSaveDC { 12 };
 	bool _spellScriptHarmful { false };
 	Object *_spellScriptCastItem { nullptr };
+	bool _spellScriptHasTargetLocation { false };
+	glm::vec3 _spellScriptTargetLocation { 0.0f, 0.0f, 0.0f };
 	Common::UString _lastConversation;
 	Object *_lastAoECreator { nullptr };
 
 	bool _moviePlaying { false }; ///< Is a full-screen movie currently playing?
+	/** Frame locks the module holds while updating the world and running
+	 *  scripts. A movie a script starts releases them while it plays: videos
+	 *  only advance while frames are rendered. */
+	uint32_t _frameLocksHeld { 0 };
+
+	void lockFrame();
+	void unlockFrame();
+
+	PauseState _pause;
+	AutoPauseMonitor _autoPauseMonitor;
+	float _autoPauseScanTimer { 0.0f };
+	/** Item uses from the action menus, waiting for the game to be unpaused. */
+	std::vector<std::function<void()>> _unpauseCommands;
 	std::vector<Common::UString> _movieQueue; ///< Movies queued for PlayMovieQueue.
 
 private:
@@ -688,11 +827,31 @@ private:
 	void handleEvents();
 	void handleActions();
 
+	/** What currently forbids pausing. */
+	PauseBlockers getPauseBlockers() const;
+	/** Push the world's timers (DelayCommand, combat rounds, ...) back by @p ms. */
+	void shiftWorldTimers(uint32_t ms);
+	/** Look for the events that auto-pause the game. */
+	void updateAutoPause();
+	/** Run an item use now, or once the game is unpaused. */
+	void runWhenUnpaused(const std::function<void()> &command);
+	/** Run the item uses queued while paused (at a safe point of the frame). */
+	void runUnpauseCommands();
+	/** Use an item from the action menus: on the user, or thrown at the target. */
+	void useActionMenuItem(const Common::UString &tag, uint32_t userID, uint32_t targetID);
+
 	void updateSoundListener();
 	void updateSelection();
 
 	void handleDelayedInteractions();
-	void openContainer(Placeable *placeable);
+	void processAutoSave();
+	void processTutorialWindows();
+	void processQueuedUserDefinedEvents();
+	void resetSessionState();
+	/** Create a companion from its template and restore its known state. */
+	Creature *createPartyNPC(int npc, const Common::UString &templ);
+	void rememberNPCState(int npc, const Creature &creature);
+	void openContainer(Object *container);
 
 	void notifyCombatRoundBegan(int round);
 	void notifyCombatRoundEnded(int round);
@@ -709,6 +868,13 @@ private:
 
 	/** Award XP to the party for creatures that died this frame. */
 	void updateXPOnKill();
+
+	/** Heartbeat: out-of-combat Force regeneration, and fallen party members
+	 *  getting back up once nobody has been fighting for a while. */
+	void updateOutOfCombatRecovery();
+
+	/** Is this creature hostile to the player's party? */
+	bool isHostileToParty(const Creature *creature) const;
 
 	friend class Area;
 	friend class ActionExecutor;

@@ -1,8 +1,38 @@
+<#
+.SYNOPSIS
+Start xoreos from PowerShell: pick a saved game or a detected install, then launch.
+
+.DESCRIPTION
+Without -GamePath or -Target, lists your saved games and the installs found in
+the usual Steam and GOG folders, and asks which one to start. For a window
+instead, use scripts\xoreos_launcher_gui.py.
+
+.PARAMETER GamePath
+Start the game installed in this folder (the folder with swkotor.exe).
+
+.PARAMETER Target
+Start a game saved in xoreos.conf under this name.
+
+.PARAMETER BuildDir
+Use the xoreos.exe from this build folder (relative to the repository, or absolute).
+
+.PARAMETER Configuration
+Preferred build configuration when several exist (Debug or Release).
+
+.PARAMETER LogDir
+Write xoreos-runtime.log and xoreos-console.log into this folder.
+
+.PARAMETER ListSources
+Print the engine, config file and games found, then exit.
+
+.EXAMPLE
+powershell -ExecutionPolicy Bypass -File scripts\run_xoreos_windows.ps1 -GamePath "C:\GOG Games\Star Wars - KotOR"
+#>
 param(
 	[string]$GamePath = "",
 	[string]$Target = "",
-	[string]$BuildDir = "build-vcpkg-portable",
-	[string]$Configuration = "Debug",
+	[string]$BuildDir = "",
+	[string]$Configuration = "",
 	[string]$LogDir = "",
 	[int]$Width = 0,
 	[int]$Height = 0,
@@ -17,102 +47,130 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
+# Program files xoreos uses to recognise each game (src/engines/*/probes.cpp)
+$gamePrograms = @(
+	@{ Label = "KotOR I"; Program = "swkotor.exe" },
+	@{ Label = "KotOR II"; Program = "swkotor2.exe" },
+	@{ Label = "Neverwinter Nights"; Program = "nwmain.exe" },
+	@{ Label = "Jade Empire"; Program = "JadeEmpire.exe" }
+)
+
+function Stop-WithMessage {
+	param([string[]]$Lines)
+
+	foreach ($line in $Lines) {
+		Write-Host $line -ForegroundColor Red
+	}
+	exit 1
+}
+
+function Resolve-RepoPath {
+	param([string]$Path)
+
+	if ([System.IO.Path]::IsPathRooted($Path)) {
+		return $Path
+	}
+	return (Join-Path $repoRoot $Path)
+}
+
+# The newest xoreos.exe: XOREOS_EXE, then -BuildDir, then any build folder.
 function Get-XoreosExecutable {
-	param(
-		[string]$RepoRoot,
-		[string]$BuildDir,
-		[string]$Configuration
-	)
+	if ($env:XOREOS_EXE) {
+		if (Test-Path -LiteralPath $env:XOREOS_EXE -PathType Leaf) {
+			return $env:XOREOS_EXE
+		}
+		Stop-WithMessage @("XOREOS_EXE is set, but '$($env:XOREOS_EXE)' isn't a file.")
+	}
 
-	$candidates = @(
-		(Join-Path $RepoRoot "$BuildDir\bin\$Configuration\xoreos.exe"),
-		(Join-Path $RepoRoot "build-vcpkg\bin\$Configuration\xoreos.exe"),
-		(Join-Path $RepoRoot "build-vcpkg-portable\bin\$Configuration\xoreos.exe"),
-		(Join-Path $RepoRoot "build\bin\$Configuration\xoreos.exe")
-	)
-
-	foreach ($candidate in $candidates) {
-		if (Test-Path $candidate) {
-			return $candidate
+	$bases = @()
+	if ($BuildDir) {
+		$bases += (Resolve-RepoPath $BuildDir)
+	} else {
+		$bases += $repoRoot
+		foreach ($pattern in @("build*", "builds\*")) {
+			$bases += @(Get-ChildItem -Path (Join-Path $repoRoot $pattern) -Directory -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
 		}
 	}
 
-	return $null
+	$configs = @("", "Release", "RelWithDebInfo", "MinSizeRel", "Debug")
+	if ($Configuration) {
+		$configs = @($Configuration) + ($configs | Where-Object { $_ -ne $Configuration })
+	}
+
+	$found = @()
+	foreach ($base in $bases) {
+		foreach ($config in $configs) {
+			$candidate = if ($config) { Join-Path $base "bin\$config\xoreos.exe" } else { Join-Path $base "bin\xoreos.exe" }
+			if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+				$found += Get-Item -LiteralPath $candidate
+			}
+		}
+	}
+
+	if ($found.Count -eq 0) {
+		return $null
+	}
+	if ($Configuration) {
+		$preferred = @($found | Where-Object { $_.Directory.Name -eq $Configuration })
+		if ($preferred.Count -gt 0) {
+			$found = $preferred
+		}
+	}
+	return ($found | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
 }
 
 function Add-RuntimeDllPaths {
-	param(
-		[string]$RepoRoot
-	)
+	param([string]$ExePath)
 
-	$candidates = @(
-		(Join-Path $RepoRoot "build-vcpkg\vcpkg_installed\x64-windows\bin"),
-		(Join-Path $RepoRoot "build-vcpkg\vcpkg_installed\x64-windows\debug\bin"),
-		(Join-Path $RepoRoot "build-vcpkg-portable\vcpkg_installed\x64-windows\bin"),
-		(Join-Path $RepoRoot "build-vcpkg-portable\vcpkg_installed\x64-windows\debug\bin"),
-		(Join-Path $RepoRoot ".deps\vcpkg\installed\x64-windows\bin"),
-		(Join-Path $RepoRoot ".deps\vcpkg\installed\x64-windows\debug\bin")
-	)
+	$debug = $ExePath -match '\\Debug\\'
+	$installed = @()
+	foreach ($pattern in @("build*\vcpkg_installed\*", "builds\*\vcpkg_installed\*", ".deps\vcpkg\installed\*")) {
+		$installed += @(Get-ChildItem -Path (Join-Path $repoRoot $pattern) -Directory -ErrorAction SilentlyContinue)
+	}
 
 	$existing = @()
-	foreach ($dir in $candidates) {
-		if (Test-Path $dir) {
-			$existing += [System.IO.Path]::GetFullPath($dir)
+	foreach ($dir in $installed) {
+		$candidates = @(Join-Path $dir.FullName "bin")
+		if ($debug) {
+			$candidates = @((Join-Path $dir.FullName "debug\bin")) + $candidates
+		}
+		foreach ($candidate in $candidates) {
+			if (Test-Path -LiteralPath $candidate) {
+				$existing += [System.IO.Path]::GetFullPath($candidate)
+			}
 		}
 	}
 
-	if ($existing.Count -eq 0) {
-		return @()
-	}
-
-	$pathParts = @()
-	if ($env:PATH) {
-		$pathParts = $env:PATH -split ';'
-	}
-
-	$toPrepend = @()
-	foreach ($dir in $existing) {
-		if ($pathParts -notcontains $dir) {
-			$toPrepend += $dir
+	if ($existing.Count -gt 0) {
+		$pathParts = @()
+		if ($env:PATH) {
+			$pathParts = $env:PATH -split ';'
 		}
-	}
-
-	if ($toPrepend.Count -gt 0) {
-		$env:PATH = ($toPrepend -join ';') + ';' + $env:PATH
+		$toPrepend = @($existing | Where-Object { $pathParts -notcontains $_ })
+		if ($toPrepend.Count -gt 0) {
+			$env:PATH = ($toPrepend -join ';') + ';' + $env:PATH
+		}
 	}
 
 	return $existing
 }
 
-function Get-XoreosConfigPath {
-	$candidates = @()
-
+# Where xoreos reads its config and writes its log (src/common/platform.cpp)
+function Get-XoreosConfigDir {
 	if ($env:APPDATA) {
-		$candidates += (Join-Path $env:APPDATA "xoreos\xoreos.conf")
+		return (Join-Path $env:APPDATA "xoreos")
 	}
 	if ($env:USERPROFILE) {
-		$candidates += (Join-Path $env:USERPROFILE ".config\xoreos\xoreos.conf")
-		$candidates += (Join-Path $env:USERPROFILE "xoreos\xoreos.conf")
+		return (Join-Path $env:USERPROFILE "xoreos")
 	}
-
-	foreach ($candidate in $candidates) {
-		if (Test-Path $candidate) {
-			return $candidate
-		}
-	}
-
-	if ($candidates.Count -gt 0) {
-		return $candidates[0]
-	}
-
-	return $null
+	return (Get-Location).Path
 }
 
 function Get-ConfigTargets {
 	param([string]$ConfigPath)
 
 	$entries = @()
-	if (-not $ConfigPath -or -not (Test-Path $ConfigPath)) {
+	if (-not $ConfigPath -or -not (Test-Path -LiteralPath $ConfigPath)) {
 		return $entries
 	}
 
@@ -120,24 +178,31 @@ function Get-ConfigTargets {
 	$currentPath = $null
 	$currentDescription = $null
 
-	foreach ($line in Get-Content $ConfigPath) {
+	$flush = {
+		if ($currentName -and $currentName -ne "xoreos" -and $currentPath) {
+			[pscustomobject]@{
+				Name = $currentName
+				Path = $currentPath
+				Description = $currentDescription
+				Source = "Saved"
+				LaunchKind = "Target"
+				LaunchValue = $currentName
+			}
+		}
+	}
+
+	foreach ($line in Get-Content -LiteralPath $ConfigPath) {
 		$trimmed = $line.Trim()
-		if (-not $trimmed -or $trimmed.StartsWith("#") -or $trimmed.StartsWith(";")) {
+		if (-not $trimmed -or $trimmed.StartsWith(";")) {
+			continue
+		}
+		$trimmed = ($trimmed -split '#', 2)[0].Trim()
+		if (-not $trimmed) {
 			continue
 		}
 
 		if ($trimmed -match '^\[(.+)\]$') {
-			if ($currentName -and $currentName -ne "xoreos" -and $currentPath) {
-				$entries += [pscustomobject]@{
-					Name = $currentName
-					Path = $currentPath
-					Description = $currentDescription
-					Source = "Config target"
-					LaunchKind = "Target"
-					LaunchValue = $currentName
-				}
-			}
-
+			$entries += @(& $flush)
 			$currentName = $matches[1]
 			$currentPath = $null
 			$currentDescription = $null
@@ -148,153 +213,156 @@ function Get-ConfigTargets {
 			continue
 		}
 
-		if ($trimmed -match '^path=(.+)$') {
+		if ($trimmed -match '^path\s*=\s*(.+)$') {
 			$currentPath = $matches[1].Trim()
-			continue
-		}
-
-		if ($trimmed -match '^description=(.+)$') {
+		} elseif ($trimmed -match '^description\s*=\s*(.+)$') {
 			$currentDescription = $matches[1].Trim()
 		}
 	}
 
-	if ($currentName -and $currentName -ne "xoreos" -and $currentPath) {
-		$entries += [pscustomobject]@{
-			Name = $currentName
-			Path = $currentPath
-			Description = $currentDescription
-			Source = "Config target"
-			LaunchKind = "Target"
-			LaunchValue = $currentName
-		}
-	}
-
+	$entries += @(& $flush)
 	return $entries
 }
 
-function Get-DetectedGames {
-	$roots = @()
+function Get-GameInFolder {
+	param([string]$Folder)
 
-	foreach ($candidate in @(
-		"${env:ProgramFiles(x86)}\Steam\steamapps\common",
-		"${env:ProgramFiles}\Steam\steamapps\common",
-		"C:\GOG Games",
-		"D:\GOG Games",
-		"${env:ProgramFiles(x86)}\GOG Galaxy\Games",
-		"${env:ProgramFiles}\GOG Galaxy\Games"
-	)) {
-		if ($candidate -and (Test-Path $candidate)) {
-			$roots += $candidate
+	foreach ($game in $gamePrograms) {
+		if (Test-Path -LiteralPath (Join-Path $Folder $game.Program) -PathType Leaf) {
+			return $game.Label
+		}
+	}
+	return $null
+}
+
+# Folders whose subfolders may be game installs: Steam libraries and GOG folders
+function Get-SearchRoots {
+	$steamRoots = @()
+	try {
+		$steamPath = (Get-ItemProperty -Path "HKCU:\Software\Valve\Steam" -Name SteamPath -ErrorAction Stop).SteamPath
+		if ($steamPath) {
+			$steamRoots += $steamPath
+		}
+	} catch {
+	}
+	foreach ($programFiles in @(${env:ProgramFiles(x86)}, $env:ProgramFiles)) {
+		if ($programFiles) {
+			$steamRoots += (Join-Path $programFiles "Steam")
 		}
 	}
 
-	$gameFolderHints = @(
-		@{ Label = "KotOR I"; Folder = "swkotor" },
-		@{ Label = "KotOR I"; Folder = "Star Wars - Knights of the Old Republic" },
-		@{ Label = "KotOR II"; Folder = "Knights of the Old Republic II" },
-		@{ Label = "KotOR II"; Folder = "Star Wars Knights of the Old Republic II" },
-		@{ Label = "Neverwinter Nights"; Folder = "Neverwinter Nights" },
-		@{ Label = "Jade Empire"; Folder = "Jade Empire" }
-	)
-
-	$entries = @()
-	foreach ($root in $roots | Select-Object -Unique) {
-		foreach ($hint in $gameFolderHints) {
-			$path = Join-Path $root $hint.Folder
-			if (Test-Path $path) {
-				$entries += [pscustomobject]@{
-					Name = $hint.Label
-					Path = $path
-					Description = $root
-					Source = "Detected install"
-					LaunchKind = "Path"
-					LaunchValue = $path
+	$roots = @()
+	foreach ($steam in $steamRoots) {
+		if (-not (Test-Path -LiteralPath $steam)) {
+			continue
+		}
+		$roots += (Join-Path $steam "steamapps\common")
+		foreach ($vdf in @((Join-Path $steam "steamapps\libraryfolders.vdf"), (Join-Path $steam "config\libraryfolders.vdf"))) {
+			if (Test-Path -LiteralPath $vdf) {
+				foreach ($match in [regex]::Matches((Get-Content -LiteralPath $vdf -Raw), '"path"\s+"([^"]+)"')) {
+					$roots += (Join-Path ($match.Groups[1].Value -replace '\\\\', '\') "steamapps\common")
 				}
 			}
 		}
 	}
 
-	$entries | Sort-Object Path -Unique
+	foreach ($programFiles in @(${env:ProgramFiles(x86)}, $env:ProgramFiles)) {
+		if ($programFiles) {
+			$roots += (Join-Path $programFiles "GOG Galaxy\Games")
+		}
+	}
+	# Only local hard drives: probing an empty CD drive can pop up a "no disk" dialog
+	try {
+		foreach ($drive in @(Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DriveType=3")) {
+			$roots += "$($drive.DeviceID)\GOG Games"
+			$roots += "$($drive.DeviceID)\Games"
+		}
+	} catch {
+	}
+
+	$unique = @()
+	foreach ($root in $roots) {
+		if ((Test-Path -LiteralPath $root) -and -not ($unique -contains $root)) {
+			$unique += $root
+		}
+	}
+	return $unique
+}
+
+function Get-DetectedGames {
+	$entries = @()
+	foreach ($root in Get-SearchRoots) {
+		foreach ($folder in @(Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue)) {
+			$label = Get-GameInFolder $folder.FullName
+			if ($label) {
+				$entries += [pscustomobject]@{
+					Name = $label
+					Path = $folder.FullName
+					Description = $root
+					Source = "Found"
+					LaunchKind = "Path"
+					LaunchValue = $folder.FullName
+				}
+			}
+		}
+	}
+	return $entries
 }
 
 function Get-LaunchChoice {
 	param([object[]]$Sources)
 
 	if (-not $Sources -or $Sources.Count -eq 0) {
-		$manual = Read-Host "No saved or detected installs were found. Enter a game path"
+		Write-Host ""
+		Write-Host "No saved games, and no installs found in the usual Steam and GOG folders."
+		$manual = Read-Host "Enter the folder you installed the game in"
 		if (-not $manual) {
-			throw "No game path provided."
+			Stop-WithMessage @("No game folder given.")
 		}
-
-		return [pscustomobject]@{
-			LaunchKind = "Path"
-			LaunchValue = $manual
-			Name = "Manual path"
-			Source = "Manual"
-		}
+		return [pscustomobject]@{ LaunchKind = "Path"; LaunchValue = $manual }
 	}
 
 	Write-Host ""
-	Write-Host "Available games and targets:"
+	Write-Host "Games:"
 	for ($i = 0; $i -lt $Sources.Count; $i++) {
 		$entry = $Sources[$i]
-		$desc = if ($entry.Description) { " | $($entry.Description)" } else { "" }
-		Write-Host ("[{0}] {1} ({2}){3}" -f ($i + 1), $entry.Name, $entry.Source, $desc)
-		Write-Host ("     {0}" -f $entry.Path)
+		$saved = if ($entry.LaunchKind -eq "Target") { " (saved)" } else { "" }
+		Write-Host ("  [{0}] {1}{2}" -f ($i + 1), $entry.Name, $saved)
+		Write-Host ("      {0}" -f $entry.Path)
 	}
-	Write-Host "[M] Manual path"
+	Write-Host "  [M] Another folder"
 
 	while ($true) {
 		$choice = (Read-Host "Choose a number or M").Trim()
 		if ($choice -match '^[Mm]$') {
-			$manual = Read-Host "Enter a game path"
+			$manual = Read-Host "Enter the folder you installed the game in"
 			if ($manual) {
-				return [pscustomobject]@{
-					LaunchKind = "Path"
-					LaunchValue = $manual
-					Name = "Manual path"
-					Source = "Manual"
-				}
+				return [pscustomobject]@{ LaunchKind = "Path"; LaunchValue = $manual }
 			}
+			continue
 		}
 
 		$index = 0
-		if ([int]::TryParse($choice, [ref]$index)) {
-			if ($index -ge 1 -and $index -le $Sources.Count) {
-				return $Sources[$index - 1]
-			}
+		if ([int]::TryParse($choice, [ref]$index) -and $index -ge 1 -and $index -le $Sources.Count) {
+			return $Sources[$index - 1]
 		}
 
-		Write-Warning "Please choose a valid option."
+		Write-Host "Please type one of the numbers shown, or M." -ForegroundColor Yellow
 	}
 }
 
-$exePath = Get-XoreosExecutable -RepoRoot $repoRoot -BuildDir $BuildDir -Configuration $Configuration
-$configPath = Get-XoreosConfigPath
-$configTargets = Get-ConfigTargets -ConfigPath $configPath
-$detectedGames = Get-DetectedGames
+$exePath = Get-XoreosExecutable
+$configPath = Join-Path (Get-XoreosConfigDir) "xoreos.conf"
+$logPath = Join-Path (Get-XoreosConfigDir) "xoreos.log"
+$configTargets = @(Get-ConfigTargets -ConfigPath $configPath)
 
 $combined = @()
 $seenPaths = @{}
-
-foreach ($entry in @($configTargets)) {
+foreach ($entry in @($configTargets) + @(Get-DetectedGames)) {
 	if (-not $entry) {
 		continue
 	}
-
-	$key = "$($entry.LaunchKind)|$($entry.LaunchValue)"
-	if (-not $seenPaths.ContainsKey($key)) {
-		$combined += $entry
-		$seenPaths[$key] = $true
-	}
-}
-
-foreach ($entry in @($detectedGames)) {
-	if (-not $entry) {
-		continue
-	}
-
-	$key = "$($entry.LaunchKind)|$($entry.LaunchValue)"
+	$key = $entry.Path.TrimEnd('\', '/').ToLowerInvariant()
 	if (-not $seenPaths.ContainsKey($key)) {
 		$combined += $entry
 		$seenPaths[$key] = $true
@@ -303,13 +371,27 @@ foreach ($entry in @($detectedGames)) {
 
 if ($ListSources) {
 	Write-Host "Executable : $(if ($exePath) { $exePath } else { '<not built yet>' })"
-	if ($configPath) {
-		Write-Host "Config file: $configPath"
-	}
+	Write-Host "Config file: $configPath"
+	Write-Host "Engine log : $logPath"
 	foreach ($entry in $combined) {
 		Write-Host ("{0} | {1} | {2}" -f $entry.Source, $entry.Name, $entry.Path)
 	}
-	return
+	exit 0
+}
+
+if (-not $exePath) {
+	Stop-WithMessage @(
+		"Can't find xoreos.exe. Build it first:",
+		"  powershell -ExecutionPolicy Bypass -File scripts\bootstrap_windows.ps1",
+		"If you built it elsewhere, pass -BuildDir or set XOREOS_EXE."
+	)
+}
+
+if ($Width -lt 0 -or $Height -lt 0) {
+	Stop-WithMessage @("-Width and -Height must be positive numbers.")
+}
+if ($Fullscreen -and $Windowed) {
+	Stop-WithMessage @("Use either -Fullscreen or -Windowed, not both.")
 }
 
 $launchKind = ""
@@ -320,31 +402,33 @@ if ($Target) {
 	$launchValue = $Target
 } elseif ($GamePath) {
 	$launchKind = "Path"
-	$launchValue = [System.IO.Path]::GetFullPath($GamePath)
+	$launchValue = $GamePath
 } else {
-	Write-Host "xoreos launcher"
-	Write-Host "Executable : $(if ($exePath) { $exePath } else { '<not built yet>' })"
-	if ($configPath) {
-		Write-Host "Config file: $configPath"
-	}
-
+	Write-Host "xoreos: $exePath"
 	$choice = Get-LaunchChoice -Sources $combined
 	$launchKind = $choice.LaunchKind
 	$launchValue = $choice.LaunchValue
 }
 
-if (-not $exePath) {
-	throw "xoreos.exe was not found in the known build directories. Run scripts/bootstrap_windows.ps1 first."
-}
-
-$dllPaths = @(Add-RuntimeDllPaths -RepoRoot $repoRoot)
-
 $arguments = New-Object System.Collections.Generic.List[string]
 if ($launchKind -eq "Target") {
+	if (-not ($configTargets | Where-Object { $_.Name -eq $launchValue })) {
+		Stop-WithMessage @(
+			"There's no game saved as '$launchValue' in $configPath.",
+			"Run without -Target to see your games, or use -GamePath."
+		)
+	}
 	$arguments.Add($launchValue)
 } else {
-	$resolvedGamePath = [System.IO.Path]::GetFullPath($launchValue)
-	$arguments.Add("-p$resolvedGamePath")
+	if (-not (Test-Path -LiteralPath $launchValue -PathType Container)) {
+		Stop-WithMessage @("The game folder doesn't exist: $launchValue")
+	}
+	$resolvedGamePath = (Resolve-Path -LiteralPath $launchValue).ProviderPath
+	if (-not (Get-GameInFolder $resolvedGamePath)) {
+		Write-Host "Warning: no game program (such as swkotor.exe) in $resolvedGamePath." -ForegroundColor Yellow
+		Write-Host "xoreos will probably not recognise it. Use the folder that contains swkotor.exe." -ForegroundColor Yellow
+	}
+	$arguments.Add("--path=$resolvedGamePath")
 }
 
 if ($Width -gt 0) {
@@ -364,18 +448,26 @@ if ($SkipVideos) {
 }
 
 if ($LogDir) {
-	$resolvedLogDir = [System.IO.Path]::GetFullPath($LogDir)
-	if (-not (Test-Path $resolvedLogDir)) {
-		New-Item -ItemType Directory -Path $resolvedLogDir -Force | Out-Null
-	}
-
-	$arguments.Add("--logfile=$(Join-Path $resolvedLogDir 'xoreos-runtime.log')")
+	$resolvedLogDir = Resolve-RepoPath $LogDir
+	New-Item -ItemType Directory -Path $resolvedLogDir -Force | Out-Null
+	$logPath = Join-Path $resolvedLogDir "xoreos-runtime.log"
+	$arguments.Add("--logfile=$logPath")
 	$arguments.Add("--consolelog=$(Join-Path $resolvedLogDir 'xoreos-console.log')")
 }
 
+$dllPaths = @(Add-RuntimeDllPaths -ExePath $exePath)
+
 Write-Host ""
-Write-Host ("Launching: {0} {1}" -f $exePath, ($arguments -join " "))
+Write-Host ("Launching: {0} {1}" -f $exePath, (($arguments | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } }) -join " "))
 if ($dllPaths.Count -gt 0) {
-	Write-Host ("Using runtime DLL search paths: {0}" -f ($dllPaths -join ", "))
+	Write-Host ("Using runtime DLLs from: {0}" -f ($dllPaths -join ", "))
 }
+
 & $exePath @arguments
+$status = $LASTEXITCODE
+if ($status -ne 0) {
+	Write-Host ""
+	Write-Host "xoreos stopped with an error (exit code $status). The messages above say why;" -ForegroundColor Red
+	Write-Host "the full log is in $logPath" -ForegroundColor Red
+}
+exit $status

@@ -4,7 +4,10 @@ either version 3 * of the License, or (at your option) any later version. * * xo
 without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the * GNU General Public License for more details. * * You should have received a copy of the GNU General Public License * along with xoreos. If not, see <http://www.gnu.org/licenses/>. */
 /** @file *  Creature within an area in KotOR games. */
 #include <cassert>
+#include <cfloat>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
 #include "external/glm/gtc/type_ptr.hpp"
 #include "src/common/util.h"
 #include "src/common/maths.h"
@@ -16,25 +19,39 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/aurora/2dafile.h"
 #include "src/aurora/2dareg.h"
 #include "src/aurora/gff3file.h"
+#include "src/aurora/gff3writer.h"
 #include "src/aurora/locstring.h"
 #include "src/aurora/resman.h"
+#include "src/aurora/talkman.h"
+#include "src/aurora/ssffile.h"
 #include "src/graphics/aurora/modelnode.h"
 #include "src/graphics/aurora/model.h"
 #include "src/graphics/aurora/animationchannel.h"
 #include "src/engines/aurora/util.h"
 #include "src/engines/aurora/model.h"
+#include "src/sound/sound.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/objectcontainer.h"
+#include "src/engines/kotorbase/situated.h"
+#include "src/engines/kotorbase/perception.h"
+#include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/creaturesearch.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 #include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
+#include "src/engines/kotorbase/animationnames.h"
+#include "src/engines/kotorbase/creaturesounds.h"
+#include "src/engines/kotorbase/visualeffects.h"
 namespace Engines {
 namespace KotORBase {
+
+/** animations.2da row of the fall a Force push throws a creature into (as KotOR.js plays it). */
+static const int kAnimationForcePushed = 84;
+
 		Creature::Creature(
 		const Common::UString &resRef) :		Object(kObjectTypeCreature),		_commandable(true),		_walkRate(0.0f),		_runRate(0.0f) {
 			init();
@@ -142,8 +159,22 @@ namespace KotORBase {
 			debugC(Common::kDebugEngineLogic, 1, 	       "Saving Throw (%d): d20(%d) + bonus(%d) = %d vs DC %d -> %s",	       (int)type, d20, bonus, d20 + bonus, dc, success ? "SUCCESS" : "FAILED");
 			return success;
 		}
-		int Creature::getSavingThrowBonus(SavingThrow type) {
-			return _info.getSavingThrowBonus(type);
+		int Creature::getSavingThrowBonus(SavingThrow type) const {
+			// The class bonus, with the current ability modifier instead of the base one.
+			Ability ability = kAbilityConstitution;
+			if (type == kSavingThrowReflex)
+				ability = kAbilityDexterity;
+			else if (type == kSavingThrowWill)
+				ability = kAbilityWisdom;
+
+			int bonus = _info.getSavingThrowBonus(type) - _info.getAbilityModifier(ability) + getAbilityModifier(ability);
+
+			// Saving throw effects: SAVING_THROW_ALL, then the specific one.
+			bonus += _savingThrowModifiers[0];
+			if ((type >= kSavingThrowFortitude) && (type <= kSavingThrowWill))
+				bonus += _savingThrowModifiers[type + 1];
+
+			return bonus;
 		}
 		void Creature::setAIArchetype(AIArchetype archetype) {
 			_aiArchetype = archetype;
@@ -174,14 +205,41 @@ namespace KotORBase {
 		const {
 			return _runRate;
 		}
-		int Creature::getSkillRank(Skill skill) {
+		int Creature::getSkillRank(Skill skill) const {
 			int baseRank = _info.getSkillRank(skill);
 			int modified = baseRank + getSkillModifier(skill);
 			return (modified < 0) ? 0 : modified;
 		}
 
-		int Creature::getAbilityScore(Ability ability) {
-			return _info.getAbilityScore(ability);
+		int Creature::getAbilityScore(Ability ability) const {
+			const int base = _info.getAbilityScore(ability);
+			if ((ability < kAbilityStrength) || (ability > kAbilityCharisma))
+				return base;
+
+			const int bonus = _abilityModifiers[ability] + getEquipmentAbilityBonus(ability);
+
+			// Penalties never take a score below 3.
+			if (bonus < 0)
+				return MAX(base + bonus, MIN(base, 3));
+
+			return base + bonus;
+		}
+
+		int Creature::getAbilityModifier(Ability ability) const {
+			const int delta = getAbilityScore(ability) - 10;
+			if (delta >= 0)
+				return delta / 2;
+
+			return -(((-delta) + 1) / 2);
+		}
+
+		int Creature::getEquipmentAbilityBonus(Ability ability) const {
+			int bonus = 0;
+			for (const auto &equipped : _equipment)
+				if (equipped.second)
+					bonus += equipped.second->getAbilityBonus(ability);
+
+			return bonus;
 		}
 
 		void Creature::setForcePoints(
@@ -273,12 +331,26 @@ namespace KotORBase {
 		void Creature::load(
 		const Aurora::GFF3Struct &instance,
 		const Aurora::GFF3Struct *blueprint) {
-			_info = CreatureInfo(instance);
+			// Area (GIT) instances only carry a TemplateResRef and a position;
+			// classes, feats, skills, Force points and powers live in the blueprint.
+			const bool instanceHasStats = instance.hasField("ClassList");
+			_info = CreatureInfo((blueprint && !instanceHasStats) ? *blueprint : instance);
 
 			// General properties
 			if (blueprint)
 				loadProperties(*blueprint); // Blueprint
 			loadProperties(instance, false); // Instance
+
+			// Force points: templated Jedi without stored values get the class formula.
+			if (getMaxForcePoints() <= 0) {
+				const int maxFP = computeMaxForcePoints();
+				if (maxFP > 0) {
+					setMaxForcePoints(maxFP);
+					setForcePoints(maxFP);
+				}
+			}
+			if (getForcePoints() > getMaxForcePoints())
+				setForcePoints(getMaxForcePoints());
 
 			// Appearance
 			if (_appearance == Aurora::kFieldIDInvalid)
@@ -334,6 +406,10 @@ namespace KotORBase {
 			// Usable
 			_usable = gff.getBool("Useable", _usable);
 
+			// Challenge rating (kill XP, GetChallengeRating)
+			if (gff.hasField("ChallengeRating"))
+				_challengeRating = static_cast<float>(gff.getDouble("ChallengeRating"));
+
 			// PC
 			_isPC = gff.getBool("IsPC", _isPC);
 
@@ -348,6 +424,11 @@ namespace KotORBase {
 			_currentHitPoints = gff.getSint("CurrentHitPoints", _maxHitPoints);
 			_maxHitPoints = gff.getSint("MaxHitPoints", _currentHitPoints);
 			_minOneHitPoint = gff.getBool("Min1HP", _minOneHitPoint);
+
+			// What happens to the corpse (SetIsDestroyable)
+			_destroyable = gff.getBool("IsDestroyable", _destroyable);
+			_raiseable = gff.getBool("IsRaiseable", _raiseable);
+			_deadSelectable = gff.getBool("DeadSelectable", _deadSelectable);
 
 			// Faction
 			_faction = Faction(gff.getUint("FactionID", _faction));
@@ -393,8 +474,8 @@ namespace KotORBase {
 		void Creature::getModelState(uint32_t &state, uint8_t &textureVariation) {
 			state = 'a';
 			textureVariation = 1;
-			if (_info.isInventorySlotEquipped(kInventorySlotBody)) {
-				Item *item = _equipment[kInventorySlotBody].get();
+			Item *item = getEquipedItem(kInventorySlotBody);
+			if (item) {
 				state += item->getBodyVariation() - 1;
 				textureVariation = item->getTextureVariation();
 			}
@@ -435,6 +516,8 @@ namespace KotORBase {
 			_ids.push_back(_model->getID());
 			_model->setTag(_tag);
 			_model->setClickable(isClickable());
+			// Footsteps and weapon sounds: taken in updatePresentation()
+			_model->setAnimationEventsEnabled(true);
 			if (_modelType != "B" && _modelType != "P")		_model->addAnimationChannel(Graphics::Aurora::kAnimationChannelHead);
 		}
 		void Creature::loadHead(PartModels &parts) {
@@ -493,15 +576,16 @@ namespace KotORBase {
 				break;
 				default:			throw Common::Exception("Unsupported equip slot");
 			}
+			if (!_model)
+				return;
 			if (!_model->hasNode(hookNode)) {
 				warning("Creature::attachWeaponModel(): Model \"%s\" does not have node \"%s\"",		        _model->getName().c_str(), hookNode.c_str());
 				return;
 			}
 			Graphics::Aurora::Model *weaponModel = 0;
-			if (_info.isInventorySlotEquipped(slot)) {
-				Item *item = _equipment[slot].get();
+			Item *item = getEquipedItem(slot);
+			if (item)
 				weaponModel = loadModelObject(item->getModelName());
-			}
 			GfxMan.lockFrame();
 			_model->attachModel(hookNode, weaponModel);
 			GfxMan.unlockFrame();
@@ -510,6 +594,7 @@ namespace KotORBase {
 			_name = "Fakoo McFakeston";
 			_tag  = Common::String::format("[PC: %s]", _name.c_str());
 			_isPC = true;
+			setFaction(kFactionPlayer);
 		}
 		void Creature::initAsPC(
 		const CharacterGenerationInfo &chargenInfo,
@@ -517,6 +602,8 @@ namespace KotORBase {
 			_name = chargenInfo.getName();
 			_usable = false;
 			_isPC = true;
+			// The player's faction is repute.2da row 0.
+			setFaction(kFactionPlayer);
 			_race = kRaceHuman;
 			_subRace = kSubRaceNone;
 			_gender = chargenInfo.getGender();
@@ -528,7 +615,6 @@ namespace KotORBase {
 			_info = info;
 			_skin = chargenInfo.getSkin();
 			_face = chargenInfo.getFace();
-			_minOneHitPoint = true;
 			if (_info.hasHitPoints()) {
 				_currentHitPoints = _info.getCurrentHitPoints();
 				_maxHitPoints = _info.getMaxHitPoints();
@@ -547,6 +633,7 @@ namespace KotORBase {
 				setMaxForcePoints(computeMaxForcePoints());
 				setForcePoints(getMaxForcePoints());
 			}
+			setCurrentXP(_info.getExperience());
 			reloadEquipment();
 			loadEquippedModel();
 		}
@@ -577,9 +664,9 @@ namespace KotORBase {
 			static Common::UString talkCursor("talk");
 			static Common::UString killCursor("kill");
 			static Common::UString useCursor("use");
-			if (!isEnemy())
-			return talkCursor;
-			return isDead() ? useCursor : killCursor;
+			if (isDead())
+			return useCursor;
+			return isEnemy() ? killCursor : talkCursor;
 		}
 		void Creature::highlight(
 		bool enabled) {
@@ -655,13 +742,18 @@ namespace KotORBase {
 		const {
 			if (!_info.isInventorySlotEquipped(slot))
 			return nullptr;
-			return _equipment.find(slot)->second.get();
+			// The item may have failed to load (e.g. missing UTI in a save).
+			auto it = _equipment.find(slot);
+			return (it == _equipment.end()) ? nullptr : it->second.get();
 		}
 		float Creature::getMaxAttackRange()
 		const {
 			const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
-			if (rightWeapon && rightWeapon->isRangedWeapon())
-			return rightWeapon->getMaxAttackRange();
+			if (rightWeapon && rightWeapon->isRangedWeapon()) {
+				// An empty maxattackrange would leave ranged attackers unable to fire.
+				const float range = rightWeapon->getMaxAttackRange();
+				return range > 0.0f ? range : 10.0f;
+			}
 			return 1.0f;
 		}
 		Item *Creature::addScriptItem(
@@ -697,6 +789,46 @@ namespace KotORBase {
 			}
 			return nullptr;
 		}
+		std::vector<Creature::ItemPower> Creature::getEquippedItemPowers() const {
+			std::vector<ItemPower> powers;
+
+			for (const auto &equipped : _equipment) {
+				if (!equipped.second)
+					continue;
+
+				const Common::UString &item = _info.getEquippedItem(equipped.first);
+				for (int spell : equipped.second->getCastSpells()) {
+					ItemPower power;
+					power.spellId = spell;
+					power.item    = item;
+					powers.push_back(power);
+				}
+			}
+
+			return powers;
+		}
+
+		std::vector<Creature::ItemPower> Creature::getInventoryItemPowers() const {
+			std::vector<ItemPower> powers;
+
+			for (const auto &item : _info.getInventory().getItems()) {
+				for (int spell : Item::getConsumableSpells(item.first)) {
+					ItemPower power;
+					power.spellId = spell;
+					power.item    = item.first;
+					powers.push_back(power);
+				}
+			}
+
+			return powers;
+		}
+
+		float Creature::getChallengeRating()
+		const {
+			if (_challengeRating >= 0.0f)
+			return _challengeRating;
+			return static_cast<float>(getHitDice());
+		}
 		int Creature::getHitDice()
 		const {
 			int total = 0;
@@ -714,7 +846,7 @@ namespace KotORBase {
 		}
 		int Creature::getAC()
 		const {
-			int ac = 10 + _info.getAbilityModifier(kAbilityDexterity);
+			int ac = 10 + getAbilityModifier(kAbilityDexterity);
 			const Item *armor = getEquipedItem(kInventorySlotBody);
 			if (armor)		ac += armor->getACBonus();
 			ac += _armorClassModifier;
@@ -765,40 +897,52 @@ namespace KotORBase {
 		}
 		void Creature::playAttackAnimation() {
 			if (!_model)		return;
-			const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
-			const Item *leftWeapon = getEquipedItem(kInventorySlotLeftWeapon);
-			if (rightWeapon && !leftWeapon) {
-				switch (rightWeapon->getWeaponWield()) {
-					case kWeaponWieldBaton:				_model->playAnimation("g1a1");
-					break;
-					case kWeaponWieldSword:				_model->playAnimation("g2a1");
-					break;
-					case kWeaponWieldStaff:				_model->playAnimation("g3a1");
-					break;
-					case kWeaponWieldPistol:				_model->playAnimation("b5a1");
-					break;
-					case kWeaponWieldRifle:				_model->playAnimation("b7a1");
-					break;
-					default:				break;
-				}
+			// An occasional grunt with the swing
+			if (RNG.getNext(0, 3) == 0)
+				playRandomSoundSetBark(kSoundSetAttack1, 3);
+
+			const int weapon = getWeaponAnimationNumber();
+
+			// Dueling: both fight in melee, each the other's target
+			Creature *target = ObjectContainer::toCreature(_attemptedAttackTarget ? _attemptedAttackTarget : _attackTarget);
+			const bool engaged = target && !target->isDead() && (target->getAttackTarget() == this) &&
+			                     isMeleeWeaponAnimation(weapon) &&
+			                     isMeleeWeaponAnimation(target->getWeaponAnimationNumber());
+
+			const HasAnimation hasAnimation = [this](const Common::UString &anim) {
+				return _model->canPlayAnimation(anim);
+			};
+
+			if (weapon == -1)
 				return;
-			}
-			if (rightWeapon && leftWeapon) {
-				switch (rightWeapon->getWeaponWield()) {
-					case kWeaponWieldSword:				_model->playAnimation("g4a1");
-					break;
-					case kWeaponWieldPistol:				_model->playAnimation("b6a1");
-					break;
-					default:				break;
-				}
-				return;
-			}
-			_model->playAnimation("g8a1");
+
+			Common::UString anim = chooseAttackAnimation(weapon, engaged, RNG.getNext(0, 1000), hasAnimation);
+			if (anim.empty())
+				anim = (weapon >= 5 && weapon <= 7) ? Common::String::format("b%da1", weapon) :
+				                                       Common::String::format("g%da1", weapon);
+
+			_model->playAnimation(anim);
+
+			// The target answers this attack in playDodgeAnimation()
+			if (target)
+				target->_incomingAttackAnimation = anim;
 		}
 		void Creature::playDodgeAnimation() {
 			if (!_model)		return;
-			int number = getWeaponAnimationNumber();
-			if (number != -1)		_model->playAnimation(Common::String::format("g%dg1", number));
+
+			// Attacking this round: the attack animation shows, not a dodge
+			if (_attemptedAttackTarget) {
+				_incomingAttackAnimation.clear();
+				return;
+			}
+
+			const int number = getWeaponAnimationNumber();
+			const Common::UString anim = chooseDefenseAnimation(number, _incomingAttackAnimation,
+				[this](const Common::UString &name) { return _model->canPlayAnimation(name); });
+			_incomingAttackAnimation.clear();
+
+			if (!anim.empty())
+				_model->playAnimation(anim);
 		}
 		void Creature::playAnimation(
 		const Common::UString &anim,
@@ -806,6 +950,19 @@ namespace KotORBase {
 		float length,
 		float speed) {
 			if (_model)		_model->playAnimation(anim, restart, length, speed);
+		}
+		void Creature::setStuntModel(Graphics::Aurora::Model *stunt) {
+			if (_model)		_model->setStuntModel(stunt);
+		}
+		bool Creature::hasModelAnimation(const Common::UString &anim) {
+			return _model && _model->canPlayAnimation(anim);
+		}
+		Common::UString Creature::getScriptAnimationName(int animation) const {
+			const bool simple = (_modelType == "S") || (_modelType == "L");
+			return KotORBase::getScriptAnimationName(animation, getWeaponAnimationNumber(), simple);
+		}
+		float Creature::getModelAnimationLength(const Common::UString &anim) {
+			return _model ? _model->getAnimationLength(anim) : 0.0f;
 		}
 		void Creature::getTooltipAnchor(
 		float &x,
@@ -818,22 +975,39 @@ namespace KotORBase {
 			}
 			_model->getTooltipAnchor(x, y, z);
 		}
+		bool Creature::canPerceive(const Creature &target, float distance) const {
+			PerceptionRules::SightCheck check;
+			check.hostile         = ReputationMan.isHostile(static_cast<int>(getFaction()),
+			                                                static_cast<int>(target.getFaction()));
+			check.targetInvisible = target.isInvisible();
+			check.seesInvisible   = canSeeInvisible();
+			check.targetStealthy  = target.getStealthMode();
+			check.targetStealth   = target.getSkillRank(kSkillStealth);
+			check.awareness       = getSkillRank(kSkillAwareness);
+			check.distance        = distance;
+
+			return PerceptionRules::canSee(check);
+		}
 		void Creature::updatePerception(Creature &object) {
-			const
-			float kPerceptionRange = 16.0f;
 			float distance = glm::distance(		glm::make_vec3(_position),		glm::make_vec3(object._position));
-			if (distance <= kPerceptionRange) {
-				handleObjectSeen(object);
+			// Hearing goes by distance; sight can be fooled (invisibility, stealth).
+			if (distance <= PerceptionRules::kPerceptionRange) {
 				handleObjectHeard(object);
-				object.handleObjectSeen(*this);
 				object.handleObjectHeard(*this);
-			}
-			else {
-				handleObjectVanished(object);
+			} else {
 				handleObjectInaudible(object);
-				object.handleObjectVanished(*this);
 				object.handleObjectInaudible(*this);
 			}
+
+			if (canPerceive(object, distance))
+				handleObjectSeen(object);
+			else
+				handleObjectVanished(object);
+
+			if (object.canPerceive(*this, distance))
+				object.handleObjectSeen(*this);
+			else
+				object.handleObjectVanished(*this);
 		}
 		bool Creature::isInCombat()
 		const {
@@ -869,6 +1043,11 @@ namespace KotORBase {
 			_lastDamageType = damageType;
 			if (damager)
 				_lastHostileActor = damager;
+			if (amount > 0 && !_dead) {
+				_damagedEventPending = true;
+				if (_model)
+					playRandomSoundSetBark(kSoundSetPain1, 2);
+			}
 		}
 
 		int Creature::getDamageDealtByType(int damageType) const {
@@ -938,14 +1117,158 @@ namespace KotORBase {
 			clearActions();
 			setFaction(kFactionSurrender1);
 			if (!retainBuffs) {
-				_effects.clear();
+				// Reverse the modifiers the effects applied, don't just drop them.
+				clearActiveEffects();
 				clearImmunities();
 			}
 		}
 
+		void Creature::stopAttacksOn(const std::vector<Creature *> &creatures, const Object *target,
+		                             bool clearQueuedActions) {
+			if (!target)
+				return;
+
+			for (Creature *c : creatures) {
+				if (!c || c == target)
+					continue;
+
+				const Action *current = c->getCurrentAction();
+				const bool attacking = (c->_attackTarget == target) ||
+				                       (c->_attemptedAttackTarget == target) ||
+				                       (current && current->object == target &&
+				                        (current->type == kActionAttackObject || current->type == kActionCastSpell));
+				if (!attacking)
+					continue;
+
+				if (c->_attackTarget == target)
+					c->cancelCombat();
+				if (c->_attemptedAttackTarget == target)
+					c->_attemptedAttackTarget = nullptr;
+
+				if (clearQueuedActions)
+					c->clearActions();
+				else
+					c->_actions.removeActionsTargeting(target);
+			}
+		}
+
+		void Creature::regenerateForcePoints() {
+			if (_dead || _inCombat)
+				return;
+
+			const int maxFP = getMaxForcePoints();
+			const int fp = getForcePoints();
+			if (maxFP <= 0 || fp >= maxFP)
+				return;
+
+			// Conservative: 5% of the maximum (at least 1) per heartbeat.
+			setForcePoints(MIN(maxFP, fp + MAX(1, maxFP / 20)));
+		}
+
+		void Creature::restoreFully() {
+			if (_dead)
+				return;
+
+			setCurrentHitPoints(getMaxHitPoints());
+			setForcePoints(getMaxForcePoints());
+		}
+
 		int Creature::getDamageResistance(int damageType) const {
 			std::map<int, int>::const_iterator it = _damageResistance.find(damageType);
-			return it != _damageResistance.end() ? it->second : 0;
+			int resistance = (it != _damageResistance.end()) ? it->second : 0;
+
+			for (const ActiveEffect &e : _effects)
+				if ((e.type == kEffectModifier) && !e.expired &&
+				    (e.kotorType == kKotOREffectDamageResistance) && (e.subType & damageType))
+					resistance += e.value;
+
+			return resistance;
+		}
+
+		int Creature::absorbDamage(int damage, int damageType) {
+			if (damage <= 0)
+				return 0;
+
+			// Innate resistance (SetDamageResistance) takes its share of every hit.
+			std::map<int, int>::const_iterator it = _damageResistance.find(damageType);
+			if (it != _damageResistance.end())
+				damage = MAX(0, damage - it->second);
+
+			static const int kPhysicalDamage = kDamageTypeBludgeoning | kDamageTypePiercing | kDamageTypeSlashing;
+
+			for (ActiveEffect &e : _effects) {
+				if (damage <= 0)
+					break;
+				if ((e.type != kEffectModifier) || e.expired)
+					continue;
+
+				const bool resistance = (e.kotorType == kKotOREffectDamageResistance) ||
+				                        (e.kotorType == kKotOREffectForceShield);
+				const bool reduction  = (e.kotorType == kKotOREffectDamageReduction);
+				if (!resistance && !reduction)
+					continue;
+
+				// Resistance and shields cover their damage types (all for 0),
+				// damage reduction stops physical damage.
+				if (resistance && (e.subType != 0) && !(e.subType & damageType))
+					continue;
+				if (reduction && !(damageType & kPhysicalDamage))
+					continue;
+
+				// value: absorbed per hit (0: all of it); limit: in total (0: no limit).
+				int absorbed = (e.value > 0) ? MIN(e.value, damage) : damage;
+				if (e.limit > 0) {
+					absorbed = MIN(absorbed, e.limit);
+					e.limit -= absorbed;
+					if (e.limit <= 0) {
+						// Used up: the effect ends at the next update.
+						e.expired  = true;
+						e.duration = 0.0f;
+					}
+				}
+
+				damage -= absorbed;
+			}
+
+			return MAX(0, damage);
+		}
+
+		float Creature::knockBack(Area &area, float fromX, float fromY, float distance) {
+			float x, y, z;
+			getPosition(x, y, z);
+
+			float dirX = x - fromX;
+			float dirY = y - fromY;
+			float length = std::sqrt(dirX * dirX + dirY * dirY);
+			if (length < 0.001f) {
+				// No source to push away from: push backwards from the creature's facing.
+				float ox, oy, oz, angle;
+				getOrientation(ox, oy, oz, angle);
+				const float rad = Common::deg2rad(angle);
+				dirX =  std::sin(rad);
+				dirY = -std::cos(rad);
+				length = 1.0f;
+			}
+
+			dirX /= length;
+			dirY /= length;
+
+			// Land as far away as possible, but only where the walkmesh goes.
+			for (float d = distance; d >= 1.0f; d -= 1.0f) {
+				const float nx = x + dirX * d;
+				const float ny = y + dirY * d;
+				const float nz = area.evaluateElevation(nx, ny);
+				if (nz == FLT_MIN)
+					continue;
+				if (!area.walkable(glm::vec3(x, y, z + 0.1f), glm::vec3(nx, ny, nz + 0.1f)))
+					continue;
+
+				setPosition(nx, ny, nz);
+				area.notifyObjectMoved(*this);
+				return d;
+			}
+
+			return 0.0f;
 		}
 
 		void Creature::setDamageResistance(int damageType, int amount) {
@@ -1018,17 +1341,17 @@ namespace KotORBase {
 				case kSkillDemolitions:
 				case kSkillRepair:
 				case kSkillSecurity:
-					bonus += _info.getAbilityModifier(kAbilityIntelligence);
+					bonus += getAbilityModifier(kAbilityIntelligence);
 					break;
 				case kSkillStealth:
-					bonus += _info.getAbilityModifier(kAbilityDexterity);
+					bonus += getAbilityModifier(kAbilityDexterity);
 					break;
 				case kSkillAwareness:
 				case kSkillTreatInjury:
-					bonus += _info.getAbilityModifier(kAbilityWisdom);
+					bonus += getAbilityModifier(kAbilityWisdom);
 					break;
 				case kSkillPersuade:
-					bonus += _info.getAbilityModifier(kAbilityCharisma);
+					bonus += getAbilityModifier(kAbilityCharisma);
 					break;
 				default:
 					break;
@@ -1059,7 +1382,7 @@ namespace KotORBase {
 			if (isPC() || isDead()) return;
 
 			// If no target, try to find one
-			if (!_attackTarget || ObjectContainer::toCreature(_attackTarget)->isDead()) {
+			if (!_attackTarget || _attackTarget->isDead()) { // may be a door/placeable
 				_attackTarget = nullptr; // Combat target needs area context
 			}
 
@@ -1070,8 +1393,17 @@ namespace KotORBase {
 
 			// Decide action
 			float dist = getDistanceTo(_attackTarget);
-			if (dist > getMaxAttackRange()) {
-				// Move closer
+			if (dist > getMaxAttackRange() + (ObjectContainer::toSituated(_attackTarget) ? BashRules::kExtraReach : 0.0f)) {
+				// Move closer, unless already on the way (this runs every round).
+				const Action *current = _actions.getCurrent();
+				if (current && (current->type == kActionMoveToPoint ||
+				                (current->type == kActionAttackObject && current->object == _attackTarget)))
+					return;
+				if (current && current->type != kActionFollowLeader)
+					return; // Busy with something else (e.g. a scripted action).
+				if (current)
+					clearActions();
+
 				float tx, ty, tz;
 				_attackTarget->getPosition(tx, ty, tz);
 				Action move(kActionMoveToPoint);
@@ -1141,14 +1473,42 @@ namespace KotORBase {
 				cancelCombat();
 				return;
 			}
+			// Re-engaging the same target mid-round must not wipe the attack
+			// notifyCombatRoundBegan() already scheduled for this round.
+			if (_attackTarget != target)
+				_attemptedAttackTarget = nullptr;
+			if (!_inCombat && _model && !_dead && (RNG.getNext(0, 3) == 0))
+				playRandomSoundSetBark(kSoundSetBattleCry1, 6);
 			_inCombat = true;
 			_attackTarget = target;
 			_attackRound = round;
-			_attemptedAttackTarget = nullptr;
 		}
 		void Creature::cancelCombat() {
 			_inCombat = false;
 			_attackTarget = nullptr;
+		}
+		void Creature::forgetObject(const Object *object) {
+			if (_attackTarget == object)
+				cancelCombat();
+			if (_attemptedAttackTarget == object)		_attemptedAttackTarget = nullptr;
+			if (_lastHostileActor == object)		_lastHostileActor = nullptr;
+			if (_lastKiller == object)		_lastKiller = nullptr;
+			if (_lastWeaponUsed == object)		_lastWeaponUsed = nullptr;
+			if (_lastPerceived == object)		_lastPerceived = nullptr;
+			if (_blockingDoor == object)		_blockingDoor = nullptr;
+			if (_lastAttacker == object) {
+				_lastAttacker = nullptr;
+				_attackedEventPending = false;
+			}
+			for (auto it = _perceptionEvents.begin(); it != _perceptionEvents.end(); ) {
+				if (it->object == object)
+					it = _perceptionEvents.erase(it);
+				else
+					++it;
+			}
+			_seenObjects.erase(const_cast<Object *>(object));
+			_heardObjects.erase(const_cast<Object *>(object));
+			_actions.removeActionsTargeting(object);
 		}
 		void Creature::applyEffect(
 		const ActiveEffect &effect) {
@@ -1197,27 +1557,151 @@ namespace KotORBase {
 				case kEffectSpeed:
 					// Movement speed increase - future implementation
 					break;
+				case kEffectModifier:
+					adjustEffectModifiers(effect, 1);
+					break;
+				case kEffectVFX:
+					playVisualEffect(effect.value, true);
+					break;
 				default:
 					break;
 			}
 		}
+
+		/** Duration of DURATION_TYPE_PERMANENT effects. */
+		static const float kPermanentEffectDuration = 1.0e9f;
+
 		void Creature::applyEffect(
 		const Engines::KotORBase::Effect &effect,
 		float durationOverride) {
+			// Linked effects share their duration and a link id, so that removing
+			// one of them removes them all.
+			const int linkId = effect.getLinkedEffects().empty() ? 0 : ++_nextEffectLinkId;
+
+			applyEffectPart(effect, durationOverride, linkId);
+			for (const Effect &part : effect.getLinkedEffects()) {
+				if (_dead && (part.getType() != kKotOREffectResurrection))
+					break;
+
+				applyEffectPart(part, durationOverride, linkId);
+			}
+		}
+
+		void Creature::addActiveEffect(const ActiveEffect &effect) {
+			_effects.push_back(effect);
+			applyEffect(effect);
+		}
+
+		void Creature::adjustEffectModifiers(const ActiveEffect &effect, int sign) {
+			const int value = effect.value * sign;
+
+			switch (effect.kotorType) {
+				case kKotOREffectACIncrease:
+					adjustArmorClassModifier(value);
+					break;
+				case kKotOREffectACDecrease:
+					adjustArmorClassModifier(-value);
+					break;
+				case kKotOREffectAttackIncrease:
+					adjustAttackModifier(value);
+					break;
+				case kKotOREffectAttackDecrease:
+					adjustAttackModifier(-value);
+					break;
+				case kKotOREffectDamageIncrease:
+					_damageModifier += value;
+					break;
+				case kKotOREffectDamageDecrease:
+					_damageModifier -= value;
+					break;
+				case kKotOREffectAbilityIncrease:
+				case kKotOREffectAbilityDecrease:
+					if ((effect.subType >= kAbilityStrength) && (effect.subType <= kAbilityCharisma))
+						_abilityModifiers[effect.subType] +=
+							(effect.kotorType == kKotOREffectAbilityIncrease) ? value : -value;
+					break;
+				case kKotOREffectSkillIncrease:
+					adjustSkillModifier(static_cast<Skill>(effect.subType), value);
+					break;
+				case kKotOREffectSkillDecrease:
+					adjustSkillModifier(static_cast<Skill>(effect.subType), -value);
+					break;
+				case kKotOREffectSavingThrowIncrease:
+				case kKotOREffectSavingThrowDecrease:
+					// SAVING_THROW_ALL (0), FORT (1), REFLEX (2), WILL (3).
+					if ((effect.subType >= 0) && (effect.subType < static_cast<int>(_savingThrowModifiers.size())))
+						_savingThrowModifiers[effect.subType] +=
+							(effect.kotorType == kKotOREffectSavingThrowIncrease) ? value : -value;
+					break;
+				case kKotOREffectForceResistanceIncrease:
+					adjustForceResistance(value);
+					break;
+				case kKotOREffectForceResistanceDecrease:
+					adjustForceResistance(-value);
+					break;
+				case kKotOREffectBlasterDeflectionIncrease:
+					adjustBlasterDeflection(value);
+					break;
+				case kKotOREffectBlasterDeflectionDecrease:
+					adjustBlasterDeflection(-value);
+					break;
+				case kKotOREffectDamageImmunityIncrease:
+					adjustDamageImmunity(effect.subType, value);
+					break;
+				case kKotOREffectDamageImmunityDecrease:
+					adjustDamageImmunity(effect.subType, -value);
+					break;
+				case kKotOREffectInvisibility:
+					_invisibility += sign;
+					break;
+				case kKotOREffectSeeInvisible:
+					_seeInvisible += sign;
+					break;
+				default:
+					// Damage resistance/reduction and Force shields act in absorbDamage().
+					break;
+			}
+		}
+		void Creature::applyEffectPart(
+		const Engines::KotORBase::Effect &effect,
+		float durationOverride,
+		int linkId) {
 			auto timed = [&](EffectType type, float defaultDuration, int value = 0) {
 				const float duration = durationOverride >= 0.0f ? durationOverride : defaultDuration;
+				ActiveEffect e;
+				e.type = type;
+				e.duration = duration;
+				e.value = value;
+				e.spellId = effect.getSpellId();
+				e.linkId = linkId;
 				if (duration <= 0.0f) {
 					// DURATION_TYPE_INSTANT: apply mechanical impact, do not linger.
-					ActiveEffect e;
-					e.type = type;
-					e.duration = 0.0f;
-					e.value = value;
-					e.spellId = effect.getSpellId();
 					applyEffect(e);
 					removeEffect(e);
 					return;
 				}
-				applyEffect(type, duration, value, effect.getSpellId());
+				e.permanent = duration >= kPermanentEffectDuration;
+				addActiveEffect(e);
+			};
+
+			// Lasting modifiers (AC, attack, abilities, resistances...): engine
+			// calls without a duration make them permanent, instant ones do nothing.
+			auto modifier = [&](int value, int subType, int limit) {
+				const float duration = durationOverride >= 0.0f ? durationOverride : kPermanentEffectDuration;
+				if (duration <= 0.0f)
+					return;
+
+				ActiveEffect e;
+				e.type = kEffectModifier;
+				e.duration = duration;
+				e.value = value;
+				e.spellId = effect.getSpellId();
+				e.kotorType = effect.getType();
+				e.subType = subType;
+				e.limit = limit;
+				e.linkId = linkId;
+				e.permanent = duration >= kPermanentEffectDuration;
+				addActiveEffect(e);
 			};
 
 			int current = getCurrentHitPoints();
@@ -1236,6 +1720,7 @@ namespace KotORBase {
 					int immunity = getDamageImmunityPercent(damageType);
 					if (immunity > 0)
 						amount = amount - (amount * immunity) / 100;
+					amount = absorbDamage(amount, damageType);
 					if (amount < 0)
 						amount = 0;
 					recordDamageTaken(amount, damageType);
@@ -1252,8 +1737,24 @@ namespace KotORBase {
 					}
 					break;
 				}
-				case kKotOREffectTemporaryHitpoints:
-				case kKotOREffectForceShield: {
+				case kKotOREffectDeath:
+					// Plot creatures cannot be killed (Object::_plotFlag: "immune to
+					// permanent death"); death immunity blocks it as well. Min1HP keeps
+					// the creature at 1 HP, which is why the original scripts clear it
+					// with SetMinOneHP(FALSE) before applying EffectDeath.
+					if (_dead || getPlotFlag() || isImmune(kImmunityTypeDeath))
+						break;
+					if (getMinOneHitPoints()) {
+						setCurrentHitPoints(MIN(current, 1));
+						break;
+					}
+					setCurrentHitPoints(0);
+					cancelCombat();
+					if (_lastHostileActor)
+						_lastKiller = _lastHostileActor;
+					handleDeath();
+					break;
+				case kKotOREffectTemporaryHitpoints: {
 					int maxHP = getMaxHitPoints();
 					int boosted = current + effect.getAmount();
 					if (boosted > maxHP)
@@ -1261,6 +1762,61 @@ namespace KotORBase {
 					setCurrentHitPoints(boosted);
 					break;
 				}
+				case kKotOREffectForceShield: {
+					// forceshields.2da: the damage types it stops, how much of each hit
+					// ("resistance", 0 for all of it) and how much in total ("amount").
+					// Without the table: a shield that soaks 10 damage per shield row.
+					int damageFlags = 0, perHit = 0, total = 10 * (MAX(effect.getAmount(), 0) + 1);
+					try {
+						const Aurora::TwoDAFile &shields = TwoDAReg.get2DA("forceshields");
+						if ((effect.getAmount() >= 0) && (static_cast<size_t>(effect.getAmount()) < shields.getRowCount())) {
+							const Aurora::TwoDARow &row = shields.getRow(effect.getAmount());
+							damageFlags = row.getInt("damageflags");
+							perHit      = row.getInt("resistance");
+							total       = row.getInt("amount");
+						}
+					} catch (...) {
+					}
+					modifier(perHit, damageFlags, total);
+					break;
+				}
+				case kKotOREffectForcePointsHeal:
+					setForcePoints(MIN(getForcePoints() + MAX(effect.getAmount(), 0), getMaxForcePoints()));
+					break;
+				case kKotOREffectForcePointsDamage:
+				case kKotOREffectForceDrain:
+					setForcePoints(getForcePoints() - MAX(effect.getAmount(), 0));
+					break;
+				case kKotOREffectForcePush:
+					// The knockback itself needs the area (see knockBack()); here the
+					// target falls and is stunned while it gets up.
+					if (!isImmune(kImmunityTypeKnockdown)) {
+						const Common::UString anim = getAnimationNameById(kAnimationForcePushed);
+						if (!anim.empty())
+							playAnimation(anim, true);
+						timed(kEffectKnockdown, 3.0f);
+					}
+					break;
+				case kKotOREffectACIncrease:
+				case kKotOREffectACDecrease:
+				case kKotOREffectAttackIncrease:
+				case kKotOREffectAttackDecrease:
+				case kKotOREffectDamageIncrease:
+				case kKotOREffectDamageDecrease:
+				case kKotOREffectAbilityIncrease:
+				case kKotOREffectAbilityDecrease:
+				case kKotOREffectSkillIncrease:
+				case kKotOREffectSkillDecrease:
+				case kKotOREffectSavingThrowIncrease:
+				case kKotOREffectSavingThrowDecrease:
+				case kKotOREffectInvisibility:
+				case kKotOREffectSeeInvisible:
+				case kKotOREffectDamageImmunityDecrease:
+					modifier(effect.getAmount(), effect.getDamageType(), 0);
+					break;
+				case kKotOREffectDamageReduction:
+					modifier(effect.getAmount(), 0, effect.getLimit());
+					break;
 				case kKotOREffectKnockdown:
 					timed(kEffectKnockdown, 3.0f);
 					break;
@@ -1284,7 +1840,7 @@ namespace KotORBase {
 					addSpellImmunity(effect.getAmount());
 					break;
 				case kKotOREffectDamageImmunityIncrease:
-					adjustDamageImmunity(effect.getDamageType(), effect.getAmount());
+					modifier(effect.getAmount(), effect.getDamageType(), 0);
 					break;
 				case kKotOREffectSleep:
 					if (!isImmune(kImmunityTypeSleep) && !isImmune(kImmunityTypeMindSpells))
@@ -1293,13 +1849,18 @@ namespace KotORBase {
 				case kKotOREffectRegenerate:
 					applyEffect(kEffectHeal, 0.0f, effect.getAmount(), effect.getSpellId());
 					break;
+				case kKotOREffectResurrection:
+					// SetIsDestroyable(..., bRaiseDeadPossible = FALSE)
+					if (_raiseable)
+						resurrect(MAX(1, effect.getAmount()));
+					break;
 				case kKotOREffectTemporaryForcePoints: {
 					int fp = getForcePoints() + effect.getAmount();
 					setForcePoints(fp);
 					break;
 				}
 				case kKotOREffectDamageResistance:
-					setDamageResistance(effect.getDamageType(), effect.getAmount());
+					modifier(effect.getAmount(), effect.getDamageType(), effect.getLimit());
 					break;
 				case kKotOREffectConcealment:
 					_concealment = effect.getAmount();
@@ -1319,24 +1880,33 @@ namespace KotORBase {
 				case kKotOREffectBodyFuel:
 					applyEffect(kEffectHeal, 0.0f, effect.getAmount() > 0 ? effect.getAmount() : 5, effect.getSpellId());
 					break;
-				case kKotOREffectDamageIncrease:
-					adjustAttackModifier(0); // damage tracked via effect amount on apply path
-					break;
 				case kKotOREffectForceResistanceIncrease:
-					adjustForceResistance(effect.getAmount());
-					break;
 				case kKotOREffectForceResistanceDecrease:
-					adjustForceResistance(-effect.getAmount());
-					break;
 				case kKotOREffectBlasterDeflectionIncrease:
-					adjustBlasterDeflection(effect.getAmount());
-					break;
 				case kKotOREffectBlasterDeflectionDecrease:
-					adjustBlasterDeflection(-effect.getAmount());
+					modifier(effect.getAmount(), 0, 0);
 					break;
 				case kKotOREffectDispelMagicAll:
 					clearActiveEffects();
 					break;
+				case kKotOREffectVisual: {
+					// Instant: play once. With a duration, a duration visual lasts
+					// as long as the effects it's linked to (see updateEffects()).
+					const float duration = durationOverride > 0.0f ? durationOverride : 0.0f;
+					if (duration <= 0.0f) {
+						playVisualEffect(effect.getAmount());
+						break;
+					}
+
+					LastingVisual visual;
+					visual.id = effect.getAmount();
+					visual.linkId = linkId;
+					visual.timeLeft = duration;
+					_lastingVisuals.push_back(visual);
+
+					playVisualEffect(visual.id, true);
+					break;
+				}
 				case kKotOREffectAreaOfEffect:
 				case kKotOREffectForceJump:
 				case kKotOREffectBeam:
@@ -1360,8 +1930,22 @@ namespace KotORBase {
 		bool Creature::removeActiveEffectAt(size_t index) {
 			if (index >= _effects.size())
 				return false;
+
+			const int linkId = _effects[index].linkId;
 			removeEffect(_effects[index]);
 			_effects.erase(_effects.begin() + static_cast<std::ptrdiff_t>(index));
+
+			// Removing one part of a linked effect removes the whole link.
+			if (linkId != 0) {
+				for (size_t i = _effects.size(); i-- > 0; ) {
+					if (_effects[i].linkId != linkId)
+						continue;
+
+					removeEffect(_effects[i]);
+					_effects.erase(_effects.begin() + static_cast<std::ptrdiff_t>(i));
+				}
+			}
+
 			return true;
 		}
 		void Creature::executeAttack(Object *target,
@@ -1382,8 +1966,23 @@ namespace KotORBase {
 				cancelCombat();
 				return;
 			}
+			_lastAttackAction = kActionAttackObject;
+			// Attacking gives a sneaking creature away.
+			if (_stealthMode)
+				setStealthMode(false);
 			// Track hostility for NWScript callers (GetLastHostileActor/GetLastAttacker).
-			if (targetCreature)		targetCreature->_lastHostileActor = this;
+			if (targetCreature) {
+				targetCreature->_lastHostileActor = this;
+				// OnAttacked runs later, outside the creature iteration.
+				targetCreature->_lastAttacker = this;
+				targetCreature->_attackedEventPending = true;
+			} else if (Situated *situated = ObjectContainer::toSituated(target)) {
+				if (situated->isDead()) {
+					cancelCombat();
+					return;
+				}
+				situated->notifyAttacked(this);
+			}
 			Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
 			Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
 			Object *weaponUsed = rightWeapon ? static_cast<Object *>(rightWeapon)
@@ -1391,8 +1990,8 @@ namespace KotORBase {
 			// Determine attack stat: Dex for ranged, Str for melee.
 			bool ranged = (rightWeapon && rightWeapon->isRangedWeapon()) ||
 			              (leftWeapon  && leftWeapon->isRangedWeapon());
-			int abMod = ranged ? _info.getAbilityModifier(kAbilityDexterity)
-			                   : _info.getAbilityModifier(kAbilityStrength);
+			int abMod = ranged ? getAbilityModifier(kAbilityDexterity)
+			                   : getAbilityModifier(kAbilityStrength);
 
 			// Flanking bonus (+2)
 			int flankingMod = 0;
@@ -1415,20 +2014,17 @@ namespace KotORBase {
 			// (Sneak Attack damage is rolled once, after the hit is confirmed —
 			//  see the "Sneak Attack" block further down.)
 
-			// caller may pass per-attack bonuses
-			const
-			bool hasActivePowerAttack = (activeFeat == kFeatPowerAttack || activeFeat == kFeatImprovedPowerAttack);
-			const
-			bool hasActiveCriticalStrike = (activeFeat == kFeatCriticalStrike || activeFeat == kFeatImprovedCriticalStrike);
-			if (!ranged && hasActivePowerAttack) {
-				if (activeFeat == kFeatImprovedPowerAttack && _info.hasFeat(kFeatImprovedPowerAttack)) {
-					featAttackMod -= 3;
-					featDamageMod += 6;
-				}
-				else
-				if (_info.hasFeat(kFeatPowerAttack)) {
-					featAttackMod -= 3;
-					featDamageMod += 3;
+			// The round's activated combat feat (Power Attack/Blast, Critical
+			// Strike, Sniper Shot...). Flurry and Rapid Shot penalties come in
+			// babPenalty with the round's extra attack.
+			int featThreatRange = 0;
+			if ((activeFeat >= 0) && _info.hasFeat(static_cast<uint32_t>(activeFeat))) {
+				const CombatFeatModifiers feat = getCombatFeatModifiers(activeFeat);
+				if (ranged ? feat.ranged : feat.melee) {
+					if (feat.extraAttacks == 0)
+						featAttackMod += feat.attack;
+					featDamageMod   += feat.damage;
+					featThreatRange += feat.threatRange;
 				}
 			}
 			// Weapon Focus / Specialization bonuses.
@@ -1436,6 +2032,10 @@ namespace KotORBase {
 				if (ranged) {
 					if (_info.hasFeat(kFeatWeaponFocusBlaster) || _info.hasFeat(kFeatWeaponFocusBlasterRifle))				featAttackMod += 1;
 					if (_info.hasFeat(kFeatWeaponSpecializationBlaster) || _info.hasFeat(kFeatWeaponSpecializationBlasterRifle))				featDamageMod += 2;
+				}
+				else if (hasLightsaberEquipped()) {
+					if (_info.hasFeat(kFeatWeaponFocusLightsaber))				featAttackMod += 1;
+					if (_info.hasFeat(kFeatWeaponSpecializationLightsaber))				featDamageMod += 2;
 				}
 				else {
 					if (_info.hasFeat(kFeatWeaponFocusMelee))				featAttackMod += 1;
@@ -1459,7 +2059,7 @@ namespace KotORBase {
 			if (ranged && targetCreature && targetCreature->hasLightsaberEquipped()) {
 				// Rule: Opposed roll. If Deflect roll >= Attack roll, the bolt is deflected.
 				int deflectD20 = RNG.getNext(1, 21);
-				int deflectBonus = targetCreature->getBAB() + targetCreature->getCreatureInfo().getAbilityModifier(kAbilityDexterity);
+				int deflectBonus = targetCreature->getBAB() + targetCreature->getAbilityModifier(kAbilityDexterity);
 				if (targetCreature->getCreatureInfo().hasFeat(kFeatMasterJediDefense))			deflectBonus += 10;
 				else
 				if (targetCreature->getCreatureInfo().hasFeat(kFeatImprovedJediDefense))			deflectBonus += 6;
@@ -1485,10 +2085,7 @@ namespace KotORBase {
 			}
 			// --- Critical hit system ---	// Threat on natural 20 (weapons may lower this, but 20 is the universal minimum).	// Critical Strike feat: threat on 19-20;
 			// Improved: 18-20.
-			int critThreat = 20;
-			if (hasActiveCriticalStrike && activeFeat == kFeatImprovedCriticalStrike && _info.hasFeat(kFeatImprovedCriticalStrike))		critThreat = 18;
-			else
-			if (hasActiveCriticalStrike && _info.hasFeat(kFeatCriticalStrike))		critThreat = 19;
+			int critThreat = 20 - featThreatRange;
 			bool isThreat = (d20 >= critThreat);
 			bool isCrit   = false;
 			if (isThreat) {
@@ -1504,34 +2101,34 @@ namespace KotORBase {
 			if (rightWeapon)		damage = computeWeaponDamage(rightWeapon);
 			else
 				// Unarmed: 1 + Str modifier (minimum 1 die).
-				damage = 1 + _info.getAbilityModifier(kAbilityStrength);
+				damage = 1 + getAbilityModifier(kAbilityStrength);
 			// On a confirmed critical, double the weapon dice (not the fixed modifiers).
 			if (isCrit) {
 				int dieDamage;
 				int modDamage;
 				if (rightWeapon && leftWeapon) {
-					int rMod = _info.getAbilityModifier(kAbilityStrength);
-					int lMod = _info.getAbilityModifier(kAbilityStrength);
+					int rMod = getAbilityModifier(kAbilityStrength);
+					int lMod = getAbilityModifier(kAbilityStrength);
 					dieDamage = damage - rMod - lMod;
 					modDamage  = rMod + lMod;
 				}
 				else
 				if (rightWeapon) {
-					int mod = ranged ? _info.getAbilityModifier(kAbilityDexterity)			                 : _info.getAbilityModifier(kAbilityStrength);
+					int mod = ranged ? getAbilityModifier(kAbilityDexterity)			                 : getAbilityModifier(kAbilityStrength);
 					dieDamage = damage - mod;
 					modDamage  = mod;
 				}
 				else {
 					// Unarmed: the "1" is the die, Str mod is the modifier.
-					int mod = _info.getAbilityModifier(kAbilityStrength);
+					int mod = getAbilityModifier(kAbilityStrength);
 					dieDamage = damage - mod;
 					modDamage  = mod;
 				}
 				// Double the dice portion only.
 					damage = dieDamage * 2 + modDamage;
 			}
-			// Apply feat damage bonus.
-			damage += featDamageMod;
+			// Apply feat and effect damage bonuses.
+			damage += featDamageMod + _damageModifier;
 			// Sneak Attack (Scoundrel class feature): roll +1d6 per rank when the
 			// target is flat-footed (not currently in combat), flanked, or
 			// knocked down/stunned.
@@ -1566,9 +2163,6 @@ namespace KotORBase {
 			else if (rightWeapon)
 				damageType = kDamageTypeSlashing;
 			if (targetCreature) {
-				int resist = targetCreature->getDamageResistance(damageType);
-				if (resist > 0)
-					damage = damage > resist ? damage - resist : 0;
 				int immunity = targetCreature->getDamageImmunityPercent(damageType);
 				if (immunity > 0)
 					damage = damage - (damage * immunity) / 100;
@@ -1583,17 +2177,29 @@ namespace KotORBase {
 						return;
 					}
 				}
+				// Damage resistance, damage reduction and Force shields.
+				damage = targetCreature->absorbDamage(damage, damageType);
 				targetCreature->recordDamageTaken(damage, damageType, this);
 			}
 			if (_assuredHit)
 				_assuredHit = false;
 			recordAttackResult(isCrit ? kAttackResultCriticalHitSuccessful : kAttackResultHitSuccessful, weaponUsed);
+			if (isCrit && _model)
+				playSoundSetBark(kSoundSetCriticalHit);
+			// Bashing a door or container: its Hardness soaks the blow; it breaks at 0 HP.
+			if (Situated *situated = ObjectContainer::toSituated(target)) {
+				situated->takeBashDamage(damage, this);
+				if (situated->isDead())
+					cancelCombat();
+				return;
+			}
 			int hp    = target->getCurrentHitPoints() - damage;
 			int minHp = target->getMinOneHitPoints() ? 1 : 0;
 			if (hp < minHp)		hp = minHp;
 			target->setCurrentHitPoints(hp);
 			debugC(Common::kDebugEngineLogic, 1,	       "Object \"%s\" was %shit by \"%s\" (d20=%d bab=%d abMod=%d effect=%d total=%d vs AC %d), %d dmg, %d/%d HP",	       target->getTag().c_str(), isCrit ? "CRITICALLY " : "",	       _tag.c_str(), d20, bab + babPenalty, abMod, _attackModifier, attackRoll, targetAC,	       damage, hp, target->getMaxHitPoints());
-			if (hp <= minHp) {
+			// A Min1HP target left at 1 HP is still alive: no kill bookkeeping.
+			if (hp <= 0) {
 				cancelCombat();
 				if (targetCreature) {
 					targetCreature->cancelCombat();
@@ -1618,19 +2224,149 @@ namespace KotORBase {
 		bool Creature::handleDeath() {
 			if (!_dead && _currentHitPoints <= 0) {
 				_dead = true;
+				_deathEventPending = true;
+				_damagedEventPending = false;
+				// The dead don't perceive, get attacked or end combat rounds.
+				_attackedEventPending = false;
+				_endRoundEventPending = false;
+				_perceptionEvents.clear();
 				if (!_lastKiller && _lastHostileActor)
 					_lastKiller = _lastHostileActor;
 				if (_model) {
 					_model->clearDefaultAnimations();
 					_model->addDefaultAnimation("dead", 100);
 					_model->playAnimation("die", false);
+					playSoundSetBark(kSoundSetDead, true);
 				}
 				else {
 					warning("Creature::handleDeath(): \"%s\" has no model; applying logical death only", _tag.c_str());
 				}
+				stopLastingVisuals();
+				if (_model)
+					_model->setClickable(isClickable());
 				return true;
 			}
 			return false;
+		}
+		void Creature::setDestroyable(bool destroyable, bool raiseable, bool selectableWhenDead) {
+			_destroyable = destroyable;
+			_raiseable = raiseable;
+			_deadSelectable = selectableWhenDead;
+			if (_model)
+				_model->setClickable(isClickable());
+		}
+		bool Creature::isClickable() const {
+			if (!Object::isClickable())
+				return false;
+			// Destroyable corpses stay lootable; a non-destroyable one is only
+			// clickable when it was made selectable when dead.
+			return !_dead || _destroyable || _deadSelectable;
+		}
+		void Creature::saveState(Aurora::GFF3WriterStruct &gff) const {
+			Object::saveState(gff);
+			gff.addByte("IsDead", _dead ? 1 : 0);
+			gff.addDouble("XPosition", _position[0]);
+			gff.addDouble("YPosition", _position[1]);
+			gff.addDouble("ZPosition", _position[2]);
+			float x, y, z, angle;
+			getOrientation(x, y, z, angle);
+			gff.addDouble("Facing", angle);
+			gff.addSint32("FactionID", static_cast<int32_t>(getFaction()));
+			gff.addByte("Min1HP", getMinOneHitPoints() ? 1 : 0);
+			gff.addByte("IsDestroyable", _destroyable ? 1 : 0);
+			gff.addByte("IsRaiseable", _raiseable ? 1 : 0);
+			gff.addByte("DeadSelectable", _deadSelectable ? 1 : 0);
+		}
+		void Creature::loadState(const Aurora::GFF3Struct &gff) {
+			Object::loadState(gff);
+			if (gff.hasField("XPosition"))
+				setPosition(gff.getDouble("XPosition"), gff.getDouble("YPosition"), gff.getDouble("ZPosition"));
+			if (gff.hasField("Facing"))
+				setOrientation(0.0f, 0.0f, 1.0f, gff.getDouble("Facing"));
+			// Scripts change factions (hostile on insult, surrender, ...).
+			if (gff.hasField("FactionID"))
+				setFaction(Faction(gff.getSint("FactionID")));
+			// Scripts keep cutscene actors alive with SetMinOneHP.
+			if (gff.hasField("Min1HP"))
+				setMinOneHitPoints(gff.getBool("Min1HP"));
+			// SetIsDestroyable keeps corpses (and their clickability) around.
+			_destroyable = gff.getBool("IsDestroyable", _destroyable);
+			_raiseable = gff.getBool("IsRaiseable", _raiseable);
+			_deadSelectable = gff.getBool("DeadSelectable", _deadSelectable);
+			// A restored creature already spawned once; don't run OnSpawn again.
+			_spawnEventPending = false;
+			if (gff.getBool("IsDead", false)) {
+				// Dead in a previous visit: stay dead, without death events or XP.
+				_currentHitPoints = 0;
+				_dead = true;
+				_xpAwarded = true;
+				_deathEventPending = false;
+				_damagedEventPending = false;
+				if (_model) {
+					_model->clearDefaultAnimations();
+					_model->addDefaultAnimation("dead", 100);
+				}
+			}
+			if (_model)
+				_model->setClickable(isClickable());
+		}
+		void Creature::resurrect(int hitPoints) {
+			if (!_dead)
+				return;
+			_dead = false;
+			_deathEventPending = false;
+			_damagedEventPending = false;
+			setCurrentHitPoints(MAX(1, MIN(hitPoints, getMaxHitPoints())));
+			if (_model) {
+				_model->clearDefaultAnimations();
+				setDefaultAnimations();
+				playDefaultAnimation();
+				_model->setClickable(isClickable());
+			}
+		}
+		bool Creature::consumeDeathEvent() {
+			const bool pending = _deathEventPending;
+			_deathEventPending = false;
+			return pending;
+		}
+		bool Creature::consumeDamagedEvent() {
+			const bool pending = _damagedEventPending;
+			_damagedEventPending = false;
+			return pending;
+		}
+		bool Creature::consumeSpawnEvent() {
+			const bool pending = _spawnEventPending;
+			_spawnEventPending = false;
+			return pending;
+		}
+		bool Creature::consumeHeartbeatEvent() {
+			const bool pending = _heartbeatEventPending;
+			_heartbeatEventPending = false;
+			return pending;
+		}
+		bool Creature::consumeEndRoundEvent() {
+			const bool pending = _endRoundEventPending;
+			_endRoundEventPending = false;
+			return pending;
+		}
+		bool Creature::consumeAttackedEvent(Object *&attacker) {
+			const bool pending = _attackedEventPending;
+			attacker = _lastAttacker;
+			_attackedEventPending = false;
+			return pending;
+		}
+		bool Creature::consumePerceptionEvent(PerceptionEvent &event) {
+			if (_perceptionEvents.empty())
+				return false;
+			event = _perceptionEvents.front();
+			_perceptionEvents.erase(_perceptionEvents.begin());
+			// GetLastPerceived & co. describe the event being dispatched.
+			_lastPerceived           = event.object;
+			_lastPerceptionSeen      = event.seen;
+			_lastPerceptionVanished  = !event.seen;
+			_lastPerceptionHeard     = event.seen;
+			_lastPerceptionInaudible = !event.seen;
+			return true;
 		}
 		Object *Creature::getLastPerceived()
 		const {
@@ -1670,6 +2406,10 @@ namespace KotORBase {
 				_lastPerceptionVanished  = false;
 				_lastPerceptionHeard     = false;
 				_lastPerceptionInaudible = false;
+				PerceptionEvent event;
+				event.object = &object;
+				event.seen = true;
+				_perceptionEvents.push_back(event);
 				debugC(Common::kDebugEngineLogic, 2,			"Creature \"%s\" have seen \"%s\"",			_tag.c_str(), object.getTag().c_str());
 			}
 		}
@@ -1681,6 +2421,10 @@ namespace KotORBase {
 				_lastPerceptionVanished  = true;
 				_lastPerceptionHeard     = false;
 				_lastPerceptionInaudible = false;
+				PerceptionEvent event;
+				event.object = &object;
+				event.seen = false;
+				_perceptionEvents.push_back(event);
 				debugC(Common::kDebugEngineLogic, 2,			"Object \"%s\" have vanished from \"%s\"",			object.getTag().c_str(), _tag.c_str());
 			}
 		}
@@ -1723,6 +2467,7 @@ namespace KotORBase {
 			return _actions.getCurrent();
 		}
 		void Creature::clearActions() {
+			_movePath.clear();
 			_actions.clear();
 		}
 		void Creature::addAction(
@@ -1736,8 +2481,8 @@ namespace KotORBase {
 			return _info.hasForcePower(power);
 		}
 		void Creature::performCutsceneAttack(Object *target,
-		int flags) {
-			if (!target)
+		int flags, int damage, int animation) {
+			if (!target || target->isDead())
 				return;
 
 			makeLookAt(target);
@@ -1745,7 +2490,15 @@ namespace KotORBase {
 			if (targetCreature)
 				targetCreature->makeLookAt(this);
 
-			playAnimation("attack1", false, 1.2f);
+			// The animation the script asks for (an animations.2da row, as
+			// KotOR.js plays it); else the attack of the weapon held.
+			const Common::UString scripted = (animation >= 0) ? getAnimationNameById(animation) : "";
+			if (!scripted.empty() && hasModelAnimation(scripted))
+				playAnimation(scripted, true);
+			else if (_model && (getWeaponAnimationNumber() != -1))
+				playAttackAnimation();
+			else
+				playAnimation("attack1", false, 1.2f);
 
 			if (flags & kCutsceneAttackForceHit) {
 				if (targetCreature && (flags & kCutsceneAttackPlayReaction)) {
@@ -1770,6 +2523,11 @@ namespace KotORBase {
 				if (targetCreature && !(flags & kCutsceneAttackNoDamage))
 					targetCreature->playAnimation("die", false, 1.5f);
 			}
+			// The scripted damage lands with the blow, not when it was queued.
+			if (targetCreature && damage > 0 && !(flags & kCutsceneAttackNoDamage)) {
+				targetCreature->recordDamageTaken(damage, 0, this);
+				targetCreature->applyEffect(Effect(kKotOREffectDamage, damage));
+			}
 		}
 		void Creature::setDefaultAnimations() {
 			if (!_model)		return;
@@ -1788,7 +2546,9 @@ namespace KotORBase {
 		bool Creature::addItemToEquipment(
 		const Common::UString &tag, InventorySlot slot) {
 			try {
-				_equipment.insert(std::make_pair(slot, std::make_unique<Item>(tag)));
+				// Overwrite: companions rebuilt from a template and then given
+				// saved state must not keep the template's gear.
+				_equipment[slot] = std::make_unique<Item>(tag);
 			}
 			catch (Common::Exception &e) {
 				e.add("Failed to load item \"%s\"", tag.c_str());
@@ -1834,7 +2594,7 @@ namespace KotORBase {
 		const {
 			int result = 0;
 			Ability ability = weapon->isRangedWeapon() ? kAbilityDexterity : kAbilityStrength;
-			int mod = _info.getAbilityModifier(ability);
+			int mod = getAbilityModifier(ability);
 			for (
 			int i = 0;
 			i < weapon->getNumDice();
@@ -1872,6 +2632,62 @@ namespace KotORBase {
 		Object *Creature::getBlockingDoor() const {
 			return _blockingDoor;
 		}
+		CombatFeatModifiers getCombatFeatModifiers(int feat) {
+			// Penalties as KotOR.js TalentFeat applies them (attack and Defense for
+			// one round); Power Attack/Blast damage as KotOR.js CombatAttackData.
+			CombatFeatModifiers mods;
+			switch (feat) {
+				case kFeatFlurry:
+				case kFeatImprovedFlurry:
+				case kFeatMasterFlurry:
+				case kFeatRapidShot:
+				case kFeatImprovedRapidShot:
+				case kFeatMasterRapidShot: {
+					const bool flurry = (feat == kFeatFlurry) || (feat == kFeatImprovedFlurry) || (feat == kFeatMasterFlurry);
+					const int penalty = ((feat == kFeatFlurry) || (feat == kFeatRapidShot)) ? 4 :
+					                    (((feat == kFeatImprovedFlurry) || (feat == kFeatImprovedRapidShot)) ? 2 : 1);
+					mods.melee        = flurry;
+					mods.ranged       = !flurry;
+					mods.attack       = -penalty;
+					mods.armorClass   = -penalty;
+					mods.extraAttacks = 1;
+					break;
+				}
+				case kFeatPowerAttack:
+				case kFeatImprovedPowerAttack:
+				case kFeatMasterPowerAttack:
+				case kFeatPowerBlast:
+				case kFeatImprovedPowerBlast:
+				case kFeatMasterPowerBlast: {
+					const bool melee = (feat == kFeatPowerAttack) || (feat == kFeatImprovedPowerAttack) ||
+					                   (feat == kFeatMasterPowerAttack);
+					mods.melee  = melee;
+					mods.ranged = !melee;
+					mods.attack = -3;
+					mods.damage = ((feat == kFeatPowerAttack) || (feat == kFeatPowerBlast)) ? 5 :
+					              (((feat == kFeatImprovedPowerAttack) || (feat == kFeatImprovedPowerBlast)) ? 8 : 10);
+					break;
+				}
+				case kFeatCriticalStrike:
+				case kFeatImprovedCriticalStrike:
+				case kFeatMasterCriticalStrike:
+					mods.melee       = true;
+					mods.armorClass  = -5;
+					mods.threatRange = (feat == kFeatCriticalStrike) ? 1 : ((feat == kFeatImprovedCriticalStrike) ? 2 : 3);
+					break;
+				case kFeatSniperShot:
+				case kFeatImprovedSniperShot:
+				case kFeatMasterSniperShot:
+					// The ranged Critical Strike.
+					mods.ranged      = true;
+					mods.threatRange = (feat == kFeatSniperShot) ? 1 : ((feat == kFeatImprovedSniperShot) ? 2 : 3);
+					break;
+				default:
+					break;
+			}
+			return mods;
+		}
+
 		void Creature::think(Area *area) {
 			if (_aiArchetype == kAIArchetypeNone || isPC() || isDead() || !area)
 				return;
@@ -1899,22 +2715,6 @@ namespace KotORBase {
 				_actions.add(Action(kActionAttackObject, target));
 				_aiCooldown = 2.0f;
 				break;
-				case kAIArchetypeForceUser: {
-					_actions.clear();
-					const std::vector<uint32_t> &powers = getCreatureInfo().getForcePowers();
-					const bool canCast = !powers.empty() && getForcePoints() >= 10;
-					if (canCast && getDistanceTo(target) <= 12.0f) {
-						Action spell(kActionCastSpell, target);
-						spell.actionID = static_cast<int>(powers[static_cast<size_t>(RNG.getNext(0, static_cast<int>(powers.size())))]);
-						_actions.add(spell);
-						setForcePoints(std::max(0, getForcePoints() - 10));
-						_aiCooldown = 2.0f;
-					} else {
-						_actions.add(Action(kActionAttackObject, target));
-						_aiCooldown = 1.0f;
-					}
-					break;
-				}
 				default:			break;
 			}
 		}
@@ -1932,6 +2732,12 @@ namespace KotORBase {
 					break;
 				case kEffectConfusion:
 					adjustArmorClassModifier(4);
+					break;
+				case kEffectModifier:
+					adjustEffectModifiers(effect, -1);
+					break;
+				case kEffectVFX:
+					stopVisualEffect(effect.value);
 					break;
 				default:
 					break;
@@ -1956,12 +2762,17 @@ namespace KotORBase {
 			) {
 				it->duration -= dt;
 				if (it->type == kEffectPoison) {
-					// Periodic poison damage (simplified: value is damage per sec)
-					if (_currentHitPoints > 0) {
-						float dam = it->value * dt;
-						_currentHitPoints -= (int)dam;
-						if (_currentHitPoints < 1) _currentHitPoints = 1;
-						// Poison usually doesn't kill in KOTOR
+					// Periodic poison damage: value is damage per second, applied in
+					// whole-second ticks (truncating value * dt lost every tick).
+					it->nextTick -= dt;
+					while (it->nextTick <= 0.0f) {
+						it->nextTick += 1.0f;
+						if (_currentHitPoints > 1 && it->value > 0) {
+							// Poison wears a creature down but doesn't kill it.
+							const int dealt = MIN(it->value, _currentHitPoints - 1);
+							recordDamageTaken(dealt, 0, _lastHostileActor);
+							_currentHitPoints -= dealt;
+						}
 					}
 				}
 				if (it->duration <= 0.0f) {
@@ -1972,6 +2783,38 @@ namespace KotORBase {
 					++it;
 				}
 			}
+			updateLastingVisuals(dt);
+		}
+
+		void Creature::updateLastingVisuals(float dt) {
+			for (auto v = _lastingVisuals.begin(); v != _lastingVisuals.end(); ) {
+				v->timeLeft -= dt;
+
+				// A linked visual ends with the last of the effects it's linked to
+				bool linkAlive = false;
+				if (v->linkId != 0)
+					for (const ActiveEffect &e : _effects)
+						if (e.linkId == v->linkId)
+							linkAlive = true;
+
+				if (linkAlive)
+					v->linkSeen = true;
+
+				if ((v->timeLeft > 0.0f) && (linkAlive || !v->linkSeen)) {
+					++v;
+					continue;
+				}
+
+				stopVisualEffect(v->id);
+				v = _lastingVisuals.erase(v);
+			}
+		}
+
+		void Creature::stopLastingVisuals() {
+			for (const LastingVisual &visual : _lastingVisuals)
+				stopVisualEffect(visual.id);
+
+			_lastingVisuals.clear();
 		}
 		bool Creature::hasEffect(EffectType type)
 		const {
@@ -1981,6 +2824,10 @@ namespace KotORBase {
 				return true;
 			}
 			return false;
+		}
+
+		bool Creature::isIncapacitated() const {
+			return hasEffect(kEffectStun) || hasEffect(kEffectKnockdown);
 		}
 
 		bool Creature::hasSpellEffect(int spellId) const {
@@ -1998,6 +2845,280 @@ namespace KotORBase {
 			if (isDead())		return;
 			updateEffects(dt);
 			if (_aiCooldown > 0.0f)		_aiCooldown -= dt;
+		}
+
+		// --- Sounds and visual effects ---
+
+		/** Footsteps carry this far, in metres. */
+		static const float kFootstepMinDistance = 1.0f;
+		static const float kFootstepMaxDistance = 12.0f;
+		/** Weapons and voices carry this far, in metres. */
+		static const float kCombatSoundMinDistance = 3.0f;
+		static const float kCombatSoundMaxDistance = 30.0f;
+
+		void Creature::updatePresentation(float dt, Area *area) {
+			for (auto s = _delayedSounds.begin(); s != _delayedSounds.end(); ) {
+				s->delay -= dt;
+				if (s->delay > 0.0f) {
+					++s;
+					continue;
+				}
+
+				playSoundHere(s->sound, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+				s = _delayedSounds.erase(s);
+			}
+
+			_visualEffects.update(_model.get(), dt);
+
+			if (!_model)
+				return;
+
+			std::vector<Graphics::Aurora::Model::FiredAnimationEvent> events;
+			_model->takeAnimationEvents(events);
+
+			for (const auto &event : events)
+				handleAnimationEvent(event.name, area);
+		}
+
+		void Creature::loadAppearanceSounds() {
+			if (_appearanceSoundsFor == _appearance)
+				return;
+
+			_appearanceSoundsFor = _appearance;
+			_footstepType = -1;
+			_sizeCategory = 3;
+
+			try {
+				const Aurora::TwoDARow &row = TwoDAReg.get2DA("appearance").getRow(_appearance);
+
+				if (!row.empty("footsteptype"))
+					_footstepType = row.getInt("footsteptype");
+				if (!row.empty("sizecategory"))
+					_sizeCategory = row.getInt("sizecategory");
+			} catch (...) {
+				Common::exceptionDispatcherWarning("Failed to read the sounds of appearance %u", _appearance);
+			}
+		}
+
+		const Item *Creature::getSoundWeapon() const {
+			static const InventorySlot kSlots[] = {
+				kInventorySlotRightWeapon, kInventorySlotLeftWeapon,
+				kInventorySlotCWeaponR, kInventorySlotCWeaponL, kInventorySlotCWeaponB
+			};
+
+			for (InventorySlot slot : kSlots) {
+				const Item *item = getEquipedItem(slot);
+				if (item)
+					return item;
+			}
+
+			return nullptr;
+		}
+
+		/** What a weapon hitting @p target sounds like hitting. */
+		static WeaponHitMaterial getHitMaterial(const Object *target) {
+			if (!target)
+				return kWeaponHitLeather;
+
+			const Creature *creature = dynamic_cast<const Creature *>(target);
+			if (!creature)
+				return kWeaponHitMetal; // Doors and containers
+
+			if (creature->getRace() == kRaceDroid)
+				return kWeaponHitMetal;
+
+			return kWeaponHitLeather;
+		}
+
+		void Creature::playSoundHere(const Common::UString &sound, float minDistance, float maxDistance) {
+			if (sound.empty())
+				return;
+
+			float x, y, z;
+			getPosition(x, y, z);
+
+			playSoundAt(sound, x, y, z, Sound::kSoundTypeSFX, minDistance, maxDistance);
+		}
+
+		void Creature::handleAnimationEvent(const Common::UString &event, Area *area) {
+			const AnimationEventSound sound = getAnimationEventSound(event);
+			if (sound == kAnimationEventSoundNone) {
+				debugC(Common::kDebugEngineLogic, 3, "Creature \"%s\": animation event \"%s\"",
+				       _tag.c_str(), event.c_str());
+				return;
+			}
+
+			float x, y, z;
+			getPosition(x, y, z);
+
+			try {
+				if (sound == kAnimationEventSoundFootstep) {
+					loadAppearanceSounds();
+					if (_footstepType < 0)
+						return;
+
+					const uint32_t surface = area ? area->getSurfaceAt(x, y) : UINT32_MAX;
+					const Common::UString footstep = getFootstepSound(TwoDAReg.get2DA("footstepsounds"),
+					                                                  _footstepType, surface, RNG.getNext(0, 3));
+
+					playSoundAt(footstep, x, y, z, Sound::kSoundTypeSFX, kFootstepMinDistance, kFootstepMaxDistance);
+					return;
+				}
+
+				const Item *weapon = getSoundWeapon();
+				if (!weapon)
+					return;
+
+				const int row = getWeaponSoundRow(TwoDAReg.get2DA("baseitems"), weapon->getBaseItem());
+				if (row < 0)
+					return;
+
+				const Object *target = _attemptedAttackTarget ? _attemptedAttackTarget : _attackTarget;
+				const int variant = RNG.getNext(0, MAX(getWeaponSoundVariantCount(sound), 1));
+
+				const Common::UString weaponSound = getWeaponSound(TwoDAReg.get2DA("weaponsounds"), row, sound,
+				                                                   getHitMaterial(target), variant);
+
+				playSoundAt(weaponSound, x, y, z, Sound::kSoundTypeSFX, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+
+			} catch (...) {
+				Common::exceptionDispatcherWarning("Failed to play the sound of animation event \"%s\"", event.c_str());
+			}
+		}
+
+		bool Creature::playSoundSetBark(SoundSetEntry entry, bool interrupt) {
+			if (!_model)
+				return false;
+
+			if (!interrupt && SoundMan.isPlaying(_barkSound))
+				return false;
+
+			loadSSF();
+			if (!_ssf)
+				return false;
+
+			const uint32_t strRef = _ssf->getStrRef(entry);
+			if (strRef == Aurora::kStrRefInvalid)
+				return false;
+
+			const Common::UString &sound = TalkMan.getSoundResRef(strRef);
+			if (sound.empty())
+				return false;
+
+			if (interrupt)
+				SoundMan.stopChannel(_barkSound);
+
+			float x, y, z;
+			getPosition(x, y, z);
+
+			// Raise the voice to head height
+			_barkSound = playSoundAt(sound, x, y, z + 1.5f, Sound::kSoundTypeVoice,
+			                         kCombatSoundMinDistance, kCombatSoundMaxDistance);
+			return true;
+		}
+
+		bool Creature::playRandomSoundSetBark(SoundSetEntry first, int count, bool interrupt) {
+			if (!_model || (count <= 0))
+				return false;
+
+			if (!interrupt && SoundMan.isPlaying(_barkSound))
+				return false;
+
+			// Not every soundset has every entry: try them all, starting at random
+			const int start = RNG.getNext(0, count);
+			for (int i = 0; i < count; i++) {
+				const SoundSetEntry entry = static_cast<SoundSetEntry>(first + ((start + i) % count));
+				if (playSoundSetBark(entry, interrupt))
+					return true;
+			}
+
+			return false;
+		}
+
+		void Creature::playVisualEffect(int id, bool lasting) {
+			if (!_model)
+				return;
+
+			VisualEffectInfo effect;
+			try {
+				if (!loadVisualEffect(TwoDAReg.get2DA("visualeffects"), id, effect))
+					return;
+			} catch (...) {
+				Common::exceptionDispatcherWarning("Failed to read visual effect %d", id);
+				return;
+			}
+
+			if (effect.isBeam()) {
+				debugC(Common::kDebugEngineLogic, 2, "Creature \"%s\": beam visual effect %d is not shown",
+				       _tag.c_str(), id);
+				return;
+			}
+
+			loadAppearanceSounds();
+
+			_visualEffects.playEffect(*_model, effect, _sizeCategory, lasting && effect.isDuration());
+			playSoundHere(effect.impactSound, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+		}
+
+		void Creature::stopVisualEffect(int id) {
+			_visualEffects.stopEffect(_model.get(), id);
+		}
+
+		void Creature::playSpellVisual(const Common::UString &visual, VisualEffectHook hook, float delay) {
+			if (visual.empty())
+				return;
+
+			const char *text = visual.c_str();
+			if (std::strspn(text, "0123456789") == std::strlen(text)) {
+				// A visualeffects.2da row
+				if (delay <= 0.0f)
+					playVisualEffect(std::atoi(text));
+				return;
+			}
+
+			_visualEffects.playModel(*_model, visual, hook, delay);
+		}
+
+		void Creature::playSpellCastVisuals(int spell) {
+			if (!_model)
+				return;
+
+			SpellCastVisuals visuals;
+			try {
+				if (!loadSpellCastVisuals(TwoDAReg.get2DA("spells"), spell, visuals) || visuals.empty())
+					return;
+			} catch (...) {
+				Common::exceptionDispatcherWarning("Failed to read the casting visuals of spell %d", spell);
+				return;
+			}
+
+			// Powers resolve at once: show the conjuring, then the casting a moment later
+			const float castDelay = MIN(visuals.conjureTime, 1.5f);
+
+			playSpellVisual(visuals.conjureHand  , kVisualEffectHookHand, 0.0f);
+			playSpellVisual(visuals.conjureHead  , kVisualEffectHookHead, 0.0f);
+			playSpellVisual(visuals.conjureGround, kVisualEffectHookRoot, 0.0f);
+
+			playSpellVisual(visuals.castHand  , kVisualEffectHookHand, castDelay);
+			playSpellVisual(visuals.castHead  , kVisualEffectHookHead, castDelay);
+			playSpellVisual(visuals.castGround, kVisualEffectHookRoot, castDelay);
+
+			playSoundHere(visuals.conjureSound, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+
+			const Common::UString &voice = (getGender() == kGenderFemale) ?
+				visuals.conjureSoundFemale : visuals.conjureSoundMale;
+			playSoundHere(voice, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+
+			if (!visuals.castSound.empty()) {
+				if (castDelay <= 0.0f) {
+					playSoundHere(visuals.castSound, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+				} else {
+					DelayedSound delayed;
+					delayed.delay = castDelay;
+					delayed.sound = visuals.castSound;
+					_delayedSounds.push_back(delayed);
+				}
+			}
 		}
 
 		void Creature::equipMostDamagingMelee() {

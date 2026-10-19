@@ -56,7 +56,7 @@ public:
 	void updateMinimapExplored(const std::vector<bool> &explored) override;
 	void updateMinimapMapPins(const std::vector<KotORBase::MapPin> &pins) override;
 
-	void showContainer(KotORBase::Inventory &inv);
+	std::vector<KotORBase::InventoryDisturbance> showContainer(KotORBase::Inventory &inv) override;
 
 	void setPartyLeader(KotORBase::Creature *creature);
 	void setPartyMember1(KotORBase::Creature *creature);
@@ -76,13 +76,15 @@ private:
 
 	std::unique_ptr<Minimap> _minimap;
 	Odyssey::WidgetLabel *_minimapPointer { nullptr };
+	Common::UString _combatModeMessage;
 
 	void update(int width, int height);
 	void initWidget(Widget &widget);
 	void setPortrait(uint8_t n, KotORBase::Creature *creature);
 	void setLevelUpIndicator(uint8_t n, bool visible);
 	void updateLevelUpIndicators();
-	void updateGrenadeTargetingPrompt();
+	/** Show the grenade prompt or why the game is paused. */
+	void updateCombatModeMessage();
 	void updatePortraitVitals(uint8_t n, KotORBase::Creature *creature);
 	void updatePartyVitals();
 	void notifyResized(int oldWidth, int oldHeight, int newWidth, int newHeight);

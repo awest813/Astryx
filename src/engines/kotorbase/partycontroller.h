@@ -41,6 +41,11 @@ class Creature;
 
 class PartyController {
 public:
+	/** Party slot of the PC. */
+	static const int kPCSlot = -1;
+	/** Party slot of members joined via AddToParty (no NPC roster slot). */
+	static const int kTemporarySlot = -2;
+
 	PartyController(Module *module);
 
 	// Current party
@@ -61,6 +66,9 @@ public:
 	void clearCurrentParty();
 	/** Add a creature to the party. */
 	void addPartyMember(int npc, Creature *creature);
+	/** Take a creature out of the party, leaving the others where they are.
+	 *  If it led the party, the next member takes over. False if it wasn't a member. */
+	bool removePartyMember(Creature *creature);
 	/** Set which party member should be the controlled character. */
 	void setPartyLeader(int npc);
 	/** Set which party member should be the controlled character. */
@@ -84,7 +92,6 @@ public:
 	const std::map<int, Common::UString> &getAvailableNPCs() const;
 
 	bool handleEvent(const Events::Event &e);
-	void raiseHeartbeatEvent();
 
 private:
 	Module *_module;

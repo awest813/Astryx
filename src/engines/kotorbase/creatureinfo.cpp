@@ -93,8 +93,36 @@ CreatureInfo::CreatureInfo(const Aurora::GFF3Struct &gff) {
 	loadSkills(gff);
 	loadAbilities(gff);
 	loadFeats(gff);
+	loadForcePowers(gff);
+	loadKnownPowers(gff);
 
 	_alignment = gff.getSint("GoodEvil", 50);
+
+	// What the creature carries (scripts look for it, and it's left as loot).
+	if (gff.hasField("ItemList"))
+		_inventory.read(gff.getList("ItemList"));
+
+	// UTC Force points: "ForcePoints" is the maximum, "CurrentForce" the current value.
+	const int maxFP = static_cast<int>(gff.getSint("ForcePoints", 0));
+	const int curFP = static_cast<int>(gff.getSint("CurrentForce", maxFP));
+	_forcePointsMax     = static_cast<uint32_t>(MAX(0, maxFP));
+	_forcePointsCurrent = static_cast<uint32_t>(MAX(0, MIN(curFP, maxFP)));
+}
+
+void CreatureInfo::loadKnownPowers(const Aurora::GFF3Struct &gff) {
+	// Blueprints list the known Force powers per class: ClassList[].KnownList0[].Spell
+	if (!gff.hasField("ClassList"))
+		return;
+
+	for (const auto &charClass : gff.getList("ClassList")) {
+		if (!charClass || !charClass->hasField("KnownList0"))
+			continue;
+
+		for (const auto &spell : charClass->getList("KnownList0")) {
+			if (spell && spell->hasField("Spell"))
+				addForcePower(static_cast<uint32_t>(spell->getUint("Spell")));
+		}
+	}
 }
 
 CreatureInfo::CreatureInfo(const CharacterGenerationInfo &info) {
@@ -658,6 +686,10 @@ Inventory &CreatureInfo::getInventory() {
 	return _inventory;
 }
 
+const Inventory &CreatureInfo::getInventory() const {
+	return _inventory;
+}
+
 void CreatureInfo::addInventoryItem(const Common::UString &tag, int count) {
 	_inventory.addItem(tag, count);
 }
@@ -728,7 +760,6 @@ void CreatureInfo::setExperience(int xp) {
 }
 
 int CreatureInfo::getFeatRank(uint32_t feat) const {
-	int rank = 0;
 	if (feat == kFeatSneakAttack1) {
 		if (hasFeat(kFeatSneakAttack9)) return 9;
 		if (hasFeat(kFeatSneakAttack8)) return 8;

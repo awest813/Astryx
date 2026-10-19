@@ -1,6 +1,6 @@
 # KotOR I Full Parity — Status Audit & Plan
 
-**Date:** 2026-07-29  
+**Date:** 2026-07-29 (playable-build audit pass: 2026-10-17, see §2.5)  
 **Scope:** Star Wars: Knights of the Old Republic I campaign parity in Astryx  
 **Audience:** Maintainers and coding agents executing Milestone 7 work
 
@@ -98,7 +98,7 @@ Thin K1 handlers can still fail plot gates silently when semantics diverge from 
 
 ### 2.4 Verification reality
 
-**Automated (unit / model):** `tests/engines/kotorbase/` — **20** suites covering formulas, party/globals models, cinematic stubs, swoop kinematics, save serialization, flanking/LOS, and Phase-0 natives. Most **do not require live game archives** and therefore cannot prove module playthroughs.
+**Automated (unit / model):** `tests/engines/kotorbase/` — **21** suites covering formulas, party/globals models, cinematic stubs, swoop kinematics, save serialization, flanking/LOS, and Phase-0 natives. Most **do not require live game archives** and therefore cannot prove module playthroughs.
 
 **Scripted smoke:** `tests/smoke/*.ps1` runs unit binaries only.
 
@@ -108,6 +108,25 @@ Thin K1 handlers can still fail plot gates silently when semantics diverge from 
 - `docs/KOTOR_PROGRESS_TO_DANTOOINE_SMOKE.md` — Main menu → Dantooine
 
 **Supported content policy** (`docs/SUPPORTED_CONTENT.md`, `docs/PLAYABILITY_DEFINITION.md`) correctly still prioritizes Endar Spire, then Taris entry — **prefer this over README optimism when triaging**.
+
+### 2.5 Playable-build audit (2026-10-17)
+
+A code audit of the K1 critical path (natives, module flow, save/load,
+creatures/combat/GUI) found ~65 issues; the crash, softlock and state-loss
+ones were fixed. Build: Linux gcc, 0 errors; 106/106 unit tests pass. Still
+**no live smoke** (no game data in CI). Playtest instructions and the
+current known-gaps list: [PLAYTEST_BUILD.md](PLAYTEST_BUILD.md).
+
+| Area | Fixed in this pass |
+|------|--------------------|
+| Startup | Debug builds aborted while registering natives (`DisplayFeedBackText` default type); verifier now type-checks defaults and runs in CI |
+| New game | Opening movies hung behind the chargen frame lock |
+| NWScript | Table 199 → `EffectLinkEffects`, 360 → `ActionMoveAwayFromLocation`; ~30 natives with wrong param order/types or return types (script aborts) or reads of missing params (crashes); `GetNearestCreature` nNth; local booleans vs numbers |
+| Object lifetime | Deferred `DestroyObject` + reference scrubbing; index iteration so script spawns can't invalidate creature loops; action executor use-after-pop; double-owned party members |
+| Softlocks | Transition triggers (`LinkedTo`), NoClicksFor/cutscene input lock, dialog closing line + EndConversation, stuck/zero-range moves, BAB-0 attackers, level-up feat/power steps, Pazaak after standing, party selection readback |
+| Creature events | OnSpawn, OnDeath, OnDamaged, NPC/module/area OnHeartbeat now dispatched (queued, outside creature iteration) |
+| Persistence | PC XP/HP/FP and companion progression across transitions; in-game load keeps the save's state; position, play time and PC identity restored; all visited areas' object state saved (locals, containers), unique keys for repeated tags; session state reset on new game/load; autosave (`DoSinglePlayerAutoSave`) |
+| GUI | Store end-iterator crash + per-frame UTI reload; save menu survives broken saves |
 
 ---
 

@@ -56,6 +56,8 @@ public:
 	const Common::UString &getName() const;
 	const Common::UString &getModuleName() const;
 	uint32_t getTimePlayed() const;
+	/** Get the PC's saved position. Returns false if the save has none. */
+	bool getPCPosition(float &x, float &y, float &z) const;
 
 	bool isPCLoaded() const;
 
@@ -79,9 +81,18 @@ protected:
 	std::vector<SavedPartyMemberState> _savedPartyMembers;
 	int _savedPartyLeaderIndex { 0 };
 	bool _hasSavedPartyState { false };
+	std::map<int, CreatureInfo> _savedNPCStates;
+
+	/** The PC's character-creation identity, if the save has it. */
+	bool _hasPCIdentity { false };
+	Common::UString _pcName;
+	int _pcClass { 0 };
+	int _pcSkin { 0 };
+	int _pcFace { 0 };
 
 	std::unique_ptr<Aurora::GFF3File> _globals;
 	std::unique_ptr<Aurora::GFF3File> _areaState;
+	std::unique_ptr<Aurora::GFF3File> _repute;
 
 private:
 	void load(const Common::UString &dir, bool loadSav);

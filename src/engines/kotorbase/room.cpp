@@ -22,6 +22,8 @@
  *  Room within an area in KotOR games.
  */
 
+#include "src/common/strutil.h"
+
 #include "src/engines/aurora/model.h"
 
 #include "src/engines/kotorbase/room.h"
@@ -61,6 +63,19 @@ void Room::show() {
 void Room::hide() {
 	if (_model)
 		_model->hide();
+}
+
+bool Room::playAnimation(const Common::UString &anim) {
+	if (!_model || !_model->canPlayAnimation(anim))
+		return false;
+
+	// Looping: plays until another animation replaces it.
+	_model->playAnimation(anim, true, -1.0f);
+	return true;
+}
+
+Common::UString getRoomScriptLoopAnimation(int animation) {
+	return Common::String::format("scriptloop%02d", animation);
 }
 
 } // End of namespace KotORBase

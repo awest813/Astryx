@@ -68,10 +68,14 @@ CharacterGenerationSkillsMenu::CharacterGenerationSkillsMenu(
 	_ranks[KotORBase::kSkillSecurity]    = s.security;
 	_ranks[KotORBase::kSkillTreatInjury] = s.treatInjury;
 
-	// Compute how many points are still available.
+	// Compute how many points are still available. Ranks over budget (the
+	// abilities changed since) start over rather than being kept for free.
 	_remainingPoints = computeSkillPoints() - computeSpentPoints();
-	if (_remainingPoints < 0)
-		_remainingPoints = 0;
+	if (_remainingPoints < 0) {
+		for (int i = 0; i < KotORBase::kSkillMAX; ++i)
+			_ranks[static_cast<KotORBase::Skill>(i)] = 0;
+		_remainingPoints = computeSkillPoints();
+	}
 
 	updateLabels();
 }

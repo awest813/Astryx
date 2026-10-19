@@ -815,6 +815,12 @@ void ModelNode::render(RenderPass pass) {
 		glPopMatrix();
 	}
 
+	for (Model *effect : _effectModels) {
+		glPushMatrix();
+		effect->render(pass);
+		glPopMatrix();
+	}
+
 	// Render the node's children
 	for (std::list<ModelNode *>::iterator c = _children.begin(); c != _children.end(); ++c) {
 		glPushMatrix();
@@ -875,6 +881,8 @@ void ModelNode::renderImmediate(const glm::mat4 &parentTransform) {
 	if (_attachedModel) {
 		_attachedModel->renderImmediate(_renderTransform);
 	}
+	for (Model *effect : _effectModels)
+		effect->renderImmediate(_renderTransform);
 	// Render the node's children
 	for (std::list<ModelNode *>::iterator c = _children.begin(); c != _children.end(); ++c) {
 		(*c)->renderImmediate(_renderTransform);
@@ -916,6 +924,8 @@ void ModelNode::queueRender(const glm::mat4 &parentTransform) {
 	if (_attachedModel) {
 		_attachedModel->queueRender(_renderTransform);
 	}
+	for (Model *effect : _effectModels)
+		effect->queueRender(_renderTransform);
 	// Render the node's children
 	for (std::list<ModelNode *>::iterator c = _children.begin(); c != _children.end(); ++c) {
 		(*c)->queueRender(_renderTransform);

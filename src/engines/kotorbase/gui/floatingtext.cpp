@@ -28,6 +28,7 @@
 #include "src/graphics/aurora/fontman.h"
 
 #include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/objectcontainer.h"
 
 #include "src/engines/kotorbase/gui/floatingtext.h"
 
@@ -43,7 +44,7 @@ void FloatingTextManager::show(Object *object, const Common::UString &text, floa
 		_font = FontMan.get("fnt_d16x16");
 
 	for (auto &entry : _entries) {
-		if (entry.object == object) {
+		if (*entry.object == object) {
 			entry.label->setText(text);
 			entry.label->show();
 			entry.remaining = duration;
@@ -65,14 +66,15 @@ void FloatingTextManager::show(Object *object, const Common::UString &text, floa
 
 void FloatingTextManager::update(float dt) {
 	for (auto it = _entries.begin(); it != _entries.end();) {
-		if (!it->object) {
+		Object *object = ObjectContainer::toObject(*it->object);
+		if (!object) {
 			it->label->hide();
 			it = _entries.erase(it);
 			continue;
 		}
 
 		float x, y, z;
-		it->object->getTooltipAnchor(x, y, z);
+		object->getTooltipAnchor(x, y, z);
 
 		float sX, sY, sZ;
 		GfxMan.project(x, y, z, sX, sY, sZ);

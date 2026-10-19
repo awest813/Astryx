@@ -81,40 +81,38 @@ void Functions::setLocalString(Aurora::NWScript::FunctionContext &ctx) {
 		object->setLocalString(ctx.getParams()[1].getString(), ctx.getParams()[2].getString());
 }
 
+// Local booleans and local numbers are separate per-object tables in KotOR
+// (index 0..63 of each), so they must not share variable names. They are
+// kept as object local ints, which object save states persist.
+
+static Common::UString localBooleanName(int index) {
+	return "__localbool_" + Common::composeString(index);
+}
+
+static Common::UString localNumberName(int index) {
+	return "__localnum_" + Common::composeString(index);
+}
+
 void Functions::getLocalBoolean(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();
-	if (object) {
-		Common::UString name = Common::composeString(ctx.getParams()[1].getInt());
-		Aurora::NWScript::Variable &var = object->getVariable(name, Aurora::NWScript::kTypeInt);
-		ctx.getReturn() = var.getInt() != 0;
-	}
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
+	ctx.getReturn() = (object && object->getLocalInt(localBooleanName(ctx.getParams()[1].getInt())) != 0) ? 1 : 0;
 }
 
 void Functions::setLocalBoolean(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();
-	if (object) {
-		Common::UString name = Common::composeString(ctx.getParams()[1].getInt());
-		Aurora::NWScript::Variable &var = object->getVariable(name, Aurora::NWScript::kTypeInt);
-		var = ctx.getParams()[2].getInt();
-	}
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
+	if (object)
+		object->setLocalInt(localBooleanName(ctx.getParams()[1].getInt()), (ctx.getParams()[2].getInt() != 0) ? 1 : 0);
 }
 
 void Functions::getLocalNumber(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();
-	if (object) {
-		Common::UString name = Common::composeString(ctx.getParams()[1].getInt());
-		Aurora::NWScript::Variable &var = object->getVariable(name, Aurora::NWScript::kTypeInt);
-		ctx.getReturn() = var.getInt();
-	}
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
+	ctx.getReturn() = object ? object->getLocalInt(localNumberName(ctx.getParams()[1].getInt())) : 0;
 }
 
 void Functions::setLocalNumber(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();
-	if (object) {
-		Common::UString name = Common::composeString(ctx.getParams()[1].getInt());
-		Aurora::NWScript::Variable &var = object->getVariable(name, Aurora::NWScript::kTypeInt);
-		var = ctx.getParams()[2].getInt();
-	}
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
+	if (object)
+		object->setLocalInt(localNumberName(ctx.getParams()[1].getInt()), ctx.getParams()[2].getInt());
 }
 
 } // End of namespace KotORBase

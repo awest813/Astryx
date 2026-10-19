@@ -41,6 +41,18 @@ void DialogGUI::getTextColor(float &r, float &g, float &b) const {
 	b = 0.968750f;
 }
 
+ComputerGUI::ComputerGUI(KotORBase::Module &module) : KotORBase::DialogGUI(module, true) {
+	load("computer");
+	addBackground(KotORBase::kBackgroundTypeComp0);
+	update(WindowMan.getWindowWidth(), WindowMan.getWindowHeight());
+}
+
+void ComputerGUI::getTextColor(float &r, float &g, float &b) const {
+	r = 0.0f;
+	g = 0.648438f;
+	b = 0.968750f;
+}
+
 } // End of namespace KotOR
 
 } // End of namespace Engines

@@ -38,6 +38,8 @@ public:
 	int getNextCombatRound() const;
 
 	void update();
+	/** The game was paused for @p ms: the current round lasts as much longer. */
+	void delay(uint32_t ms);
 
 private:
 	Module *_module;

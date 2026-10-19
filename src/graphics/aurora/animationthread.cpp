@@ -53,6 +53,10 @@ void AnimationThread::resume() {
 	_pause.store(kPauseResumed, std::memory_order_seq_cst);
 }
 
+void AnimationThread::setTimeFrozen(bool frozen) {
+	_timeFrozen.store(frozen, std::memory_order_seq_cst);
+}
+
 void AnimationThread::registerModel(Model *model) {
 	if (_pause.load(std::memory_order_seq_cst) == kPausePaused) {
 		registerModelInternal(model);
@@ -123,7 +127,7 @@ void AnimationThread::threadMethod() {
 
 			uint32_t now = EventMan.getTimestamp();
 			float dt = 0;
-			if (m.second.lastChanged > 0) {
+			if ((m.second.lastChanged > 0) && !_timeFrozen.load(std::memory_order_relaxed)) {
 				dt = (now - m.second.lastChanged) / 1000.0f;
 			}
 			m.second.lastChanged = now;

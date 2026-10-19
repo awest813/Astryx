@@ -25,6 +25,7 @@ private:
 	KotORBase::Module &_module;
 
 	void fillPlanets();
+	Odyssey::WidgetButton *findPlanetButton(const char *tag, int index);
 	void jumpToPlanet(int planetIndex, const Common::UString &targetResRef);
 };
 

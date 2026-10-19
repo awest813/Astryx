@@ -41,8 +41,9 @@ void Functions::getIdentified(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setIdentified(Aurora::NWScript::FunctionContext &ctx) {
-	int identified = ctx.getParams()[0].getInt();
-	Object *item = ObjectContainer::toObject(getParamObject(ctx, 1));
+	// SetIdentified(object oItem, int bIdentified)
+	Object *item = ObjectContainer::toObject(getParamObject(ctx, 0));
+	int identified = ctx.getParams()[1].getInt();
 	if (item)
 		item->setLocalInt(kIdentifiedLocalKey, identified != 0 ? 1 : 0);
 }

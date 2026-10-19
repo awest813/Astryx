@@ -42,6 +42,8 @@ void LYTFile::clear() {
 	_rooms.clear();
 	_artPlaceables.clear();
 	_doorHooks.clear();
+	_tracks.clear();
+	_obstacles.clear();
 	_fileDependency.clear();
 }
 
@@ -51,6 +53,27 @@ void LYTFile::assertTokenCount(const std::vector<Common::UString> &tokens, size_
 	if (tokens.size() != n)
 		throw Common::Exception("LYTFile::load(): Invalid token \"%s\" (size %u)",
 		                        name.c_str(), (uint)tokens.size());
+}
+
+void LYTFile::readPlacedModels(Common::SeekableReadStream &lyt, Common::StreamTokenizer &tokenizer,
+                               std::vector<Common::UString> &strings, PlacedModelArray &models,
+                               const Common::UString &name) {
+
+	int count;
+	Common::parseString(strings[1], count);
+	models.resize(count);
+
+	for (int i = 0; i < count; i++) {
+		tokenizer.nextChunk(lyt);
+		tokenizer.getTokens(lyt, strings);
+
+		assertTokenCount(strings, 4, name);
+
+		models[i].model = strings[0];
+		Common::parseString(strings[1], models[i].x);
+		Common::parseString(strings[2], models[i].y);
+		Common::parseString(strings[3], models[i].z);
+	}
 }
 
 void LYTFile::load(Common::SeekableReadStream &lyt) {
@@ -96,26 +119,16 @@ void LYTFile::load(Common::SeekableReadStream &lyt) {
 			}
 
 		} else if (strings[0] == "trackcount") {
-			// TODO: Tracks?
+			// Minigame tracks
 
 			assertTokenCount(strings, 2, "trackcount");
-
-			int trackCount;
-			Common::parseString(strings[1], trackCount);
-
-			for (int i = 0; i < trackCount; i++)
-				tokenizer.nextChunk(lyt);
+			readPlacedModels(lyt, tokenizer, strings, _tracks, "track");
 
 		} else if (strings[0] == "obstaclecount") {
-			// TODO: Obstacles?
+			// Minigame obstacles
 
 			assertTokenCount(strings, 2, "obstaclecount");
-
-			int obstacleCount;
-			Common::parseString(strings[1], obstacleCount);
-
-			for (int i = 0; i < obstacleCount; i++)
-				tokenizer.nextChunk(lyt);
+			readPlacedModels(lyt, tokenizer, strings, _obstacles, "obstacle");
 
 		} else if (strings[0] == "artplaceablecount") {
 			// Art placeables
@@ -209,6 +222,14 @@ const LYTFile::ArtPlaceableArray &LYTFile::getArtPlaceables() const {
 
 const LYTFile::DoorHookArray &LYTFile::getDoorHooks() const {
 	return _doorHooks;
+}
+
+const LYTFile::PlacedModelArray &LYTFile::getTracks() const {
+	return _tracks;
+}
+
+const LYTFile::PlacedModelArray &LYTFile::getObstacles() const {
+	return _obstacles;
 }
 
 Common::UString LYTFile::getFileDependency() const {

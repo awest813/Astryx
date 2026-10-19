@@ -22,11 +22,14 @@
  *  The feat selection menu for custom character creation.
  */
 
+#include <algorithm>
+
 #include "src/common/strutil.h"
 #include "src/common/util.h"
 
 #include "src/engines/odyssey/button.h"
 #include "src/engines/odyssey/label.h"
+#include "src/engines/odyssey/listbox.h"
 
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 #include "src/engines/kotorbase/levelup.h"
@@ -54,6 +57,9 @@ static const FeatButtonMap kFeatButtons[] = {
 	{ "BTN_JEDI_DEFENSE", KotORBase::kFeatJediDefense },
 };
 
+/** Rows of the feat list box. */
+static const uint32_t kFeatListRows = 8;
+
 CharacterGenerationFeatsMenu::CharacterGenerationFeatsMenu(
 		KotORBase::CharacterGenerationInfo &info,
 		Console *console) :
@@ -68,15 +74,56 @@ CharacterGenerationFeatsMenu::CharacterGenerationFeatsMenu(
 
 	addBackground(KotORBase::kBackgroundTypeMenu);
 
-	_availableFeats = KotORBase::getSelectableFeats(info.getClass(), info.getFeats());
+	// Re-entering this step replaces the earlier pick: offer it again.
+	std::vector<uint32_t> known = info.getFeats();
+	if (info.getChosenFeat() != 0xFFFFFFFF) {
+		auto chosen = std::find(known.begin(), known.end(), info.getChosenFeat());
+		if (chosen != known.end())
+			known.erase(chosen);
+	}
+
+	_availableFeats = KotORBase::getSelectableFeats(info, known);
 	if (_availableFeats.empty())
 		_availableFeats.push_back(KotORBase::kFeatToughness);
+
+	// The retail panel lists the feats in a list box (KotOR.js: LB_FEATS).
+	if (Odyssey::WidgetListBox *list = getListBox("LB_FEATS")) {
+		list->setItemSelectionEnabled(true);
+		list->setHideScrollbar(false);
+		list->createItemWidgets(kFeatListRows);
+	}
 
 	updateLabels();
 }
 
 void CharacterGenerationFeatsMenu::updateLabels() {
-	setWidgetText("REMAINING_SELECTIONS_LBL", (_selectedFeat == 0xFFFFFFFF) ? "1" : "0");
+	const Common::UString remaining = (_selectedFeat == 0xFFFFFFFF) ? "1" : "0";
+	setWidgetText("REMAINING_SELECTIONS_LBL", remaining);
+	setWidgetText("STD_REMAINING_SELECTIONS_LBL", remaining);
+
+	Odyssey::WidgetListBox *list = getListBox("LB_FEATS");
+	if (!list)
+		return;
+
+	const int selected = list->getSelectedIndex();
+
+	list->removeAllItems();
+	for (uint32_t feat : _availableFeats)
+		list->addItem(((feat == _selectedFeat) ? "* " : "") + KotORBase::getFeatDisplayName(feat));
+
+	list->selectItemByIndex(selected);
+	list->refreshItemWidgets();
+}
+
+void CharacterGenerationFeatsMenu::callbackKeyInput(const Events::Key &key, const Events::EventType &type) {
+	Odyssey::WidgetListBox *list = getListBox("LB_FEATS");
+	if (!list || type != Events::kEventKeyDown)
+		return;
+
+	if (key == Events::kKeyUp)
+		list->selectPreviousItem();
+	else if (key == Events::kKeyDown)
+		list->selectNextItem();
 }
 
 bool CharacterGenerationFeatsMenu::isFeatAvailable(uint32_t feat) const {
@@ -100,6 +147,18 @@ void CharacterGenerationFeatsMenu::callbackActive(Widget &widget) {
 		return;
 	}
 
+	if (tag == "BTN_SELECT") {
+		// Pick the feat highlighted in the list.
+		Odyssey::WidgetListBox *list = getListBox("LB_FEATS");
+		const int index = list ? list->getSelectedIndex() : -1;
+		if (index >= 0 && static_cast<size_t>(index) < _availableFeats.size()) {
+			_selectedFeat = _availableFeats[index];
+			setWidgetText("LBL_NAME", KotORBase::getFeatDisplayName(_selectedFeat));
+			updateLabels();
+		}
+		return;
+	}
+
 	if (tag == "BTN_RECOMMENDED" && !_availableFeats.empty()) {
 		_selectedFeat = _availableFeats.front();
 		updateLabels();
@@ -112,8 +171,13 @@ void CharacterGenerationFeatsMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "BTN_ACCEPT") {
+		// The retail panel may not carry a button per feat; never block on
+		// that: fall back to the recommended (first) feat.
+		if ((_selectedFeat == 0xFFFFFFFF || !isFeatAvailable(_selectedFeat)) && !_availableFeats.empty())
+			_selectedFeat = _availableFeats.front();
+
 		if (_selectedFeat != 0xFFFFFFFF && isFeatAvailable(_selectedFeat)) {
-			_info.addFeat(_selectedFeat);
+			_info.setChosenFeat(_selectedFeat);
 			accept();
 			_returnCode = 1;
 		}

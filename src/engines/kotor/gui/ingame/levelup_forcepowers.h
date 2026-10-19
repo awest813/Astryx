@@ -44,17 +44,22 @@ public:
 	~LevelUpForcePowersMenu();
 
 	void callbackActive(Widget &widget) override;
+	void callbackKeyInput(const Events::Key &key, const Events::EventType &type) override;
 
 	bool isAccepted() const { return _accepted; }
 
 private:
 	void updateLabels();
+	void fillPowerList();
 	bool isPowerAvailable(uint32_t power) const;
+	bool isPowerSelected(uint32_t power) const;
+	void togglePower(uint32_t power);
 
 	KotORBase::CreatureInfo &_info;
 
 	std::vector<uint32_t> _availablePowers;
-	uint32_t _selectedPower;
+	std::vector<uint32_t> _selectedPowers;
+	int _picks; ///< How many powers this level grants.
 
 	bool _accepted;
 };

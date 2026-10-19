@@ -43,6 +43,25 @@ namespace Engines {
 
 namespace KotORBase {
 
+namespace BashRules {
+
+const float kExtraReach = 1.0f;
+
+bool canBash(bool locked, bool plot, bool notBlastable, bool broken, int hitPoints) {
+	return locked && !plot && !notBlastable && !broken && (hitPoints > 0);
+}
+
+int damageAfterHardness(int damage, int hardness) {
+	return MAX(damage - MAX(hardness, 0), 0);
+}
+
+int hitPointsAfterDamage(int hitPoints, int damage, bool minOneHitPoint) {
+	const int left = hitPoints - MAX(damage, 0);
+	return MAX(left, minOneHitPoint ? MIN(hitPoints, 1) : 0);
+}
+
+} // End of namespace BashRules
+
 Situated::Situated(ObjectType type) :
 		Object(type),
 		_appearanceID(Aurora::kFieldIDInvalid),
@@ -122,88 +141,181 @@ void Situated::setLocked(bool locked) {
 	_locked = locked;
 }
 
+int Situated::getHardness() const {
+	return _hardness;
+}
+
+bool Situated::isNotBlastable() const {
+	return _notBlastable;
+}
+
+bool Situated::isBroken() const {
+	return _broken;
+}
+
+bool Situated::isDead() const {
+	return _broken;
+}
+
+bool Situated::canBeBashed() const {
+	return BashRules::canBash(_locked, _plotFlag, _notBlastable, _broken, _currentHitPoints);
+}
+
+void Situated::takeBashDamage(int damage, Object *attacker) {
+	takeDamage(BashRules::damageAfterHardness(damage, _hardness), attacker);
+}
+
+void Situated::takeDamage(int damage, Object *attacker) {
+	if (_broken)
+		return;
+
+	if (attacker)
+		_lastHostileActor = attacker;
+
+	if ((_maxHitPoints <= 0) && (_currentHitPoints <= 0))
+		return;
+
+	// Plot objects can't be harmed.
+	if (_plotFlag || (damage <= 0))
+		return;
+
+	_currentHitPoints = BashRules::hitPointsAfterDamage(_currentHitPoints, damage, _minOneHitPoint);
+	_damagedEventPending = true;
+
+	if (_currentHitPoints <= 0) {
+		// Dead at once, so nobody swings at it again; it opens once its OnDeath ran.
+		_broken = true;
+		_deathEventPending = true;
+	}
+}
+
+void Situated::notifyAttacked(Object *attacker) {
+	if (attacker)
+		_lastHostileActor = attacker;
+
+	_attackedEventPending = true;
+}
+
+Object *Situated::getLastHostileActor() const {
+	return _lastHostileActor;
+}
+
+bool Situated::consumeAttackedEvent() {
+	const bool pending = _attackedEventPending;
+	_attackedEventPending = false;
+	return pending;
+}
+
+bool Situated::consumeDamagedEvent() {
+	const bool pending = _damagedEventPending;
+	_damagedEventPending = false;
+	return pending;
+}
+
+bool Situated::consumeDeathEvent() {
+	const bool pending = _deathEventPending;
+	_deathEventPending = false;
+	return pending;
+}
+
+void Situated::breakOpen(Object *UNUSED(breaker)) {
+	_broken = true;
+	_locked = false;
+
+	playSound(_soundDestroyed);
+}
+
 bool Situated::getIsTrapped() const {
-	return _trapFlag;
+	return _trap.isTrapped();
 }
 
 bool Situated::getTrapActive() const {
-	return _trapFlag && _trapActive;
+	return _trap.isActive();
 }
 
 bool Situated::getTrapDetectable() const {
-	return _trapDetectable;
+	return _trap.isDetectable();
 }
 
 bool Situated::getTrapDisarmable() const {
-	return _trapDisarmable;
+	return _trap.isDisarmable();
 }
 
 bool Situated::getTrapFlagged() const {
-	return _trapFlag && _trapFlagged;
+	return _trap.isFlagged();
 }
 
 bool Situated::getTrapOneShot() const {
-	return _trapOneShot;
+	return _trap.isOneShot();
 }
 
 uint8_t Situated::getTrapBaseType() const {
-	return _trapType;
+	return _trap.getType();
 }
 
 uint8_t Situated::getTrapDetectDC() const {
-	return _trapDetectDC;
+	return _trap.getDetectDC();
 }
 
 uint8_t Situated::getTrapDisarmDC() const {
-	return _trapDisarmDC;
+	return _trap.getDisarmDC();
 }
 
 const Common::UString &Situated::getTrapKeyTag() const {
-	return _trapKeyTag;
+	return _trap.getKeyTag();
 }
 
 Object *Situated::getTrapDetectedBy() const {
-	return _trapDetectedBy;
+	if (_trap.getDetectors().empty())
+		return nullptr;
+
+	return ObjectContainer::toObject(ObjectMan.findObject(_trap.getDetectors().front()));
 }
 
 Object *Situated::getTrapCreator() const {
-	if (_trapCreatedBy == 0)
+	if (_trap.getCreatorID() == 0)
 		return nullptr;
 
-	return ObjectContainer::toObject(ObjectMan.findObject(_trapCreatedBy));
+	return ObjectContainer::toObject(ObjectMan.findObject(_trap.getCreatorID()));
 }
 
 void Situated::setTrapDetectedBy(Object *detector) {
-	_trapDetectedBy = detector;
+	if (detector)
+		_trap.setDetectedBy(detector->getID());
 }
 
 void Situated::setTrapDisabled() {
-	_trapFlag = false;
-	_trapActive = false;
-	_trapFlagged = false;
-	_trapDetectedBy = nullptr;
+	_trap.disable();
 }
 
 void Situated::triggerTrap(Object *triggerer) {
 	if (!getTrapActive())
 		return;
 
+	_trap.fire();
 	runScript(kScriptTrapTriggered, this, triggerer);
+}
 
-	if (_trapOneShot)
-		_trapActive = false;
+Trap &Situated::getTrap() {
+	return _trap;
+}
+
+const Trap &Situated::getTrap() const {
+	return _trap;
 }
 
 void Situated::saveState(Aurora::GFF3WriterStruct &gff) const {
 	Object::saveState(gff);
 	gff.addByte("Locked", _locked ? 1 : 0);
-	saveTrapState(gff);
+	gff.addByte("Bashed", _broken ? 1 : 0);
+	_trap.saveState(gff);
 }
 
 void Situated::loadState(const Aurora::GFF3Struct &gff) {
 	Object::loadState(gff);
 	_locked = gff.getBool("Locked", _locked);
-	loadTrapState(gff);
+	_broken = gff.getBool("Bashed", _broken);
+	_trap.loadState(gff);
 }
 
 Object *Situated::getLastOpenedBy() const {
@@ -212,6 +324,17 @@ Object *Situated::getLastOpenedBy() const {
 
 Object *Situated::getLastClosedBy() const {
 	return _lastClosedBy;
+}
+
+void Situated::forgetObject(const Object *object) {
+	if (_lastOpenedBy == object)
+		_lastOpenedBy = nullptr;
+	if (_lastClosedBy == object)
+		_lastClosedBy = nullptr;
+	if (_lastUsedBy == object)
+		_lastUsedBy = nullptr;
+	if (_lastHostileActor == object)
+		_lastHostileActor = nullptr;
 }
 
 Object *Situated::getLastUsedBy() const {
@@ -333,7 +456,12 @@ void Situated::loadProperties(const Aurora::GFF3Struct &gff) {
 	// Lock Skill
 	_lockSkill = gff.getUint("LockSkill", _lockSkill);
 
-	loadTrapState(gff);
+	// Plot (indestructible), and what bashing it open takes
+	_plotFlag     = gff.getBool("Plot", _plotFlag);
+	_hardness     = gff.getUint("Hardness", _hardness);
+	_notBlastable = gff.getBool("NotBlastable", _notBlastable);
+
+	_trap.load(gff);
 
 	// Conversation
 	_conversation = gff.getString("Conversation", _conversation);
@@ -356,34 +484,6 @@ void Situated::loadPortrait(const Aurora::GFF3Struct &gff) {
 	}
 
 	_portrait = gff.getString("Portrait", _portrait);
-}
-
-void Situated::loadTrapState(const Aurora::GFF3Struct &gff) {
-	_trapType = static_cast<uint8_t>(gff.getUint("TrapType", _trapType));
-	_trapFlag = gff.getBool("TrapFlag", _trapFlag);
-	_trapDetectable = gff.getBool("TrapDetectable", _trapDetectable);
-	_trapDisarmable = gff.getBool("TrapDisarmable", _trapDisarmable);
-	_trapRecoverable = gff.getBool("TrapRecoverable", _trapRecoverable);
-	_trapOneShot = gff.getBool("TrapOneShot", _trapOneShot);
-	_trapActive = gff.getBool("TrapActive", _trapFlag);
-	_trapFlagged = gff.getBool("TrapFlagged", _trapFlagged);
-	_trapDetectDC = static_cast<uint8_t>(gff.getUint("TrapDetectDC", _trapDetectDC));
-	_trapDisarmDC = static_cast<uint8_t>(gff.getUint("DisarmDC", _trapDisarmDC));
-	_trapKeyTag = gff.getString("KeyName", _trapKeyTag);
-}
-
-void Situated::saveTrapState(Aurora::GFF3WriterStruct &gff) const {
-	gff.addByte("TrapFlag", _trapFlag ? 1 : 0);
-	gff.addByte("TrapDetectable", _trapDetectable ? 1 : 0);
-	gff.addByte("TrapDisarmable", _trapDisarmable ? 1 : 0);
-	gff.addByte("TrapRecoverable", _trapRecoverable ? 1 : 0);
-	gff.addByte("TrapOneShot", _trapOneShot ? 1 : 0);
-	gff.addByte("TrapActive", _trapActive ? 1 : 0);
-	gff.addByte("TrapFlagged", _trapFlagged ? 1 : 0);
-	gff.addUint32("TrapType", _trapType);
-	gff.addUint32("TrapDetectDC", _trapDetectDC);
-	gff.addUint32("DisarmDC", _trapDisarmDC);
-	gff.addExoString("KeyName", _trapKeyTag);
 }
 
 void Situated::loadSounds() {

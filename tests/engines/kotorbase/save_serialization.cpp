@@ -35,6 +35,7 @@
 #include "src/aurora/gff3writer.h"
 
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/object.h"
@@ -173,6 +174,74 @@ GTEST_TEST(KotORSaveSerialization, objectStateRoundTrip) {
 
 	EXPECT_EQ(loaded.getCurrentHitPoints(), 7);
 	EXPECT_FALSE(loaded.isUsable());
+}
+
+namespace {
+
+class StateTestCreature : public Engines::KotORBase::Creature {
+public:
+	StateTestCreature() : Creature() {}
+
+protected:
+	void getPartModelsPC(PartModels &parts, uint32_t state, uint8_t textureVariation) override {
+		(void)parts;
+		(void)state;
+		(void)textureVariation;
+	}
+};
+
+} // End of anonymous namespace
+
+GTEST_TEST(KotORSaveSerialization, creatureStateRoundTrip) {
+	StateTestCreature creature;
+	creature.setMaxHitPoints(30);
+	creature.setCurrentHitPoints(12);
+	creature.setPosition(1.5f, -2.0f, 3.25f);
+	creature.setOrientation(0.0f, 0.0f, 1.0f, 90.0f);
+	creature.setLocalInt("__localbool_10", 1);
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+
+	StateTestCreature loaded;
+	loaded.setMaxHitPoints(30);
+	loaded.queueSpawnEvent();
+	loaded.loadState(gff.getTopLevel());
+
+	float x, y, z, ox, oy, oz, angle;
+	loaded.getPosition(x, y, z);
+	loaded.getOrientation(ox, oy, oz, angle);
+
+	EXPECT_EQ(loaded.getCurrentHitPoints(), 12);
+	EXPECT_FLOAT_EQ(x, 1.5f);
+	EXPECT_FLOAT_EQ(y, -2.0f);
+	EXPECT_FLOAT_EQ(z, 3.25f);
+	EXPECT_NEAR(angle, 90.0f, 0.01f);
+	EXPECT_EQ(loaded.getLocalInt("__localbool_10"), 1);
+	EXPECT_FALSE(loaded.isDead());
+	// A restored creature already spawned once: no second OnSpawn.
+	EXPECT_FALSE(loaded.consumeSpawnEvent());
+}
+
+GTEST_TEST(KotORSaveSerialization, deadCreatureStaysDead) {
+	StateTestCreature creature;
+	creature.setMaxHitPoints(10);
+	creature.setCurrentHitPoints(0);
+	ASSERT_TRUE(creature.handleDeath());
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+
+	StateTestCreature loaded;
+	loaded.setMaxHitPoints(10);
+	loaded.loadState(gff.getTopLevel());
+
+	EXPECT_TRUE(loaded.isDead());
+	// No OnDeath and no kill XP again for a corpse from an earlier visit.
+	EXPECT_FALSE(loaded.consumeDeathEvent());
+	EXPECT_TRUE(loaded.isXPAwarded());
 }
 
 GTEST_TEST(KotORSaveSerialization, partyPCStateRoundTrip) {
@@ -381,6 +450,30 @@ GTEST_TEST(KotORSaveSerialization, objectLocalVarsRoundTrip) {
 	EXPECT_EQ(loaded.getLocalString("OWNER"), Common::UString("end_trask"));
 }
 
+// Areas and the module keep only their script variables this way (e.g. the
+// "has never triggered" flag of the Endar Spire's OnEnter script).
+GTEST_TEST(KotORSaveSerialization, localsOnlyRoundTripReplacesAndClears) {
+	Object area(Engines::KotORBase::kObjectTypeArea);
+	area.setLocalInt("PLOT_BOOLEAN_10", 1);
+	area.setLocalString("NOTE", "seen");
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	area.saveLocals(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+	EXPECT_FALSE(gff.getTopLevel().hasField("CurrentHP"));
+
+	Object loaded(Engines::KotORBase::kObjectTypeArea);
+	loaded.setLocalInt("STALE", 7);
+	loaded.loadLocals(gff.getTopLevel());
+	EXPECT_EQ(loaded.getLocalInt("PLOT_BOOLEAN_10"), 1);
+	EXPECT_EQ(loaded.getLocalString("NOTE"), Common::UString("seen"));
+	EXPECT_EQ(loaded.getLocalInt("STALE"), 0);
+
+	loaded.clearLocals();
+	EXPECT_EQ(loaded.getLocalInt("PLOT_BOOLEAN_10"), 0);
+	EXPECT_EQ(loaded.getLocalString("NOTE"), Common::UString(""));
+}
+
 GTEST_TEST(KotORSaveSerialization, planetAvailabilityRoundTrip) {
 	Aurora::GFF3Writer writer(MKTAG('G', 'V', 'A', 'R'));
 	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();
@@ -426,4 +519,64 @@ GTEST_TEST(KotORSaveSerialization, planetAvailabilityRoundTrip) {
 		select[entry->getSint("Planet")] = entry->getUint("Selectable") != 0;
 	}
 	EXPECT_TRUE(select[6]);
+}
+
+GTEST_TEST(KotORSaveSerialization, creatureFactionPersists) {
+	StateTestCreature creature;
+	creature.setFaction(Engines::KotORBase::kFactionSurrender1);
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+
+	StateTestCreature loaded;
+	loaded.setFaction(Engines::KotORBase::kFactionHostile1);
+	loaded.loadState(gff.getTopLevel());
+	EXPECT_EQ(loaded.getFaction(), Engines::KotORBase::kFactionSurrender1);
+}
+
+// Cutscene actors kept alive with SetMinOneHP stay that way after a load.
+GTEST_TEST(KotORSaveSerialization, creatureMinOneHPPersists) {
+	StateTestCreature creature;
+	creature.setMinOneHitPoints(true);
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+
+	StateTestCreature loaded;
+	loaded.loadState(gff.getTopLevel());
+	EXPECT_TRUE(loaded.getMinOneHitPoints());
+
+	creature.setMinOneHitPoints(false);
+	Aurora::GFF3Writer writer2(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer2.getTopLevel());
+	Aurora::GFF3File gff2 = roundTrip(writer2);
+	loaded.loadState(gff2.getTopLevel());
+	EXPECT_FALSE(loaded.getMinOneHitPoints());
+}
+
+GTEST_TEST(KotORSaveSerialization, blueprintForcePointsAndKnownPowers) {
+	// UTC layout: ForcePoints / CurrentForce and ClassList[].KnownList0[].Spell
+	Aurora::GFF3Writer writer(MKTAG('U', 'T', 'C', ' '));
+	Aurora::GFF3WriterStructPtr root = writer.getTopLevel();
+	root->addSint16("ForcePoints", 42);
+	root->addSint16("CurrentForce", 30);
+
+	Aurora::GFF3WriterListPtr classes = root->addList("ClassList");
+	Aurora::GFF3WriterStructPtr jedi = classes->addStruct();
+	jedi->addSint32("Class", static_cast<int32_t>(Engines::KotORBase::kClassJediConsular));
+	jedi->addSint16("ClassLevel", 5);
+	Aurora::GFF3WriterListPtr known = jedi->addList("KnownList0");
+	known->addStruct()->addUint16("Spell", 5);
+	known->addStruct()->addUint16("Spell", 14);
+
+	Aurora::GFF3File gff = roundTrip(writer);
+	CreatureInfo info(gff.getTopLevel());
+
+	EXPECT_EQ(info.getMaxForcePoints(), 42u);
+	EXPECT_EQ(info.getForcePoints(), 30u);
+	EXPECT_TRUE(info.hasForcePower(5));
+	EXPECT_TRUE(info.hasForcePower(14));
+	EXPECT_EQ(info.getForcePowers().size(), 2u);
 }

@@ -468,6 +468,7 @@ void Model_NWN::readAnimBinary(ParserContext &ctx, uint32_t offset) {
 	anim->setLength(animLength);
 	anim->setTransTime(transTime);
 	_animationMap.insert(std::make_pair(ctx.state->name, anim));
+	_animationNames.push_back(ctx.state->name);
 	debugC(kDebugGraphics, 4, "Loaded animation \"%s\" in model \"%s\"", ctx.state->name.c_str(), _name.c_str());
 
 	for (std::list<ModelNode *>::iterator n = ctx.nodes.begin();

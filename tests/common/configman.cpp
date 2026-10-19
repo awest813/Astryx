@@ -199,3 +199,15 @@ GTEST_TEST_F(ConfigManager, newSave) {
 
 	compareStream(writeStream, kConfigFile);
 }
+
+GTEST_TEST_F(ConfigManager, getGames) {
+	EXPECT_TRUE(ConfigMan.getGames().empty());
+
+	loadConfigMan();
+
+	const std::vector<Common::UString> games = ConfigMan.getGames();
+	ASSERT_EQ(games.size(), 2U);
+
+	EXPECT_STREQ(games[0].c_str(), "game1");
+	EXPECT_STREQ(games[1].c_str(), "game2");
+}

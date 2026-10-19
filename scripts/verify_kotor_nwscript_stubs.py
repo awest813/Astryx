@@ -83,6 +83,70 @@ def check_table_alignment(engine: str) -> list[str]:
     return errors
 
 
+DEFAULT_DECL_RE = re.compile(
+    r"static const Aurora::NWScript::Variable\s+(\w+)\s*\((.*)\);"
+)
+SIG_RE = re.compile(r"\{\s*(\d+)\s*,\s*kType\w+\s*,\s*\{([^}]*)\}\s*\}")
+DEF_RE = re.compile(r"\{\s*(\d+)\s*,\s*\{([^}]*)\}\s*\}")
+
+
+def default_type(init: str) -> str | None:
+    init = init.strip()
+    if init.startswith("&"):
+        return "kTypeObject"
+    if "UString" in init:
+        return "kTypeString"
+    if "int32_t" in init:
+        return "kTypeInt"
+    if "," in init:
+        return "kTypeVector"
+    if re.fullmatch(r"\(?\s*-?[\d.]+f\s*\)?", init):
+        return "kTypeFloat"
+    return None
+
+
+def check_default_types(engine: str) -> list[str]:
+    """Defaults are right-aligned onto the parameters; their types must match.
+
+    FunctionContext::setDefaults() asserts this, so a mismatch aborts debug
+    builds while the engine registers its NWScript functions.
+    """
+    path = REPO_ROOT / f"src/engines/{engine}/script/function_tables.h"
+    content = path.read_text(encoding="utf-8")
+    errors: list[str] = []
+
+    types: dict[str, str] = {}
+    for match in DEFAULT_DECL_RE.finditer(content):
+        kind = default_type(match.group(2))
+        if kind is None:
+            errors.append(f"{engine}: cannot infer type of default {match.group(1)}")
+        else:
+            types[match.group(1)] = kind
+
+    sig_start = content.find("kFunctionSignatures[]")
+    def_start = content.find("kFunctionDefaults[]")
+    signatures = {
+        int(m.group(1)): [t.strip() for t in m.group(2).split(",") if t.strip()]
+        for m in SIG_RE.finditer(content[sig_start:def_start])
+    }
+
+    for match in DEF_RE.finditer(content[def_start:]):
+        func_id = int(match.group(1))
+        names = [d.strip().lstrip("&") for d in match.group(2).split(",") if d.strip()]
+        params = signatures.get(func_id, [])
+        if len(names) > len(params):
+            errors.append(f"{engine}: id {func_id} has more defaults than parameters")
+            continue
+        for name, param in zip(names, params[len(params) - len(names):]):
+            if types.get(name) != param:
+                errors.append(
+                    f"{engine}: id {func_id} default {name} ({types.get(name)}) "
+                    f"does not match parameter type {param}"
+                )
+
+    return errors
+
+
 def check_engine(engine: str) -> list[str]:
     path = REPO_ROOT / f"src/engines/{engine}/script/function_tables.h"
     content = path.read_text(encoding="utf-8")
@@ -120,6 +184,7 @@ def check_engine(engine: str) -> list[str]:
         f"behavioral={pct_real:.1f}% null={len(errors)}"
     )
     errors.extend(check_table_alignment(engine))
+    errors.extend(check_default_types(engine))
     return errors
 
 

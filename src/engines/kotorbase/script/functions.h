@@ -83,6 +83,7 @@
 
 
 #include <map>
+#include <memory>
 
 
 #include <vector>
@@ -98,6 +99,8 @@
 
 
 #include "src/aurora/nwscript/types.h"
+
+#include "src/engines/kotorbase/script/event.h"
 
 
 
@@ -145,6 +148,8 @@ class Area;
 class Object;
 
 class Creature;
+
+class Effect;
 
 
 class Event;
@@ -257,6 +262,13 @@ protected:
 
 
 	static Aurora::NWScript::Object *getParamObject(const Aurora::NWScript::FunctionContext &ctx, size_t n);
+
+	/** Shake the camera for the screen shakes among an effect's visuals. */
+	void shakeForVisualEffects(const Effect &effect);
+	/** Apply an effect to an object that isn't a creature (a door, a placeable):
+	 *  its damage, healing and visuals. */
+	void applyEffectToNonCreature(const Effect &effect, Object &target, Object *source,
+	                              float visualDuration);
 
 
 
@@ -608,7 +620,6 @@ protected:
 	void setAIArchetype(Aurora::NWScript::FunctionContext &ctx);
 
 
-	void signalEncounter(Aurora::NWScript::FunctionContext &ctx);
 
 	void showUpgradeScreen(Aurora::NWScript::FunctionContext &ctx);
 	void getEncounterActive(Aurora::NWScript::FunctionContext &ctx);
@@ -1087,6 +1098,7 @@ protected:
 
 
 	void actionMoveAwayFromObject(Aurora::NWScript::FunctionContext &ctx);
+	void actionMoveAwayFromLocation(Aurora::NWScript::FunctionContext &ctx);
 
 
 	void actionForceMoveToObject(Aurora::NWScript::FunctionContext &ctx);
@@ -1215,6 +1227,7 @@ protected:
 	void getReflexAdjustedDamage(Aurora::NWScript::FunctionContext &ctx);
 	void getIsPlayableRacialType(Aurora::NWScript::FunctionContext &ctx);
 	void getTargetLocation(Aurora::NWScript::FunctionContext &ctx);
+	void effectLinkEffects(Aurora::NWScript::FunctionContext &ctx);
 	void getIsLinkImmune(Aurora::NWScript::FunctionContext &ctx);
 
 
@@ -2527,11 +2540,9 @@ private:
 	// Matched substrings from TestStringAgainstPattern
 	std::vector<Common::UString> _matchedSubstrings;
 
-	// Context state for inventory-disturb and item-activation events
-	int _lastInventoryDisturbType { 0 };
-	Aurora::NWScript::Object *_lastInventoryDisturbItem { nullptr };
-	Aurora::NWScript::Object *_lastItemActivated { nullptr };
-	Aurora::NWScript::Object *_lastItemActivator { nullptr };
+	/** The EventActivateItem the module's OnActivateItem script runs for
+	 *  (GetItemActivated, GetItemActivator, GetItemActivatedTarget[Location]). */
+	std::unique_ptr<Event> _itemActivatedEvent;
 
 public:
 	void grantFeat(Aurora::NWScript::FunctionContext &ctx);

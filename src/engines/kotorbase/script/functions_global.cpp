@@ -78,13 +78,17 @@ void Functions::setGlobalString(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::getGlobalLocation(Aurora::NWScript::FunctionContext &ctx) {
-	// Location loc;
-	ctx.getReturn() = Location(); // Stub
+	Location location;
+	if (!_game->getModule().getGlobalLocation(ctx.getParams()[0].getString(), location))
+		location.setArea(_game->getModule().getCurrentArea());
+
+	ctx.getReturn() = location;
 }
 
 void Functions::setGlobalLocation(Aurora::NWScript::FunctionContext &ctx) {
-	// Location loc = ctx.getParams()[0].getLocation();
-	debugC(Common::kDebugEngineLogic, 1, "SetGlobalLocation stub");
+	const Location *location = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
+	if (location)
+		_game->getModule().setGlobalLocation(ctx.getParams()[0].getString(), *location);
 }
 
 } // End of namespace KotORBase

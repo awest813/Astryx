@@ -9,19 +9,13 @@ namespace KotORBase {
 
 namespace KotOR {
 
-/** Play logo/crawl movies and load the first module (from the main menu). */
+/** Load the first module after character generation. The Endar Spire's own
+ *  OnEnter script (k_pend_area01) plays the opening movie, fades in and
+ *  starts Trask's wake-up conversation. */
 void performEndarSpireOpening(KotORBase::Module &module);
 
-/** In-module beat after enter(): ship attack shake, journal, music. */
-void performEndarSpireOpeningBeat(KotORBase::Module &module);
-
-/** Orchestrate the Trask Ulgo tutorial encounter. */
-void performTraskEncounter(KotORBase::Module &module);
-
-/** Orchestrate the Sith boarding event in Sector 2. */
-void performSithBoarding(KotORBase::Module &module);
-
 } // End of namespace KotOR
+
 } // End of namespace Engines
 
 #endif // ENGINES_KOTOR_ENCOUNTERS_END_H

@@ -22,7 +22,10 @@
  *  The context needed to run a module in KotOR games.
  */
 
+#include <algorithm>
+#include <cmath>
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -48,6 +51,7 @@
 #include "src/aurora/2dareg.h"
 #include "src/aurora/2dafile.h"
 #include "src/aurora/talkman.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/graphics/camera.h"
 
@@ -59,17 +63,23 @@
 #include "src/events/events.h"
 
 #include "src/engines/aurora/util.h"
+#include "src/engines/aurora/model.h"
 #include "src/engines/aurora/resources.h"
 #include "src/engines/aurora/console.h"
 #include "src/engines/aurora/flycamera.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/reputation.h"
 #include "src/engines/kotorbase/itemupgrades.h"
 #include "src/engines/kotorbase/itemactions.h"
+#include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/minigameruntime.h"
+#include "src/engines/kotorbase/swoopminigame.h"
 #include "src/engines/kotorbase/waypoint.h"
 
 #include "src/engines/kotorbase/gui/partyselection.h"
@@ -87,6 +97,9 @@ namespace Engines {
 namespace KotORBase {
 
 static std::map<int, Common::UString> sCustomDialogTokens;
+
+static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst,
+                                 const char *skipField = nullptr);
 
 const std::map<int, Common::UString> &Module::getCustomDialogTokens() {
 	return sCustomDialogTokens;
@@ -125,8 +138,7 @@ Module::Module(Game &game, ::Engines::Console &console) :
 		_frameTime(0),
 		_inDialog(false),
 		_runScriptVar(-1),
-		_soloMode(false),
-		_selectedPlanet(-1) {
+		_soloMode(false) {
 
 	loadSurfaceTypes();
 }
@@ -142,11 +154,53 @@ void Module::clear() {
 	unload(true);
 }
 
+Creature *Module::createPartyNPC(int npc, const Common::UString &templ) {
+	Creature *creature = createCreature(templ);
+
+	auto state = _npcStates.find(npc);
+	if (state != _npcStates.end())
+		creature->applyCreatureInfo(state->second);
+
+	return creature;
+}
+
+void Module::rememberNPCState(int npc, const Creature &creature) {
+	if (npc >= 0)
+		_npcStates[npc] = creature.buildSavedState();
+}
+
+void Module::resetSessionState() {
+	// Everything a new game or a loaded save must not inherit from the
+	// previous session (globals and party are handled by the callers).
+	_areaObjectSaves.clear();
+	_exploredMaps.clear();
+	_messages.clear();
+	_journal.clear();
+	_journalWorld.clear();
+	_journalQuestPictures.clear();
+	_planetSelectable.clear();
+	_planetAvailable.clear();
+	_selectedPlanet = -1;
+	ReputationMan.reset();
+	_returnDestinationModule = "m12aa";
+	_playTime = 0.0f;
+	_playerInputEnabled = true;
+	_cutsceneMode = false;
+	_noClicksUntil = 0;
+	_soloMode = false;
+	_movieQueue.clear();
+	_npcStates.clear();
+	_temporaryPartyMembers.clear();
+	_autoSavePending = false;
+	_hasSavedPCPosition = false;
+}
+
 void Module::load(const Common::UString &module, const Common::UString &entryLocation,
                   ObjectType entryLocationType) {
 
-	if (isRunning()) {
-		// We are currently running a module. Schedule a safe change instead
+	if (isRunning() || _hasModule) {
+		// We are currently running (or still entering, e.g. a StartNewModule
+		// from an OnEnter script) a module. Schedule a safe change instead
 
 		changeModule(module, entryLocation, entryLocationType);
 		return;
@@ -226,6 +280,36 @@ void Module::holdWorldFadeInForDialog() {
 	_fade->setHoldFadeIn(true);
 }
 
+void Module::startModuleFadeIn() {
+	// A module comes up from black. A fade-out the previous module's scripts
+	// left behind (SetGlobalFadeOut, then StartNewModule) must not keep the new
+	// one dark; its OnEnter scripts run after this and may fade as they like.
+	_holdWorldFadeInForDialog = false;
+	_fade->setHoldFadeIn(false);
+
+	_fade->setColor(0.0f, 0.0f, 0.0f);
+	_fade->setWaitTime(0.0f);
+	_fade->setRunTime(kModuleFadeInTime);
+	_fade->fadeIn();
+}
+
+bool Module::getAreaUnescapable() const {
+	if (!_area)
+		return false;
+
+	// SetAreaUnescapable() overrides the area file's flag for that area only
+	const int override = getGlobalNumber("__area_unescapable_" + _area->getResRef());
+	if (override != 0)
+		return override == 2;
+
+	return _area->isUnescapable();
+}
+
+void Module::setAreaUnescapable(bool unescapable) {
+	if (_area)
+		setGlobalNumber("__area_unescapable_" + _area->getResRef(), unescapable ? 2 : 1);
+}
+
 void Module::releaseWorldFadeInForDialog() {
 	if (!_holdWorldFadeInForDialog)
 		return;
@@ -241,11 +325,33 @@ void Module::removeObject(Object &object) {
 	if (_ingame->getTargetObject() == &object)
 		_ingame->setTargetObject(0);
 
+	// Nothing may keep pointing at the object once it is deleted.
+	_cameraController.forgetObject(&object);
+
+	if (_delayedContainer == &object)
+		_delayedContainer = nullptr;
+	if (_delayedConversation && _delayedConversation->owner == &object)
+		_delayedConversation.reset();
+	if (_lastAcquiredItem == &object)
+		_lastAcquiredItem = nullptr;
+	if (_spellScriptCaster == &object)
+		_spellScriptCaster = nullptr;
+	if (_spellScriptTarget == &object)
+		_spellScriptTarget = nullptr;
+	if (_spellScriptCastItem == &object)
+		_spellScriptCastItem = nullptr;
+	if (_lastAoECreator == &object)
+		_lastAoECreator = nullptr;
+
 	ObjectContainer::removeObject(object);
 }
 
 bool Module::isLoaded() const {
 	return _hasModule && _area && _pc;
+}
+
+bool Module::isMinigameRunning() const {
+	return _minigame != nullptr;
 }
 
 bool Module::isRunning() const {
@@ -361,10 +467,15 @@ void Module::loadParty() {
 			if (member.templateResRef.empty())
 				continue;
 
-			Creature *creature = createCreature(member.templateResRef);
-			creature->applyCreatureInfo(member.info);
-			_partyController.addPartyMember(member.npcSlot, creature);
-			refreshCreatureEquipmentUpgrades(*creature, *this);
+			try {
+				Creature *creature = createCreature(member.templateResRef);
+				creature->applyCreatureInfo(member.info);
+				_partyController.addPartyMember(member.npcSlot, creature);
+				refreshCreatureEquipmentUpgrades(*creature, *this);
+			} catch (Common::Exception &e) {
+				e.add("Failed to restore saved party member \"%s\"", member.templateResRef.c_str());
+				printException(e, "WARNING: ");
+			}
 		}
 
 		if (_savedPartyLeaderIndex > 0 &&
@@ -384,21 +495,44 @@ void Module::loadParty() {
 		_partyController.clearCurrentParty();
 
 		for (auto npc : partyMembers) {
-			if (npc == -1) {
-				_partyController.addPartyMember(-1, _pc);
+			if (npc == PartyController::kPCSlot) {
+				_partyController.addPartyMember(PartyController::kPCSlot, _pc);
 				continue;
 			}
 
-			Common::UString templ = _partyController.getAvailableNPCTemplate(npc);
+			if (npc == PartyController::kTemporarySlot)
+				continue; // Rebuilt below from their templates.
 
-			// Special case: Trask exists only on the Endar Spire
-			if (templ == "end_trask")
-				continue;
+			// One broken companion must not abort the whole module load.
+			try {
+				Common::UString templ = _partyController.getAvailableNPCTemplate(npc);
 
-			Creature *creature = createCreature(templ);
-			_partyController.addPartyMember(npc, creature);
+				// Special case: Trask exists only on the Endar Spire
+				if (templ == "end_trask")
+					continue;
+
+				_partyController.addPartyMember(npc, createPartyNPC(npc, templ));
+			} catch (Common::Exception &e) {
+				e.add("Failed to restore party member %d", npc);
+				printException(e, "WARNING: ");
+			}
 		}
 	}
+
+	for (const auto &member : _temporaryPartyMembers) {
+		if (member.first.empty())
+			continue;
+
+		try {
+			Creature *creature = createCreature(member.first);
+			creature->applyCreatureInfo(member.second);
+			_partyController.addPartyMember(PartyController::kTemporarySlot, creature);
+		} catch (Common::Exception &e) {
+			e.add("Failed to restore party member \"%s\"", member.first.c_str());
+			printException(e, "WARNING: ");
+		}
+	}
+	_temporaryPartyMembers.clear();
 
 	updateCurrentPartyGUI();
 }
@@ -448,9 +582,46 @@ void Module::unload(bool completeUnload) {
 	_ingame->resetSelection();
 	_ingame->hideSelection();
 
+	// A dialog script may have changed the module mid-conversation; its owner
+	// and the cinematic camera targets are about to be destroyed.
+	if (_inDialog) {
+		getConversationGUI().stopConversation();
+		getConversationGUI().hide();
+		_inDialog = false;
+	}
+	_conversationPausedSince = 0;
+	_pause.unpause(EventMan.getTimestamp());
+	GfxMan.setAnimationTimeFrozen(false);
+	_unpauseCommands.clear();
+	_autoPauseMonitor.reset();
+	_pendingTutorialWindows.clear();
+	if (_area) // The party (used to re-target the camera) dies with the area.
+		_cameraController.resetToOrbit();
+	_delayedConversation.reset();
+	_delayedContainer = nullptr;
+
 	if (_pc) {
-		_pcInfo = _pc->getCreatureInfo();
+		// buildSavedState() also captures HP, Force points and XP, which live
+		// outside the CreatureInfo; otherwise they reset on every transition.
+		_pcInfo = _pc->buildSavedState();
 		_pc = nullptr;
+	}
+
+	// Companions are rebuilt from their templates in the next module; keep
+	// their progression (levels, XP, gear, HP) across the transition. Only
+	// while the area (which owns them) is alive: a transition unloads twice.
+	if (!completeUnload && _area) {
+		for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+			const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+			if (!member.second)
+				continue;
+
+			if (member.first == PartyController::kTemporarySlot)
+				_temporaryPartyMembers.emplace_back(member.second->getTemplateResRef(),
+				                                    member.second->buildSavedState());
+			else if (member.first != PartyController::kPCSlot)
+				rememberNPCState(member.first, *member.second);
+		}
 	}
 
 	GfxMan.pauseAnimations();
@@ -461,10 +632,16 @@ void Module::unload(bool completeUnload) {
 	if (completeUnload) {
 		unloadTexturePack();
 
+		// No minigame script objects may outlive the game (and ObjectMan).
+		SwoopMinigame::get().reset();
+
 		_globalNumbers.clear();
 		_globalBooleans.clear();
 		_globalStrings.clear();
+		_globalLocations.clear();
 		_loadedFromSaveGame = false;
+		resetSessionState();
+		_queuedUserDefinedEvents.clear();
 
 		_partyController.clearCurrentParty();
 		_partyController.clearAvailableParty();
@@ -498,7 +675,26 @@ void Module::unloadIFO() {
 }
 
 void Module::unloadArea() {
+	_minigame.reset(); // It refers to the area.
 	_area.reset();
+	_stuntModels.clear(); // After the creatures that may play their animations.
+}
+
+Graphics::Aurora::Model *Module::getStuntModel(const Common::UString &resRef) {
+	auto it = _stuntModels.find(resRef);
+	if (it != _stuntModels.end())
+		return it->second.get();
+
+	std::unique_ptr<Graphics::Aurora::Model> model;
+	try {
+		model.reset(loadModelObject(resRef));
+	} catch (...) {
+		Common::exceptionDispatcherWarning("Failed to load stunt model \"%s\"", resRef.c_str());
+	}
+
+	Graphics::Aurora::Model *stunt = model.get();
+	_stuntModels[resRef] = std::move(model);
+	return stunt;
 }
 
 void Module::unloadTexturePack() {
@@ -532,15 +728,56 @@ void Module::replaceModule() {
 
 	_newModule.clear();
 
+	const bool loadingSave = _loadingSavedGame;
+	_loadingSavedGame = false;
+
 	try {
-		if (_area) {
+		// When loading a save, the current area's state must not overwrite
+		// the state that was just loaded from it.
+		if (_area && !loadingSave) {
 			_area->savePersistence();
 			setMapExplored(_area->getResRef(), _area->getMapExplored());
 		}
 
+		// Leaving the old area runs OnExit scripts and saves its state; when
+		// loading a save, none of that may leak into the state just loaded.
+		const CreatureInfo savedPCInfo = _pcInfo;
+		const auto savedNPCStates       = _npcStates;
+		const auto savedAreaObjectSaves = _areaObjectSaves;
+		const auto savedExploredMaps    = _exploredMaps;
+		const auto savedBooleans        = _globalBooleans;
+		const auto savedNumbers         = _globalNumbers;
+		const auto savedStrings         = _globalStrings;
+		const auto savedJournal         = _journal;
+		const auto savedJournalWorld    = _journalWorld;
+		const auto savedQuestPictures   = _journalQuestPictures;
+		const auto savedPlanetSelect    = _planetSelectable;
+		const auto savedPlanetAvailable = _planetAvailable;
+		const int  savedSelectedPlanet  = _selectedPlanet;
+		const auto savedReputations     = ReputationMan.getChanges();
+
 		unload(false);
 		_exit = true;
-		_loadedFromSaveGame = false;
+		_loadedFromSaveGame = loadingSave;
+
+		if (loadingSave) {
+			_pcInfo               = savedPCInfo;
+			_npcStates            = savedNPCStates;
+			_areaObjectSaves      = savedAreaObjectSaves;
+			_exploredMaps         = savedExploredMaps;
+			_globalBooleans       = savedBooleans;
+			_globalNumbers        = savedNumbers;
+			_globalStrings        = savedStrings;
+			_journal              = savedJournal;
+			_journalWorld         = savedJournalWorld;
+			_journalQuestPictures = savedQuestPictures;
+			_planetSelectable     = savedPlanetSelect;
+			_planetAvailable      = savedPlanetAvailable;
+			_selectedPlanet       = savedSelectedPlanet;
+			ReputationMan.setChanges(savedReputations);
+			_temporaryPartyMembers.clear();
+			_queuedUserDefinedEvents.clear();
+		}
 
 		loadModule(newModule, entryLocation, entryLocationType);
 		enter();
@@ -563,15 +800,43 @@ void Module::enter() {
 
 	_console->printf("Entering module \"%s\"", _name.c_str());
 
-	Common::UString startMovie = _ifo.getStartMovie();
-	if (!startMovie.empty() && !getGlobalBoolean("__endar_opening_played"))
-		playVideo(startMovie);
+	// The IFO start movie plays the first time the module is entered in a
+	// game, not again when coming back or loading a save made in it.
+	const Common::UString startMovie = _ifo.getStartMovie();
+	const Common::UString startMoviePlayed = "__startmovie_" + _module;
+	if (!startMovie.empty() && !getGlobalBoolean(startMoviePlayed)) {
+		// A save made in the module (even by an older build without this
+		// flag) is past the movie.
+		setGlobalBoolean(startMoviePlayed, true);
+		if (!_loadedFromSaveGame)
+			playMovie(startMovie);
+	}
 
 	float entryX, entryY, entryZ, _;
 	if (!getEntryObjectLocation(entryX, entryY, entryZ, _))
 		getEntryIFOLocation(entryX, entryY, entryZ, _);
 
+	// A loaded save resumes where the PC stood, not at the module entry.
+	if (_hasSavedPCPosition && _loadedFromSaveGame) {
+		entryX = _savedPCPosition.x;
+		entryY = _savedPCPosition.y;
+		entryZ = _savedPCPosition.z;
+	}
+	const bool resumingSave = _hasSavedPCPosition && _loadedFromSaveGame;
+	_hasSavedPCPosition = false;
+
+	if (_loadedFromSaveGame && _pc)
+		_pc->setMinOneHitPoints(getGlobalBoolean("__pc_min1hp"));
+
 	moveParty(entryX, entryY, entryZ, _);
+
+	startModuleFadeIn();
+
+	// A loaded save resumes inside the triggers it was saved in: their
+	// OnEnter already ran before the save.
+	if (resumingSave && _area)
+		_area->seedTriggerOccupants();
+
 	enterArea();
 
 	GfxMan.resumeAnimations();
@@ -579,8 +844,11 @@ void Module::enter() {
 	_running = true;
 	_exit    = false;
 
-	if (!deferIngameHUDOnEnter())
+	if (!deferIngameHUDOnEnter() && !_minigame)
 		_ingame->show();
+
+	// Loading took a while; don't feed that time into the first frame.
+	updateFrameTimestamp();
 }
 
 bool Module::getObjectLocation(const Common::UString &object, ObjectType location,
@@ -632,27 +900,48 @@ void Module::leave() {
 }
 
 void Module::enterArea() {
-	GfxMan.lockFrame();
+	// Creatures spawn (and set up their AI) before any OnEnter script runs.
+	_area->runPendingSpawnEvents();
+
+	lockFrame();
 
 	_area->show();
+
+	// Swoop race and turret areas run their minigame instead of the party.
+	// Set it up before the module scripts, so their SWMG_* calls stick.
+	if (_area->isMinigame()) {
+		_minigame = std::make_unique<MinigameRuntime>(*this, *_area);
+		if (_minigame->load())
+			_ingame->hide();
+		else
+			_minigame.reset();
+	}
 
 	runScript(kScriptModuleLoad , this, _pc);
 	runScript(kScriptModuleStart, this, _pc);
 	runScript(kScriptEnter      , this, _pc);
 
-	GfxMan.unlockFrame();
+	unlockFrame();
+
+	if (_minigame)
+		_minigame->start();
 
 	_area->runScript(kScriptEnter, _area.get(), _pc);
 }
 
 void Module::leaveArea() {
+	_minigame.reset();
+
 	if (_area) {
-		_area->savePersistence();
 		_area->runScript(kScriptExit, _area.get(), _pc);
 
 		_area->hide();
 
 		runScript(kScriptExit, this, _pc);
+
+		// After the OnExit scripts, so what they set on the area, the module
+		// or the area's objects is kept for the next visit.
+		_area->savePersistence();
 	}
 }
 
@@ -690,6 +979,152 @@ void Module::clickObject(Object *object) {
 	partyLeader->addAction(action);
 }
 
+void Module::useActionMenuOption(const ActionMenuOption &option, Object *target) {
+	if (getGlobalNumber("__player_restrict_mode") != 0)
+		return;
+
+	Creature *leader = getPartyLeader();
+	if (!leader || leader->isDead())
+		return;
+
+	switch (option.type) {
+		case kActionMenuAttack:
+		case kActionMenuFeat: {
+			if (!target || target->isDead())
+				return;
+
+			// As clicking a hostile target; the feat applies to the next combat round.
+			KotORBase::Action action(kActionAttackObject);
+			action.object = target;
+			action.range = 1.0f;
+
+			leader->clearActions();
+			if (option.type == kActionMenuFeat) {
+				leader->setLastCombatFeatUsed(option.id);
+				leader->queueCombatFeat(option.id);
+			}
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuPower: {
+			KotORBase::Action action(kActionCastSpell, option.id);
+			action.object = target ? target : leader;
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuItemPower: {
+			// An equipped item's power: free, and the item stays.
+			KotORBase::Action action(kActionCastSpell, option.id);
+			action.object = leader;
+			action.cheat  = true;
+			action.item   = option.itemTag;
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuBash: {
+			Situated *situated = ObjectContainer::toSituated(target);
+			if (!situated || !situated->canBeBashed())
+				return;
+
+			// Break it open with melee or ranged rounds (Creature::executeAttack()).
+			KotORBase::Action action(kActionAttackObject);
+			action.object = target;
+			action.range  = leader->getMaxAttackRange();
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuSetMine: {
+			if (!getInventoryOf(*leader).hasItem(option.itemTag))
+				return;
+
+			// Laid just ahead of the leader (ActionExecutor::executeSetTrap()).
+			KotORBase::Action action(kActionSetTrap);
+			action.item = option.itemTag;
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuDisarmMine:
+		case kActionMenuRecoverMine: {
+			if (!target)
+				return;
+
+			KotORBase::Action action(option.type == kActionMenuDisarmMine ? kActionDisableTrap : kActionRecoverTrap);
+			action.object = target;
+			action.range  = 1.0f;
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuOpenLock: {
+			if (!target)
+				return;
+
+			KotORBase::Action action(kActionOpenLock);
+			action.object = target;
+			action.range = 1.0f;
+
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuItem: {
+			// Items are used at once, so they wait for the game to be unpaused.
+			const Common::UString tag = option.itemTag;
+			const uint32_t leaderID = leader->getID();
+			const uint32_t targetID = target ? target->getID() : leaderID;
+
+			runWhenUnpaused([this, tag, leaderID, targetID]() {
+				useActionMenuItem(tag, leaderID, targetID);
+			});
+			break;
+		}
+
+		default:
+			return;
+	}
+
+	pauseGame(kPauseReasonActionMenuUsed);
+}
+
+void Module::useActionMenuItem(const Common::UString &tag, uint32_t userID, uint32_t targetID) {
+	// The party shares the PC's inventory (as the inventory menu does).
+	Creature *user = ObjectContainer::toCreature(ObjectMan.findObject(userID));
+	if (!_pc || !user || user->isDead() || !_pc->getInventory().hasItem(tag))
+		return;
+
+	Object *target = ObjectContainer::toObject(ObjectMan.findObject(targetID));
+
+	ItemActionResult result;
+	if (target && (target != user)) {
+		// A grenade, thrown at the target.
+		if (target->isDead())
+			return;
+
+		float x, y, z;
+		target->getPosition(x, y, z);
+		result = throwGrenadeAt(*_pc, tag, *this, x, y, z);
+	} else
+		result = useInventoryItem(*user, *_pc, tag, this);
+
+	if (!result.success && !result.message.empty())
+		showFloatingText(user, result.message, 3.0f);
+}
+
 void Module::enterObject(Object *object) {
 	_ingame->setHoveredObject(object);
 }
@@ -720,7 +1155,7 @@ void Module::runCinematicBeat(float duration) {
 		_prevTimestamp = now;
 		elapsed += _frameTime;
 
-		GfxMan.lockFrame();
+		lockFrame();
 
 		if (_area)
 			_area->processCreaturesActions(_frameTime);
@@ -732,7 +1167,7 @@ void Module::runCinematicBeat(float duration) {
 		if (_ingame && !_inDialog)
 			_ingame->getHUD().update(_frameTime);
 
-		GfxMan.unlockFrame();
+		unlockFrame();
 		EventMan.delay(10);
 	}
 
@@ -744,10 +1179,35 @@ void Module::playMovie(const Common::UString &resRef, bool allowSkip) {
 		return;
 
 	debugC(Common::kDebugEngineLogic, 1, "Playing Movie: %s (allowSkip: %d)", resRef.c_str(), allowSkip ? 1 : 0);
+
+	// A script may start a movie while the world update holds the frame lock
+	// (OnEnter scripts, actions). Release it, or the movie wouldn't advance.
+	// The game thread waits for the movie, so nothing changes the world meanwhile.
+	const uint32_t locksHeld = _frameLocksHeld;
+	for (uint32_t i = 0; i < locksHeld; i++)
+		GfxMan.unlockFrame();
+
 	_moviePlaying = true;
 	const int videoEffect = getGlobalNumber("__video_effect");
 	::Engines::playVideo(resRef, allowSkip, videoEffect >= 0 ? videoEffect : -1);
 	_moviePlaying = false;
+
+	for (uint32_t i = 0; i < locksHeld; i++)
+		GfxMan.lockFrame();
+
+	// The movie took a while; don't feed that time into the next frame.
+	updateFrameTimestamp();
+}
+
+void Module::lockFrame() {
+	GfxMan.lockFrame();
+	_frameLocksHeld++;
+}
+
+void Module::unlockFrame() {
+	assert(_frameLocksHeld > 0);
+	_frameLocksHeld--;
+	GfxMan.unlockFrame();
 }
 
 bool Module::isMoviePlaying() const {
@@ -800,39 +1260,78 @@ void Module::processEventQueue() {
 	uint32_t now = SDL_GetTicks();
 	_frameTime = (now - _prevTimestamp) / 1000.f;
 	_prevTimestamp = now;
-	_playTime += _frameTime;
 
-	if (_noClicksUntil != 0 && EventMan.getTimestamp() >= _noClicksUntil) {
+	// Keep the timer pending while a dialog or cutscene runs, so input is
+	// restored once it ends instead of staying disabled for good.
+	if (_noClicksUntil != 0 && EventMan.getTimestamp() >= _noClicksUntil &&
+	    !_cutsceneMode && !_inDialog) {
 		_noClicksUntil = 0;
-		if (!_cutsceneMode && !_inDialog)
-			setPlayerInputEnabled(true);
+		setPlayerInputEnabled(true);
 	}
 
 	handleEvents();
-	handleActions();
 
-	_roundController.update();
-	_area->handleCreaturesDeath();
+	// A save was just loaded from the menu: the old world must not run another
+	// frame (scripts, deaths, destruction) on top of the loaded state.
+	if (_loadingSavedGame && !_newModule.empty())
+		return;
 
-	// Run NPC and party combat AI before executing movement/actions.
-	updateCombatAI();
+	// Conversations, cutscenes and minigames never run paused.
+	const PauseBlockers pauseBlockers = getPauseBlockers();
+	if (_pause.isPaused() && pauseBlockers.any())
+		unpauseGame();
 
-	GfxMan.lockFrame();
+	// While paused, the world stands still: no actions, combat rounds,
+	// heartbeats, effects, script timers or movement. The camera, the HUD
+	// and the player's orders (queued for later) still work.
+	const bool worldFrozen = _pause.isWorldFrozen(pauseBlockers);
 
-	_area->processCreaturesActions(_frameTime);
-	_cameraController.processRotation(_frameTime);
+	// The game clock (encounter timers, the saved play time) stands still too.
+	if (!worldFrozen)
+		_playTime += _frameTime;
 
-	if (!_cameraController.isFlyCamera())
-		_partyLeaderController.processMovement(_frameTime);
+	if (!worldFrozen) {
+		runUnpauseCommands();
+		handleActions();
+		processQueuedUserDefinedEvents();
 
-	_cameraController.processMovement(_frameTime);
+		_roundController.update();
+		_area->handleCreaturesDeath();
+
+		// Run NPC and party combat AI before executing movement/actions.
+		updateCombatAI();
+	}
+
+	lockFrame();
+
+	if (!worldFrozen) {
+		_area->processCreaturesActions(_frameTime);
+		_area->updateEncounters();
+	}
+
+	if (!_minigame) {
+		_cameraController.processRotation(_frameTime);
+
+		if (!_cameraController.isFlyCamera() && !worldFrozen)
+			_partyLeaderController.processMovement(_frameTime);
+
+		_cameraController.processMovement(_frameTime);
+	}
+
 	updateSoundListener();
-	updateSelection();
 
-	if (!_inDialog)
-		_ingame->getHUD().update(_frameTime);
+	if (!_minigame) {
+		updateSelection();
 
-	GfxMan.unlockFrame();
+		if (!_inDialog)
+			_ingame->getHUD().update(_frameTime);
+	}
+
+	unlockFrame();
+
+	// The minigame drives the player and the camera (it runs scripts: outside the frame lock).
+	if (_minigame && !_inDialog)
+		_minigame->update(_frameTime);
 
 	if (getGlobalBoolean("__open_galaxymap")) {
 		setGlobalBoolean("__open_galaxymap", false);
@@ -844,9 +1343,49 @@ void Module::processEventQueue() {
 		showWorkbench();
 	}
 
-	onFrameUpdate(_frameTime);
+	if (!worldFrozen) {
+		onFrameUpdate(_frameTime);
 
-	handleDelayedInteractions();
+		handleDelayedInteractions();
+
+		if (_area)
+			_area->processPendingDestruction();
+
+		updateAutoPause();
+	}
+
+	processTutorialWindows();
+	processAutoSave();
+}
+
+void Module::requestAutoSave() {
+	if (!ConfigMan.getBool("autosave", true))
+		return;
+
+	_autoSavePending = true;
+}
+
+void Module::processAutoSave() {
+	// Scripts request autosaves while a transition, dialog or cutscene may
+	// still be in progress; wait until the world is in a stable state.
+	if (!_autoSavePending || !_area || !_pc || _inDialog || _cutsceneMode || isMoviePlaying())
+		return;
+
+	_autoSavePending = false;
+
+	const Common::UString slot = Common::FilePath::normalize(
+		ConfigMan.getString("path") + "/saves/000001 - AUTOSAVE");
+
+	try {
+		saveGame(slot, "Auto Save");
+	} catch (Common::Exception &e) {
+		e.add("Autosave failed");
+		printException(e, "WARNING: ");
+	}
+}
+
+void Module::setSavedNPCStates(const std::map<int, CreatureInfo> &states) {
+	_npcStates = states;
 }
 
 void Module::setSavedPCInfo(const CreatureInfo &info) {
@@ -930,6 +1469,11 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 	Common::WriteFile nfoFile(nfoPath);
 	nfoWriter.write(nfoFile);
 
+	// SetMinOneHP on the PC lasts while the save is in this module (the
+	// Endar Spire keeps the PC alive this way). It isn't carried to other
+	// modules: the PC is rebuilt from its character record there.
+	setGlobalBoolean("__pc_min1hp", pc && pc->getMinOneHitPoints());
+
 	Common::MemoryWriteStreamDynamic globalsMem(true);
 	{
 		Aurora::GFF3Writer globalsWriter(MKTAG('G', 'V', 'A', 'R'));
@@ -946,6 +1490,17 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 			partyRoot->addUint32("PT_GOLD", pc->getInventory().getGold());
 			Aurora::GFF3WriterStructPtr pcState = partyRoot->addStruct("PT_PC_STATE");
 			_pcInfo.save(*pcState);
+
+			// Who the PC is (not stored in the CreatureInfo), so a load
+			// rebuilds the same character rather than a random one.
+			if (_chargenInfo) {
+				Aurora::GFF3WriterStructPtr identity = partyRoot->addStruct("PT_PC_IDENTITY");
+				identity->addExoString("Name", _chargenInfo->getName());
+				identity->addUint32("Gender", static_cast<uint32_t>(_chargenInfo->getGender()));
+				identity->addSint32("Class", static_cast<int32_t>(_chargenInfo->getClass()));
+				identity->addSint32("Skin", static_cast<int32_t>(_chargenInfo->getSkin()));
+				identity->addSint32("Face", static_cast<int32_t>(_chargenInfo->getFace()));
+			}
 		}
 
 		Aurora::GFF3WriterListPtr availList = partyRoot->addList("PT_AVAIL_NPCS");
@@ -953,6 +1508,20 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 			Aurora::GFF3WriterStructPtr avail = availList->addStruct();
 			avail->addSint32("Index", entry.first);
 			avail->addResRef("NPCResRef", entry.second);
+		}
+
+		// Progression of every companion met so far, including benched ones.
+		for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+			const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+			if (member.second)
+				rememberNPCState(member.first, *member.second);
+		}
+
+		Aurora::GFF3WriterListPtr npcStates = partyRoot->addList("PT_NPC_STATES");
+		for (const auto &entry : _npcStates) {
+			Aurora::GFF3WriterStructPtr npcState = npcStates->addStruct();
+			npcState->addSint32("Index", entry.first);
+			entry.second.save(*npcState->addStruct("CreatureState"));
 		}
 
 		Aurora::GFF3WriterListPtr membersList = partyRoot->addList("PT_MEMBERS");
@@ -999,32 +1568,53 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 			ifoWriter.write(ifoMem);
 		}
 
-		Common::MemoryReadStream ifoStream(ifoMem.getData(), ifoMem.size(), true);
+		Common::MemoryReadStream ifoStream(ifoMem.getData(), ifoMem.size());
 		moduleErf.add("Module", Aurora::kFileTypeIFO, ifoStream);
 
 		if (_area) {
+			// Every visited area's object state (the current one was refreshed
+			// above), so containers, doors and object locals elsewhere survive.
 			Common::MemoryWriteStreamDynamic areaMem(true);
 			Aurora::GFF3Writer areaWriter(MKTAG('G', 'F', 'F', ' '));
-			_area->writePersistence(*areaWriter.getTopLevel());
+			Aurora::GFF3WriterListPtr areaList = areaWriter.getTopLevel()->addList("AreaObjectList");
+			for (const auto &entry : _areaObjectSaves) {
+				if (!entry.second)
+					continue;
+
+				Aurora::GFF3WriterStructPtr areaEntry = areaList->addStruct();
+				areaEntry->addExoString("Key", entry.first);
+				copyObjectSaveFields(entry.second->getTopLevel(), *areaEntry);
+			}
 			areaWriter.write(areaMem);
 
-			Common::MemoryReadStream areaStream(areaMem.getData(), areaMem.size(), true);
+			Common::MemoryReadStream areaStream(areaMem.getData(), areaMem.size());
 			moduleErf.add("areastate", Aurora::kFileTypeRES, areaStream);
 		}
 	}
 
 	const Common::UString savPath = Common::FilePath::normalize(slot + "/SAVEGAME.sav");
 	Common::WriteFile savFile(savPath);
-	Aurora::ERFWriter savErf(MKTAG('S', 'A', 'V', ' '), 3, savFile, Aurora::ERFWriter::kERFVersion22);
+	Aurora::ERFWriter savErf(MKTAG('S', 'A', 'V', ' '), 4, savFile, Aurora::ERFWriter::kERFVersion22);
 
-	Common::MemoryReadStream globalsStream(globalsMem.getData(), globalsMem.size(), true);
+	Common::MemoryReadStream globalsStream(globalsMem.getData(), globalsMem.size());
 	savErf.add("GLOBALVARS", Aurora::kFileTypeRES, globalsStream);
 
-	Common::MemoryReadStream partyStream(partyMem.getData(), partyMem.size(), true);
+	Common::MemoryReadStream partyStream(partyMem.getData(), partyMem.size());
 	savErf.add("partytable", Aurora::kFileTypeRES, partyStream);
 
-	Common::MemoryReadStream moduleSavStream(moduleSavMem.getData(), moduleSavMem.size(), true);
+	Common::MemoryReadStream moduleSavStream(moduleSavMem.getData(), moduleSavMem.size());
 	savErf.add(_module, Aurora::kFileTypeSAV, moduleSavStream);
+
+	// Faction reputations, in the original's REPUTE.fac format.
+	Common::MemoryWriteStreamDynamic reputeMem(true);
+	{
+		Aurora::GFF3Writer reputeWriter(MKTAG('F', 'A', 'C', ' '));
+		ReputationMan.save(*reputeWriter.getTopLevel());
+		reputeWriter.write(reputeMem);
+	}
+
+	Common::MemoryReadStream reputeStream(reputeMem.getData(), reputeMem.size());
+	savErf.add("repute", Aurora::kFileTypeFAC, reputeStream);
 
 	info("Game saved to %s", slot.c_str());
 }
@@ -1043,7 +1633,7 @@ void Module::handleEvents() {
 
 		// Conversation/cutscene
 		if (_inDialog) {
-			_dialog->addEvent(*event);
+			getConversationGUI().addEvent(*event);
 			continue;
 		}
 
@@ -1085,6 +1675,19 @@ void Module::handleEvents() {
 				_console->show();
 				continue;
 			}
+
+			// Pause (the minigames use Space to fire)
+			if ((event->key.keysym.sym == SDLK_SPACE) && !_minigame) {
+				if (!event->key.repeat)
+					toggleGamePaused();
+				continue;
+			}
+		}
+
+		// A minigame takes all the input the menu and console don't.
+		if (_minigame) {
+			_minigame->handleEvent(*event);
+			continue;
 		}
 
 		if (_partyController.handleEvent(*event))
@@ -1103,10 +1706,23 @@ void Module::handleEvents() {
 	_eventQueue.clear();
 
 	if (_inDialog) {
-		_dialog->processEventQueue();
-		if (!_dialog->isConversationActive()) {
-			_dialog->hide();
-			_ingame->show();
+		// A pause whose ActionResumeConversation never comes (the actor died,
+		// got stuck, ...) must not hold the conversation forever.
+		if (_conversationPausedSince != 0 &&
+		    EventMan.getTimestamp() - _conversationPausedSince > 15000) {
+			warning("Conversation paused for too long; resuming");
+			_conversationPausedSince = 0;
+		}
+
+		DialogGUI &conversation = getConversationGUI();
+		conversation.processEventQueue();
+		if (_conversationPausedSince == 0)
+			conversation.update(_frameTime);
+		if (!conversation.isConversationActive()) {
+			_conversationPausedSince = 0;
+			conversation.hide();
+			if (!_minigame)
+				_ingame->show();
 			_inDialog = false;
 			resetToOrbit();
 			updateFrameTimestamp();
@@ -1208,18 +1824,51 @@ void Module::handleDelayedInteractions() {
 	}
 }
 
-void Module::openContainer(Placeable *placeable) {
+void Module::openContainer(Object *container) {
+	Placeable *placeable = ObjectContainer::toPlaceable(container);
+	Creature *corpse = ObjectContainer::toCreature(container);
+	if (!placeable && !corpse)
+		return;
+
 	_cameraController.stopMovement();
 	_partyLeaderController.clearUserInput();
 	_partyLeaderController.stopMovement();
 
 	_ingame->hideSelection();
-	_ingame->showContainer(placeable->getInventory());
+	const std::vector<InventoryDisturbance> moved =
+		_ingame->showContainer(placeable ? placeable->getInventory() : corpse->getInventory());
 
-	placeable->close(_pc);
-	placeable->runScript(kScriptDisturbed, placeable, _pc);
+	// OnInventoryDisturbed for each item taken or given, then OnClosed.
+	Object *owner = placeable ? static_cast<Object *>(placeable) : static_cast<Object *>(corpse);
+	const uint32_t ownerID = owner->getID();
+	for (const InventoryDisturbance &disturbance : moved) {
+		// The script may destroy the container.
+		if (ObjectMan.findObject(ownerID) != owner)
+			break;
+
+		signalInventoryDisturbed(*owner, disturbance);
+	}
+
+	if (placeable && (ObjectMan.findObject(ownerID) == owner))
+		placeable->close(_pc);
 
 	updateFrameTimestamp();
+}
+
+void Module::signalInventoryDisturbed(Object &container, const InventoryDisturbance &disturbance) {
+	// The item object scripts see: where the item now is.
+	Item *item = nullptr;
+	if (disturbance.type == kInventoryDisturbTypeRemoved) {
+		if (_pc)
+			item = _pc->addScriptItem(disturbance.item);
+	} else if (Placeable *placeable = ObjectContainer::toPlaceable(&container)) {
+		item = placeable->addScriptItem(disturbance.item);
+	} else if (Creature *creature = ObjectContainer::toCreature(&container)) {
+		item = creature->addScriptItem(disturbance.item);
+	}
+
+	container.setInventoryDisturbance(disturbance.type, item);
+	container.runScript(kScriptDisturbed, &container, _pc);
 }
 
 void Module::notifyCombatRoundBegan(int round) {
@@ -1230,6 +1879,12 @@ void Module::notifyCombatRoundBegan(int round) {
 		if (c->isDead())
 			continue;
 
+		// Stunned / paralysed / asleep / knocked down: no attack this round.
+		if (c->isIncapacitated()) {
+			c->setAttemptedAttackTarget(nullptr);
+			continue;
+		}
+
 		if (!c->isPC())
 			c->updateCombatAI();
 
@@ -1237,7 +1892,15 @@ void Module::notifyCombatRoundBegan(int round) {
 			continue;
 
 		Object *target = c->getAttackTarget();
-		if (!target || c->getDistanceTo(target) > c->getMaxAttackRange())
+		if (target && target->isDead()) {
+			// Never swing at a corpse; the AI picks a new target.
+			c->cancelCombat();
+			c->setAttemptedAttackTarget(nullptr);
+			continue;
+		}
+
+		if (!target || c->getDistanceTo(target) > (c->getMaxAttackRange() +
+		                (ObjectContainer::toSituated(target) ? BashRules::kExtraReach : 0.0f)))
 			continue;
 
 		c->setAttemptedAttackTarget(target);
@@ -1256,12 +1919,19 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 	if (!_area)
 		return;
 
+	Creature *leader = getPartyLeader();
+	if (leader && !leader->isDead() && leader->isInCombat())
+		pauseGame(kPauseReasonCombatRoundEnd);
+
 	for (auto &c : _area->getCreatures()) {
 		if (c->isDead() || !c->isInCombat())
 			continue;
 
+		// OnEndCombatRound runs later, outside this iteration.
+		c->queueEndRoundEvent();
+
 		Object *target = c->getAttemptedAttackTarget();
-		if (!target) {
+		if (!target || target->isDead() || c->isIncapacitated()) {
 			c->setAttemptedAttackTarget(nullptr);
 			continue;
 		}
@@ -1298,39 +1968,25 @@ void Module::notifyCombatRoundEnded(int UNUSED(round)) {
 		struct Swing { int babPenalty; int damageMod; };
 		std::vector<Swing> swings;
 
-		// Base iterative attacks from BAB.
-		for (int penalty = 0; bab + penalty > 0; penalty -= 5) {
+		// Base iterative attacks from BAB. Everyone gets the primary swing,
+		// even at BAB 0 (level-1 Scoundrels, Scouts and Jedi).
+		swings.push_back({0, 0});
+		for (int penalty = -5; bab + penalty > 0; penalty -= 5)
 			swings.push_back({penalty, 0});
-			if (bab + penalty < 6)
-				break; // no more iterations below BAB 1
-		}
 
-		// Feat: Flurry / Improved Flurry (melee only).
-		// All attacks (including the bonus one) take a -4 penalty (-2 for Improved).
-		// The extra attack is at the highest BAB (same as the primary swing).
-		const bool activatedFlurry = (activeFeat == kFeatFlurry || activeFeat == kFeatImprovedFlurry);
-		if (!ranged && activatedFlurry && (info.hasFeat(kFeatFlurry) || info.hasFeat(kFeatImprovedFlurry))) {
-			int penalty = (activeFeat == kFeatImprovedFlurry && info.hasFeat(kFeatImprovedFlurry)) ? -2 : -4;
-			// First apply the penalty to all existing swings, then add the bonus one
-			// (it is also at full BAB, i.e. penalty=0 relative to base, then shifted).
+		// Feats: Flurry (melee) and Rapid Shot (ranged), all tiers: an extra
+		// attack at full BAB, every attack of the round at the feat's penalty.
+		// Every combat feat's Defense penalty lasts the round.
+		const CombatFeatModifiers featMods = getCombatFeatModifiers(activeFeat);
+		const bool featApplies = (activeFeat >= 0) && (ranged ? featMods.ranged : featMods.melee);
+		if (featApplies && (featMods.extraAttacks > 0)) {
 			for (auto &s : swings)
-				s.babPenalty += penalty;
-			// Extra attack is at the same "post-penalty" BAB as the primary swing.
-			swings.push_back({penalty, 0});
+				s.babPenalty += featMods.attack;
+			for (int i = 0; i < featMods.extraAttacks; ++i)
+				swings.push_back({featMods.attack, 0});
 		}
-
-		// Feat: Rapid Shot (ranged only).
-		// All attacks (including the bonus one) take a -2 penalty (Improved: none).
-		const bool activatedRapidShot = (activeFeat == kFeatRapidShot || activeFeat == kFeatImprovedRapidShot);
-		if (ranged && activatedRapidShot && (info.hasFeat(kFeatRapidShot) || info.hasFeat(kFeatImprovedRapidShot))) {
-			int penalty = (activeFeat == kFeatImprovedRapidShot && info.hasFeat(kFeatImprovedRapidShot)) ? 0 : -2;
-			if (penalty != 0) {
-				for (auto &s : swings)
-					s.babPenalty += penalty;
-			}
-			// Extra ranged attack at the highest BAB (post-penalty).
-			swings.push_back({penalty, 0});
-		}
+		if (featApplies && (featMods.armorClass < 0))
+			c->applyEffect(Effect(kKotOREffectACDecrease, -featMods.armorClass), kCombatFeatPenaltyDuration);
 
 		// Feat: Two-Weapon Fighting (off-hand attack when wielding two weapons, melee)
 		if (!ranged && rightWeapon && leftWeapon) {
@@ -1380,7 +2036,7 @@ void Module::updateCombatAI() {
 		partyMembers.push_back(_partyController.getPartyMemberByIndex(i).second);
 
 	for (auto &c : creatures) {
-		if (c->isDead() || !c->isCommandable())
+		if (c->isDead() || !c->isCommandable() || c->isIncapacitated())
 			continue;
 
 		bool isPartyMember = false;
@@ -1397,6 +2053,16 @@ void Module::updateCombatAI() {
 			// If in combat, ensure we're either attacking or chasing the target.
 			if (c->isInCombat()) {
 				Object *t = c->getAttackTarget();
+
+				// A target that turned invisible (or slipped into stealth) is lost.
+				Creature *tc = ObjectContainer::toCreature(t);
+				if (tc && !tc->isDead() && !c->canPerceive(*tc, c->getDistanceTo(tc))) {
+					if (currentAction && (currentAction->type == kActionAttackObject) && (currentAction->object == t))
+						c->clearActions();
+					c->cancelCombat();
+					continue;
+				}
+
 				if (t && !t->isDead()) {
 					// Target is alive — chase if out of range and idle.
 					bool outOfRange = c->getDistanceTo(t) > c->getMaxAttackRange();
@@ -1428,10 +2094,12 @@ void Module::updateCombatAI() {
 				float dist = c->getDistanceTo(pm);
 				if (dist > kNPCNoticeRange)
 					continue;
-				// Check faction hostility: reputation < 50 means hostile.
-				int rep = getReputation(static_cast<int>(c->getFaction()),
-				                        static_cast<int>(pm->getFaction()));
-				if (rep >= 50)
+				// Can't engage what it can't see (e.g. behind a closed door,
+				// invisible or sneaking past).
+				if (!_area->hasLineOfSight(c, pm) || !c->canPerceive(*pm, dist))
+					continue;
+				if (!ReputationMan.isHostile(static_cast<int>(c->getFaction()),
+				                             static_cast<int>(pm->getFaction())))
 					continue;
 				if (dist < bestDist) {
 					bestDist   = dist;
@@ -1458,11 +2126,32 @@ void Module::updateCombatAI() {
 		if (!leader || c == leader)
 			continue;
 
-		// Non-leader: if idle, mirror the leader's attack target.
+		// Non-leader: if idle, mirror the leader's attack target. Following the
+		// leader counts as idle, whether Astryx queued it or the party AI's
+		// heartbeat did (ActionFollowLeader, ActionForceFollowObject).
 		const CombatAction *ca = c->getCurrentAction();
-		bool idle = (!ca || ca->type == kActionFollowLeader);
+		bool idle = (!ca || ca->type == kActionFollowLeader ||
+		             (ca->type == kActionFollow && ca->object == leader));
 		if (!idle)
 			continue;
+
+		// Already fighting a living target: only chase it when out of range.
+		// Re-queueing the attack every frame restarted combat and wiped the
+		// attack scheduled for the round, so companions never landed a blow.
+		if (c->isInCombat()) {
+			Object *t = c->getAttackTarget();
+			if (t && !t->isDead()) {
+				if (c->getDistanceTo(t) > c->getMaxAttackRange()) {
+					c->clearActions();
+					CombatAction attack(kActionAttackObject);
+					attack.object = t;
+					attack.range  = c->getMaxAttackRange();
+					c->addAction(attack);
+				}
+				continue;
+			}
+			c->cancelCombat();
+		}
 
 		// Prefer the leader's current attack target.
 		Object *leaderTarget = leader->isInCombat() ? leader->getAttackTarget() : nullptr;
@@ -1479,12 +2168,11 @@ void Module::updateCombatAI() {
 					if (pm == nc) { ncIsParty = true; break; }
 				if (ncIsParty)
 					continue;
-				int rep = getReputation(static_cast<int>(c->getFaction()),
-				                        static_cast<int>(nc->getFaction()));
-				if (rep >= 50)
+				if (!ReputationMan.isHostile(static_cast<int>(c->getFaction()),
+				                             static_cast<int>(nc->getFaction())))
 					continue;
 				float dist = c->getDistanceTo(nc);
-				if (dist < bestDist) {
+				if (dist < bestDist && _area->hasLineOfSight(c, nc)) {
 					bestDist    = dist;
 					leaderTarget = nc;
 				}
@@ -1519,6 +2207,17 @@ void Module::updateBattleMusic() {
 	} else if (!anyInCombat && _inBattleMusic) {
 		_inBattleMusic = false;
 		_area->playAmbientMusic();
+
+		// As in the original, fallen party members get back up once the
+		// fight is over (as long as the leader survived).
+		Creature *leader = getPartyLeader();
+		if (leader && !leader->isDead()) {
+			for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+				Creature *member = _partyController.getPartyMemberByIndex(static_cast<int>(i)).second;
+				if (member && member->isDead())
+					member->resurrect(1);
+			}
+		}
 	}
 }
 
@@ -1529,22 +2228,79 @@ void Module::updateXPOnKill() {
 	for (auto &c : _area->getCreatures()) {
 		if (!c->isDead() || c->isXPAwarded())
 			continue;
-		if (c->isPC() || c->isPartyMember())
-			continue;
-
-		int hitDice = c->getHitDice();
-		if (hitDice <= 0)
+		if (c->isPC() || isObjectPartyMember(c))
 			continue;
 
 		c->markXPAwarded();
 
-		// XP = 25 × creature hit dice — consistent with KOTOR's own scaling.
-		int xp = 25 * hitDice;
-		_pc->addPlotXP(xp);
+		// Only kills by the party, of creatures hostile to the party, give XP.
+		Creature *killer = ObjectContainer::toCreature(c->getLastKiller());
+		if (!killer || !(killer->isPC() || killer == _pc || isObjectPartyMember(killer)))
+			continue;
+		if (!isHostileToParty(c))
+			continue;
+
+		if (c->getHitDice() <= 0)
+			continue;
+
+		// xptable.2da by party level and the blueprint's challenge rating;
+		// 25 x the rating without game data.
+		const int challengeRating = static_cast<int>(std::lround(c->getChallengeRating()));
+		const int xp = killExperience(_pc->getHitDice(), challengeRating);
+		awardPartyXP(xp);
 
 		debugC(Common::kDebugEngineLogic, 1,
-		       "Module::updateXPOnKill(): awarded %d XP for killing \"%s\" (HD %d)",
-		       xp, c->getTag().c_str(), hitDice);
+		       "Module::updateXPOnKill(): awarded %d XP for killing \"%s\" (CR %d)",
+		       xp, c->getTag().c_str(), challengeRating);
+	}
+}
+
+bool Module::isHostileToParty(const Creature *creature) const {
+	if (!creature)
+		return false;
+
+	const Faction partyFaction = _pc ? _pc->getFaction() : kFactionPlayer;
+	return ReputationMan.isHostile(static_cast<int>(creature->getFaction()),
+	                               static_cast<int>(partyFaction == kFactionInvalid ? kFactionPlayer : partyFaction));
+}
+
+void Module::updateOutOfCombatRecovery() {
+	if (!_area)
+		return;
+
+	bool anyInCombat = false;
+	for (Creature *c : _area->getCreatures()) {
+		if (!c->isDead() && c->isInCombat()) {
+			anyInCombat = true;
+			break;
+		}
+	}
+
+	if (anyInCombat) {
+		_calmHeartbeats = 0;
+		return;
+	}
+
+	++_calmHeartbeats;
+
+	// Force points slowly come back outside of combat.
+	for (Creature *c : _area->getCreatures())
+		c->regenerateForcePoints();
+
+	// Fallen party members get back up once nobody has fought for two
+	// heartbeats, even when no battle music transition happened (scripted
+	// damage, a death outside of a fight, ...).
+	if (_calmHeartbeats < 2)
+		return;
+
+	Creature *leader = getPartyLeader();
+	if (!leader || leader->isDead())
+		return;
+
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+		Creature *member = _partyController.getPartyMemberByIndex(static_cast<int>(i)).second;
+		if (member && member->isDead())
+			member->resurrect(1);
 	}
 }
 
@@ -1565,6 +2321,170 @@ void Module::handleActions() {
 	}
 }
 
+bool Module::isGamePaused() const {
+	return _pause.isPaused();
+}
+
+PauseReason Module::getPauseReason() const {
+	return _pause.getReason();
+}
+
+PauseBlockers Module::getPauseBlockers() const {
+	PauseBlockers blockers;
+
+	blockers.conversation = _inDialog;
+	blockers.cutscene     = _cutsceneMode || !_playerInputEnabled;
+	blockers.minigame     = _minigame != nullptr;
+	blockers.movie        = _moviePlaying;
+
+	return blockers;
+}
+
+bool Module::pauseGame(PauseReason reason) {
+	if (!_running || !_area)
+		return false;
+
+	const bool wasPaused = _pause.isPaused();
+	const bool paused = _pause.requestPause(reason, AutoPauseOptions::fromConfig(),
+	                                        getPauseBlockers(), EventMan.getTimestamp());
+
+	if (paused && !wasPaused) {
+		GfxMan.setAnimationTimeFrozen(true);
+		_partyLeaderController.stopMovement();
+		debugC(Common::kDebugEngineLogic, 1, "Game paused (reason %d)", static_cast<int>(reason));
+	}
+
+	return paused;
+}
+
+void Module::unpauseGame() {
+	if (!_pause.isPaused())
+		return;
+
+	shiftWorldTimers(_pause.unpause(EventMan.getTimestamp()));
+	GfxMan.setAnimationTimeFrozen(false);
+	updateFrameTimestamp();
+
+	debugC(Common::kDebugEngineLogic, 1, "Game unpaused");
+
+	// Item uses the player chose while paused run at the next frame's safe
+	// point (runUnpauseCommands()), not from inside whatever unpaused us.
+}
+
+void Module::runUnpauseCommands() {
+	if (_unpauseCommands.empty() || _pause.isPaused() || getPauseBlockers().any())
+		return;
+
+	std::vector<std::function<void()>> commands;
+	commands.swap(_unpauseCommands);
+	for (const std::function<void()> &command : commands)
+		command();
+}
+
+void Module::toggleLeaderStealth() {
+	Creature *leader = getPartyLeader();
+	if (!leader || leader->isDead() || !_area)
+		return;
+
+	leader->setStealthMode(!leader->getStealthMode());
+
+	// The enemies around may lose sight of the leader, or spot them again.
+	_area->notifyObjectMoved(*leader);
+}
+
+bool Module::isLeaderStealthy() const {
+	Creature *leader = getPartyLeader();
+	return leader && leader->getStealthMode();
+}
+
+void Module::toggleGamePaused() {
+	if (_pause.isPaused())
+		unpauseGame();
+	else
+		pauseGame(kPauseReasonGeneric);
+}
+
+void Module::shiftWorldTimers(uint32_t ms) {
+	if (ms == 0)
+		return;
+
+	// DelayCommand and friends
+	ActionQueue delayed;
+	for (const Action &action : _delayedActions) {
+		Action shifted = action;
+		shifted.timestamp += ms;
+		delayed.insert(shifted);
+	}
+	_delayedActions.swap(delayed);
+
+	_roundController.delay(ms);
+
+	if (_area) {
+		_area->delayPendingDestruction(ms);
+		_area->delayHeartbeats(ms);
+	}
+}
+
+void Module::runWhenUnpaused(const std::function<void()> &command) {
+	if (_pause.isPaused())
+		_unpauseCommands.push_back(command);
+	else
+		command();
+}
+
+void Module::updateAutoPause() {
+	if (!_area || getPauseBlockers().any())
+		return;
+
+	Creature *leader = getPartyLeader();
+	if (!leader || leader->isDead())
+		return;
+
+	// Party member down
+	std::vector<uint32_t> down;
+	for (int i = 0; i < getPartyMemberCount(); ++i) {
+		Creature *member = getPartyMemberByIndex(i);
+		if (member && member->isDead())
+			down.push_back(member->getID());
+	}
+	if (_autoPauseMonitor.updatePartyDown(down))
+		pauseGame(kPauseReasonPartyMemberKilled);
+
+	// New target selected: the leader's target died and the leader took on another one.
+	Object *target = leader->getAttackTarget();
+	auto isDead = [](uint32_t id) {
+		Object *object = ObjectContainer::toObject(ObjectMan.findObject(id));
+		return !object || object->isDead();
+	};
+	if (_autoPauseMonitor.updateLeaderTarget(target ? target->getID() : 0, leader->isInCombat(), isDead))
+		pauseGame(kPauseReasonNewTargetSelected);
+
+	// Enemy sighted, by the leader's perception (see Creature::updatePerception()).
+	_autoPauseScanTimer -= _frameTime;
+	if (_autoPauseScanTimer > 0.0f)
+		return;
+	_autoPauseScanTimer = 0.25f;
+
+	static const float kPerceptionRange = 16.0f;
+
+	std::vector<uint32_t> hostiles;
+	for (Creature *creature : _area->getCreatures()) {
+		if (!creature || creature->isDead() || (creature == leader) || isObjectPartyMember(creature))
+			continue;
+		if (!isHostileToParty(creature))
+			continue;
+		if (leader->getDistanceTo(creature) > kPerceptionRange)
+			continue;
+		if (!_area->hasLineOfSight(leader, creature) ||
+		    !leader->canPerceive(*creature, leader->getDistanceTo(creature)))
+			continue;
+
+		hostiles.push_back(creature->getID());
+	}
+	if (_autoPauseMonitor.updateSightedEnemies(hostiles, leader->isInCombat()))
+		pauseGame(kPauseReasonEnemySighted);
+}
+
 void Module::moveParty(float x, float y, float z) {
 	Creature *partyLeader = getPartyLeader();
 	float angle = 0.0f;
@@ -1576,6 +2496,9 @@ void Module::moveParty(float x, float y, float z) {
 }
 
 void Module::moveParty(float x, float y, float z, float angle) {
+	// Arriving inside a transition trigger must not bounce the party right back.
+	_teleportingParty = true;
+
 	int partySize = static_cast<int>(_partyController.getPartyMemberCount());
 	for (int i = 0; i < partySize; ++i) {
 		Creature *creature = _partyController.getPartyMemberByIndex(i).second;
@@ -1587,6 +2510,8 @@ void Module::moveParty(float x, float y, float z, float angle) {
 		else
 			_area->notifyObjectMoved(*creature);
 	}
+
+	_teleportingParty = false;
 
 	setCameraYaw(Common::deg2rad(angle));
 }
@@ -1603,11 +2528,31 @@ void Module::moveParty(const Common::UString &module, const Common::UString &obj
 	load(module, object, type);
 }
 
-void Module::movedPartyLeader() {
-	float x, y, _;
-	_partyController.getPartyLeader()->getPosition(x, y, _);
+void Module::notifyObjectTeleported(Object &object) {
+	if (!_area)
+		return;
 
-	_area->evaluateTriggers(x, y);
+	// A route planned from where it stood no longer applies.
+	if (Creature *creature = ObjectContainer::toCreature(&object))
+		creature->getMovePath().clear();
+
+	if (&object == getPartyLeader()) {
+		// Arriving inside a transition trigger must not move the party on.
+		_teleportingParty = true;
+		movedPartyLeader();
+		_teleportingParty = false;
+	} else {
+		_area->notifyObjectMoved(object);
+	}
+}
+
+void Module::movedPartyLeader() {
+	Creature *leader = _partyController.getPartyLeader();
+	if (!leader || !_area)
+		return;
+
+	// The triggers are checked at the next safe point of the frame.
+	_area->queueTriggerCheck(*leader, !_teleportingParty);
 	_area->notifyPartyLeaderMoved();
 
 	_cameraController.updateTarget();
@@ -1619,7 +2564,7 @@ Creature *Module::getPartyLeader() const {
 }
 
 Creature *Module::getPartyMemberByIndex(int index) const {
-	if (index >= static_cast<int>(_partyController.getPartyMemberCount()))
+	if (index < 0 || index >= static_cast<int>(_partyController.getPartyMemberCount()))
 		return nullptr;
 
 	return _partyController.getPartyMemberByIndex(index).second;
@@ -1627,6 +2572,38 @@ Creature *Module::getPartyMemberByIndex(int index) const {
 
 bool Module::isObjectPartyMember(Creature *object) const {
 	return _partyController.isObjectPartyMember(object);
+}
+
+Inventory &Module::getInventoryOf(Creature &creature) {
+	if (_pc && ((&creature == _pc) || isObjectPartyMember(&creature)))
+		return _pc->getInventory();
+
+	return creature.getInventory();
+}
+
+void Module::awardPartyXP(int xp) {
+	if (xp <= 0)
+		return;
+
+	// In KotOR the whole roster shares experience, so companions keep pace.
+	std::set<Creature *> awarded;
+	std::set<int> activeNPCs;
+
+	if (_pc) {
+		_pc->addPlotXP(xp);
+		awarded.insert(_pc);
+	}
+
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+		const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+		activeNPCs.insert(member.first);
+		if (member.second && awarded.insert(member.second).second)
+			member.second->addPlotXP(xp);
+	}
+
+	for (auto &state : _npcStates)
+		if (activeNPCs.find(state.first) == activeNPCs.end())
+			state.second.setExperience(state.second.getExperience() + xp);
 }
 
 bool Module::isAvailableCreature(int npc) const {
@@ -1647,17 +2624,33 @@ void Module::setPartyLeaderByIndex(int index) {
 
 void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 	if (_inDialog) {
-		_dialog->hide();
+		getConversationGUI().hide();
 	} else {
 		_ingame->hide();
 		_ingame->hideSelection();
 	}
+
+	// Only roster slots can be forced (the GUI indexes its slots with them).
+	if ((forceNPC1 < -1) || (forceNPC1 >= 10))
+		forceNPC1 = -1;
+	if ((forceNPC2 < -1) || (forceNPC2 >= 10))
+		forceNPC2 = -1;
 
 	PartyConfiguration config;
 
 	for (int i = 0; i < 10; ++i) {
 		if (_partyController.isAvailableCreature(i))
 			config.slotTemplate[i] = _partyController.getAvailableNPCTemplate(i);
+	}
+
+	for (int i = 0; i < 10; ++i)
+		config.slotSelectable[i] = isNPCSelectable(i);
+
+	// The current companions start out ticked
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+		const int npc = _partyController.getPartyMemberByIndex(static_cast<int>(i)).first;
+		if ((npc >= 0) && (npc < 10) && !config.slotTemplate[npc].empty())
+			config.slotSelected[npc] = true;
 	}
 
 	config.forceNPC1 = forceNPC1;
@@ -1670,8 +2663,11 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 	_partySelection->run();
 	_partySelection->hide();
 
+	// The GUI edits its own copy of the configuration.
+	config = _partySelection->getConfiguration();
+
 	if (_inDialog) {
-		_dialog->show();
+		getConversationGUI().show();
 	} else {
 		_ingame->show();
 	}
@@ -1681,36 +2677,60 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 
 	if ((npc1 == -1) || (npc2 == -1)) {
 		for (int i = 0; i < 10; ++i) {
-			if (config.slotSelected[i]) {
-				if (npc1 == -1) {
-					npc1 = i;
-				} else {
-					npc2 = i;
-					break;
-				}
-			}
+			if (!config.slotSelected[i] || config.slotTemplate[i].empty() || i == npc1 || i == npc2)
+				continue;
+
+			if (npc1 == -1)
+				npc1 = i;
+			else if (npc2 == -1)
+				npc2 = i;
 		}
 	}
 
+	// Keep companions that stay in the party; bench the others (remembering
+	// their progression) and remove them from the area.
+	std::map<int, Creature *> kept;
+	std::vector<Creature *> temporary;
 	int partySize = static_cast<int>(_partyController.getPartyMemberCount());
 	for (int i = 0; i < partySize; ++i) {
 		auto partyMember = _partyController.getPartyMemberByIndex(i);
-		if (partyMember.first != -1)
-			_area->removeObject(partyMember.second);
+		if (partyMember.first == PartyController::kPCSlot || !partyMember.second)
+			continue;
+
+		// Members without a roster slot aren't part of the selection.
+		if (partyMember.first == PartyController::kTemporarySlot) {
+			temporary.push_back(partyMember.second);
+			continue;
+		}
+
+		if (partyMember.first == npc1 || partyMember.first == npc2) {
+			kept[partyMember.first] = partyMember.second;
+			continue;
+		}
+
+		rememberNPCState(partyMember.first, *partyMember.second);
+		_area->removeObject(partyMember.second);
 	}
 
 	_partyController.clearCurrentParty();
 	_partyController.addPartyMember(-1, _pc);
 
-	if (npc1 != -1) {
-		Creature *creature = createCreature(config.slotTemplate[npc1]);
-		_partyController.addPartyMember(npc1, creature);
+	for (int npc : { npc1, npc2 }) {
+		if (npc == -1)
+			continue;
+
+		try {
+			auto it = kept.find(npc);
+			Creature *creature = (it != kept.end()) ? it->second : createPartyNPC(npc, config.slotTemplate[npc]);
+			_partyController.addPartyMember(npc, creature);
+		} catch (Common::Exception &e) {
+			e.add("Failed to add party member %d", npc);
+			printException(e, "WARNING: ");
+		}
 	}
 
-	if (npc2 != -1) {
-		Creature *creature = createCreature(config.slotTemplate[npc2]);
-		_partyController.addPartyMember(npc2, creature);
-	}
+	for (Creature *creature : temporary)
+		_partyController.addPartyMember(PartyController::kTemporarySlot, creature);
 
 	updateCurrentPartyGUI();
 }
@@ -1735,8 +2755,30 @@ void Module::setSoloMode(bool enabled) {
 	_soloMode = enabled;
 }
 
+int Module::getPartyAIStyle() const {
+	return getGlobalNumber("__party_ai_style");
+}
+
 void Module::setPartyAIStyle(int style) {
-	// TODO: Module::setPartyAIStyle()
+	setGlobalNumber("__party_ai_style", style);
+}
+
+void Module::saveNPCState(int npc) {
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+		const std::pair<int, Creature *> &member = _partyController.getPartyMemberByIndex(static_cast<int>(i));
+		if ((member.first == npc) && member.second) {
+			rememberNPCState(npc, *member.second);
+			return;
+		}
+	}
+}
+
+bool Module::isNPCSelectable(int npc) const {
+	return !getGlobalBoolean(Common::String::format("__npc_unselectable_%d", npc));
+}
+
+void Module::setNPCSelectable(int npc, bool selectable) {
+	setGlobalBoolean(Common::String::format("__npc_unselectable_%d", npc), !selectable);
 }
 
 void Module::addPartyMember(int npc, Creature *creature) {
@@ -1745,45 +2787,32 @@ void Module::addPartyMember(int npc, Creature *creature) {
 }
 
 void Module::removePartyMember(int npc) {
-	size_t count = _partyController.getPartyMemberCount();
-
-	// Collect all members we want to keep
-	std::vector<std::pair<int, Creature *>> remaining;
-	remaining.reserve(count);
-	for (size_t i = 0; i < count; ++i) {
+	// Like the original, the creature leaves the party but stays in the world
+	// as an ordinary NPC: scripts keep using it (k_pend_traskdie1 gives Trask
+	// a sword for his last fight) or destroy it themselves (UT_StoreParty).
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
 		const auto &pair = _partyController.getPartyMemberByIndex(static_cast<int>(i));
-		if (pair.first != npc) {
-			remaining.push_back(pair);
-		} else if (pair.second && _area) {
-			_area->removeObject(pair.second);
+		if (pair.first == npc) {
+			removeCreatureFromParty(pair.second);
+			return;
 		}
 	}
-
-	_partyController.clearCurrentParty();
-	for (auto &pair : remaining)
-		_partyController.addPartyMember(pair.first, pair.second);
-
-	updateCurrentPartyGUI();
 }
 
 void Module::removeCreatureFromParty(Creature *creature) {
-	if (!creature)
+	// The PC always stays in the party.
+	if (!creature || (creature == _pc))
 		return;
 
-	size_t count = _partyController.getPartyMemberCount();
-	std::vector<std::pair<int, Creature *>> remaining;
-	remaining.reserve(count);
-	for (size_t i = 0; i < count; ++i) {
-		const auto &pair = _partyController.getPartyMemberByIndex(static_cast<int>(i));
-		if (pair.second != creature)
-			remaining.push_back(pair);
-	}
+	const bool wasLeader = creature && (creature == _partyController.getPartyLeader());
 
-	_partyController.clearCurrentParty();
-	for (auto &pair : remaining)
-		_partyController.addPartyMember(pair.first, pair.second);
+	if (!_partyController.removePartyMember(creature))
+		return;
 
-	updateCurrentPartyGUI();
+	if (wasLeader)
+		notifyPartyLeaderChanged();
+	else
+		updateCurrentPartyGUI();
 }
 
 void Module::addAvailableNPCByObject(int npc, Creature *creature) {
@@ -1796,26 +2825,28 @@ void Module::removeAvailableNPC(int npc) {
 	_partyController.removeAvailableNPC(npc);
 }
 
-void Module::spawnAvailableNPC(int npc, const Common::UString &waypointTag) {
-	if (!_partyController.isAvailableCreature(npc))
-		return;
+Creature *Module::spawnAvailableNPC(int npc, float x, float y, float z, float angle) {
+	// Like the original, this only puts the companion into the area (e.g. the
+	// crew standing around the Ebon Hawk); it does not join the party.
+	if (!_area || !_partyController.isAvailableCreature(npc))
+		return nullptr;
 
-	const Common::UString &templ = _partyController.getAvailableNPCTemplate(npc);
-	Creature *creature = createCreature(templ);
-	if (!creature)
-		return;
-
-	float x = 0.0f, y = 0.0f, z = 0.0f, angle = 0.0f;
-	if (!waypointTag.empty())
-		getObjectLocation(waypointTag, kObjectTypeWaypoint, x, y, z, angle);
+	Creature *creature = nullptr;
+	try {
+		creature = createPartyNPC(npc, _partyController.getAvailableNPCTemplate(npc));
+	} catch (Common::Exception &e) {
+		e.add("Failed to spawn available NPC %d", npc);
+		printException(e, "WARNING: ");
+		return nullptr;
+	}
 
 	creature->setPosition(x, y, z);
 	creature->setOrientation(0.0f, 0.0f, 1.0f, angle);
-	if (_area)
-		_area->addCreature(creature);
+	creature->setRosterSpawn(true);
+	_area->addCreature(creature);
+	creature->show();
 
-	_partyController.addPartyMember(npc, creature);
-	updateCurrentPartyGUI();
+	return creature;
 }
 
 void Module::showGalaxyMap() {
@@ -1879,6 +2910,21 @@ void Module::setGlobalString(const Common::UString &id, const Common::UString &v
 	_globalStrings[id] = value;
 }
 
+bool Module::getGlobalLocation(const Common::UString &id, Location &location) const {
+	auto it = _globalLocations.find(id);
+	if (it == _globalLocations.end())
+		return false;
+
+	location = it->second;
+	// KotOR has one area per module: a location is in the current area.
+	location.setArea(_area.get());
+	return true;
+}
+
+void Module::setGlobalLocation(const Common::UString &id, const Location &location) {
+	_globalLocations[id] = location;
+}
+
 Common::UString Module::getGlobalString(const Common::UString &id) const {
 	auto iter = _globalStrings.find(id);
 	if (iter != _globalStrings.end())
@@ -1890,47 +2936,12 @@ Common::UString Module::getGlobalString(const Common::UString &id) const {
 // Reputation helpers
 // ---------------------------------------------------------------------------
 
-static bool isHostileFactionId(int faction) {
-	return faction == static_cast<int>(kFactionHostile1) ||
-	       faction == static_cast<int>(kFactionHostile2) ||
-	       faction == static_cast<int>(kFactionEndarSpire);
-}
-
-static bool isFriendlyFactionId(int faction) {
-	return faction == static_cast<int>(kFactionFriendly1) ||
-	       faction == static_cast<int>(kFactionFriendly2);
-}
-
-static int defaultReputationBetweenFactions(int sourceFaction, int targetFaction) {
-	if (sourceFaction == targetFaction)
-		return 100;
-
-	const bool sourceHostile  = isHostileFactionId(sourceFaction);
-	const bool sourceFriendly = isFriendlyFactionId(sourceFaction);
-	const bool targetHostile  = isHostileFactionId(targetFaction);
-	const bool targetFriendly = isFriendlyFactionId(targetFaction);
-
-	if ((sourceHostile && targetFriendly) || (sourceFriendly && targetHostile))
-		return 0;
-
-	return 50;
-}
-
 int Module::getReputation(int sourceFaction, int targetFaction) const {
-	auto key = std::make_pair(sourceFaction, targetFaction);
-	auto it = _reputations.find(key);
-	if (it != _reputations.end())
-		return it->second;
-	return defaultReputationBetweenFactions(sourceFaction, targetFaction);
+	return ReputationMan.get(sourceFaction, targetFaction);
 }
 
 void Module::adjustReputation(int targetFaction, int sourceFaction, int delta) {
-	auto key = std::make_pair(sourceFaction, targetFaction);
-	int current = getReputation(sourceFaction, targetFaction);
-	int updated = current + delta;
-	if (updated < 0)   updated = 0;
-	if (updated > 100) updated = 100;
-	_reputations[key] = updated;
+	ReputationMan.adjust(sourceFaction, targetFaction, delta);
 }
 
 void Module::setReturnStrref(uint32_t id) {
@@ -2009,10 +3020,46 @@ void Module::delayScript(const Common::UString &script,
 	_delayedActions.insert(action);
 }
 
+bool Module::hasDelayedScriptFor(const Aurora::NWScript::Object *owner, uint32_t until) const {
+	for (const Action &action : _delayedActions) {
+		if (action.timestamp > until)
+			break;
+
+		if ((action.type == kActionScript) && owner && (action.owner.getId() == owner->getID()))
+			return true;
+	}
+
+	return false;
+}
+
 void Module::signalUserDefinedEvent(Object *owner, int number) {
 	if (owner) {
+		// Handlers may signal further events; restore the outer number after.
+		const int previous = _userDefinedEventNumber;
 		_userDefinedEventNumber = number;
 		owner->runScript(kScriptUserdefined, owner, owner);
+		_userDefinedEventNumber = previous;
+	}
+}
+
+void Module::queueUserDefinedEvent(Object *owner, int number) {
+	if (owner)
+		_queuedUserDefinedEvents.emplace_back(Aurora::NWScript::ObjectReference(owner), number);
+}
+
+void Module::processQueuedUserDefinedEvents() {
+	if (_queuedUserDefinedEvents.empty())
+		return;
+
+	// Events signalled by these handlers run next frame, so a handler that
+	// signals itself can't recurse without bound.
+	std::vector<std::pair<Aurora::NWScript::ObjectReference, int>> events;
+	events.swap(_queuedUserDefinedEvents);
+
+	for (const auto &event : events) {
+		Object *owner = ObjectContainer::toObject(*event.first);
+		if (owner)
+			signalUserDefinedEvent(owner, event.second);
 	}
 }
 
@@ -2182,8 +3229,14 @@ void Module::loadSavedGame(SavedGame *save) {
 	try {
 		std::unique_ptr<CharacterGenerationInfo> info(save->createCharGenInfo());
 		usePC(*info.get());
+		resetSessionState();
 		save->applyPersistedState(*this);
+		_playTime = static_cast<float>(save->getTimePlayed());
+		_hasSavedPCPosition = save->getPCPosition(_savedPCPosition.x, _savedPCPosition.y, _savedPCPosition.z);
 		_loadedFromSaveGame = true;
+		// From inside a running game the module swap is deferred to
+		// replaceModule(), which must then keep the state loaded here.
+		_loadingSavedGame = isRunning() || _hasModule;
 		load(save->getModuleName());
 	} catch (...) {
 		Common::exceptionDispatcherWarning();
@@ -2199,7 +3252,11 @@ bool Module::isConversationActive() const {
 }
 
 bool Module::isObjectInConversation(Aurora::NWScript::Object *object) const {
-	return _dialog && _dialog->isObjectInConversation(object);
+	return (_dialog || _computer) && getConversationGUI().isObjectInConversation(object);
+}
+
+DialogGUI &Module::getConversationGUI() const {
+	return _conversationGUI ? *_conversationGUI : *_dialog;
 }
 
 void Module::startConversation(const Common::UString &name, Aurora::NWScript::Object *owner) {
@@ -2218,24 +3275,37 @@ void Module::startConversation(const Common::UString &name, Aurora::NWScript::Ob
 			finalName = situated->getConversation();
 	}
 
-	if (finalName.empty())
+	if (finalName.empty()) {
+		// HoldWorldFadeInForDialog waits for a conversation that won't come
+		releaseWorldFadeInForDialog();
 		return;
+	}
 
 	_lastConversation = finalName;
-	_dialog->startConversation(finalName, owner);
+	_conversationPausedSince = 0;
 
-	if (_dialog->isConversationActive()) {
+	// Computer terminals run in their own GUI, without the cinematic camera.
+	_conversationGUI = _dialog.get();
+	if (_computer && DialogGUI::isComputerConversation(DialogGUI::getConversationType(finalName)))
+		_conversationGUI = _computer.get();
+
+	_conversationGUI->startConversation(finalName, owner);
+
+	if (_conversationGUI->isConversationActive()) {
 		_cameraController.stopMovement();
 		_partyLeaderController.clearUserInput();
 		_partyLeaderController.stopMovement();
 
 		_ingame->hide();
 		_ingame->hideSelection();
-		_dialog->show();
+		_conversationGUI->show();
 		_inDialog = true;
 		releaseWorldFadeInForDialog();
 
 		updateFrameTimestamp();
+	} else {
+		// No start entry applied: don't leave the screen held black
+		releaseWorldFadeInForDialog();
 	}
 }
 
@@ -2277,6 +3347,61 @@ void Module::setCameraPitch(float pitch) {
 
 void Module::setCinematicCamera(uint32_t cameraID, float cameraAngle, const Common::UString &cameraModel) {
 	_cameraController.setCinematicCamera(cameraID, cameraAngle, cameraModel);
+}
+
+void Module::requestTutorialWindow(int index) {
+	if (!_tutorialWindowsEnabled || index < 0)
+		return;
+
+	// Each tutorial is shown only once per game (globals are saved; the flag
+	// is set when it is actually displayed).
+	const Common::UString shown = Common::String::format("__tutorial_%d", index);
+	if (getGlobalBoolean(shown))
+		return;
+
+	if (std::find(_pendingTutorialWindows.begin(), _pendingTutorialWindows.end(), index) ==
+	    _pendingTutorialWindows.end())
+		_pendingTutorialWindows.push_back(index);
+}
+
+void Module::processTutorialWindows() {
+	if (_pendingTutorialWindows.empty() || _inDialog || _cutsceneMode || isMoviePlaying())
+		return;
+
+	const int index = _pendingTutorialWindows.front();
+	_pendingTutorialWindows.erase(_pendingTutorialWindows.begin());
+
+	_cameraController.stopMovement();
+	_partyLeaderController.clearUserInput();
+	_partyLeaderController.stopMovement();
+
+	setGlobalBoolean(Common::String::format("__tutorial_%d", index), true);
+	showTutorialWindow(index);
+	updateFrameTimestamp();
+}
+
+void Module::setConversationPaused(bool paused) {
+	// A pause reached after its conversation ended must not hold the next one.
+	if (paused && !_inDialog)
+		return;
+
+	_conversationPausedSince = paused ? MAX<uint32_t>(EventMan.getTimestamp(), 1) : 0;
+}
+
+void Module::setDialogShot(int cameraAngle, Object *speaker, Object *listener) {
+	_cameraController.setDialogShot(cameraAngle, speaker, listener);
+}
+
+bool Module::setStaticShot(uint32_t cameraID) {
+	return _cameraController.setStaticShot(cameraID);
+}
+
+bool Module::setAnimatedShot(const Common::UString &cameraModel, uint32_t cameraAnimation) {
+	return _cameraController.setAnimatedShot(cameraModel, cameraAnimation);
+}
+
+void Module::setShotFieldOfView(float fov) {
+	_cameraController.setShotFieldOfView(fov);
 }
 
 void Module::setCameraMode(CameraMode mode, Object *target) {
@@ -2332,8 +3457,12 @@ void Module::setCutsceneMode(bool enabled) {
 	_cutsceneMode = enabled;
 	if (enabled)
 		setPlayerInputEnabled(false);
-	else
+	else {
 		resetToOrbit();
+		// Leaving cutscene mode hands control back to the player.
+		if (_noClicksUntil == 0)
+			setPlayerInputEnabled(true);
+	}
 
 	if (_ingame) {
 		if (enabled)
@@ -2382,8 +3511,8 @@ void Module::delayConversation(const Common::UString &name, Aurora::NWScript::Ob
 	_delayedConversation = std::make_unique<DelayedConversation>(name, owner);
 }
 
-void Module::delayContainer(Placeable *placeable) {
-	_delayedContainer = placeable;
+void Module::delayContainer(Object *container) {
+	_delayedContainer = container;
 }
 
 void Module::addItemToActiveObject(const Common::UString &item, int count) {
@@ -2427,11 +3556,9 @@ void Module::updateCurrentPartyGUI() {
 	if (partySize > 0)
 		_ingame->setPartyLeader(_partyController.getPartyLeader());
 
-	if (partySize > 1)
-		_ingame->setPartyMember1(_partyController.getPartyMemberByIndex(1).second);
-
-	if (partySize > 2)
-		_ingame->setPartyMember2(_partyController.getPartyMemberByIndex(2).second);
+	// Empty the portraits of members who left.
+	_ingame->setPartyMember1((partySize > 1) ? _partyController.getPartyMemberByIndex(1).second : nullptr);
+	_ingame->setPartyMember2((partySize > 2) ? _partyController.getPartyMemberByIndex(2).second : nullptr);
 }
 
 Creature *Module::createCreatureByTemplate(const Common::UString &resRef) const {
@@ -2453,6 +3580,7 @@ void Module::setSpellScriptContext(int spellId, Object *caster, Object *target, 
 	_spellScriptSaveDC = saveDC > 0 ? saveDC : 12;
 	_spellScriptHarmful = harmful;
 	_spellScriptCastItem = castItem;
+	_spellScriptHasTargetLocation = false;
 }
 
 void Module::clearSpellScriptContext() {
@@ -2462,6 +3590,20 @@ void Module::clearSpellScriptContext() {
 	_spellScriptSaveDC = 12;
 	_spellScriptHarmful = false;
 	_spellScriptCastItem = nullptr;
+	_spellScriptHasTargetLocation = false;
+}
+
+void Module::setSpellScriptTargetLocation(const glm::vec3 &location) {
+	_spellScriptTargetLocation = location;
+	_spellScriptHasTargetLocation = true;
+}
+
+bool Module::getSpellScriptTargetLocation(glm::vec3 &location) const {
+	if (!_spellScriptHasTargetLocation)
+		return false;
+
+	location = _spellScriptTargetLocation;
+	return true;
 }
 
 int Module::getSpellScriptId() const {
@@ -2504,35 +3646,87 @@ Object *Module::getLastAoECreator() const {
 	return _lastAoECreator;
 }
 
-static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst) {
-	auto copyUint = [&](const char *field) {
-		if (src.hasField(field))
-			dst.addUint32(field, src.getUint(field));
-	};
-	auto copyByte = [&](const char *field) {
-		if (src.hasField(field))
-			dst.addByte(field, src.getUint(field) ? 1 : 0);
-	};
-	auto copyString = [&](const char *field) {
-		if (src.hasField(field))
-			dst.addExoString(field, src.getString(field));
-	};
+/** Copy every field of a GFF3 struct (recursively) into a writer struct. */
+static void copyObjectSaveFields(const Aurora::GFF3Struct &src, Aurora::GFF3WriterStruct &dst,
+                                 const char *skipField) {
+	for (const Common::UString &name : src.getFieldNames()) {
+		if (skipField && name == skipField)
+			continue;
 
-	copyUint("CurrentHP");
-	copyByte("Usable");
-	copyByte("Locked");
-	copyByte("TrapFlag");
-	copyByte("TrapDetectable");
-	copyByte("TrapDisarmable");
-	copyByte("TrapRecoverable");
-	copyByte("TrapOneShot");
-	copyByte("TrapActive");
-	copyByte("TrapFlagged");
-	copyUint("TrapType");
-	copyUint("TrapDetectDC");
-	copyUint("DisarmDC");
-	copyString("KeyName");
-	copyUint("AnimationState");
+		switch (src.getFieldType(name)) {
+			case Aurora::GFF3Struct::kFieldTypeByte:
+				dst.addByte(name, static_cast<uint8_t>(src.getUint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeChar:
+				dst.addChar(name, static_cast<int8_t>(src.getSint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeUint16:
+				dst.addUint16(name, static_cast<uint16_t>(src.getUint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeSint16:
+				dst.addSint16(name, static_cast<int16_t>(src.getSint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeUint32:
+				dst.addUint32(name, static_cast<uint32_t>(src.getUint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeSint32:
+				dst.addSint32(name, static_cast<int32_t>(src.getSint(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeUint64:
+				dst.addUint64(name, src.getUint(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeSint64:
+				dst.addSint64(name, src.getSint(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeFloat:
+				dst.addFloat(name, static_cast<float>(src.getDouble(name)));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeDouble:
+				dst.addDouble(name, src.getDouble(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeExoString:
+				dst.addExoString(name, src.getString(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeResRef:
+				dst.addResRef(name, src.getString(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeLocString: {
+				Aurora::LocString locString;
+				if (src.getLocString(name, locString))
+					dst.addLocString(name, locString);
+				break;
+			}
+			case Aurora::GFF3Struct::kFieldTypeVoid:
+				dst.addVoid(name, src.getData(name));
+				break;
+			case Aurora::GFF3Struct::kFieldTypeVector: {
+				float x, y, z;
+				src.getVector(name, x, y, z);
+				dst.addVector(name, glm::vec3(x, y, z));
+				break;
+			}
+			case Aurora::GFF3Struct::kFieldTypeOrientation: {
+				float a, b, c, d;
+				src.getOrientation(name, a, b, c, d);
+				dst.addOrientation(name, glm::vec4(a, b, c, d));
+				break;
+			}
+			case Aurora::GFF3Struct::kFieldTypeStruct: {
+				const Aurora::GFF3Struct &child = src.getStruct(name);
+				copyObjectSaveFields(child, *dst.addStruct(name, child.getID()));
+				break;
+			}
+			case Aurora::GFF3Struct::kFieldTypeList: {
+				Aurora::GFF3WriterListPtr list = dst.addList(name);
+				for (const Aurora::GFF3Struct *child : src.getList(name))
+					if (child)
+						copyObjectSaveFields(*child, *list->addStruct(child->getID()));
+				break;
+			}
+			default:
+				break;
+		}
+	}
 }
 
 void Module::loadAreaObjectSaves(const Aurora::GFF3Struct &gff) {
@@ -2549,11 +3743,13 @@ void Module::loadAreaObjectSaves(const Aurora::GFF3Struct &gff) {
 			continue;
 
 		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
-		copyObjectSaveFields(*entry, *writer.getTopLevel());
+		copyObjectSaveFields(*entry, *writer.getTopLevel(), "Key");
 
 		Common::MemoryWriteStreamDynamic memStream(true);
 		writer.write(memStream);
 
+		// The GFF takes over the buffer.
+		memStream.setDisposable(false);
 		auto state = std::make_shared<Aurora::GFF3File>(
 			new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
 		setAreaObjectSave(key, state);
@@ -2580,6 +3776,19 @@ void Module::saveState(Aurora::GFF3WriterStruct &gff) const {
 		Aurora::GFF3WriterStructPtr item = stringList->addStruct();
 		item->addExoString("Name", entry.first);
 		item->addExoString("Value", entry.second);
+	}
+
+	Aurora::GFF3WriterListPtr locationList = gff.addList("ValLocation");
+	for (const auto &entry : _globalLocations) {
+		float x, y, z;
+		entry.second.getPosition(x, y, z);
+
+		Aurora::GFF3WriterStructPtr item = locationList->addStruct();
+		item->addExoString("Name", entry.first);
+		item->addDouble("X", x);
+		item->addDouble("Y", y);
+		item->addDouble("Z", z);
+		item->addDouble("Facing", entry.second.getFacing());
 	}
 
 	Aurora::GFF3WriterListPtr journalList = gff.addList("JournalEntries");
@@ -2664,6 +3873,19 @@ void Module::loadState(const Aurora::GFF3Struct &gff) {
 			if (!entry)
 				continue;
 			_globalStrings[entry->getString("Name")] = entry->getString("Value");
+		}
+	}
+
+	_globalLocations.clear();
+	if (gff.hasField("ValLocation")) {
+		for (const auto &entry : gff.getList("ValLocation")) {
+			if (!entry)
+				continue;
+
+			Location location;
+			location.setPosition(entry->getDouble("X"), entry->getDouble("Y"), entry->getDouble("Z"));
+			location.setFacing(entry->getDouble("Facing"));
+			_globalLocations[entry->getString("Name")] = location;
 		}
 	}
 

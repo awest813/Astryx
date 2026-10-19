@@ -62,6 +62,11 @@ void Store::setMarkDown(int markDown) {
 	_markDown = markDown;
 }
 
+void Store::setBonusMarks(int bonusMarkUp, int bonusMarkDown) {
+	_bonusMarkUp   = bonusMarkUp;
+	_bonusMarkDown = bonusMarkDown;
+}
+
 int Store::getBuyPrice(const Item &item, const Creature &pc) const {
 	int cost = item.getCost();
 
@@ -70,7 +75,7 @@ int Store::getBuyPrice(const Item &item, const Creature &pc) const {
 	int persuadeRank = const_cast<Creature &>(pc).getSkillRank(kSkillPersuade);
 	int discount = std::min(persuadeRank, 20);
 
-	int markUp = _markUp;
+	int markUp = _markUp + _bonusMarkUp;
 	int price = (cost * (markUp - discount)) / 100;
 	return std::max(price, 1);
 }
@@ -83,7 +88,7 @@ int Store::getSellPrice(const Item &item, const Creature &pc) const {
 	int persuadeRank = const_cast<Creature &>(pc).getSkillRank(kSkillPersuade);
 	int bonus = std::min(persuadeRank, 20);
 
-	int markDown = _markDown;
+	int markDown = _markDown + _bonusMarkDown;
 	int price = (cost * (markDown + bonus)) / 100;
 	return std::max(price, 1);
 }

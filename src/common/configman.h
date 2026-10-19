@@ -28,6 +28,7 @@
 #define COMMON_CONFIGMAN_H
 
 #include <memory>
+#include <vector>
 
 #include "src/common/types.h"
 #include "src/common/error.h"
@@ -76,7 +77,11 @@ public:
 	/** Load from a generic read stream. */
 	void load(SeekableReadStream &stream);
 
-	/** Save to the default config file. */
+	/** Save to the default config file.
+	 *
+	 *  If a value can't be written so that it reads back the same
+	 *  (see ConfigFile::isValidValue()), nothing is saved and false is returned.
+	 */
 	bool save();
 	/** Save to a generic write stream. */
 	void save(WriteStream &stream, bool clearChanged = false);
@@ -91,6 +96,8 @@ public:
 
 	/** Does the specified game domain exist? */
 	bool hasGame(const UString &gameID);
+	/** Return the IDs of all game domains (targets) in the config. */
+	std::vector<UString> getGames() const;
 
 	/** Set the game domain to gameID. */
 	bool setGame(const UString &gameID = "");

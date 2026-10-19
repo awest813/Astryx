@@ -22,6 +22,8 @@
  *  Character generation information for KotOR games.
  */
 
+#include <algorithm>
+
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 
 namespace Engines {
@@ -102,6 +104,18 @@ void CharacterGenerationInfo::addFeat(uint32_t feat) {
 	_feats.push_back(feat);
 }
 
+void CharacterGenerationInfo::setChosenFeat(uint32_t feat) {
+	if (_chosenFeat != 0xFFFFFFFF) {
+		auto it = std::find(_feats.begin(), _feats.end(), _chosenFeat);
+		if (it != _feats.end())
+			_feats.erase(it);
+	}
+
+	_chosenFeat = feat;
+	if (feat != 0xFFFFFFFF)
+		_feats.push_back(feat);
+}
+
 CharacterGenerationInfo::CharacterGenerationInfo(const CharacterGenerationInfo &info) {
 	_class = info._class;
 	_gender = info._gender;
@@ -111,6 +125,7 @@ CharacterGenerationInfo::CharacterGenerationInfo(const CharacterGenerationInfo &
 	_abilities = info._abilities;
 	_skills = info._skills;
 	_feats = info._feats;
+	_chosenFeat = info._chosenFeat;
 }
 
 
@@ -126,6 +141,7 @@ void CharacterGenerationInfo::operator=(const CharacterGenerationInfo &info) {
 	_abilities = info._abilities;
 	_skills = info._skills;
 	_feats = info._feats;
+	_chosenFeat = info._chosenFeat;
 }
 
 

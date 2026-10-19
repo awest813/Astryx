@@ -53,6 +53,8 @@ public:
 	             ::Engines::Console *console,
 	             uint8_t type = kSaveLoadMenuTypeLoad,
 	             bool frontBackground = false);
+
+	void show() override;
 private:
 	KotORBase::Module *_module;
 	uint8_t _type;
@@ -61,6 +63,7 @@ private:
 	void callbackActive(Widget &widget);
 	void callbackKeyInput(const Events::Key &key, const Events::EventType &type);
 	void addSavedGameItems(Odyssey::WidgetListBox *listBox);
+	void fillSavedGames();
 	void tryLoadGame(const Common::UString &dir);
 	void trySaveGame(const Common::UString &dir);
 	Common::UString getNewSaveDirectory() const;

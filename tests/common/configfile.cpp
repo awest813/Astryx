@@ -397,3 +397,82 @@ GTEST_TEST(ConfigFile, create) {
 	for (size_t i = 0; i < strlen(compareFile); i++)
 		EXPECT_EQ(writeStream.getData()[i], compareFile[i]) << "At index " << i;
 }
+
+GTEST_TEST(ConfigFile, valueSpecialCharacters) {
+	static const char *kSpecialConfig = "[section]\n"
+	                                    "path=/games/Star Wars [GOG]/swkotor\n"
+	                                    "equals=a=b=c\n"
+	                                    "bracket= ]x[ # comment\n";
+
+	Common::ConfigFile config;
+	loadConfig(config, kSpecialConfig);
+
+	const Common::ConfigDomain *domain = config.getDomain("section");
+	ASSERT_NE(domain, static_cast<const Common::ConfigDomain *>(0));
+
+	EXPECT_STREQ(domain->getString("path").c_str(), "/games/Star Wars [GOG]/swkotor");
+	EXPECT_STREQ(domain->getString("equals").c_str(), "a=b=c");
+	EXPECT_STREQ(domain->getString("bracket").c_str(), "]x[");
+}
+
+GTEST_TEST(ConfigFile, valueRoundTrip) {
+	static const char *kPath = "/games/Star Wars [GOG]/swkotor=1";
+
+	Common::ConfigFile config;
+	config.addDomain("game")->setString("path", kPath);
+
+	Common::MemoryWriteStreamDynamic writeStream(true);
+	config.save(writeStream);
+
+	Common::MemoryReadStream readStream(writeStream.getData(), writeStream.size());
+
+	Common::ConfigFile config2;
+	config2.load(readStream);
+
+	const Common::ConfigDomain *domain = config2.getDomain("game");
+	ASSERT_NE(domain, static_cast<const Common::ConfigDomain *>(0));
+
+	EXPECT_STREQ(domain->getString("path").c_str(), kPath);
+}
+
+GTEST_TEST(ConfigFile, parseFailBrackets) {
+	Common::ConfigFile config;
+	EXPECT_THROW(loadConfig(config, "[section]\nkey[1]=5"), Common::Exception);
+
+	config.clear();
+	EXPECT_THROW(loadConfig(config, "[section][section2]\nkey1=5"), Common::Exception);
+}
+
+GTEST_TEST(ConfigFile, isValidValue) {
+	EXPECT_TRUE(Common::ConfigFile::isValidValue(""));
+	EXPECT_TRUE(Common::ConfigFile::isValidValue("foobar"));
+	EXPECT_TRUE(Common::ConfigFile::isValidValue("/games/Star Wars [GOG]/swkotor"));
+	EXPECT_TRUE(Common::ConfigFile::isValidValue("a=b"));
+
+	EXPECT_FALSE(Common::ConfigFile::isValidValue("/games/kotor#1"));
+	EXPECT_FALSE(Common::ConfigFile::isValidValue("foo\nbar"));
+	EXPECT_FALSE(Common::ConfigFile::isValidValue("foo\rbar"));
+	EXPECT_FALSE(Common::ConfigFile::isValidValue(" foobar"));
+	EXPECT_FALSE(Common::ConfigFile::isValidValue("foobar "));
+}
+
+GTEST_TEST(ConfigFile, findInvalidValue) {
+	Common::ConfigFile config;
+
+	Common::ConfigDomain *domain1 = config.addDomain("section1");
+	Common::ConfigDomain *domain2 = config.addDomain("section2");
+	ASSERT_NE(domain1, static_cast<Common::ConfigDomain *>(0));
+	ASSERT_NE(domain2, static_cast<Common::ConfigDomain *>(0));
+
+	domain1->setString("key1", "value");
+	domain2->setString("key2", "value [with] = signs");
+
+	Common::UString domainName, key;
+	EXPECT_FALSE(config.findInvalidValue(domainName, key));
+
+	domain2->setString("path", "/games/kotor#1");
+
+	EXPECT_TRUE(config.findInvalidValue(domainName, key));
+	EXPECT_STREQ(domainName.c_str(), "section2");
+	EXPECT_STREQ(key.c_str(), "path");
+}

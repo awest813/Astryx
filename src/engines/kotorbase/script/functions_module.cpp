@@ -28,6 +28,7 @@
 #include "src/common/debug.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/area.h"
@@ -36,6 +37,7 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/waypoint.h"
+#include "src/engines/kotorbase/store.h"
 
 #include "src/aurora/2dareg.h"
 #include "src/aurora/2dafile.h"
@@ -44,19 +46,10 @@
 #include "src/aurora/talkman.h"
 #include "src/engines/kotorbase/script/functions.h"
 
-#include "src/engines/kotor/encounters_dan.h"
-#include "src/engines/kotor/encounters_end.h"
 
 namespace Engines {
 
 namespace KotORBase {
-
-void Functions::signalEncounter(Aurora::NWScript::FunctionContext &ctx) {
-	Common::UString encounterID = ctx.getParams()[0].getString();
-	Module &module = _game->getModule();
-
-	module.signalEncounter(encounterID);
-}
 
 void Functions::actionWorkbench(Aurora::NWScript::FunctionContext &ctx) {
 	_game->getModule().setGlobalBoolean("__open_workbench", true);
@@ -67,7 +60,12 @@ void Functions::getModule(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getFirstPC(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = (Aurora::NWScript::Object *) _game->getModule().getPC();
+	// The character the player controls: the party leader (as in KotOR.js),
+	// which is the player character unless the player switched to a companion.
+	Module &module = _game->getModule();
+	Creature *leader = module.getPartyLeader();
+
+	ctx.getReturn() = (Aurora::NWScript::Object *) (leader ? leader : module.getPC());
 }
 
 void Functions::getNextPC(Aurora::NWScript::FunctionContext &ctx) {
@@ -123,12 +121,11 @@ void Functions::setTime(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
-	const bool unescapable = ctx.getParams()[0].getInt() != 0;
-	_game->getModule().setGlobalBoolean("__area_unescapable", unescapable);
+	_game->getModule().setAreaUnescapable(ctx.getParams()[0].getInt() != 0);
 }
 
 void Functions::getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _game->getModule().getGlobalBoolean("__area_unescapable") ? 1 : 0;
+	ctx.getReturn() = _game->getModule().getAreaUnescapable() ? 1 : 0;
 }
 
 void Functions::getCurrentForcePoints(Aurora::NWScript::FunctionContext &ctx) {
@@ -142,10 +139,11 @@ void Functions::getMaxForcePoints(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::pauseGame(Aurora::NWScript::FunctionContext &ctx) {
-	const bool paused = ctx.getParams()[0].getInt() != 0;
-	_game->getModule().setGlobalBoolean("__game_paused", paused);
-	if (paused)
-		_game->getModule().showMenu();
+	// As KotOR.js: a generic pause, as if the player had pressed the pause key.
+	if (ctx.getParams()[0].getInt() != 0)
+		_game->getModule().pauseGame(kPauseReasonGeneric);
+	else
+		_game->getModule().unpauseGame();
 }
 
 void Functions::setPlayerRestrictMode(Aurora::NWScript::FunctionContext &ctx) {
@@ -184,11 +182,15 @@ void Functions::getDifficultyModifier(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setCameraMode(Aurora::NWScript::FunctionContext &ctx) {
-	// SetCameraMode(object oPlayer, int nCameraMode)
-	Object *player = ObjectContainer::toObject(ctx.getParams()[0].getObject());
-	int mode = ctx.getParams()[1].getInt();
+	// SetCameraMode(object oPlayer, int nCameraMode): the CAMERA_MODE_*
+	// constants (chase, top-down, stiff chase) select the *gameplay* camera,
+	// not a cinematic shot. Hand the camera back to the player, unless a
+	// conversation is framing the scene.
+	(void)ctx;
 
-	_game->getModule().setCameraMode(static_cast<CameraMode>(mode), player);
+	Module &module = _game->getModule();
+	if (!module.isInConversation())
+		module.restoreGameplayCamera(0.0f);
 }
 
 void Functions::setCutsceneMode(Aurora::NWScript::FunctionContext &ctx) {
@@ -268,19 +270,12 @@ void Functions::setLockHeadFollowInDialog(Aurora::NWScript::FunctionContext &ctx
 }
 
 void Functions::setCameraFacing(Aurora::NWScript::FunctionContext &ctx) {
-	// void SetCameraFacing(float fDirection, float fDistance = -1.0f, float fPitch = -1.0f, int nTransitionType = CAMERA_TRANSITION_TYPE_SNAP)
+	// void SetCameraFacing(float fDirection) -- KotOR I and II take only the
+	// direction; distance/pitch/transition are NWN-only parameters.
 	float direction = ctx.getParams()[0].getFloat();
-	float distance = ctx.getParams()[1].getFloat();
-	float pitch = ctx.getParams()[2].getFloat();
 
 	if (direction >= 0.0f)
 		_game->getModule().setCameraYaw(Common::deg2rad(direction));
-	
-	if (distance >= 0.0f)
-		_game->getModule().setCameraDistance(distance);
-
-	if (pitch >= 0.0f)
-		_game->getModule().setCameraPitch(pitch);
 }
 
 void Functions::getListenPatternNumber(Aurora::NWScript::FunctionContext &ctx) {
@@ -297,18 +292,18 @@ void Functions::getLastSpeaker(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getPartyAIStyle(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	ctx.getReturn() = _game->getModule().getPartyAIStyle();
 }
 
 void Functions::getNPCAIStyle(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	// k_inc_generic picks companions' tactics by this (NPC_AISTYLE_*)
+	const Object *object = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = object ? object->getLocalInt("__npc_ai_style") : 0;
 }
 
 void Functions::shipBuild(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = 0;
+	// This plays the released game: its scripts skip their debug output.
+	ctx.getReturn() = 1;
 }
 
 void Functions::startNewModule(Aurora::NWScript::FunctionContext &ctx) {
@@ -333,6 +328,9 @@ void Functions::setGlobalFadeOut(Aurora::NWScript::FunctionContext &ctx) {
 
 	Graphics::Aurora::FadeQuad &fadeQuad = _game->getModule().getFadeQuad();
 
+	// A scripted fade takes over from HoldWorldFadeInForDialog (as KotOR.js).
+	_game->getModule().releaseWorldFadeInForDialog();
+
 	fadeQuad.setColor(r, g, b);
 	fadeQuad.setWaitTime(wait);
 	fadeQuad.setRunTime(run);
@@ -347,6 +345,9 @@ void Functions::setGlobalFadeIn(Aurora::NWScript::FunctionContext &ctx) {
 	float b = ctx.getParams()[4].getFloat();
 
 	Graphics::Aurora::FadeQuad &fadeQuad = _game->getModule().getFadeQuad();
+
+	// A scripted fade takes over from HoldWorldFadeInForDialog (as KotOR.js).
+	_game->getModule().releaseWorldFadeInForDialog();
 
 	fadeQuad.setColor(r, g, b);
 	fadeQuad.setWaitTime(wait);
@@ -365,7 +366,8 @@ void Functions::showLevelUpGUI(Aurora::NWScript::FunctionContext &) {
 }
 
 void Functions::popUpGUIPanel(Aurora::NWScript::FunctionContext &ctx) {
-	int panel = ctx.getParams()[0].getInt();
+	// PopUpGUIPanel(object oPC, int nGUIPanel) -- single-player: oPC is the PC.
+	int panel = ctx.getParams()[1].getInt();
 	debugC(Common::kDebugEngineLogic, 1, "PopUpGUIPanel: %d", panel);
 	_game->getModule().showGUIPanel(panel);
 }
@@ -429,9 +431,25 @@ void Functions::setJournalQuestEntryPicture(Aurora::NWScript::FunctionContext &c
 
 void Functions::openStore(Aurora::NWScript::FunctionContext &ctx) {
 	// OpenStore(object oStore, object oPC, int nBonusMarkUp=0, int nMarkDown=0)
-	// Presents the store GUI to the player.
-	Common::UString tag = ctx.getParams()[0].getString();
-	_game->openStoreGUI(tag);
+	// Presents the store GUI to the player. The store is addressed by object;
+	// the GUI path looks stores up by tag. The bonuses add to the store's own
+	// percentages for this visit only.
+	Object *store = ObjectContainer::toObject(getParamObject(ctx, 0));
+	if (!store) {
+		warning("Functions::openStore(): invalid store object");
+		return;
+	}
+
+	const uint32_t storeID = store->getID();
+	Store *shop = ObjectContainer::toStore(store);
+	if (shop)
+		shop->setBonusMarks(ctx.getParams()[2].getInt(), ctx.getParams()[3].getInt());
+
+	_game->openStoreGUI(store->getTag());
+
+	// The GUI may have been closed by a script that destroyed the store.
+	if (shop && ObjectMan.findObject(storeID) == shop)
+		shop->setBonusMarks(0, 0);
 }
 
 void Functions::setReturnStrref(Aurora::NWScript::FunctionContext &ctx) {
@@ -464,9 +482,10 @@ void Functions::getModuleName(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setAreaTransitionBMP(Aurora::NWScript::FunctionContext &ctx) {
+	// SetAreaTransitionBMP(int nPredefinedAreaTransition, string sCustomAreaTransitionBMP="")
 	int bmp = ctx.getParams()[0].getInt();
-	int strref = ctx.getParams()[1].getInt();
-	info("Transition BMP set: %d (strref %d)", bmp, strref);
+	const Common::UString &custom = ctx.getParams()[1].getString();
+	info("Transition BMP set: %d (custom \"%s\")", bmp, custom.c_str());
 }
 
 void Functions::endGame(Aurora::NWScript::FunctionContext &ctx) {
@@ -534,27 +553,40 @@ void Functions::floatingTextStrRefOnCreature(Aurora::NWScript::FunctionContext &
 }
 
 void Functions::addJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) {
-	const Common::UString &tag = ctx.getParams()[0].getString();
-	const Common::UString &text = ctx.getParams()[1].getString();
+	// AddJournalWorldEntry(int nIndex, string szEntry, string szTitle="World Entry")
+	// World entries are keyed by their index; the journal GUI uses the first
+	// line of the text as the list label, so prepend the title there.
+	const Common::UString tag = Common::String::format("%d", ctx.getParams()[0].getInt());
+	const Common::UString &entry = ctx.getParams()[1].getString();
+	const Common::UString &title = ctx.getParams()[2].getString();
+	const Common::UString text = title.empty() ? entry : (title + "\n" + entry);
 
 	_game->getModule().addJournalWorldEntry(tag, text);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Added [%s]: %s", tag.c_str(), text.c_str());
 }
 
 void Functions::addJournalWorldEntryStrref(Aurora::NWScript::FunctionContext &ctx) {
-	const Common::UString &tag = ctx.getParams()[0].getString();
-	const int strRef = ctx.getParams()[1].getInt();
+	// AddJournalWorldEntryStrref(int strref, int strrefTitle)
+	// Keyed by the entry strref so DeleteJournalWorldEntryStrref() finds it.
+	const int strRef = ctx.getParams()[0].getInt();
+	const int titleStrRef = ctx.getParams()[1].getInt();
+	const Common::UString tag = Common::String::format("<strref:%d>", strRef);
 
 	Common::UString text = TalkMan.getString(strRef);
 	if (text.empty())
-		text = Common::String::format("<strref:%d>", strRef);
+		text = tag;
+
+	const Common::UString title = TalkMan.getString(titleStrRef);
+	if (!title.empty())
+		text = title + "\n" + text;
 
 	_game->getModule().addJournalWorldEntry(tag, text);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Added [%s]: %s", tag.c_str(), text.c_str());
 }
 
 void Functions::deleteJournalWorldEntry(Aurora::NWScript::FunctionContext &ctx) {
-	const Common::UString &tag = ctx.getParams()[0].getString();
+	// DeleteJournalWorldEntry(int nIndex)
+	const Common::UString tag = Common::String::format("%d", ctx.getParams()[0].getInt());
 	_game->getModule().deleteJournalWorldEntry(tag);
 	debugC(Common::kDebugEngineLogic, 1, "World Journal Entry Deleted [%s]", tag.c_str());
 }
@@ -572,19 +604,21 @@ void Functions::deleteJournalWorldAllEntries(Aurora::NWScript::FunctionContext &
 }
 
 
-void Functions::doSinglePlayerAutoSave(Aurora::NWScript::FunctionContext &ctx) {
+void Functions::doSinglePlayerAutoSave(Aurora::NWScript::FunctionContext &UNUSED(ctx)) {
 	debugC(Common::kDebugEngineLogic, 1, "DoSinglePlayerAutoSave triggered");
-	// Trigger autosave logic
+	_game->getModule().requestAutoSave();
 }
 
 void Functions::setTutorialWindowsEnabled(Aurora::NWScript::FunctionContext &ctx) {
 	int enabled = ctx.getParams()[0].getInt();
 	debugC(Common::kDebugEngineLogic, 1, "SetTutorialWindowsEnabled: %d", enabled);
+	_game->getModule().setTutorialWindowsEnabled(enabled != 0);
 }
 
 void Functions::showTutorialWindow(Aurora::NWScript::FunctionContext &ctx) {
 	int windowId = ctx.getParams()[0].getInt();
 	debugC(Common::kDebugEngineLogic, 1, "ShowTutorialWindow: %d", windowId);
+	_game->getModule().requestTutorialWindow(windowId);
 }
 
 void Functions::startCreditSequence(Aurora::NWScript::FunctionContext &ctx) {
@@ -596,7 +630,7 @@ void Functions::isCreditSequenceInProgress(Aurora::NWScript::FunctionContext &ct
 }
 
 void Functions::saveNPCState(Aurora::NWScript::FunctionContext &ctx) {
-	debugC(Common::kDebugEngineLogic, 1, "SaveNPCState");
+	_game->getModule().saveNPCState(ctx.getParams()[0].getInt());
 }
 
 

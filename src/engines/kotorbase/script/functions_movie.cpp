@@ -75,9 +75,7 @@ namespace KotORBase {
 
 
 void Functions::playMovie(Aurora::NWScript::FunctionContext &ctx) {
-
-	playVideo(ctx.getParams()[0].getString());
-
+	_game->getModule().playMovie(ctx.getParams()[0].getString());
 }
 
 
@@ -105,6 +103,12 @@ void Functions::disableVideoEffect(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setDialogPlaceableCamera(Aurora::NWScript::FunctionContext &ctx) {
+	// "Function only works during Dialog": a call that comes late (e.g. from a
+	// DelayCommand after the conversation ended) must not take the gameplay
+	// camera away from the player.
+	if (!_game->getModule().isInConversation())
+		return;
+
 	int cameraId = ctx.getParams()[0].getInt();
 	_game->getModule().setCinematicCamera(static_cast<uint32_t>(cameraId), 0.0f, Common::UString());
 }

@@ -32,6 +32,7 @@
 #include "src/common/error.h"
 #include "src/common/readstream.h"
 #include "src/common/maths.h"
+#include "src/common/debug.h"
 
 #include "src/aurora/resman.h"
 #include "src/aurora/gff3file.h"
@@ -40,6 +41,7 @@
 #include "src/common/memwritestream.h"
 #include "src/aurora/2dafile.h"
 #include "src/aurora/2dareg.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/graphics/graphics.h"
 #include "src/graphics/renderable.h"
@@ -47,6 +49,8 @@
 #include "src/graphics/aurora/cursorman.h"
 
 #include "src/sound/sound.h"
+
+#include "src/events/events.h"
 
 #include "src/engines/aurora/util.h"
 #include "src/engines/aurora/localpathfinding.h"
@@ -57,20 +61,29 @@
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/waypoint.h"
 #include "src/engines/kotorbase/trigger.h"
+#include "src/engines/kotorbase/encounter.h"
 #include "src/engines/kotorbase/sound.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/path/pathfollow.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/actionexecutor.h"
 #include "src/engines/kotorbase/creaturesearch.h"
+#include "src/engines/kotorbase/reputation.h"
+#include "src/engines/kotorbase/trap.h"
 
 #include "src/engines/kotorbase/path/pathfinding.h"
 #include "src/engines/kotorbase/path/objectwalkmesh.h"
 #include "src/engines/kotorbase/path/doorwalkmesh.h"
+#include "src/engines/kotorbase/visualeffects.h"
+#include "src/engines/kotorbase/creaturesounds.h"
 
 namespace Engines {
 
 namespace KotORBase {
+
+/** The event number k_ai_master handles as a party member's heartbeat (KOTOR_HENCH_EVENT_ON_HEARTBEAT). */
+static const int kHenchmanHeartbeatEvent = 2001;
 
 Area::Area(Module &module, const Common::UString &resRef) :
 		Object(kObjectTypeArea),
@@ -80,8 +93,8 @@ Area::Area(Module &module, const Common::UString &resRef) :
 		_activeObject(0),
 		_highlightAll(false),
 		_triggersVisible(false),
-		_activeTrigger(0),
-		_walkmeshInvisible(true) {
+		_walkmeshInvisible(true),
+		_worldVisualEffects(std::make_unique<WorldVisualEffects>()) {
 
 	_pathfinding = new Pathfinding(_module->getWalkableSurfaces());
 	_pathfinding->showWalkmesh(!_walkmeshInvisible);
@@ -106,6 +119,8 @@ Area::~Area() {
 
 	removeFocus();
 
+	_worldVisualEffects->clear();
+
 	clear();
 
 	delete _localPathfinding;
@@ -125,44 +140,314 @@ void Area::load() {
 	loadGIT(git.getTopLevel());
 
 	loadPersistence();
+
+	// Mines spotted before a save: their models were added after the object
+	// map was built, so they must be added again to be clicked on.
+	for (Trigger *trigger : _triggers)
+		if (trigger->isTrap() && trigger->isTrapDetected())
+			addToObjectMap(trigger);
+
+	seedTriggerOccupants();
+}
+
+Common::UString Area::getPersistenceKey(const Object &object, std::map<Common::UString, int> &tagCounts) const {
+	// Several doors/containers often share a tag; number the repeats (in GIT
+	// order) so they don't overwrite each other's state. The first keeps the
+	// plain key, which older saves used.
+	Common::UString key = _resRef + ":" + object.getTag();
+
+	const int count = tagCounts[object.getTag()]++;
+	if (count > 0)
+		key += Common::String::format("#%d", count);
+
+	return key;
+}
+
+static std::shared_ptr<Aurora::GFF3File> finishStateGFF(Aurora::GFF3Writer &writer) {
+	Common::MemoryWriteStreamDynamic memStream(true);
+	writer.write(memStream);
+
+	// The GFF takes over the buffer.
+	memStream.setDisposable(false);
+	return std::make_shared<Aurora::GFF3File>(
+		new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
+}
+
+void Area::assignPersistenceKeys() {
+	std::map<Common::UString, int> tagCounts;
+	std::map<Common::UString, int> triggerTagCounts;
+	for (auto &object : _objects) {
+		if (!object->isPersistent())
+			continue;
+
+		// Triggers have keys of their own, so that saves made before triggers
+		// were kept still find their doors and placeables.
+		if (object->getType() == kObjectTypeTrigger)
+			object->setPersistenceKey("trigger@" + getPersistenceKey(*object, triggerTagCounts));
+		else
+			object->setPersistenceKey(getPersistenceKey(*object, tagCounts));
+	}
+}
+
+Common::UString Area::getSpawnedCreaturesKey() const {
+	return _resRef + ":@spawned";
+}
+
+Common::UString Area::getPlacedMinesKey() const {
+	return _resRef + ":@mines";
+}
+
+Common::UString Area::getAreaLocalsKey() const {
+	return _resRef + ":@area";
+}
+
+Common::UString Area::getModuleLocalsKey() const {
+	return _module->getResRef() + ":@module";
+}
+
+/** The GIT-like trigger instance of a laid mine (without its trap fields). */
+static void writeMineInstance(Aurora::GFF3WriterStruct &gff, const Common::UString &tag, uint32_t faction,
+                              const Common::UString &script, const glm::vec3 &position) {
+	gff.addExoString("Tag", tag);
+	gff.addUint32("Type", Trigger::kKindTrap);
+	gff.addUint32("Faction", faction);
+	gff.addResRef("OnTrapTriggered", script);
+
+	gff.addFloat("XPosition", position.x);
+	gff.addFloat("YPosition", position.y);
+	gff.addFloat("ZPosition", position.z);
+
+	Aurora::GFF3WriterListPtr geometry = gff.addList("Geometry");
+	for (const glm::vec3 &point : TrapRules::getMineGeometry(TrapRules::kMineHalfSize)) {
+		Aurora::GFF3WriterStructPtr vertex = geometry->addStruct();
+		vertex->addFloat("PointX", point.x);
+		vertex->addFloat("PointY", point.y);
+		vertex->addFloat("PointZ", point.z);
+	}
 }
 
 void Area::loadPersistence() {
+	assignPersistenceKeys();
+
+	/* The area's and the module's own script variables. Scripts keep "has this
+	 * run before" flags there (k_inc_end's HasNeverTriggered on the area), so
+	 * they must survive leaving and loading a save. A module entered for the
+	 * first time starts without any. */
+	std::shared_ptr<Aurora::GFF3File> areaLocals = _module->getAreaObjectSave(getAreaLocalsKey());
+	clearLocals();
+	if (areaLocals)
+		loadLocals(areaLocals->getTopLevel());
+
+	std::shared_ptr<Aurora::GFF3File> moduleLocals = _module->getAreaObjectSave(getModuleLocalsKey());
+	_module->clearLocals();
+	if (moduleLocals)
+		_module->loadLocals(moduleLocals->getTopLevel());
+
+	std::vector<Object *> destroyed;
 	for (auto &o : _objects) {
-		Common::UString key = _resRef + ":" + o->getTag();
-		if (_module->getAreaObjectSave(key)) {
-			o->loadState(_module->getAreaObjectSave(key)->getTopLevel());
+		if (!o->isPersistent() || o->getPersistenceKey().empty())
+			continue;
+
+		std::shared_ptr<Aurora::GFF3File> state = _module->getAreaObjectSave(o->getPersistenceKey());
+		if (!state)
+			continue;
+
+		if (state->getTopLevel().getBool("Destroyed", false)) {
+			destroyed.push_back(o.get());
+		} else {
+			o->loadState(state->getTopLevel());
+			notifyObjectMoved(*o); // It may have moved since the GIT placed it.
+		}
+	}
+
+	// Objects a script destroyed on an earlier visit stay gone.
+	for (Object *object : destroyed)
+		removeObject(object);
+
+	// The mines the party laid here on an earlier visit.
+	std::shared_ptr<Aurora::GFF3File> mines = _module->getAreaObjectSave(getPlacedMinesKey());
+	if (mines && mines->getTopLevel().hasField("Mines"))
+		for (const Aurora::GFF3Struct *entry : mines->getTopLevel().getList("Mines"))
+			if (entry)
+				addMine(*entry);
+
+	// Recreate creatures that scripts spawned here (CreateObject) on an earlier visit.
+	std::shared_ptr<Aurora::GFF3File> spawned = _module->getAreaObjectSave(getSpawnedCreaturesKey());
+	if (spawned && spawned->getTopLevel().hasField("Creatures")) {
+		for (const Aurora::GFF3Struct *entry : spawned->getTopLevel().getList("Creatures")) {
+			if (!entry)
+				continue;
+
+			const Common::UString templ = entry->getString("TemplateResRef");
+			if (templ.empty())
+				continue;
+
+			try {
+				Creature *creature = _module->createCreatureByTemplate(templ);
+				if (!creature)
+					continue;
+
+				const Common::UString tag = entry->getString("Tag");
+				if (!tag.empty())
+					creature->setTag(tag);
+
+				addCreature(creature);
+				if (entry->hasField("State")) {
+					creature->loadState(entry->getStruct("State"));
+					notifyObjectMoved(*creature);
+				}
+
+				// Still one of an encounter's creatures (it won't re-arm while they live).
+				const Common::UString encounterKey = entry->getString("Encounter");
+				for (Encounter *encounter : _encounters)
+					if (!encounterKey.empty() && encounter->getPersistenceKey() == encounterKey)
+						encounter->adoptCreature(*creature);
+			} catch (Common::Exception &e) {
+				e.add("Failed to restore spawned creature \"%s\"", templ.c_str());
+				printException(e, "WARNING: ");
+			}
 		}
 	}
 }
 
 void Area::savePersistence() {
+	{
+		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+		saveLocals(*writer.getTopLevel());
+		_module->setAreaObjectSave(getAreaLocalsKey(), finishStateGFF(writer));
+	}
+	{
+		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+		_module->saveLocals(*writer.getTopLevel());
+		_module->setAreaObjectSave(getModuleLocalsKey(), finishStateGFF(writer));
+	}
+
 	for (auto &object : _objects) {
-		if (!object->isPersistent())
+		if (!object->isPersistent() || object->getPersistenceKey().empty())
 			continue;
 
 		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
 		object->saveState(*writer.getTopLevel());
 
-		Common::MemoryWriteStreamDynamic memStream(true);
-		writer.write(memStream);
-
-		auto gff = std::make_shared<Aurora::GFF3File>(
-			new Common::MemoryReadStream(memStream.getData(), memStream.size(), true));
-
-		Common::UString key = _resRef + ":" + object->getTag();
-		_module->setAreaObjectSave(key, gff);
+		_module->setAreaObjectSave(object->getPersistenceKey(), finishStateGFF(writer));
 	}
+
+	// Living creatures that scripts spawned here, so they are still around
+	// next visit (the GIT doesn't know about them).
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	Aurora::GFF3WriterListPtr list = writer.getTopLevel()->addList("Creatures");
+	for (Creature *creature : _creatures) {
+		if (creature->isPersistent() || creature->isPC() || creature->isDead() || creature->isRosterSpawn() ||
+		    _module->isObjectPartyMember(creature) || creature->getTemplateResRef().empty())
+			continue;
+
+		Aurora::GFF3WriterStructPtr entry = list->addStruct();
+		entry->addResRef("TemplateResRef", creature->getTemplateResRef());
+		entry->addExoString("Tag", creature->getTag());
+		creature->saveState(*entry->addStruct("State"));
+
+		if (const Encounter *encounter = findEncounterOwning(*creature))
+			entry->addExoString("Encounter", encounter->getPersistenceKey());
+	}
+
+	_module->setAreaObjectSave(getSpawnedCreaturesKey(), finishStateGFF(writer));
+
+	// Mines the party laid that are still armed.
+	Aurora::GFF3Writer minesWriter(MKTAG('G', 'F', 'F', ' '));
+	Aurora::GFF3WriterListPtr mines = minesWriter.getTopLevel()->addList("Mines");
+	for (uint32_t id : _placedMines) {
+		const Trigger *mine = findTrigger(id);
+		if (!mine || !mine->isTrapActive())
+			continue;
+
+		float x, y, z;
+		mine->getPosition(x, y, z);
+
+		Aurora::GFF3WriterStructPtr entry = mines->addStruct();
+		writeMineInstance(*entry, mine->getTag(), static_cast<uint32_t>(mine->getFaction()),
+		                  mine->getScript(kScriptTrapTriggered), glm::vec3(x, y, z));
+		mine->saveState(*entry);
+	}
+
+	_module->setAreaObjectSave(getPlacedMinesKey(), finishStateGFF(minesWriter));
+}
+
+Trigger *Area::addMine(const Aurora::GFF3Struct &instance) {
+	std::unique_ptr<Trigger> trigger;
+	try {
+		trigger = std::make_unique<Trigger>(instance);
+	} catch (Common::Exception &e) {
+		e.add("Failed to lay a mine");
+		printException(e, "WARNING: ");
+		return nullptr;
+	}
+
+	// Armed, and known to the party (shows its model).
+	trigger->loadState(instance);
+
+	Trigger *mine = trigger.get();
+	loadObject(std::move(trigger));
+	_triggers.push_back(mine);
+	_placedMines.push_back(mine->getID());
+
+	return mine;
+}
+
+Trigger *Area::placeMine(int trapType, const glm::vec3 &position, Creature &setter) {
+	Common::UString script;
+	int detectModifier = 0, disarmModifier = 0;
+
+	try {
+		const Aurora::TwoDAFile &traps = TwoDAReg.get2DA("traps");
+		if ((trapType < 0) || (static_cast<size_t>(trapType) >= traps.getRowCount()))
+			return nullptr;
+
+		const Aurora::TwoDARow &row = traps.getRow(trapType);
+		script         = row.getString("trapscript");
+		detectModifier = row.empty("detectdcmod") ? 0 : row.getInt("detectdcmod");
+		disarmModifier = row.empty("disarmdcmod") ? 0 : row.getInt("disarmdcmod");
+	} catch (...) {
+		warning("Area::placeMine(): could not read traps.2da");
+		return nullptr;
+	}
+
+	const int demolitions = setter.getSkillRank(kSkillDemolitions);
+
+	Trap trap;
+	trap.setTrapped(true);
+	trap.setType(static_cast<uint8_t>(trapType));
+	trap.setDetectDC(static_cast<uint8_t>(TrapRules::getSetMineDC(demolitions, detectModifier)));
+	trap.setDisarmDC(static_cast<uint8_t>(TrapRules::getSetMineDC(demolitions, disarmModifier)));
+	trap.setOneShot(true);
+	trap.setFlagged(true); // The party knows where its own mines are.
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	writeMineInstance(*writer.getTopLevel(), "PartyMine", static_cast<uint32_t>(setter.getFaction()), script, position);
+	trap.saveState(*writer.getTopLevel());
+
+	std::shared_ptr<Aurora::GFF3File> instance = finishStateGFF(writer);
+
+	Trigger *mine = addMine(instance->getTopLevel());
+	if (!mine)
+		return nullptr;
+
+	mine->getTrap().setCreatorID(setter.getID());
+
+	debugC(Common::kDebugEngineLogic, 1, "\"%s\" laid mine %d at %.2f, %.2f (DC %d/%d)",
+	       setter.getTag().c_str(), trapType, position.x, position.y,
+	       (int)mine->getTrap().getDetectDC(), (int)mine->getTrap().getDisarmDC());
+
+	return mine;
 }
 
 void Area::writePersistence(Aurora::GFF3WriterStruct &gff) const {
 	Aurora::GFF3WriterListPtr list = gff.addList("AreaObjectList");
 	for (const auto &object : _objects) {
-		if (!object->isPersistent())
+		if (!object->isPersistent() || object->getPersistenceKey().empty())
 			continue;
 
 		Aurora::GFF3WriterStructPtr entry = list->addStruct();
-		entry->addExoString("Key", _resRef + ":" + object->getTag());
+		entry->addExoString("Key", object->getPersistenceKey());
 		object->saveState(*entry);
 	}
 }
@@ -175,8 +460,13 @@ void Area::clear() {
 	_creatures.clear();
 	_rooms.clear();
 	_triggers.clear();
+	_placedMines.clear();
+	_encounters.clear();
 	_situatedObjects.clear();
-	_activeTrigger = 0;
+	_staticWalkmeshes.clear();
+	_pendingTriggerChecks.clear();
+	_lastTrapDetected.clear();
+	_heartbeats.clear();
 }
 
 const Common::UString &Area::getResRef() {
@@ -449,6 +739,8 @@ void Area::hide() {
 
 	stopSound();
 
+	_worldVisualEffects->clear();
+
 	GfxMan.lockFrame();
 
 	// Hide objects
@@ -515,6 +807,9 @@ void Area::loadARE(const Aurora::GFF3Struct &are) {
 	_worldPt2Y = map.getDouble("WorldPt2Y");
 	_northAxis = map.getSint("NorthAxis");
 
+	// Can't leave the area (by the map's travel option) until scripts allow it.
+	_unescapable = are.getBool("Unescapable", false);
+
 	// Camera style
 	loadCameraStyle(are.getUint("CameraStyle"));
 
@@ -555,6 +850,10 @@ void Area::loadGIT(const Aurora::GFF3Struct &git) {
 
 	if (git.hasField("Camera List"))
 		loadCameras(git.getList("Camera List"));
+
+	// Last, so the save-state keys of all other objects stay what they were.
+	if (git.hasField("Encounter List"))
+		loadEncounters(git.getList("Encounter List"));
 }
 
 void Area::loadCameras(const Aurora::GFF3List &list) {
@@ -562,10 +861,10 @@ void Area::loadCameras(const Aurora::GFF3List &list) {
 		if (!c) continue;
 		Camera camera;
 		camera.id = c->getUint("CameraID");
-		camera.fieldOfView = c->getDouble("FieldOfView");
-		camera.pitch = c->getDouble("MicRange"); // MicRange is often reused for pitch in some gffs? No, Pitch exists.
-		camera.pitch = c->getDouble("Pitch");
-		
+		camera.fieldOfView = c->getDouble("FieldOfView", 55.0);
+		camera.pitch = c->getDouble("Pitch", 90.0);
+		camera.height = c->getDouble("Height", 0.0);
+
 		c->getVector("Position", camera.position[0], camera.position[1], camera.position[2]);
 		c->getOrientation("Orientation", camera.orientation[0], camera.orientation[1], camera.orientation[2], camera.orientation[3]);
 		
@@ -611,6 +910,14 @@ void Area::loadProperties(const Aurora::GFF3Struct &props) {
 	setMusicBattleTrack(props.getUint("MusicBattle", Aurora::kStrRefInvalid));
 }
 
+bool Area::playRoomAnimation(const Common::UString &room, const Common::UString &anim) {
+	for (const auto &r : _rooms)
+		if (r->getResRef().equalsIgnoreCase(room))
+			return r->playAnimation(anim);
+
+	return false;
+}
+
 void Area::loadRooms() {
 	const Aurora::LYTFile::RoomArray &rooms = _lyt.getRooms();
 	for (Aurora::LYTFile::RoomArray::const_iterator r = rooms.begin(); r != rooms.end(); ++r) {
@@ -628,7 +935,60 @@ void Area::loadObject(std::unique_ptr<Object> &&object) {
 	if (!_objects.back()->isStatic())
 		addToObjectMap(_objects.back().get());
 
+	// Creatures, placeables, doors and triggers get an OnHeartbeat every round.
+	// (Encounters run their own.)
+	switch (_objects.back()->getType()) {
+		case kObjectTypeCreature:
+		case kObjectTypePlaceable:
+		case kObjectTypeDoor:
+		case kObjectTypeTrigger:
+			_heartbeats.add(_objects.back()->getID(), EventMan.getTimestamp());
+			break;
+		default:
+			break;
+	}
+
 	notifyObjectMoved(*_objects.back());
+
+	// Objects added after the area went visible (scripts spawning things)
+	// would otherwise stay hidden until the leader changes rooms.
+	if (_visible) {
+		Object &added = *_objects.back();
+		const Room *room = added.getRoom();
+		if (ObjectContainer::toDoor(&added) || (room && room->isVisible()))
+			added.show();
+	}
+}
+
+Placeable *Area::spawnPlaceable(const Common::UString &templateResRef, float x, float y, float z, float facing) {
+	// Build a minimal GIT-style instance for the blueprint.
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	Aurora::GFF3WriterStructPtr instance = writer.getTopLevel();
+	instance->addResRef("TemplateResRef", templateResRef);
+	instance->addFloat("X", x);
+	instance->addFloat("Y", y);
+	instance->addFloat("Z", z);
+	instance->addFloat("Bearing", Common::deg2rad(facing));
+
+	try {
+		std::shared_ptr<Aurora::GFF3File> gff = finishStateGFF(writer);
+
+		loadObject(std::make_unique<Placeable>(gff->getTopLevel()));
+
+		Placeable *placeable = static_cast<Placeable *>(_objects.back().get());
+		_situatedObjects.push_back(placeable);
+
+		ObjectWalkmesh *walkmesh = new ObjectWalkmesh(placeable);
+		_localPathfinding->addStaticObjects(walkmesh);
+		_staticWalkmeshes[placeable] = walkmesh;
+
+		return placeable;
+	} catch (Common::Exception &e) {
+		e.add("Failed to spawn placeable \"%s\"", templateResRef.c_str());
+		printException(e, "WARNING: ");
+	}
+
+	return nullptr;
 }
 
 void Area::loadWaypoints(const Aurora::GFF3List &list) {
@@ -645,7 +1005,10 @@ void Area::loadPlaceables(const Aurora::GFF3List &list) {
 			Placeable *obj = static_cast<Placeable *>(_objects.back().get());
 			obj->setPersistent(true);
 			_situatedObjects.push_back(obj);
-			_localPathfinding->addStaticObjects(new ObjectWalkmesh(obj));
+
+			ObjectWalkmesh *walkmesh = new ObjectWalkmesh(obj);
+			_localPathfinding->addStaticObjects(walkmesh);
+			_staticWalkmeshes[obj] = walkmesh;
 		}
 	}
 }
@@ -658,15 +1021,22 @@ void Area::loadDoors(const Aurora::GFF3List &list) {
 			Door *obj = static_cast<Door *>(_objects.back().get());
 			obj->setPersistent(true);
 			_situatedObjects.push_back(obj);
-			_localPathfinding->addStaticObjects(new DoorWalkmesh(obj));
+
+			DoorWalkmesh *walkmesh = new DoorWalkmesh(obj);
+			_localPathfinding->addStaticObjects(walkmesh);
+			_staticWalkmeshes[obj] = walkmesh;
 		}
 	}
 }
 
 void Area::loadCreatures(const Aurora::GFF3List &list) {
-	for (auto &creature : list)
-		if (creature)
-			addCreature(_module->createCreature(*creature));
+	for (auto &creature : list) {
+		if (creature) {
+			Creature *obj = _module->createCreature(*creature);
+			addCreature(obj);
+			obj->setPersistent(true);
+		}
+	}
 }
 
 void Area::loadTriggers(const Aurora::GFF3List &list) {
@@ -674,9 +1044,38 @@ void Area::loadTriggers(const Aurora::GFF3List &list) {
 		if (trigger) {
 			loadObject(std::make_unique<Trigger>(*trigger));
 
-			_triggers.push_back(static_cast<Trigger *>(_objects.back().get()));
+			Trigger *obj = static_cast<Trigger *>(_objects.back().get());
+			// Scripts keep state on triggers (fire-once flags), and mines get disarmed.
+			obj->setPersistent(true);
+			_triggers.push_back(obj);
 		}
 	}
+}
+
+void Area::loadEncounters(const Aurora::GFF3List &list) {
+	for (auto &encounter : list) {
+		if (encounter) {
+			loadObject(std::make_unique<Encounter>(*encounter));
+
+			Encounter *obj = static_cast<Encounter *>(_objects.back().get());
+			obj->setPersistent(true);
+			_encounters.push_back(obj);
+		}
+	}
+}
+
+void Area::updateEncounters() {
+	// Encounter scripts may destroy encounters (deferred), never mid-loop.
+	for (size_t i = 0; i < _encounters.size(); ++i)
+		_encounters[i]->update(*this, *_module);
+}
+
+Encounter *Area::findEncounterOwning(const Object &creature) const {
+	for (Encounter *encounter : _encounters)
+		if (encounter->ownsCreature(creature))
+			return encounter;
+
+	return nullptr;
 }
 
 void Area::loadSounds(const Aurora::GFF3List &list) {
@@ -841,6 +1240,39 @@ bool Area::walkable(const glm::vec3 &orig, const glm::vec3 &dest) const {
 	return _localPathfinding->walkable(dest);
 }
 
+bool Area::findPath(const glm::vec2 &from, const glm::vec2 &to, std::vector<glm::vec2> &waypoints) {
+	waypoints.clear();
+
+	if ((evaluateElevation(from.x, from.y) == FLT_MIN) || (evaluateElevation(to.x, to.y) == FLT_MIN))
+		return false;
+
+	std::vector<glm::vec3> route;
+	try {
+		std::vector<uint32_t> faces;
+		if (!_pathfinding->findPath(from.x, from.y, to.x, to.y, faces, 0.0f, 4000) || faces.empty())
+			return false;
+
+		_pathfinding->smoothPath(from.x, from.y, to.x, to.y, faces, route);
+	} catch (...) {
+		return false;
+	}
+
+	// The route starts where we stand; keep what comes after.
+	for (size_t i = 1; i < route.size(); i++)
+		waypoints.push_back(glm::vec2(route[i].x, route[i].y));
+
+	if (waypoints.empty() || (glm::length(waypoints.back() - to) > 0.01f))
+		waypoints.push_back(to);
+
+	waypoints.insert(waypoints.begin(), from);
+	pushPathOffCorners(waypoints, 0.5f, [this](const glm::vec2 &p) {
+		return evaluateElevation(p.x, p.y) != FLT_MIN;
+	});
+	waypoints.erase(waypoints.begin());
+
+	return true;
+}
+
 void Area::toggleWalkmesh() {
 	_walkmeshInvisible = !_walkmeshInvisible;
 	_pathfinding->showWalkmesh(!_walkmeshInvisible);
@@ -858,27 +1290,225 @@ void Area::toggleTriggers() {
 			++it) {
 		(*it)->setVisible(_triggersVisible);
 	}
+
+	for (Encounter *encounter : _encounters)
+		encounter->setVisible(_triggersVisible);
 }
 
-void Area::evaluateTriggers(float x, float y) {
-	Trigger *trigger = 0;
+const std::vector<Trigger *> &Area::getTriggers() const {
+	return _triggers;
+}
 
-	for (std::vector<Trigger *>::iterator it = _triggers.begin();
-			it != _triggers.end();
-			++it) {
-		Trigger *t = *it;
-		if (t->contains(x, y)) {
-			trigger = t;
-			break;
-		}
+Trigger *Area::findTrigger(uint32_t id) const {
+	for (Trigger *trigger : _triggers)
+		if (trigger->getID() == id)
+			return trigger;
+
+	return nullptr;
+}
+
+Creature *Area::findCreature(uint32_t id) const {
+	for (Creature *creature : _creatures)
+		if (creature->getID() == id)
+			return creature;
+
+	return nullptr;
+}
+
+void Area::queueTriggerCheck(const Object &creature, bool allowTransitions) {
+	if (creature.getType() != kObjectTypeCreature)
+		return;
+
+	// A creature teleported into a transition this frame must not use it,
+	// however else it moved.
+	auto pending = _pendingTriggerChecks.find(creature.getID());
+	if (pending != _pendingTriggerChecks.end())
+		pending->second = pending->second && allowTransitions;
+	else
+		_pendingTriggerChecks.emplace(creature.getID(), allowTransitions);
+}
+
+void Area::seedTriggerOccupants() {
+	// As in KotOR.js: creatures the GIT placed inside a trigger are simply in
+	// it. Only walking in later runs OnEnter. (The party arrives afterwards,
+	// and does get OnEnter for the triggers it lands in.)
+	for (Creature *creature : _creatures) {
+		if (creature->isDead())
+			continue;
+
+		float x, y, z;
+		creature->getPosition(x, y, z);
+
+		for (Trigger *trigger : _triggers)
+			if (trigger->contains(x, y))
+				trigger->getOccupancy().addSilently(creature->getID());
+
+		_pendingTriggerChecks.erase(creature->getID());
+	}
+}
+
+void Area::forgetTriggerOccupant(uint32_t id) {
+	// Destroyed, or gone to another area: no OnExit, as there is no object
+	// left for GetExitingObject() to return.
+	for (Trigger *trigger : _triggers)
+		trigger->getOccupancy().removeSilently(id);
+}
+
+void Area::processTriggerChecks() {
+	// A script run from here that moves creatures queues more checks; they
+	// are done by the loop below, not by a nested call.
+	if (_processingTriggers)
+		return;
+
+	_processingTriggers = true;
+
+	// Scripts teleporting creatures back and forth between triggers must not
+	// hang the game: stop after a few rounds, the rest waits for the next frame.
+	static const int kMaxRounds = 8;
+	for (int round = 0; (round < kMaxRounds) && !_pendingTriggerChecks.empty(); ++round) {
+		std::map<uint32_t, bool> pending;
+		pending.swap(_pendingTriggerChecks);
+
+		for (const auto &check : pending)
+			checkTriggers(check.first, check.second);
 	}
 
-	if (_activeTrigger != trigger) {
-		if (_activeTrigger)
-			_activeTrigger->runScript(kScriptExit, _activeTrigger, _module->getPC());
-		_activeTrigger = trigger;
-		if (_activeTrigger)
-			_activeTrigger->runScript(kScriptEnter, _activeTrigger, _module->getPC());
+	_processingTriggers = false;
+}
+
+void Area::checkTriggers(uint32_t creatureID, bool allowTransitions) {
+	Creature *creature = findCreature(creatureID);
+	if (!creature || creature->isDead())
+		return; // The dead stay where they fell, inside or not.
+
+	if (!creature->isInCombat())
+		detectTraps(*creature, false);
+
+	// Scripts may destroy triggers or move the creature: work on IDs, look
+	// everything up again after every script.
+	std::vector<uint32_t> triggerIDs;
+	triggerIDs.reserve(_triggers.size());
+	for (Trigger *trigger : _triggers)
+		triggerIDs.push_back(trigger->getID());
+
+	// First the triggers it left, then those it entered, so that walking from
+	// one into an overlapping one exits the first before entering the second.
+	for (int pass = 0; pass < 2; ++pass) {
+		const bool entering = pass == 1;
+
+		for (uint32_t triggerID : triggerIDs) {
+			creature = findCreature(creatureID);
+			if (!creature || creature->isDead())
+				return;
+
+			Trigger *trigger = findTrigger(triggerID);
+			if (!trigger)
+				continue;
+
+			float x, y, z;
+			creature->getPosition(x, y, z);
+
+			const bool inside = trigger->contains(x, y);
+			if (inside != entering)
+				continue;
+
+			const TriggerOccupancy::Change change = trigger->getOccupancy().update(creatureID, inside);
+
+			if (change == TriggerOccupancy::kChangeExited) {
+				trigger->setLastExitedID(creatureID);
+				trigger->runScript(kScriptExit, trigger, creature);
+				continue;
+			}
+
+			if (change != TriggerOccupancy::kChangeEntered)
+				continue;
+
+			trigger->setLastEnteredID(creatureID);
+			trigger->runScript(kScriptEnter, trigger, creature);
+
+			// The OnEnter script may have destroyed the trigger or moved the creature.
+			trigger  = findTrigger(triggerID);
+			creature = findCreature(creatureID);
+			if (!trigger || !creature || creature->isDead())
+				continue;
+
+			if (trigger->isTrap())
+				enterTrap(*trigger, *creature);
+
+			// Area transition triggers (map edges) move the party on, when its
+			// leader walks in (not when it was teleported there).
+			trigger  = findTrigger(triggerID);
+			creature = findCreature(creatureID);
+			if (!trigger || !creature || !trigger->isTransition() || !allowTransitions)
+				continue;
+
+			if ((creature != _module->getPartyLeader()) ||
+			    !trigger->getOccupancy().contains(creatureID))
+				continue;
+
+			_module->moveParty(trigger->getLinkedToModule(), trigger->getLinkedTo(),
+			                   static_cast<ObjectType>(kObjectTypeDoor | kObjectTypeWaypoint));
+
+			// The party is somewhere else now; its new position was checked anew.
+			return;
+		}
+	}
+}
+
+void Area::enterTrap(Trigger &trigger, Creature &creature) {
+	// Mines go off for those their faction is hostile to: the party for the
+	// module's mines, the enemies for the mines the party laid.
+	if (!trigger.isTrapActive())
+		return;
+
+	if (!ReputationMan.isHostile(static_cast<int>(trigger.getFaction()), static_cast<int>(creature.getFaction())))
+		return;
+
+	debugC(Common::kDebugEngineLogic, 1, "Mine \"%s\" set off by \"%s\"",
+	       trigger.getTag().c_str(), creature.getTag().c_str());
+
+	trigger.fireTrap(&creature);
+}
+
+uint32_t Area::getLastTrapDetected(uint32_t creatureID) const {
+	auto it = _lastTrapDetected.find(creatureID);
+	return (it != _lastTrapDetected.end()) ? it->second : 0;
+}
+
+void Area::detectTraps(Creature &creature, bool rollDice) {
+	// Only the party looks out for mines (the enemies know where theirs are).
+	if (!creature.isPC() && !_module->isObjectPartyMember(&creature))
+		return;
+
+	const int awareness = creature.getSkillRank(kSkillAwareness);
+
+	float x, y, z;
+	creature.getPosition(x, y, z);
+
+	for (Trigger *trigger : _triggers) {
+		const Trap &trap = trigger->getTrap();
+		if (!trap.isActive() || !trap.isDetectable() || trap.isDetectedBy(creature.getID()))
+			continue;
+
+		float tx, ty, tz;
+		trigger->getPosition(tx, ty, tz);
+		if (glm::distance(glm::vec2(x, y), glm::vec2(tx, ty)) > TrapRules::kDetectRange)
+			continue;
+
+		const int roll = TrapRules::checkRoll(rollDice, 10, RNG.getNext(1, 21));
+		if (!TrapRules::detects(awareness, roll, trap.getDetectDC()))
+			continue;
+
+		debugC(Common::kDebugEngineLogic, 1, "\"%s\" spotted mine \"%s\" (Awareness %d + %d vs DC %d)",
+		       creature.getTag().c_str(), trigger->getTag().c_str(), awareness, roll, trap.getDetectDC());
+
+		const bool wasDetected = trigger->isTrapDetected();
+		trigger->detectTrap(&creature);
+		_lastTrapDetected[creature.getID()] = trigger->getID();
+
+		// The mine's model can now be clicked on.
+		if (!wasDetected)
+			addToObjectMap(trigger);
 	}
 }
 
@@ -905,8 +1535,10 @@ void Area::notifyObjectMoved(Object &o) {
 	o.getPosition(x, y, _);
 	o.setRoom(_pathfinding->getRoomAt(x, y));
 
-	if (o.getType() == kObjectTypeCreature)
+	if (o.getType() == kObjectTypeCreature) {
 		updatePerception((Creature &)o);
+		queueTriggerCheck(o);
+	}
 }
 
 void Area::updatePerception(Creature &subject) {
@@ -920,6 +1552,8 @@ void Area::updatePerception(Creature &subject) {
 
 void Area::notifyPartyLeaderMoved() {
 	Creature *partyLeader = _module->getPartyLeader();
+	if (!partyLeader)
+		return;
 
 	const Room *prevRoom = partyLeader->getRoom();
 	notifyObjectMoved(*partyLeader);
@@ -939,7 +1573,18 @@ const Aurora::GFF3Struct &Area::getMinigame() {
 
 std::set<Common::UString> Area::getRoomsVisibleByPartyLeader() const {
 	Creature *partyLeader = _module->getPartyLeader();
-	Common::UString currentRoom = partyLeader->getRoom()->getResRef();
+	const Room *room = partyLeader ? partyLeader->getRoom() : nullptr;
+	if (!room) {
+		// The leader is off every room's walkmesh (e.g. a badly placed entry
+		// waypoint): show everything rather than crash or blank the area.
+		std::set<Common::UString> all;
+		for (auto &r : _rooms)
+			all.insert(r->getResRef());
+
+		return all;
+	}
+
+	Common::UString currentRoom = room->getResRef();
 
 	std::set<Common::UString> rooms { currentRoom };
 
@@ -1001,16 +1646,22 @@ Object *Area::getObjectByTag(const Common::UString &tag) {
 	return nullptr;
 }
 
-Creature *Area::getNearestCreature(const Object *target, int UNUSED(nth), const CreatureSearchCriteria &criteria) const {
-	// TODO: Find Nth nearest using all criterias
+Creature *Area::getNearestCreature(const Object *target, int nth, const CreatureSearchCriteria &criteria) const {
+	// Return the Nth (1-based, like retail) nearest creature matching the
+	// criteria, or nullptr if there are fewer than nth matches. Scripts
+	// commonly loop GetNearestCreature(..., nNth++) until OBJECT_INVALID, so
+	// ignoring nth here would never terminate such loops.
+	if (!target)
+		return nullptr;
 
-	Creature *result = 0;
-	float lowestDistance = 0.0f;
+	if (nth < 1)
+		nth = 1;
 
 	float x, y, z;
 	target->getPosition(x, y, z);
 	glm::vec3 targetPosition(x, y, z);
 
+	std::vector<std::pair<float, Creature *>> matches;
 	for (auto c = _creatures.begin(); c != _creatures.end(); ++c) {
 		if (*c == target || (*c)->isDead())
 			continue;
@@ -1019,15 +1670,18 @@ Creature *Area::getNearestCreature(const Object *target, int UNUSED(nth), const 
 			continue;
 
 		(*c)->getPosition(x, y, z);
-		float dist = glm::distance(targetPosition, glm::vec3(x, y, z));
-
-		if ((result == 0) || (dist < lowestDistance)) {
-			result = *c;
-			lowestDistance = dist;
-		}
+		matches.emplace_back(glm::distance(targetPosition, glm::vec3(x, y, z)), *c);
 	}
 
-	return result;
+	if (matches.size() < static_cast<size_t>(nth))
+		return nullptr;
+
+	std::stable_sort(matches.begin(), matches.end(),
+	                 [](const std::pair<float, Creature *> &a, const std::pair<float, Creature *> &b) {
+		return a.first < b.first;
+	});
+
+	return matches[nth - 1].second;
 }
 
 const std::vector<Creature *> &Area::getCreatures() const {
@@ -1035,15 +1689,31 @@ const std::vector<Creature *> &Area::getCreatures() const {
 }
 
 void Area::processCreaturesActions(float dt) {
+	// Creatures moved by the player or by scripts since the last frame.
+	processTriggerChecks();
+
 	ActionExecutor::ExecutionContext ctx;
 	ctx.area = this;
 	ctx.frameTime = dt;
 
-	for (auto &c : _creatures) {
+	// Actions run scripts that may spawn creatures (reallocating _creatures),
+	// so iterate by index rather than with iterators.
+	_worldVisualEffects->update(dt);
+
+	for (size_t i = 0; i < _creatures.size(); ++i) {
+		Creature *c = _creatures[i];
+
+		// Footsteps, weapon sounds and visual effects, the dead's included.
+		c->updatePresentation(dt, this);
+
 		if (c->isDead())
 			continue;
 
+		// Effects keep ticking (so stuns expire), but an incapacitated
+		// creature neither thinks nor acts.
 		c->update(dt);
+		if (c->isIncapacitated())
+			continue;
 
 		const Action *action = c->getCurrentAction();
 		if (!action) {
@@ -1056,6 +1726,33 @@ void Area::processCreaturesActions(float dt) {
 			ActionExecutor::execute(*const_cast<Action *>(action), ctx);
 		}
 	}
+
+	// Trigger scripts run here, outside of the loop over the creatures.
+	processTriggerChecks();
+}
+
+uint32_t Area::getSurfaceAt(float x, float y) const {
+	if (!_pathfinding)
+		return UINT32_MAX;
+
+	return _pathfinding->getSurfaceAt(x, y);
+}
+
+void Area::playVisualEffectAt(int id, float x, float y, float z, float duration) {
+	VisualEffectInfo effect;
+	try {
+		if (!loadVisualEffect(TwoDAReg.get2DA("visualeffects"), id, effect))
+			return;
+	} catch (...) {
+		Common::exceptionDispatcherWarning("Failed to read visual effect %d", id);
+		return;
+	}
+
+	if (effect.isBeam())
+		return;
+
+	_worldVisualEffects->playEffect(effect, x, y, z, effect.isDuration() ? duration : 0.0f);
+	playSoundAt(effect.impactSound, x, y, z, Sound::kSoundTypeSFX, 3.0f, 30.0f);
 }
 
 Creature *Area::findNearestEnemy(Creature *origin) {
@@ -1144,13 +1841,128 @@ bool Area::hasLineOfSight(const Object *from, const Object *to) const {
 }
 
 void Area::handleCreaturesDeath() {
-	for (auto &c : _creatures) {
-		if (c->handleDeath())
-			_module->signalUserDefinedEvent(c, 1007);
+	// Creature event scripts are queued by combat/effects and run here, never
+	// from inside a loop over _creatures. They may spawn creatures (so iterate
+	// by index); DestroyObject is deferred to the end of the frame.
+	runHeartbeats();
+
+	for (size_t i = 0; i < _creatures.size(); ++i) {
+		Creature *c = _creatures[i];
+
+		if (c->consumeSpawnEvent() && c->hasScript(kScriptSpawn))
+			c->runScript(kScriptSpawn, c, c);
+
+		c->handleDeath();
+
+		if (c->consumeDeathEvent()) {
+			// Nobody keeps fighting a corpse; attackers pick new targets.
+			Creature::stopAttacksOn(_creatures, c, false);
+
+			Object *killer = c->getLastKiller();
+			if (c->hasScript(kScriptDeath))
+				c->runScript(kScriptDeath, c, killer ? killer : c);
+			else
+				_module->signalUserDefinedEvent(c, 1007);
+			continue;
+		}
+
+		if (c->consumeDamagedEvent() && c->hasScript(kScriptDamaged)) {
+			Object *damager = c->getLastHostileActor();
+			c->runScript(kScriptDamaged, c, damager ? damager : c);
+		}
+
+		if (c->consumeHeartbeatEvent() && !c->isDead()) {
+			// Creature blueprints store it as "ScriptHeartbeat".
+			if (c->hasScript(kScriptHeartbeart))
+				c->runScript(kScriptHeartbeart, c, c);
+			else if (c->hasScript(kScriptHeartbeat))
+				c->runScript(kScriptHeartbeat, c, c);
+			else if (c->isPC() || _module->isObjectPartyMember(c)) {
+				// A party member without one (the player character made in
+				// character generation) runs what the companions' heartbeat
+				// (k_hen_heartbt01) does: the party AI, as a henchman heartbeat.
+				_module->setRunScriptVar(kHenchmanHeartbeatEvent);
+				c->runScript("k_ai_master", c, c);
+			}
+
+			// In combat, the party gets a fresh (rolled) chance to spot mines each round.
+			if (!c->isDead() && c->isInCombat())
+				detectTraps(*c, true);
+		}
+
+		// The scripts above may have spawned creatures (reallocating
+		// _creatures) or killed this one; re-check before each event.
+		Object *attacker = nullptr;
+		if (c->consumeAttackedEvent(attacker) && !c->isDead() && c->hasScript(kScriptAttacked))
+			c->runScript(kScriptAttacked, c, attacker ? attacker : c);
+
+		Creature::PerceptionEvent perception;
+		while (!c->isDead() && c->consumePerceptionEvent(perception)) {
+			if (c->hasScript(kScriptNotice))
+				c->runScript(kScriptNotice, c, perception.object ? perception.object : c);
+		}
+
+		if (c->consumeEndRoundEvent() && !c->isDead() && c->hasScript(kScriptEndRound))
+			c->runScript(kScriptEndRound, c, c);
 	}
 
-	if (_module->getPC() && _module->getPC()->isDead())
-		_module->showDeathGUI();
+	handleSituatedEvents();
+
+	// As in the original: when the leader falls, a living party member takes
+	// over (the fallen get up after the fight); only when the whole party is
+	// down is the game lost.
+	Creature *leader = _module->getPartyLeader();
+	if (leader && leader->isDead()) {
+		const int partySize = _module->getPartyMemberCount();
+		int living = -1;
+		for (int i = 1; i < partySize && living < 0; ++i) {
+			Creature *member = _module->getPartyMemberByIndex(i);
+			if (member && !member->isDead())
+				living = i;
+		}
+
+		if (living > 0)
+			_module->setPartyLeaderByIndex(living);
+		else
+			_module->showDeathGUI();
+	}
+}
+
+void Area::handleSituatedEvents() {
+	// Doors and containers being bashed: their scripts may destroy objects, so
+	// work on IDs and look each one up again.
+	std::vector<uint32_t> ids;
+	for (Situated *situated : _situatedObjects)
+		ids.push_back(situated->getID());
+
+	for (uint32_t id : ids) {
+		Situated *situated = ObjectContainer::toSituated(ObjectMan.findObject(id));
+		if (!situated)
+			continue;
+
+		Object *attacker = situated->getLastHostileActor();
+
+		if (situated->consumeAttackedEvent() && situated->hasScript(kScriptAttacked))
+			situated->runScript(kScriptAttacked, situated, attacker ? attacker : situated);
+
+		situated = ObjectContainer::toSituated(ObjectMan.findObject(id));
+		if (situated && situated->consumeDamagedEvent() && situated->hasScript(kScriptDamaged))
+			situated->runScript(kScriptDamaged, situated, attacker ? attacker : situated);
+
+		situated = ObjectContainer::toSituated(ObjectMan.findObject(id));
+		if (!situated || !situated->consumeDeathEvent())
+			continue;
+
+		debugC(Common::kDebugEngineLogic, 1, "\"%s\" was bashed open", situated->getTag().c_str());
+
+		// As KotOR.js' destroyDoor: OnDeath first, then it breaks open.
+		if (situated->hasScript(kScriptDeath))
+			situated->runScript(kScriptDeath, situated, attacker ? attacker : situated);
+
+		situated = ObjectContainer::toSituated(ObjectMan.findObject(id));
+		if (situated)
+			situated->breakOpen(situated->getLastHostileActor());
+	}
 }
 
 Item *Area::spawnDroppedItem(const Common::UString &tag, float x, float y, float z) {
@@ -1161,7 +1973,8 @@ Item *Area::spawnDroppedItem(const Common::UString &tag, float x, float y, float
 
 		Item *itemPtr = item.get();
 		loadObject(std::move(item));
-		itemPtr->show();
+		if (!itemPtr->isVisible())
+			itemPtr->show();
 		return itemPtr;
 	} catch (Common::Exception &e) {
 		warning("Area::spawnDroppedItem: %s", e.what());
@@ -1175,6 +1988,57 @@ Item *Area::spawnDroppedItem(const Common::UString &tag, float x, float y, float
 void Area::addCreature(Creature *creature) {
 	loadObject(std::unique_ptr<Creature>(creature));
 	_creatures.push_back(creature);
+
+	// OnSpawn sets up AI and the user-defined event flags OnDeath & co rely on.
+	if (!creature->isPC())
+		creature->queueSpawnEvent();
+}
+
+void Area::runPendingSpawnEvents() {
+	for (size_t i = 0; i < _creatures.size(); ++i) {
+		Creature *creature = _creatures[i];
+		if (creature->consumeSpawnEvent() && creature->hasScript(kScriptSpawn))
+			creature->runScript(kScriptSpawn, creature, creature);
+	}
+}
+
+void Area::runHeartbeats() {
+	std::vector<uint32_t> due;
+	_heartbeats.collectDue(EventMan.getTimestamp(), due);
+
+	// Look every object up again: an earlier heartbeat may have destroyed it.
+	for (uint32_t id : due) {
+		Object *object = ObjectContainer::toObject(ObjectMan.findObject(id));
+		if (object)
+			runHeartbeat(*object);
+	}
+}
+
+void Area::runHeartbeat(Object &object) {
+	if (object.getType() == kObjectTypeCreature) {
+		// Runs with the creature's other events, in handleCreaturesDeath().
+		Creature *creature = findCreature(object.getID());
+		if (creature && !creature->isDead())
+			creature->queueHeartbeatEvent();
+
+		return;
+	}
+
+	// Only objects of this area.
+	bool ours = false;
+	if (object.getType() == kObjectTypeTrigger)
+		ours = findTrigger(object.getID()) != nullptr;
+	else
+		ours = std::find(_situatedObjects.begin(), _situatedObjects.end(), &object) != _situatedObjects.end();
+
+	if (!ours)
+		return;
+
+	// Trigger blueprints store it as "ScriptHeartbeat", doors and placeables as "OnHeartbeat".
+	if (object.hasScript(kScriptHeartbeart))
+		object.runScript(kScriptHeartbeart, &object, &object);
+	else if (object.hasScript(kScriptHeartbeat))
+		object.runScript(kScriptHeartbeat, &object, &object);
 }
 
 void Area::addToObjectMap(Object *object) {
@@ -1183,7 +2047,95 @@ void Area::addToObjectMap(Object *object) {
 		_objectMap.insert(std::make_pair(*id, object));
 }
 
+void Area::destroyObjectDeferred(Object *object, float delay) {
+	if (!object)
+		return;
+
+	const uint32_t due = EventMan.getTimestamp() + static_cast<uint32_t>(MAX(delay, 0.0f) * 1000.0f);
+	_pendingDestruction.emplace_back(object->getID(), due);
+}
+
+void Area::processPendingDestruction() {
+	if (_pendingDestruction.empty())
+		return;
+
+	const uint32_t now = EventMan.getTimestamp();
+
+	std::vector<std::pair<uint32_t, uint32_t>> due;
+	for (auto it = _pendingDestruction.begin(); it != _pendingDestruction.end(); ) {
+		if (it->second <= now) {
+			due.push_back(*it);
+			it = _pendingDestruction.erase(it);
+		} else
+			++it;
+	}
+
+	for (const auto &pending : due) {
+		// Look the object up again: it may already be gone.
+		Object *object = ObjectContainer::toObject(ObjectMan.findObject(pending.first));
+		if (!object)
+			continue;
+
+		Creature *creature = ObjectContainer::toCreature(object);
+		if (creature && (creature == _module->getPC() || _module->isObjectPartyMember(creature))) {
+			warning("Area::processPendingDestruction(): Not destroying party member \"%s\"",
+			        creature->getTag().c_str());
+			continue;
+		}
+
+		// SetIsDestroyable(FALSE): DestroyObject fails. Scripts make the creature
+		// destroyable first with an AssignCommand queued before the DestroyObject,
+		// so wait for its commands due by then before deciding.
+		if (creature && !creature->isDestroyable()) {
+			if (_module->hasDelayedScriptFor(creature, pending.second))
+				_pendingDestruction.push_back(pending);
+			else
+				debugC(Common::kDebugEngineLogic, 1, "Not destroying non-destroyable creature \"%s\"",
+				       creature->getTag().c_str());
+			continue;
+		}
+
+		const bool owned = std::any_of(_objects.begin(), _objects.end(),
+				[object](const std::unique_ptr<Object> &o) { return o.get() == object; });
+		if (owned)
+			removeObject(object);
+	}
+}
+
+void Area::delayPendingDestruction(uint32_t ms) {
+	for (auto &pending : _pendingDestruction)
+		pending.second += ms;
+}
+
+void Area::delayHeartbeats(uint32_t ms) {
+	_heartbeats.delay(ms);
+}
+
+void Area::releaseFromPersistence(Object &object) {
+	// Mark the GIT instance as gone for future visits, and stop tracking it.
+	if (object.isPersistent() && !object.getPersistenceKey().empty()) {
+		Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+		writer.getTopLevel()->addByte("Destroyed", 1);
+		_module->setAreaObjectSave(object.getPersistenceKey(), finishStateGFF(writer));
+	}
+
+	object.setPersistent(false);
+	object.setPersistenceKey("");
+}
+
 void Area::removeObject(Object *object) {
+	// A GIT object removed for good (DestroyObject, picked up, ...) must not
+	// come back from the GIT on the next visit.
+	releaseFromPersistence(*object);
+
+	// Scrub references other objects hold before the object is deleted.
+	for (Creature *creature : _creatures)
+		if (creature != object)
+			creature->forgetObject(object);
+	for (Situated *situated : _situatedObjects)
+		if (situated != object)
+			situated->forgetObject(object);
+
 	if (object == _activeObject) {
 		_activeObject->leave();
 		_module->leaveObject(_activeObject);
@@ -1198,12 +2150,25 @@ void Area::removeObject(Object *object) {
 	if (tit != _triggers.end())
 		_triggers.erase(tit);
 
+	// It no longer stands in any trigger, and has no heartbeat any more.
+	forgetTriggerOccupant(object->getID());
+	_pendingTriggerChecks.erase(object->getID());
+	_heartbeats.remove(object->getID());
+
+	auto eit = std::find(_encounters.begin(), _encounters.end(), object);
+	if (eit != _encounters.end())
+		_encounters.erase(eit);
+
 	std::list<Situated *>::iterator soit = std::find(_situatedObjects.begin(), _situatedObjects.end(), object);
 	if (soit != _situatedObjects.end())
 		_situatedObjects.erase(soit);
 
-	if (object == _activeTrigger)
-		_activeTrigger = 0;
+	// Door walkmeshes point at their door; placeables would leave a ghost obstacle.
+	auto walkmesh = _staticWalkmeshes.find(object);
+	if (walkmesh != _staticWalkmeshes.end()) {
+		_localPathfinding->removeStaticObject(walkmesh->second);
+		_staticWalkmeshes.erase(walkmesh);
+	}
 
 	if (!object->isStatic()) {
 		const std::list<uint32_t> &ids = object->getIDs();

@@ -36,11 +36,13 @@
 #include "src/common/util.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/situated.h"
+#include "src/engines/kotorbase/trigger.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/location.h"
@@ -49,6 +51,8 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/creaturesearch.h"
 #include "src/engines/kotorbase/effect.h"
+
+#include "src/engines/kotorbase/reputation.h"
 
 #include "src/engines/kotorbase/script/functions.h"
 
@@ -128,14 +132,26 @@ void Functions::getClickingObject(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = ctx.getTriggerer();
 }
 
+/** A trigger remembers who last entered/left it, also for scripts it runs
+ *  later (ExecuteScript, its heartbeat); elsewhere it's the triggerer. */
+static Aurora::NWScript::Object *getLastTriggerOccupant(Aurora::NWScript::FunctionContext &ctx, bool entered) {
+	Trigger *trigger = dynamic_cast<Trigger *>(ctx.getCaller());
+	if (trigger) {
+		const uint32_t id = entered ? trigger->getLastEnteredID() : trigger->getLastExitedID();
+		Aurora::NWScript::Object *object = (id != 0) ? ObjectMan.findObject(id) : nullptr;
+		if (object)
+			return object;
+	}
+
+	return ctx.getTriggerer();
+}
+
 void Functions::getEnteringObject(Aurora::NWScript::FunctionContext &ctx) {
-	// TODO: This should return the *last* entered object, i.e. it should remember past triggerers.
-	ctx.getReturn() = ctx.getTriggerer();
+	ctx.getReturn() = getLastTriggerOccupant(ctx, true);
 }
 
 void Functions::getExitingObject(Aurora::NWScript::FunctionContext &ctx) {
-	// TODO: This should return the *last* exited object, i.e. it should remember past triggerers.
-	ctx.getReturn() = ctx.getTriggerer();
+	ctx.getReturn() = getLastTriggerOccupant(ctx, false);
 }
 
 void Functions::getIsObjectValid(Aurora::NWScript::FunctionContext &ctx) {
@@ -143,7 +159,12 @@ void Functions::getIsObjectValid(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getIsPC(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = KotORBase::ObjectContainer::toPC(getParamObject(ctx, 0)) != 0;
+	// The player character, or the party member the player controls instead.
+	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
+	const Creature *leader = _game->getModule().getPartyLeader();
+
+	ctx.getReturn() = (KotORBase::ObjectContainer::toPC(object) != 0) ||
+	                  (object && (object == static_cast<const Aurora::NWScript::Object *>(leader)));
 }
 
 void Functions::getObjectByTag(Aurora::NWScript::FunctionContext &ctx) {
@@ -243,11 +264,12 @@ void Functions::changeToStandardFaction(Aurora::NWScript::FunctionContext &ctx) 
 void Functions::createItemOnObject(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &itemTag = ctx.getParams()[0].getString();
 	Aurora::NWScript::Object *object = ctx.getParams()[1].getObject();
-	int32_t count = ctx.getParams()[2].getInt();
+	// A stack of at least one (Inventory asserts a positive count).
+	const int32_t count = MAX<int32_t>(ctx.getParams()[2].getInt(), 1);
 
 	Creature *creature = ObjectContainer::toCreature(object);
 	if (creature) {
-		creature->getInventory().addItem(itemTag, count);
+		_game->getModule().getInventoryOf(*creature).addItem(itemTag, count);
 		Item *item = creature->addScriptItem(itemTag);
 		if (item)
 			ctx.getReturn() = item;
@@ -264,7 +286,7 @@ void Functions::createItemOnObject(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getArea(Aurora::NWScript::FunctionContext &ctx) {
-	// TODO: return current area of the specified object
+	// A KotOR module has one area, so every object is in the current one.
 	ctx.getReturn() = _game->getModule().getCurrentArea();
 }
 
@@ -292,7 +314,7 @@ void Functions::getPositionFromLocation(Aurora::NWScript::FunctionContext &ctx) 
 
 void Functions::getFacingFromLocation(Aurora::NWScript::FunctionContext &ctx) {
 	Location *location = ObjectContainer::toLocation(ctx.getParams()[0].getEngineType());
-	ctx.getReturn() = location ? location->getFacing() : 0.0f;
+	ctx.getReturn() = location ? orientationToScriptFacing(location->getFacing()) : 0.0f;
 }
 
 void Functions::jumpToLocation(Aurora::NWScript::FunctionContext &ctx) {
@@ -305,6 +327,9 @@ void Functions::jumpToLocation(Aurora::NWScript::FunctionContext &ctx) {
 	float x, y, z;
 	moveTo->getPosition(x, y, z);
 	object->setPosition(x, y, z);
+	object->setOrientation(0.0f, 0.0f, 1.0f, moveTo->getFacing());
+
+	_game->getModule().notifyObjectTeleported(*object);
 }
 
 void Functions::jumpToObject(Aurora::NWScript::FunctionContext &ctx) {
@@ -314,9 +339,14 @@ void Functions::jumpToObject(Aurora::NWScript::FunctionContext &ctx) {
 	if (!caller || !target)
 		return;
 
-	float x, y, z;
+	// Cutscenes place actors on waypoints this way: take their facing too.
+	float x, y, z, ox, oy, oz, angle;
 	target->getPosition(x, y, z);
+	target->getOrientation(ox, oy, oz, angle);
 	caller->setPosition(x, y, z);
+	caller->setOrientation(0.0f, 0.0f, 1.0f, angle);
+
+	_game->getModule().notifyObjectTeleported(*caller);
 }
 
 void Functions::locationCreate(Aurora::NWScript::FunctionContext &ctx) {
@@ -327,7 +357,7 @@ void Functions::locationCreate(Aurora::NWScript::FunctionContext &ctx) {
 
 	Location loc;
 	loc.setPosition(x, y, z);
-	loc.setFacing(facing);
+	loc.setFacing(scriptFacingToOrientation(facing));
 
 	ctx.getReturn() = loc;
 }
@@ -372,11 +402,14 @@ void Functions::getItemInSlot(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getNearestCreature(Aurora::NWScript::FunctionContext &ctx) {
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+
 	CreatureSearchCriteria criteria;
 	criteria.firstCriteriaType = static_cast<CreatureType>(ctx.getParams()[0].getInt());
 	criteria.firstCriteriaValue = ctx.getParams()[1].getInt();
 
-	Object *target = ObjectContainer::toCreature(ctx.getParams()[2].getObject());
+	// oTarget defaults to OBJECT_SELF and may be any object (e.g. a placeable).
+	Object *target = ObjectContainer::toObject(getParamObject(ctx, 2));
 	int nth = ctx.getParams()[3].getInt();
 
 	criteria.secondCriteriaType = static_cast<CreatureType>(ctx.getParams()[4].getInt());
@@ -461,8 +494,14 @@ void Functions::getTag(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::destroyObject(Aurora::NWScript::FunctionContext &ctx) {
 	Object *object = ObjectContainer::toObject(ctx.getParams()[0].getObject());
-	if (object)
-		_game->getModule().getCurrentArea()->removeObject(object);
+	Area *area = _game->getModule().getCurrentArea();
+	if (!object || !area)
+		return;
+
+	// Like the original, destruction is deferred: the caller (often the object
+	// itself) and any loop over the area's objects keep running safely.
+	const float delay = (ctx.getParams().size() > 1) ? ctx.getParams()[1].getFloat() : 0.0f;
+	area->destroyObjectDeferred(object, delay);
 }
 
 void Functions::getPosition(Aurora::NWScript::FunctionContext &ctx) {
@@ -486,7 +525,7 @@ void Functions::getFacing(Aurora::NWScript::FunctionContext &ctx) {
 
 	float x, y, z, angle;
 	object->getOrientation(x, y, z, angle);
-	ctx.getReturn() = angle;
+	ctx.getReturn() = orientationToScriptFacing(angle);
 }
 
 void Functions::getItemPossessor(Aurora::NWScript::FunctionContext &ctx) {
@@ -528,16 +567,29 @@ void Functions::getItemPossessedBy(Aurora::NWScript::FunctionContext &ctx) {
 
 	const Common::UString &tag = ctx.getParams()[1].getString();
 
-	// Check equipped items first (live Item objects)
-	Item *item = creature->findInventoryItemByTag(tag);
-	if (item) {
-		ctx.getReturn() = item;
-		return;
+	// Equipped items first
+	for (int slot = 0; slot < kInventorySlotMAX; ++slot) {
+		Item *equipped = creature->getEquipedItem(static_cast<InventorySlot>(slot));
+		if (equipped && (equipped->getTag() == tag)) {
+			ctx.getReturn() = equipped;
+			return;
+		}
 	}
 
-	// If tag is in inventory (tag+count), create a live Item object for scripting
-	if (creature->getInventory().hasItem(tag)) {
-		item = creature->addScriptItem(tag);
+	// Then the inventory, which is keyed by template, not tag. Hand out a live
+	// Item object for scripting, but only while its template is still carried:
+	// the live object of an item since used up (HealingDone's medpack) must not
+	// make it look possessed. Its tag may differ from the template.
+	const Inventory &inventory = _game->getModule().getInventoryOf(*creature);
+	if (Item *live = creature->findInventoryItemByTag(tag)) {
+		if (inventory.countItems(live->getTemplateResRef()) > 0) {
+			ctx.getReturn() = live;
+			return;
+		}
+	}
+
+	if (inventory.countItems(tag) > 0) {
+		Item *item = creature->addScriptItem(tag);
 		if (item)
 			ctx.getReturn() = item;
 	}
@@ -696,7 +748,7 @@ void Functions::getFirstItemInInventory(Aurora::NWScript::FunctionContext &ctx) 
 
 	Creature *creature = ObjectContainer::toCreature(object);
 	if (creature) {
-		for (const auto &kv : creature->getInventory().getItems())
+		for (const auto &kv : _game->getModule().getInventoryOf(*creature).getItems())
 			_inventoryIterTags.push_back(kv.first);
 	} else {
 		Placeable *placeable = ObjectContainer::toPlaceable(object);
@@ -751,78 +803,34 @@ void Functions::getNextItemInInventory(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 // ---------------------------------------------------------------------------
-// Faction relationship helpers
+// Faction relationships: how oSource's faction feels about oTarget's
 // ---------------------------------------------------------------------------
-
-/** Return true if a faction is considered hostile (attacks friendly factions). */
-static bool isFactionHostile(Engines::KotORBase::Faction f) {
-	return f == Engines::KotORBase::kFactionHostile1 ||
-	       f == Engines::KotORBase::kFactionHostile2 ||
-	       f == Engines::KotORBase::kFactionEndarSpire;
-}
-
-/** Return true if a faction is considered friendly (cooperative with other friendly factions). */
-static bool isFactionFriendly(Engines::KotORBase::Faction f) {
-	return f == Engines::KotORBase::kFactionFriendly1 ||
-	       f == Engines::KotORBase::kFactionFriendly2;
-}
 
 void Functions::getIsEnemy(Aurora::NWScript::FunctionContext &ctx) {
 	// GetIsEnemy(object oTarget, object oSource=OBJECT_SELF)
-	// Returns TRUE if oSource and oTarget are in mutually hostile factions.
-	ctx.getReturn() = 0;
-
 	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
 	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
-	if (!target || !source)
-		return;
 
-	Faction tf = target->getFaction();
-	Faction sf = source->getFaction();
-
-	bool enemy = (isFactionHostile(tf) && isFactionFriendly(sf)) ||
-	             (isFactionHostile(sf) && isFactionFriendly(tf));
-	ctx.getReturn() = enemy ? 1 : 0;
+	ctx.getReturn() = (target && source &&
+	                   ReputationMan.isHostile(source->getFaction(), target->getFaction())) ? 1 : 0;
 }
 
 void Functions::getIsFriend(Aurora::NWScript::FunctionContext &ctx) {
 	// GetIsFriend(object oTarget, object oSource=OBJECT_SELF)
-	// Returns TRUE if oSource and oTarget are in mutually friendly factions.
-	ctx.getReturn() = 0;
-
 	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
 	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
-	if (!target || !source)
-		return;
 
-	Faction tf = target->getFaction();
-	Faction sf = source->getFaction();
-
-	// Same non-invalid faction, or both in a friendly faction family
-	bool friendly = (tf != kFactionInvalid && tf == sf) ||
-	                (isFactionFriendly(tf) && isFactionFriendly(sf));
-	ctx.getReturn() = friendly ? 1 : 0;
+	ctx.getReturn() = (target && source &&
+	                   ReputationMan.isFriendly(source->getFaction(), target->getFaction())) ? 1 : 0;
 }
 
 void Functions::getIsNeutral(Aurora::NWScript::FunctionContext &ctx) {
 	// GetIsNeutral(object oTarget, object oSource=OBJECT_SELF)
-	// Returns TRUE if oSource and oTarget are neither friends nor enemies.
-	ctx.getReturn() = 0;
-
 	const Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
 	const Object *source = ObjectContainer::toObject(getParamObject(ctx, 1));
-	if (!target || !source)
-		return;
 
-	Faction tf = target->getFaction();
-	Faction sf = source->getFaction();
-
-	bool isEnemy  = (isFactionHostile(tf) && isFactionFriendly(sf)) ||
-	                (isFactionHostile(sf) && isFactionFriendly(tf));
-	bool isFriend = (tf != kFactionInvalid && tf == sf) ||
-	                (isFactionFriendly(tf) && isFactionFriendly(sf));
-
-	ctx.getReturn() = (!isEnemy && !isFriend) ? 1 : 0;
+	ctx.getReturn() = (target && source &&
+	                   ReputationMan.isNeutral(source->getFaction(), target->getFaction())) ? 1 : 0;
 }
 
 void Functions::getName(Aurora::NWScript::FunctionContext &ctx) {
@@ -833,8 +841,14 @@ void Functions::getName(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::setIsDestroyable(Aurora::NWScript::FunctionContext &ctx) {
 	// SetIsDestroyable(int bDestroyable, int bRaiseDeadPossible=TRUE, int bSelectableWhenDead=FALSE)
-	// Full destroyable semantics require a persistence layer.  For the Endar
-	// Spire milestone this is a no-op that satisfies script execution without error.
+	// Sets the caller's flags; scripts reach other creatures with AssignCommand.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (!creature)
+		return;
+
+	creature->setDestroyable(ctx.getParams()[0].getInt() != 0,
+	                         ctx.getParams()[1].getInt() != 0,
+	                         ctx.getParams()[2].getInt() != 0);
 }
 
 void Functions::getIsInConversation(Aurora::NWScript::FunctionContext &ctx) {
@@ -954,6 +968,18 @@ void Functions::applyEffectAtLocation(Aurora::NWScript::FunctionContext &ctx) {
 
 	float lx, ly, lz;
 	loc->getPosition(lx, ly, lz);
+
+	// A visual effect (an explosion, a Force wave) plays at the place itself.
+	if ((effect->getType() == kKotOREffectVisual) && effect->getLinkedEffects().empty()) {
+		const int durationType = ctx.getParams()[0].getInt();
+		const float duration = (ctx.getParams().size() > 3) ? ctx.getParams()[3].getFloat() : 0.0f;
+		area->playVisualEffectAt(effect->getAmount(), lx, ly, lz, (durationType == 1) ? duration : 0.0f);
+		shakeForVisualEffects(*effect);
+		return;
+	}
+
+	shakeForVisualEffects(*effect);
+
 	const float radius = 5.0f;
 
 	const std::vector<Creature *> &creatures = area->getCreatures();
@@ -977,20 +1003,17 @@ void Functions::revealMap(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setAILevel(Aurora::NWScript::FunctionContext &ctx) {
+	// KotOR II: SetCreatureAILevel(object oTarget, int nPriority) (834) and
+	// ResetCreatureAILevel(object oTarget) (835). Both are void natives.
 	Creature *creature = nullptr;
 	int level = 0;
 	if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeObject) {
-		creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+		creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
 		if (ctx.getParams().size() > 1)
 			level = ctx.getParams()[1].getInt();
-	} else if (!ctx.getParams().empty() && ctx.getParams()[0].getType() == Aurora::NWScript::kTypeEngineType) {
-		// Signature table lists a single engine-type arg for some builds; treat as no-op success.
-		ctx.getReturn() = 1;
-		return;
 	}
 	if (creature)
 		creature->setAILevel(level);
-	ctx.getReturn() = 1;
 }
 
 void Functions::getLastConversation(Aurora::NWScript::FunctionContext &ctx) {
@@ -1127,6 +1150,21 @@ void Functions::createObject(Aurora::NWScript::FunctionContext &ctx) {
 
 	float x, y, z;
 	loc->getPosition(x, y, z);
+	const float facing = loc->getFacing();
+
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area)
+		return;
+
+	if (objectType & kObjectTypePlaceable) {
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(area->spawnPlaceable(tmpl, x, y, z, facing));
+		return;
+	}
+
+	if (objectType & kObjectTypeItem) {
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(area->spawnDroppedItem(tmpl, x, y, z));
+		return;
+	}
 
 	if (objectType & kObjectTypeCreature) {
 		// Create a creature from its blueprint template.
@@ -1141,11 +1179,10 @@ void Functions::createObject(Aurora::NWScript::FunctionContext &ctx) {
 			return;
 
 		creature->setPosition(x, y, z);
-		_game->getModule().getCurrentArea()->addCreature(creature);
+		creature->setOrientation(0.0f, 0.0f, 1.0f, facing);
+		area->addCreature(creature);
 		ctx.getReturn() = creature;
 	}
-	// Item creation via CreateObject is rare in the progression path;
-	// CreateItemOnObject covers most use-cases and is already implemented.
 }
 
 // ---------------------------------------------------------------------------
@@ -1328,13 +1365,14 @@ void Functions::getEffectType(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getLastDamager(Aurora::NWScript::FunctionContext &ctx) {
-	// GetLastDamager(object oCreature=OBJECT_SELF) → object
-	// Returns the last creature that inflicted damage on oCreature.
+	// GetLastDamager() → object (no parameters in KotOR I/II)
+	// Returns the last creature that inflicted damage on the caller.
 	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
-	Object *target = ObjectContainer::toObject(getParamObject(ctx, 0));
-	Creature *c = dynamic_cast<Creature *>(target);
+	Creature *c = ObjectContainer::toCreature(ctx.getCaller());
 	if (c)
 		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(c->getLastHostileActor());
+	else if (Situated *situated = ObjectContainer::toSituated(ctx.getCaller()))
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(situated->getLastHostileActor());
 }
 
 void Functions::beginConversation(Aurora::NWScript::FunctionContext &ctx) {
@@ -1379,7 +1417,10 @@ void Functions::getLastHostileTarget(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getLastAttackAction(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = 0;
+	// GetLastAttackAction(object oAttacker=OBJECT_SELF): ACTION_ATTACKOBJECT,
+	// ACTION_CASTSPELL or ACTION_INVALID (k_inc_generic's GN_SetLastRoundData).
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = static_cast<int32_t>(creature ? creature->getLastAttackAction() : kActionInvalid);
 }
 
 void Functions::getWasForcePowerSuccessful(Aurora::NWScript::FunctionContext &ctx) {
@@ -1405,8 +1446,12 @@ KotOREffectType activeEffectToKotOR(EffectType type) {
 	}
 }
 
-Effect *wrapActiveEffect(const Creature::ActiveEffect &active) {
-	return new Effect(activeEffectToKotOR(active.type), active.value, 0, active.spellId);
+Effect wrapActiveEffect(const Creature::ActiveEffect &active) {
+	if (active.type == kEffectModifier)
+		return Effect(static_cast<KotOREffectType>(active.kotorType), active.value, active.subType,
+		              active.spellId, active.limit);
+
+	return Effect(activeEffectToKotOR(active.type), active.value, 0, active.spellId);
 }
 
 } // End of anonymous namespace
@@ -1450,10 +1495,25 @@ void Functions::removeEffect(Aurora::NWScript::FunctionContext &ctx) {
 
 	const auto &effects = creature->getActiveEffects();
 	for (size_t i = 0; i < effects.size(); ++i) {
-		Effect wrapped(activeEffectToKotOR(effects[i].type), effects[i].value, 0, effects[i].spellId);
+		const Effect wrapped = wrapActiveEffect(effects[i]);
 		if (wrapped.getType() == effect->getType() &&
 		    wrapped.getAmount() == effect->getAmount() &&
 		    wrapped.getSpellId() == effect->getSpellId()) {
+
+			// Inside a GetFirstEffect/GetNextEffect loop over this creature,
+			// keep the loop on the entry after the current one: removing an
+			// effect removes its whole link, possibly before the current one.
+			if (creature == _effectIterCreature && _effectIterIndex < effects.size()) {
+				const int linkId = effects[i].linkId;
+				size_t removedUpToCurrent = 0;
+				for (size_t j = 0; j <= _effectIterIndex; ++j)
+					if ((j == i) || ((linkId != 0) && (effects[j].linkId == linkId)))
+						++removedUpToCurrent;
+
+				// GetNextEffect() steps forward first (unsigned wrap-around is intended).
+				_effectIterIndex -= removedUpToCurrent;
+			}
+
 			creature->removeActiveEffectAt(i);
 			return;
 		}
@@ -1478,9 +1538,14 @@ void Functions::getEffectCreator(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getFirstFactionMember(Aurora::NWScript::FunctionContext &ctx) {
+	// GetFirstFactionMember(object oMemberOfFaction, int bPCOnly=TRUE) → object
+	// Reset the iteration so getNextFactionMember() rebuilds the member list
+	// for this reference object, then return its first entry.
 	_factionIterRef = nullptr;
 	_factionIterObjects.clear();
 	_factionIterIndex = 0;
+
+	getNextFactionMember(ctx);
 }
 
 void Functions::getNextFactionMember(Aurora::NWScript::FunctionContext &ctx) {
@@ -1532,24 +1597,27 @@ void Functions::faceObjectAwayFromObject(Aurora::NWScript::FunctionContext &ctx)
 	facer ->getPosition(fx, fy, fz);
 	source->getPosition(sx, sy, sz);
 
-	float angle = Common::rad2deg(atan2f(fy - sy, fx - sx));
-	facer->setOrientation(0.0f, 0.0f, 1.0f, angle);
+	// Look at the point mirrored through the facer, away from the source.
+	facer->makeLookAt(2.0f * fx - sx, 2.0f * fy - sy);
 }
 
 void Functions::getInventoryDisturbType(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _lastInventoryDisturbType;
+	// The caller's OnInventoryDisturbed: INVENTORY_DISTURB_TYPE_*.
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	ctx.getReturn() = static_cast<int32_t>(caller ? caller->getInventoryDisturbType() : 0);
 }
 
 void Functions::getInventoryDisturbItem(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _lastInventoryDisturbItem;
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(caller ? caller->getInventoryDisturbItem() : nullptr);
 }
 
 void Functions::getItemActivated(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _lastItemActivated;
+	ctx.getReturn() = _itemActivatedEvent ? _itemActivatedEvent->getItem() : nullptr;
 }
 
 void Functions::getItemActivator(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _lastItemActivator;
+	ctx.getReturn() = _itemActivatedEvent ? _itemActivatedEvent->getActivator() : nullptr;
 }
 
 namespace {
@@ -1669,12 +1737,12 @@ void Functions::getMatchedSubstringsCount(Aurora::NWScript::FunctionContext &ctx
 }
 
 void Functions::setAssociateListenPatterns(Aurora::NWScript::FunctionContext &ctx) {
-	Object *object = ObjectContainer::toObject(ctx.getCaller());
+	// SetAssociateListenPatterns(object oTarget=OBJECT_SELF) -- void
+	Object *object = ObjectContainer::toObject(getParamObject(ctx, 0));
 	if (object) {
 		object->setListening(true);
 		object->setListenPattern(Common::UString("**"), 0);
 	}
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(object);
 }
 
 void Functions::getFactionWeakestMember(Aurora::NWScript::FunctionContext &ctx) {
@@ -1900,26 +1968,72 @@ void Functions::getIsPlayableRacialType(Aurora::NWScript::FunctionContext &ctx) 
 	ctx.getReturn() = 1;
 }
 
+void Functions::effectLinkEffects(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectLinkEffects(effect eChildEffect, effect eParentEffect) → effect
+	// The parent with the child (and whatever is linked to it) linked to it:
+	// applied together with one duration, removed together.
+	const Effect *child  = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
+	const Effect *parent = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
+
+	if (child && parent) {
+		ctx.getReturn() = linkEffects(*child, *parent);
+		return;
+	}
+
+	ctx.getReturn() = static_cast<const Aurora::NWScript::EngineType *>(child ? child : parent);
+}
+
 void Functions::getTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
-	Location *loc = new Location();
+	Location loc;
 	Object *target = _game->getModule().getSpellScriptTarget();
 	if (target) {
 		float x, y, z;
 		target->getPosition(x, y, z);
-		loc->setPosition(x, y, z);
+		loc.setPosition(x, y, z);
 	}
 	ctx.getReturn() = loc;
 }
 
+namespace {
+
+/** Immunity type that blocks a given effect, or kImmunityTypeNone. */
+int immunityForEffect(KotOREffectType type) {
+	switch (type) {
+		case kKotOREffectPoison:                return kImmunityTypePoison;
+		case kKotOREffectKnockdown:             return kImmunityTypeKnockdown;
+		case kKotOREffectParalyze:              return kImmunityTypeParalysis;
+		case kKotOREffectStunned:
+		case kKotOREffectDroidStun:             return kImmunityTypeStun;
+		case kKotOREffectDeath:                 return kImmunityTypeDeath;
+		case kKotOREffectSleep:                 return kImmunityTypeSleep;
+		case kKotOREffectAbilityDecrease:       return kImmunityTypeAbilityDecrease;
+		case kKotOREffectMovementSpeedDecrease: return kImmunityTypeMovementSpeedDecrease;
+		default:                                return kImmunityTypeNone;
+	}
+}
+
+} // End of anonymous namespace
+
 void Functions::getIsLinkImmune(Aurora::NWScript::FunctionContext &ctx) {
-	// Table lists an odd void signature; still evaluate immunity for scripts that call it.
-	int immunityType = ctx.getParams().empty() ? 0 : ctx.getParams()[0].getInt();
-	Creature *creature = nullptr;
-	if (ctx.getParams().size() > 1)
-		creature = ObjectContainer::toCreature(ctx.getParams()[1].getObject());
-	if (!creature)
-		creature = ObjectContainer::toCreature(ctx.getCaller());
-	ctx.getReturn() = (creature && creature->isImmune(immunityType)) ? 1 : 0;
+	// GetIsLinkImmune(object oTarget, effect eEffect) → int
+	// TRUE if the target is immune to the effect or to any effect linked to it.
+	ctx.getReturn() = 0;
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
+	if (!creature || !effect)
+		return;
+
+	std::vector<KotOREffectType> types(1, effect->getType());
+	for (const Effect &linked : effect->getLinkedEffects())
+		types.push_back(linked.getType());
+
+	for (KotOREffectType type : types) {
+		const int immunityType = immunityForEffect(type);
+		if ((immunityType != kImmunityTypeNone) && creature->isImmune(immunityType)) {
+			ctx.getReturn() = 1;
+			return;
+		}
+	}
 }
 
 } // End of namespace KotORBase
