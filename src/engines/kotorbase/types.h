@@ -333,6 +333,13 @@ enum ActionType {
 	kActionInvalid       = 65535
 };
 
+/** INVENTORY_DISTURB_TYPE_* (nwscript.nss): why OnInventoryDisturbed fired. */
+enum InventoryDisturbType {
+	kInventoryDisturbTypeAdded   = 0,
+	kInventoryDisturbTypeRemoved = 1,
+	kInventoryDisturbTypeStolen  = 2
+};
+
 enum CreatureType {
 	kCreatureTypeRacialType             = 0,
 	kCreatureTypePlayerChar             = 1,

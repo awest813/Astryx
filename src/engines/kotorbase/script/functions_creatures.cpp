@@ -45,6 +45,7 @@
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/room.h"
 #include "src/engines/kotorbase/situated.h"
 #include "src/engines/kotorbase/visualeffects.h"
 
@@ -1420,7 +1421,17 @@ void Functions::getIsDebilitated(Aurora::NWScript::FunctionContext &ctx) {
 }
 void Functions::getFirstAttacker(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
 void Functions::getNextAttacker(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = (Aurora::NWScript::Object *)nullptr; }
-void Functions::playRoomAnimation(Aurora::NWScript::FunctionContext &ctx) {}
+void Functions::playRoomAnimation(Aurora::NWScript::FunctionContext &ctx) {
+	// PlayRoomAnimation(string sRoom, int nAnimation): loop the room model's
+	// "scriptloopNN" (ANIMATION_ROOM_SCRIPTLOOPNN), e.g. the Ebon Hawk's view.
+	const Common::UString &room = ctx.getParams()[0].getString();
+	const Common::UString anim = getRoomScriptLoopAnimation(ctx.getParams()[1].getInt());
+
+	Area *area = _game->getModule().getCurrentArea();
+	if (!area || !area->playRoomAnimation(room, anim))
+		debugC(Common::kDebugEngineLogic, 1, "PlayRoomAnimation: room \"%s\" has no animation \"%s\"",
+		       room.c_str(), anim.c_str());
+}
 void Functions::effectPsychicStatic(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = Effect(kKotOREffectVisual, 0); }
 void Functions::playVisualAreaEffect(Aurora::NWScript::FunctionContext &ctx) {
 	const int effectId = ctx.getParams()[0].getInt();

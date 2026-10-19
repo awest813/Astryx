@@ -71,8 +71,8 @@ void IngameGUI::setReturnEnabled(bool enabled) {
 	_hud->setReturnEnabled(enabled);
 }
 
-void IngameGUI::showContainer(KotORBase::Inventory &inv) {
-	_hud->showContainer(inv);
+std::vector<InventoryDisturbance> IngameGUI::showContainer(KotORBase::Inventory &inv) {
+	return _hud->showContainer(inv);
 }
 
 void IngameGUI::setPartyLeader(KotORBase::Creature *creature) {

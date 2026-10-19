@@ -30,6 +30,7 @@
 #include <memory>
 
 #include "src/aurora/nwscript/object.h"
+#include "src/aurora/nwscript/objectref.h"
 
 namespace Aurora {
 class SSFFile;
@@ -103,7 +104,7 @@ public:
 	/** Can the object be used by the PC? */
 	bool isUsable() const;
 	/** Can the player click the object? */
-	bool isClickable() const;
+	virtual bool isClickable() const;
 
 	/** Toggle usability of this object. */
 	virtual void setUsable(bool usable);
@@ -258,6 +259,14 @@ public:
 	const Common::UString &getListenPattern(int number) const;
 	void clearListenPatterns();
 
+	// Inventory disturbance (GetInventoryDisturbType / GetInventoryDisturbItem)
+
+	/** Record what fires OnInventoryDisturbed next: INVENTORY_DISTURB_TYPE_* and the item. */
+	void setInventoryDisturbance(int type, Object *item);
+	int getInventoryDisturbType() const;
+	/** The item, or nullptr if it no longer exists. */
+	Object *getInventoryDisturbItem() const;
+
 protected:
 	Common::UString _templateResRef;
 	ObjectType _type; ///< The object's type.
@@ -293,6 +302,9 @@ protected:
 	std::unique_ptr<Aurora::SSFFile> _ssf; ///< Loaded KotOR soundset.
 
 	void loadSSF();
+
+	int _inventoryDisturbType { 0 };
+	Aurora::NWScript::ObjectReference _inventoryDisturbItem;
 
 	std::map<Common::UString, int32_t> _localInts;
 	std::map<Common::UString, float>   _localFloats;

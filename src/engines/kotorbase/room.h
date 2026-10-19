@@ -45,12 +45,18 @@ public:
 	void show();
 	void hide();
 
+	/** Loop this animation of the room model. Return false if it has none. */
+	bool playAnimation(const Common::UString &anim);
+
 private:
 	Common::UString _resRef;
 	std::unique_ptr<Graphics::Aurora::Model> _model;
 
 	void load(const Common::UString &resRef, float x, float y, float z);
 };
+
+/** PlayRoomAnimation's ANIMATION_ROOM_SCRIPTLOOPnn: room model animation "scriptloopnn". */
+Common::UString getRoomScriptLoopAnimation(int animation);
 
 } // End of namespace KotORBase
 

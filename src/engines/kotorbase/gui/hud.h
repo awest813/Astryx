@@ -30,6 +30,7 @@
 
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/actionmenu.h"
+#include "src/engines/kotorbase/inventory.h"
 
 #include "src/engines/kotorbase/gui/gui.h"
 #include "src/engines/kotorbase/gui/floatingtext.h"
@@ -67,7 +68,8 @@ public:
 
 	// Container
 
-	virtual void showContainer(Inventory &inv);
+	/** Show the container menu (modal); return the items moved, in order. */
+	virtual std::vector<InventoryDisturbance> showContainer(Inventory &inv);
 
 	// Party management
 

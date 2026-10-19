@@ -70,7 +70,7 @@ public:
 
 	// Container
 
-	void showContainer(Inventory &inv);
+	std::vector<InventoryDisturbance> showContainer(Inventory &inv);
 
 	// Party management
 

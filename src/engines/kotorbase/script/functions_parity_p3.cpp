@@ -191,13 +191,18 @@ void Functions::getModuleItemLostBy(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::eventConversation(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = Event(kEventUserDefined);
+	ctx.getReturn() = Event(kEventConversation);
 }
 
 void Functions::eventActivateItem(Aurora::NWScript::FunctionContext &ctx) {
-	(void)ctx;
-	ctx.getReturn() = Event(kEventUserDefined);
+	// EventActivateItem(object oItem, location lTarget, object oTarget=OBJECT_INVALID)
+	Event e(kEventActivateItem);
+
+	const Location *location = ObjectContainer::toLocation(ctx.getParams()[1].getEngineType());
+	e.setActivateItem(getParamObject(ctx, 0), ctx.getCaller(), getParamObject(ctx, 2),
+	                  location ? *location : Location());
+
+	ctx.getReturn() = e;
 }
 
 void Functions::actionExamine(Aurora::NWScript::FunctionContext &ctx) {
@@ -294,11 +299,11 @@ void Functions::musicBackgroundSetDelay(Aurora::NWScript::FunctionContext &ctx) 
 }
 
 void Functions::getItemActivatedTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = Location();
+	ctx.getReturn() = _itemActivatedEvent ? _itemActivatedEvent->getTargetLocation() : Location();
 }
 
 void Functions::getItemActivatedTarget(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
+	ctx.getReturn() = _itemActivatedEvent ? _itemActivatedEvent->getTarget() : nullptr;
 }
 
 void Functions::effectDisguise(Aurora::NWScript::FunctionContext &ctx) {

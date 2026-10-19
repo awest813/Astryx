@@ -1835,14 +1835,40 @@ void Module::openContainer(Object *container) {
 	_partyLeaderController.stopMovement();
 
 	_ingame->hideSelection();
-	_ingame->showContainer(placeable ? placeable->getInventory() : corpse->getInventory());
+	const std::vector<InventoryDisturbance> moved =
+		_ingame->showContainer(placeable ? placeable->getInventory() : corpse->getInventory());
 
-	if (placeable) {
-		placeable->close(_pc);
-		placeable->runScript(kScriptDisturbed, placeable, _pc);
+	// OnInventoryDisturbed for each item taken or given, then OnClosed.
+	Object *owner = placeable ? static_cast<Object *>(placeable) : static_cast<Object *>(corpse);
+	const uint32_t ownerID = owner->getID();
+	for (const InventoryDisturbance &disturbance : moved) {
+		// The script may destroy the container.
+		if (ObjectMan.findObject(ownerID) != owner)
+			break;
+
+		signalInventoryDisturbed(*owner, disturbance);
 	}
 
+	if (placeable && (ObjectMan.findObject(ownerID) == owner))
+		placeable->close(_pc);
+
 	updateFrameTimestamp();
+}
+
+void Module::signalInventoryDisturbed(Object &container, const InventoryDisturbance &disturbance) {
+	// The item object scripts see: where the item now is.
+	Item *item = nullptr;
+	if (disturbance.type == kInventoryDisturbTypeRemoved) {
+		if (_pc)
+			item = _pc->addScriptItem(disturbance.item);
+	} else if (Placeable *placeable = ObjectContainer::toPlaceable(&container)) {
+		item = placeable->addScriptItem(disturbance.item);
+	} else if (Creature *creature = ObjectContainer::toCreature(&container)) {
+		item = creature->addScriptItem(disturbance.item);
+	}
+
+	container.setInventoryDisturbance(disturbance.type, item);
+	container.runScript(kScriptDisturbed, &container, _pc);
 }
 
 void Module::notifyCombatRoundBegan(int round) {
@@ -2992,6 +3018,18 @@ void Module::delayScript(const Common::UString &script,
 	action.timestamp = EventMan.getTimestamp() + delay;
 
 	_delayedActions.insert(action);
+}
+
+bool Module::hasDelayedScriptFor(const Aurora::NWScript::Object *owner, uint32_t until) const {
+	for (const Action &action : _delayedActions) {
+		if (action.timestamp > until)
+			break;
+
+		if ((action.type == kActionScript) && owner && (action.owner.getId() == owner->getID()))
+			return true;
+	}
+
+	return false;
 }
 
 void Module::signalUserDefinedEvent(Object *owner, int number) {

@@ -910,6 +910,14 @@ void Area::loadProperties(const Aurora::GFF3Struct &props) {
 	setMusicBattleTrack(props.getUint("MusicBattle", Aurora::kStrRefInvalid));
 }
 
+bool Area::playRoomAnimation(const Common::UString &room, const Common::UString &anim) {
+	for (const auto &r : _rooms)
+		if (r->getResRef().equalsIgnoreCase(room))
+			return r->playAnimation(anim);
+
+	return false;
+}
+
 void Area::loadRooms() {
 	const Aurora::LYTFile::RoomArray &rooms = _lyt.getRooms();
 	for (Aurora::LYTFile::RoomArray::const_iterator r = rooms.begin(); r != rooms.end(); ++r) {
@@ -2053,18 +2061,18 @@ void Area::processPendingDestruction() {
 
 	const uint32_t now = EventMan.getTimestamp();
 
-	std::vector<uint32_t> due;
+	std::vector<std::pair<uint32_t, uint32_t>> due;
 	for (auto it = _pendingDestruction.begin(); it != _pendingDestruction.end(); ) {
 		if (it->second <= now) {
-			due.push_back(it->first);
+			due.push_back(*it);
 			it = _pendingDestruction.erase(it);
 		} else
 			++it;
 	}
 
-	for (uint32_t id : due) {
+	for (const auto &pending : due) {
 		// Look the object up again: it may already be gone.
-		Object *object = ObjectContainer::toObject(ObjectMan.findObject(id));
+		Object *object = ObjectContainer::toObject(ObjectMan.findObject(pending.first));
 		if (!object)
 			continue;
 
@@ -2072,6 +2080,18 @@ void Area::processPendingDestruction() {
 		if (creature && (creature == _module->getPC() || _module->isObjectPartyMember(creature))) {
 			warning("Area::processPendingDestruction(): Not destroying party member \"%s\"",
 			        creature->getTag().c_str());
+			continue;
+		}
+
+		// SetIsDestroyable(FALSE): DestroyObject fails. Scripts make the creature
+		// destroyable first with an AssignCommand queued before the DestroyObject,
+		// so wait for its commands due by then before deciding.
+		if (creature && !creature->isDestroyable()) {
+			if (_module->hasDelayedScriptFor(creature, pending.second))
+				_pendingDestruction.push_back(pending);
+			else
+				debugC(Common::kDebugEngineLogic, 1, "Not destroying non-destroyable creature \"%s\"",
+				       creature->getTag().c_str());
 			continue;
 		}
 
