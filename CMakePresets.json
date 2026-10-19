@@ -7,111 +7,135 @@
   },
   "configurePresets": [
     {
-      "name": "portable-vcpkg-ninja",
-      "displayName": "Portable vcpkg (Ninja)",
-      "description": "Configure with a repo-local vcpkg checkout for Linux/macOS or Windows Ninja builds",
-      "binaryDir": "${sourceDir}/build-vcpkg-linux",
-      "generator": "Ninja",
+      "name": "base",
+      "hidden": true,
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_POLICY_VERSION_MINIMUM": {
           "type": "STRING",
           "value": "3.5"
-        },
+        }
+      }
+    },
+    {
+      "name": "repo-vcpkg",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": {
           "type": "FILEPATH",
           "value": "${sourceDir}/.deps/vcpkg/scripts/buildsystems/vcpkg.cmake"
         }
+      }
+    },
+    {
+      "name": "linux-system",
+      "displayName": "System packages (Ninja, Debug)",
+      "description": "Libraries from the system package manager; same build directory as scripts/build_ci_linux.sh",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build-linux-ci",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "portable-vcpkg-ninja",
+      "displayName": "Repo-local vcpkg (Ninja, Debug)",
+      "description": "vcpkg in .deps/vcpkg; same build directory as scripts/bootstrap_linux.sh (run it once to fetch vcpkg)",
+      "inherits": "repo-vcpkg",
+      "binaryDir": "${sourceDir}/build-vcpkg-linux",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
       "name": "portable-vcpkg-ninja-multi",
-      "displayName": "Portable vcpkg (Ninja Multi-Config)",
-      "description": "Configure with a repo-local vcpkg checkout for Windows multi-config builds",
+      "displayName": "Repo-local vcpkg (Ninja Multi-Config)",
+      "description": "vcpkg in .deps/vcpkg; same build directory as scripts/bootstrap_windows.ps1 (run it once to fetch vcpkg)",
+      "inherits": "repo-vcpkg",
       "binaryDir": "${sourceDir}/build-vcpkg-portable",
-      "generator": "Ninja Multi-Config",
-      "cacheVariables": {
-        "CMAKE_POLICY_VERSION_MINIMUM": {
-          "type": "STRING",
-          "value": "3.5"
-        },
-        "CMAKE_TOOLCHAIN_FILE": {
-          "type": "FILEPATH",
-          "value": "${sourceDir}/.deps/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        }
-      }
+      "generator": "Ninja Multi-Config"
     },
     {
       "name": "ninja-multi-vcpkg",
-      "displayName": "Ninja Multi-Config (vcpkg)",
-      "description": "Configure with vcpkg toolchain and generate Ninja project files for all configurations",
+      "displayName": "vcpkg from VCPKG_ROOT (Ninja Multi-Config)",
+      "description": "Uses the vcpkg checkout named by the VCPKG_ROOT environment variable",
+      "inherits": "base",
       "binaryDir": "${sourceDir}/builds/${presetName}",
       "generator": "Ninja Multi-Config",
       "cacheVariables": {
-        "CMAKE_POLICY_VERSION_MINIMUM": {
-          "type": "STRING",
-          "value": "3.5"
-        },
         "CMAKE_TOOLCHAIN_FILE": {
           "type": "FILEPATH",
           "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-        }
-      }
-    },
-    {
-      "name": "ninja-multi-vcpkg-local",
-      "displayName": "Ninja Multi-Config (local vcpkg)",
-      "description": "Configure with local C:/vcpkg toolchain and generate Ninja project files for all configurations",
-      "binaryDir": "${sourceDir}/builds/${presetName}",
-      "generator": "Ninja Multi-Config",
-      "cacheVariables": {
-        "CMAKE_POLICY_VERSION_MINIMUM": {
-          "type": "STRING",
-          "value": "3.5"
-        },
-        "CMAKE_TOOLCHAIN_FILE": {
-          "type": "FILEPATH",
-          "value": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
         }
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "portable-vcpkg-ninja-debug",
-      "configurePreset": "portable-vcpkg-ninja",
-      "displayName": "Build portable-vcpkg-ninja-debug",
-      "description": "Build portable-vcpkg-ninja Debug configuration",
+      "name": "linux-system",
+      "configurePreset": "linux-system",
+      "displayName": "Build xoreos (system packages)",
       "targets": [
         "xoreos"
+      ]
+    },
+    {
+      "name": "linux-system-check",
+      "configurePreset": "linux-system",
+      "displayName": "Build and run unit tests (system packages)",
+      "targets": [
+        "check"
+      ]
+    },
+    {
+      "name": "portable-vcpkg-ninja-debug",
+      "configurePreset": "portable-vcpkg-ninja",
+      "displayName": "Build xoreos (repo-local vcpkg, Ninja)",
+      "targets": [
+        "xoreos"
+      ]
+    },
+    {
+      "name": "portable-vcpkg-ninja-check",
+      "configurePreset": "portable-vcpkg-ninja",
+      "displayName": "Build and run unit tests (repo-local vcpkg, Ninja)",
+      "targets": [
+        "check"
       ]
     },
     {
       "name": "portable-vcpkg-ninja-multi-debug",
       "configurePreset": "portable-vcpkg-ninja-multi",
-      "displayName": "Build portable-vcpkg-ninja-multi-debug",
-      "description": "Build portable-vcpkg-ninja-multi Debug configuration",
+      "displayName": "Build xoreos Debug (repo-local vcpkg, Multi-Config)",
       "configuration": "Debug",
       "targets": [
         "xoreos"
       ]
     },
     {
-      "name": "ninja-multi-vcpkg-debug",
-      "configurePreset": "ninja-multi-vcpkg",
-      "displayName": "Build ninja-multi-vcpkg-debug",
-      "description": "Build ninja-multi-vcpkg Debug configuration",
+      "name": "portable-vcpkg-ninja-multi-release",
+      "configurePreset": "portable-vcpkg-ninja-multi",
+      "displayName": "Build xoreos Release (repo-local vcpkg, Multi-Config)",
+      "configuration": "Release",
+      "targets": [
+        "xoreos"
+      ]
+    },
+    {
+      "name": "portable-vcpkg-ninja-multi-check",
+      "configurePreset": "portable-vcpkg-ninja-multi",
+      "displayName": "Build and run unit tests Debug (repo-local vcpkg, Multi-Config)",
       "configuration": "Debug",
       "targets": [
-        "all",
         "check"
       ]
     },
     {
-      "name": "ninja-multi-vcpkg-local-debug",
-      "configurePreset": "ninja-multi-vcpkg-local",
-      "displayName": "Build ninja-multi-vcpkg-local-debug",
-      "description": "Build ninja-multi-vcpkg-local Debug configuration",
+      "name": "ninja-multi-vcpkg-debug",
+      "configurePreset": "ninja-multi-vcpkg",
+      "displayName": "Build all and run unit tests Debug (VCPKG_ROOT)",
       "configuration": "Debug",
       "targets": [
         "all",
@@ -121,24 +145,38 @@
   ],
   "testPresets": [
     {
+      "name": "linux-system",
+      "displayName": "Run unit tests with ctest (build the check target first)",
+      "configurePreset": "linux-system",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
       "name": "portable-vcpkg-ninja-debug",
+      "displayName": "Run unit tests with ctest (build the check target first)",
       "configurePreset": "portable-vcpkg-ninja",
-      "configuration": "Debug"
+      "output": {
+        "outputOnFailure": true
+      }
     },
     {
       "name": "portable-vcpkg-ninja-multi-debug",
+      "displayName": "Run unit tests with ctest (build the check target first)",
       "configurePreset": "portable-vcpkg-ninja-multi",
-      "configuration": "Debug"
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
     },
     {
       "name": "ninja-multi-vcpkg-debug",
+      "displayName": "Run unit tests with ctest (build the check target first)",
       "configurePreset": "ninja-multi-vcpkg",
-      "configuration": "Debug"
-    },
-    {
-      "name": "ninja-multi-vcpkg-local-debug",
-      "configurePreset": "ninja-multi-vcpkg-local",
-      "configuration": "Debug"
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }
