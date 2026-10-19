@@ -42,7 +42,8 @@ void indexMandatoryArchive(const Common::UString &file, uint32_t priority, const
 	try {
 		ResMan.indexArchive(file, priority, password, changeID);
 	} catch (Common::Exception &e) {
-		e.add("Failed to index mandatory archive \"%s\"", file.c_str());
+		e.add("Failed to load the required game file \"%s\". The game installation may be incomplete or "
+		      "damaged, or the game path may not point to the game's main installation folder", file.c_str());
 		throw;
 	}
 }
@@ -118,7 +119,8 @@ void indexMandatoryDirectory(const Common::UString &dir, const char *glob, int d
 	try {
 		ResMan.indexResourceDir(dir, glob, depth, priority, changeID);
 	} catch (Common::Exception &e) {
-		e.add("Failed to index mandatory directory \"%s\"", dir.c_str());
+		e.add("Failed to find the required game folder \"%s\". The game installation may be incomplete or "
+		      "damaged, or the game path may not point to the game's main installation folder", dir.c_str());
 		throw;
 	}
 }

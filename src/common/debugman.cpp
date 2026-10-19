@@ -234,6 +234,8 @@ bool DebugManager::openLogFile(const UString &file) {
 	if (!_logFile.open(path))
 		return false;
 
+	_logFilePath = path;
+
 	logString(Version::getProjectNameVersionFull());
 	logString("\n");
 
@@ -242,6 +244,11 @@ bool DebugManager::openLogFile(const UString &file) {
 
 void DebugManager::closeLogFile() {
 	_logFile.close();
+	_logFilePath.clear();
+}
+
+const UString &DebugManager::getLogFile() const {
+	return _logFilePath;
 }
 
 void DebugManager::logString(const UString &str) {

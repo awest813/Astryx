@@ -105,6 +105,11 @@ tests_common_test_configman_SOURCES  = tests/common/configman.cpp
 tests_common_test_configman_LDADD    = $(common_LIBS)
 tests_common_test_configman_CXXFLAGS = $(test_CXXFLAGS)
 
+check_PROGRAMS                       += tests/common/test_fatalerror
+tests_common_test_fatalerror_SOURCES  = tests/common/fatalerror.cpp
+tests_common_test_fatalerror_LDADD    = $(common_LIBS)
+tests_common_test_fatalerror_CXXFLAGS = $(test_CXXFLAGS)
+
 noinst_HEADERS += tests/common/encoding.h tests/common/encoding_tests.h
 
 check_PROGRAMS                           += tests/common/test_encoding_ascii

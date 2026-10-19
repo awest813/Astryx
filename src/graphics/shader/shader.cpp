@@ -557,7 +557,7 @@ void ShaderManager::genGLShader(ShaderObject *object) {
 		GLsizei logolength;
 		char logorama[4096];
 		glGetShaderInfoLog(object->glid, 4095, &logolength, logorama);
-		error("Shader compile failure! Driver output: %s", logorama);
+		error("Shader compile failure! Updating your graphics driver might help. Driver output: %s", logorama);
 	}
 }
 
@@ -599,7 +599,7 @@ void ShaderManager::genGLProgram(ShaderProgram *program) {
 		GLsizei logolength;
 		char logorama[4096];
 		glGetProgramInfoLog(glid, 4095, &logolength, logorama);
-		error("Shader link failure! Driver output: %s", logorama);
+		error("Shader link failure! Updating your graphics driver might help. Driver output: %s", logorama);
 
 		glDeleteProgram(glid);
 

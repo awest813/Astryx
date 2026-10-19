@@ -27,6 +27,7 @@
 #include <cassert>
 
 #include "src/common/configman.h"
+#include "src/common/util.h"
 #include "src/common/string.h"
 #include "src/common/strutil.h"
 #include "src/common/readfile.h"
@@ -121,6 +122,17 @@ bool ConfigManager::save() {
 
 	// Create the directories in the path, if necessary
 	UString file = FilePath::canonicalize(getConfigFile());
+
+	/* Don't write a value that would read back differently. Worst case,
+	 * that would make the whole config file unreadable on the next start. */
+	UString badDomain, badKey;
+	if (_config->findInvalidValue(badDomain, badKey)) {
+		warning("Not saving the config file \"%s\": the value of \"%s\" in [%s] contains a '#', "
+		        "a line break or leading/trailing spaces, which the config file can't store. "
+		        "Settings changed during this run won't be remembered",
+		        file.c_str(), badKey.c_str(), badDomain.c_str());
+		return false;
+	}
 
 	try {
 		FilePath::createDirectories(FilePath::getDirectory(file));
@@ -237,6 +249,18 @@ bool ConfigManager::hasGame(const UString &gameID) {
 		return false;
 
 	return _config->getDomain(gameID) != 0;
+}
+
+std::vector<UString> ConfigManager::getGames() const {
+	std::vector<UString> games;
+	if (!_config)
+		return games;
+
+	for (const auto &domain : _config->getDomains())
+		if (domain->getName() != kDomainApp)
+			games.push_back(domain->getName());
+
+	return games;
 }
 
 bool ConfigManager::setGame(const UString &gameID) {
