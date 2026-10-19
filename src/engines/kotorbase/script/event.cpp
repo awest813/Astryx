@@ -47,6 +47,30 @@ void Event::setSpellHarmful(bool harmful) {
 	_spellHarmful = harmful;
 }
 
+void Event::setActivateItem(Aurora::NWScript::Object *item, Aurora::NWScript::Object *activator,
+                            Aurora::NWScript::Object *target, const Location &targetLocation) {
+	_item = item;
+	_activator = activator;
+	_target = target;
+	_targetLocation = targetLocation;
+}
+
+Aurora::NWScript::Object *Event::getItem() const {
+	return *_item;
+}
+
+Aurora::NWScript::Object *Event::getActivator() const {
+	return *_activator;
+}
+
+Aurora::NWScript::Object *Event::getTarget() const {
+	return *_target;
+}
+
+const Location &Event::getTargetLocation() const {
+	return _targetLocation;
+}
+
 EventType Event::getType() const {
 	return _type;
 }
@@ -68,6 +92,10 @@ Aurora::NWScript::EngineType *Event::clone() const {
 	e->_userDefinedNumber = _userDefinedNumber;
 	e->_spellId = _spellId;
 	e->_spellHarmful = _spellHarmful;
+	e->_item = _item;
+	e->_activator = _activator;
+	e->_target = _target;
+	e->_targetLocation = _targetLocation;
 	return e;
 }
 

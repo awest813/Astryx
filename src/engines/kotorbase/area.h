@@ -256,6 +256,8 @@ public:
 	std::set<Common::UString> getRoomsVisibleByPartyLeader() const;
 
 	void showAllRooms();
+	/** PlayRoomAnimation: loop an animation of the room (LYT model name, any case). */
+	bool playRoomAnimation(const Common::UString &room, const Common::UString &anim);
 	void notifyObjectMoved(Object &o);
 	void notifyPartyLeaderMoved();
 

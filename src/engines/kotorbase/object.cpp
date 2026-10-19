@@ -130,6 +130,19 @@ const std::vector<int> Object::getPossibleActions() const {
 	return std::vector<int>();
 }
 
+void Object::setInventoryDisturbance(int type, Object *item) {
+	_inventoryDisturbType = type;
+	_inventoryDisturbItem = item;
+}
+
+int Object::getInventoryDisturbType() const {
+	return _inventoryDisturbType;
+}
+
+Object *Object::getInventoryDisturbItem() const {
+	return dynamic_cast<Object *>(*_inventoryDisturbItem);
+}
+
 bool Object::isStatic() const {
 	return _static;
 }

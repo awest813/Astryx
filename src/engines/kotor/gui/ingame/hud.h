@@ -56,7 +56,7 @@ public:
 	void updateMinimapExplored(const std::vector<bool> &explored) override;
 	void updateMinimapMapPins(const std::vector<KotORBase::MapPin> &pins) override;
 
-	void showContainer(KotORBase::Inventory &inv);
+	std::vector<KotORBase::InventoryDisturbance> showContainer(KotORBase::Inventory &inv) override;
 
 	void setPartyLeader(KotORBase::Creature *creature);
 	void setPartyMember1(KotORBase::Creature *creature);

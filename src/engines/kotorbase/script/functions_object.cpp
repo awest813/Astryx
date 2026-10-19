@@ -841,8 +841,14 @@ void Functions::getName(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::setIsDestroyable(Aurora::NWScript::FunctionContext &ctx) {
 	// SetIsDestroyable(int bDestroyable, int bRaiseDeadPossible=TRUE, int bSelectableWhenDead=FALSE)
-	// Full destroyable semantics require a persistence layer.  For the Endar
-	// Spire milestone this is a no-op that satisfies script execution without error.
+	// Sets the caller's flags; scripts reach other creatures with AssignCommand.
+	Creature *creature = ObjectContainer::toCreature(ctx.getCaller());
+	if (!creature)
+		return;
+
+	creature->setDestroyable(ctx.getParams()[0].getInt() != 0,
+	                         ctx.getParams()[1].getInt() != 0,
+	                         ctx.getParams()[2].getInt() != 0);
 }
 
 void Functions::getIsInConversation(Aurora::NWScript::FunctionContext &ctx) {
@@ -1411,7 +1417,10 @@ void Functions::getLastHostileTarget(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getLastAttackAction(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = 0;
+	// GetLastAttackAction(object oAttacker=OBJECT_SELF): ACTION_ATTACKOBJECT,
+	// ACTION_CASTSPELL or ACTION_INVALID (k_inc_generic's GN_SetLastRoundData).
+	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
+	ctx.getReturn() = static_cast<int32_t>(creature ? creature->getLastAttackAction() : kActionInvalid);
 }
 
 void Functions::getWasForcePowerSuccessful(Aurora::NWScript::FunctionContext &ctx) {
@@ -1593,19 +1602,22 @@ void Functions::faceObjectAwayFromObject(Aurora::NWScript::FunctionContext &ctx)
 }
 
 void Functions::getInventoryDisturbType(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _lastInventoryDisturbType;
+	// The caller's OnInventoryDisturbed: INVENTORY_DISTURB_TYPE_*.
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	ctx.getReturn() = static_cast<int32_t>(caller ? caller->getInventoryDisturbType() : 0);
 }
 
 void Functions::getInventoryDisturbItem(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _lastInventoryDisturbItem;
+	Object *caller = ObjectContainer::toObject(ctx.getCaller());
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(caller ? caller->getInventoryDisturbItem() : nullptr);
 }
 
 void Functions::getItemActivated(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _lastItemActivated;
+	ctx.getReturn() = _itemActivatedEvent ? _itemActivatedEvent->getItem() : nullptr;
 }
 
 void Functions::getItemActivator(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _lastItemActivator;
+	ctx.getReturn() = _itemActivatedEvent ? _itemActivatedEvent->getActivator() : nullptr;
 }
 
 namespace {

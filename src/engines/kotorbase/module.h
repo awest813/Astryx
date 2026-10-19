@@ -196,6 +196,10 @@ public:
 	                 const Aurora::NWScript::ScriptState &state,
 	                 Aurora::NWScript::Object *owner, Aurora::NWScript::Object *triggerer,
 	                 uint32_t delay);
+	/** Run the container's OnInventoryDisturbed for items taken from or given to it. */
+	void signalInventoryDisturbed(Object &container, const InventoryDisturbance &disturbance);
+	/** Is a delayed command (AssignCommand, DelayCommand) of this object due by then? */
+	bool hasDelayedScriptFor(const Aurora::NWScript::Object *owner, uint32_t until) const;
 
 	void signalUserDefinedEvent(Object *owner, int number);
 	/** Queue a user-defined event, as SignalEvent does in the original. */

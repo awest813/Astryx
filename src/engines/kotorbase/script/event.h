@@ -26,14 +26,19 @@
 #define ENGINES_KOTORBASE_SCRIPT_EVENT_H
 
 #include "src/aurora/nwscript/enginetype.h"
+#include "src/aurora/nwscript/objectref.h"
+
+#include "src/engines/kotorbase/location.h"
 
 namespace Engines {
 
 namespace KotORBase {
 
 enum EventType {
-	kEventUserDefined = 0,
-	kEventSpellCastAt = 1
+	kEventUserDefined  = 0,
+	kEventSpellCastAt  = 1,
+	kEventConversation = 2, ///< EventConversation: runs the target's OnConversation.
+	kEventActivateItem = 3  ///< EventActivateItem: runs the module's OnActivateItem.
 };
 
 class Event : public Aurora::NWScript::EngineType {
@@ -49,6 +54,14 @@ public:
 	void setSpellId(int spellId);
 	void setSpellHarmful(bool harmful);
 
+	/** EventActivateItem(): the item, who activated it and what it targets. */
+	void setActivateItem(Aurora::NWScript::Object *item, Aurora::NWScript::Object *activator,
+	                     Aurora::NWScript::Object *target, const Location &targetLocation);
+	Aurora::NWScript::Object *getItem() const;
+	Aurora::NWScript::Object *getActivator() const;
+	Aurora::NWScript::Object *getTarget() const;
+	const Location &getTargetLocation() const;
+
 	Aurora::NWScript::EngineType *clone() const;
 
 private:
@@ -56,6 +69,12 @@ private:
 	int _userDefinedNumber;
 	int _spellId;
 	bool _spellHarmful;
+
+	// Objects by ID: an event may outlive them (DelayCommand).
+	Aurora::NWScript::ObjectReference _item;
+	Aurora::NWScript::ObjectReference _activator;
+	Aurora::NWScript::ObjectReference _target;
+	Location _targetLocation;
 };
 
 } // End of namespace KotORBase

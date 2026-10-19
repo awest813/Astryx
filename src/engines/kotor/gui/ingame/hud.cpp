@@ -280,15 +280,16 @@ void HUD::setRotation(float angle) {
 	}
 }
 
-void HUD::showContainer(KotORBase::Inventory &inv) {
+std::vector<KotORBase::InventoryDisturbance> HUD::showContainer(KotORBase::Inventory &inv) {
 	KotORBase::Creature *pc = _module.getPC();
 	if (!pc)
-		return;
+		return {};
 
 	_container = std::make_unique<ContainerMenu>();
 	_container->bindInventories(inv, pc->getInventory());
-	_container->fillFromInventory(inv);
 	sub(*_container, kStartCodeNone, true, false);
+
+	return _container->getDisturbances();
 }
 
 void HUD::updatePortraitVitals(uint8_t n, KotORBase::Creature *creature) {

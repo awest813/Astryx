@@ -89,7 +89,8 @@ void HUD::setReturnQueryStrref(uint32_t UNUSED(id)) {
 void HUD::setReturnEnabled(bool UNUSED(enabled)) {
 }
 
-void HUD::showContainer(Inventory &UNUSED(inv)) {
+std::vector<InventoryDisturbance> HUD::showContainer(Inventory &UNUSED(inv)) {
+	return {};
 }
 
 void HUD::setPartyLeader(Creature *UNUSED(creature)) {

@@ -655,7 +655,8 @@ void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ct
 	// The dead don't talk, but what they carried is left for the taking.
 	Creature *corpse = ObjectContainer::toCreature(target);
 	if (corpse && corpse->isDead()) {
-		if (!corpse->isPC() && !module->isObjectPartyMember(corpse) &&
+		// SetIsDestroyable(FALSE, ..., bSelectableWhenDead = FALSE): not lootable.
+		if (corpse->isClickable() && !corpse->isPC() && !module->isObjectPartyMember(corpse) &&
 		    !corpse->getInventory().getItems().empty())
 			module->delayContainer(corpse);
 
@@ -1040,6 +1041,7 @@ bool ActionExecutor::castSpell(const Action &action, const ExecutionContext &ctx
 
 	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->setLastForcePowerUsed(action.actionID);
+	caster->setLastAttackAction(kActionCastSpell);
 	caster->playSpellCastVisuals(action.actionID);
 
 	// Using the Force on someone gives a sneaking caster away.

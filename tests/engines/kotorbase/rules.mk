@@ -207,3 +207,8 @@ check_PROGRAMS                                           += tests/engines/kotorb
 tests_engines_kotorbase_test_endar_spire_flow_SOURCES     = tests/engines/kotorbase/endar_spire_flow.cpp
 tests_engines_kotorbase_test_endar_spire_flow_LDADD       = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_endar_spire_flow_CXXFLAGS    = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_k1_script_natives
+tests_engines_kotorbase_test_k1_script_natives_SOURCES    = tests/engines/kotorbase/k1_script_natives.cpp
+tests_engines_kotorbase_test_k1_script_natives_LDADD      = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_k1_script_natives_CXXFLAGS   = $(test_CXXFLAGS)

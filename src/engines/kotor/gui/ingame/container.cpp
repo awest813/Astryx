@@ -52,16 +52,43 @@ ContainerMenu::ContainerMenu(Console *console) : KotORBase::GUI(console) {
 	lbItems->createItemWidgets(3);
 }
 
+// TLK strings of the container menu (as in KotOR.js).
+static const uint32_t kStrItemsAvailable     = 392;
+static const uint32_t kStrContainerInventory = 393;
+static const uint32_t kStrNoItems            = 394;
+static const uint32_t kStrSwitchTo           = 47884;
+static const uint32_t kStrGetItems           = 38542;
+static const uint32_t kStrGiveItems          = 38543;
+
 void ContainerMenu::bindInventories(KotORBase::Inventory &container, KotORBase::Inventory &party) {
 	_container = &container;
 	_party = &party;
+
+	setGiveMode(false);
+}
+
+void ContainerMenu::setGiveMode(bool give) {
+	_giveMode = give;
+
+	setWidgetText("LBL_MESSAGE", TalkMan.getString(give ? kStrItemsAvailable : kStrContainerInventory));
+	setWidgetText("BTN_GIVEITEMS", TalkMan.getString(kStrSwitchTo) + " " +
+	                               TalkMan.getString(give ? kStrGetItems : kStrGiveItems));
+	setWidgetText("BTN_OK", TalkMan.getString(give ? kStrGiveItems : kStrGetItems));
+
+	refreshList();
+}
+
+void ContainerMenu::refreshList() {
+	KotORBase::Inventory *inv = _giveMode ? _party : _container;
+	if (inv)
+		fillFromInventory(*inv);
 }
 
 void ContainerMenu::fillFromInventory(const KotORBase::Inventory &inv) {
 	_itemTags.clear();
 
 	if (inv.getItems().empty())
-		setWidgetText("LBL_MESSAGE", TalkMan.getString(394));
+		setWidgetText("LBL_MESSAGE", TalkMan.getString(kStrNoItems));
 
 	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
 	lbItems->removeAllItems();
@@ -103,9 +130,10 @@ void ContainerMenu::takeSelectedItem() {
 	if (it == items.end())
 		return;
 
-	const int count = it->second.count > 0 ? it->second.count : 1;
-	_party->addItem(tag, count);
-	_container->removeItem(tag, count);
+	const Common::UString item = tag;
+	const int moved = KotORBase::moveInventoryItems(*_container, *_party, item, MAX(it->second.count, 1));
+	if (moved > 0)
+		_disturbances.push_back({ item, moved, KotORBase::kInventoryDisturbTypeRemoved });
 
 	fillFromInventory(*_container);
 
@@ -118,19 +146,56 @@ void ContainerMenu::takeAllItems() {
 		return;
 
 	const std::map<Common::UString, KotORBase::Inventory::ItemGroup> items = _container->getItems();
-	for (const auto &entry : items)
-		_party->addItem(entry.first, entry.second.count);
+	for (const auto &entry : items) {
+		const int moved = KotORBase::moveInventoryItems(*_container, *_party, entry.first,
+		                                                MAX(entry.second.count, 1));
+		if (moved > 0)
+			_disturbances.push_back({ entry.first, moved, KotORBase::kInventoryDisturbTypeRemoved });
+	}
 
 	_container->removeAllItems();
 	fillFromInventory(*_container);
+}
+
+void ContainerMenu::giveSelectedItem() {
+	if (!_container || !_party)
+		return;
+
+	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
+	if (!lbItems)
+		return;
+
+	const int index = lbItems->getSelectedIndex();
+	if (index < 0 || index >= (int)_itemTags.size())
+		return;
+
+	// One at a time, like the original.
+	const Common::UString item = _itemTags[index];
+	if (KotORBase::moveInventoryItems(*_party, *_container, item, 1) > 0)
+		_disturbances.push_back({ item, 1, KotORBase::kInventoryDisturbTypeAdded });
+
+	fillFromInventory(*_party);
+
+	if (!lbItems->isEmpty())
+		lbItems->selectItem(index < (int)_itemTags.size() ? index : (int)_itemTags.size() - 1);
 }
 
 void ContainerMenu::callbackActive(Widget &widget) {
 	const Common::UString &tag = widget.getTag();
 
 	if (tag == "BTN_OK") {
+		if (_giveMode) {
+			giveSelectedItem();
+			return;
+		}
+
 		takeAllItems();
 		_returnCode = 1;
+		return;
+	}
+
+	if (tag == "BTN_GIVEITEMS") {
+		setGiveMode(!_giveMode);
 		return;
 	}
 
@@ -140,7 +205,10 @@ void ContainerMenu::callbackActive(Widget &widget) {
 	}
 
 	if (tag == "LB_ITEMS" || tag.beginsWith("LB_ITEMS")) {
-		takeSelectedItem();
+		if (_giveMode)
+			giveSelectedItem();
+		else
+			takeSelectedItem();
 		return;
 	}
 }
@@ -155,7 +223,10 @@ void ContainerMenu::callbackKeyInput(const Events::Key &key, const Events::Event
 				getListBox("LB_ITEMS")->selectNextItem();
 				break;
 			case Events::kKeyReturn:
-				takeSelectedItem();
+				if (_giveMode)
+					giveSelectedItem();
+				else
+					takeSelectedItem();
 				break;
 			default:
 				break;

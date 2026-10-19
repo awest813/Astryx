@@ -60,6 +60,21 @@ void Functions::signalEvent(Aurora::NWScript::FunctionContext &ctx) {
 			                                        object, 12, e->getSpellHarmful());
 			object->runScript(kScriptSpellCastAt, object, ctx.getCaller());
 			break;
+		case kEventConversation:
+			// The target's OnConversation script, as if spoken to by the caller.
+			object->runScript(kScriptDialogue, object, ctx.getCaller());
+			break;
+		case kEventActivateItem: {
+			// Signalled to the module: its OnActivateItem script, with the item
+			// for GetItemActivated() and friends (restored for nested events).
+			std::unique_ptr<Event> previous = std::move(_itemActivatedEvent);
+			_itemActivatedEvent.reset(static_cast<Event *>(e->clone()));
+
+			object->runScript(kScriptActivateItem, object, e->getActivator());
+
+			_itemActivatedEvent = std::move(previous);
+			break;
+		}
 		default:
 			warning("Functions::signalEvent(): Event type \"%d\" not implemented", e->getType());
 			break;

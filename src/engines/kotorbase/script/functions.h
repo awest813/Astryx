@@ -83,6 +83,7 @@
 
 
 #include <map>
+#include <memory>
 
 
 #include <vector>
@@ -98,6 +99,8 @@
 
 
 #include "src/aurora/nwscript/types.h"
+
+#include "src/engines/kotorbase/script/event.h"
 
 
 
@@ -2537,11 +2540,9 @@ private:
 	// Matched substrings from TestStringAgainstPattern
 	std::vector<Common::UString> _matchedSubstrings;
 
-	// Context state for inventory-disturb and item-activation events
-	int _lastInventoryDisturbType { 0 };
-	Aurora::NWScript::Object *_lastInventoryDisturbItem { nullptr };
-	Aurora::NWScript::Object *_lastItemActivated { nullptr };
-	Aurora::NWScript::Object *_lastItemActivator { nullptr };
+	/** The EventActivateItem the module's OnActivateItem script runs for
+	 *  (GetItemActivated, GetItemActivator, GetItemActivatedTarget[Location]). */
+	std::unique_ptr<Event> _itemActivatedEvent;
 
 public:
 	void grantFeat(Aurora::NWScript::FunctionContext &ctx);

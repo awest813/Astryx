@@ -31,6 +31,8 @@
 
 #include "src/aurora/types.h"
 
+#include "src/engines/kotorbase/types.h"
+
 namespace Aurora {
 class GFF3WriterList;
 }
@@ -80,6 +82,17 @@ private:
 	ItemMap _items;
 	uint32_t _gold { 0 };
 };
+
+/** Items moved into or out of a container, for its OnInventoryDisturbed. */
+struct InventoryDisturbance {
+	Common::UString item; ///< The template of the moved items.
+	int count { 0 };
+	InventoryDisturbType type { kInventoryDisturbTypeRemoved };
+};
+
+/** Move up to count items of this template from one inventory to another.
+ *  Return how many were moved. */
+int moveInventoryItems(Inventory &from, Inventory &to, const Common::UString &item, int count);
 
 } // End of namespace KotORBase
 

@@ -425,6 +425,11 @@ static const int kAnimationForcePushed = 84;
 			_maxHitPoints = gff.getSint("MaxHitPoints", _currentHitPoints);
 			_minOneHitPoint = gff.getBool("Min1HP", _minOneHitPoint);
 
+			// What happens to the corpse (SetIsDestroyable)
+			_destroyable = gff.getBool("IsDestroyable", _destroyable);
+			_raiseable = gff.getBool("IsRaiseable", _raiseable);
+			_deadSelectable = gff.getBool("DeadSelectable", _deadSelectable);
+
 			// Faction
 			_faction = Faction(gff.getUint("FactionID", _faction));
 
@@ -1845,7 +1850,9 @@ static const int kAnimationForcePushed = 84;
 					applyEffect(kEffectHeal, 0.0f, effect.getAmount(), effect.getSpellId());
 					break;
 				case kKotOREffectResurrection:
-					resurrect(MAX(1, effect.getAmount()));
+					// SetIsDestroyable(..., bRaiseDeadPossible = FALSE)
+					if (_raiseable)
+						resurrect(MAX(1, effect.getAmount()));
 					break;
 				case kKotOREffectTemporaryForcePoints: {
 					int fp = getForcePoints() + effect.getAmount();
@@ -1959,6 +1966,7 @@ static const int kAnimationForcePushed = 84;
 				cancelCombat();
 				return;
 			}
+			_lastAttackAction = kActionAttackObject;
 			// Attacking gives a sneaking creature away.
 			if (_stealthMode)
 				setStealthMode(false);
@@ -2234,9 +2242,25 @@ static const int kAnimationForcePushed = 84;
 					warning("Creature::handleDeath(): \"%s\" has no model; applying logical death only", _tag.c_str());
 				}
 				stopLastingVisuals();
+				if (_model)
+					_model->setClickable(isClickable());
 				return true;
 			}
 			return false;
+		}
+		void Creature::setDestroyable(bool destroyable, bool raiseable, bool selectableWhenDead) {
+			_destroyable = destroyable;
+			_raiseable = raiseable;
+			_deadSelectable = selectableWhenDead;
+			if (_model)
+				_model->setClickable(isClickable());
+		}
+		bool Creature::isClickable() const {
+			if (!Object::isClickable())
+				return false;
+			// Destroyable corpses stay lootable; a non-destroyable one is only
+			// clickable when it was made selectable when dead.
+			return !_dead || _destroyable || _deadSelectable;
 		}
 		void Creature::saveState(Aurora::GFF3WriterStruct &gff) const {
 			Object::saveState(gff);
@@ -2249,6 +2273,9 @@ static const int kAnimationForcePushed = 84;
 			gff.addDouble("Facing", angle);
 			gff.addSint32("FactionID", static_cast<int32_t>(getFaction()));
 			gff.addByte("Min1HP", getMinOneHitPoints() ? 1 : 0);
+			gff.addByte("IsDestroyable", _destroyable ? 1 : 0);
+			gff.addByte("IsRaiseable", _raiseable ? 1 : 0);
+			gff.addByte("DeadSelectable", _deadSelectable ? 1 : 0);
 		}
 		void Creature::loadState(const Aurora::GFF3Struct &gff) {
 			Object::loadState(gff);
@@ -2262,6 +2289,10 @@ static const int kAnimationForcePushed = 84;
 			// Scripts keep cutscene actors alive with SetMinOneHP.
 			if (gff.hasField("Min1HP"))
 				setMinOneHitPoints(gff.getBool("Min1HP"));
+			// SetIsDestroyable keeps corpses (and their clickability) around.
+			_destroyable = gff.getBool("IsDestroyable", _destroyable);
+			_raiseable = gff.getBool("IsRaiseable", _raiseable);
+			_deadSelectable = gff.getBool("DeadSelectable", _deadSelectable);
 			// A restored creature already spawned once; don't run OnSpawn again.
 			_spawnEventPending = false;
 			if (gff.getBool("IsDead", false)) {
@@ -2276,6 +2307,8 @@ static const int kAnimationForcePushed = 84;
 					_model->addDefaultAnimation("dead", 100);
 				}
 			}
+			if (_model)
+				_model->setClickable(isClickable());
 		}
 		void Creature::resurrect(int hitPoints) {
 			if (!_dead)
@@ -2288,6 +2321,7 @@ static const int kAnimationForcePushed = 84;
 				_model->clearDefaultAnimations();
 				setDefaultAnimations();
 				playDefaultAnimation();
+				_model->setClickable(isClickable());
 			}
 		}
 		bool Creature::consumeDeathEvent() {

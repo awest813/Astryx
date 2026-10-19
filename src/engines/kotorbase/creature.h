@@ -390,6 +390,10 @@ public:
 	int getLastCombatFeatUsed() const;
 	int getLastForcePowerUsed() const;
 	void setLastForcePowerUsed(int spellID);
+	/** GetLastAttackAction: ACTION_ATTACKOBJECT after a weapon attack,
+	 *  ACTION_CASTSPELL after a Force power or item spell, else ACTION_INVALID. */
+	int getLastAttackAction() const { return _lastAttackAction; }
+	void setLastAttackAction(int action) { _lastAttackAction = action; }
 	int getQueuedCombatFeat() const;
 
 	/** Record the last killer (set on death). */
@@ -529,6 +533,17 @@ public:
 
 	bool isDead() const override;
 
+	/** SetIsDestroyable(): a non-destroyable creature ignores DestroyObject and
+	 *  stays as a corpse; a non-raiseable one ignores EffectResurrection; a
+	 *  non-destroyable corpse can only be clicked if selectable when dead. */
+	void setDestroyable(bool destroyable, bool raiseable, bool selectableWhenDead);
+	bool isDestroyable() const { return _destroyable; }
+	bool isRaiseable() const { return _raiseable; }
+	bool isSelectableWhenDead() const { return _deadSelectable; }
+
+	/** Living creatures, destroyable corpses and corpses selectable when dead. */
+	bool isClickable() const override;
+
 	/** Handle creature's death. Return true if changed from alive to dead. */
 	bool handleDeath();
 
@@ -619,6 +634,10 @@ private:
 	int _lastDamageTotal { 0 };
 	int _lastDamageType { 0 };
 	int _lastAttackResult { 0 };
+	int _lastAttackAction { kActionInvalid };
+	bool _destroyable { true };     ///< IsDestroyable (UTC) / SetIsDestroyable.
+	bool _raiseable { true };       ///< IsRaiseable.
+	bool _deadSelectable { true };  ///< DeadSelectable.
 	std::set<int> _immunities;
 	std::set<int> _spellImmunities;
 	std::map<int, int> _damageImmunityPercent;
