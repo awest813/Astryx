@@ -140,5 +140,31 @@ new way:
   creature still stuck after 3 s abandons the move and carries on with its
   next action. Other creatures and placeables are only avoided by the local
   walkability check, not planned around.
+- **Triggers, heartbeats, mines and locks** follow KotOR.js and the d20
+  rules; confirm in play:
+  - every creature (companions and NPCs too) fires trigger `OnEnter`/`OnExit`
+    with itself as `GetEnteringObject()`, also for overlapping triggers;
+    creatures the GIT places in a trigger are inside without an `OnEnter`;
+    destroyed creatures leave without an `OnExit`, the dead stay inside. Area
+    transitions still only move the party when its leader walks in.
+    `GetFirstPC()` is the party leader and `GetIsPC()` is true for it (plot
+    triggers guarded by them now fire for a companion the player controls).
+  - creatures (party included), placeables, doors and triggers get
+    `OnHeartbeat` every **6 s** (KotOR.js uses 3 s), spread over the round.
+    Companions run their `ScriptHeartbeat` (`k_hen_heartbt01`) instead of a
+    direct `k_ai_master` call; a party member without one (the player
+    character) runs `k_ai_master` as event 2001. Companions following the
+    leader with `ActionForceFollowObject` still join fights.
+  - mines (`Type` 2 / `TrapFlag` triggers) go off (`OnTrapTriggered`) for
+    creatures their `Faction` is hostile to. Party members within **10 m**
+    spot them with Awareness + 10 (a d20 each heartbeat in combat) against
+    `TrapDetectDC`; the `traps.2da` model then appears. Disarming is
+    Demolitions + 10 (d20 in combat) against `DisarmDC`, recovering
+    `DisarmDC` + 5 (gives the `traps.2da` `resref` item); failing by 5 sets
+    the mine off. No HUD button for it yet; setting mines isn't implemented.
+    Triggers (and so mines) now keep their state between visits.
+  - picking locks takes 1.5 s, Security + 20 out of combat (a d20 in combat)
+    against the lock DC; failure runs `OnFailToOpen`, success `OnUnlock`.
+    `ActionRandomWalk` strolls 2-8 m around its start, pausing 1-4 s.
 - Area state from before this build: creatures in areas visited with an
   older build respawn once (older saves have no creature state).

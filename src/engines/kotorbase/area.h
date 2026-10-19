@@ -167,6 +167,8 @@ public:
 	const std::vector<Trigger *> &getTriggers() const;
 	/** The creature tries to spot the mines around it (Awareness). */
 	void detectTraps(Creature &creature, bool rollDice);
+	/** The mine (trigger ID) the creature spotted last, or 0. */
+	uint32_t getLastTrapDetected(uint32_t creatureID) const;
 
 	// Encounters
 
@@ -346,6 +348,8 @@ private:
 	/** Creatures (ID) whose triggers need checking -> may they use area transitions. */
 	std::map<uint32_t, bool> _pendingTriggerChecks;
 	bool _processingTriggers { false };
+	/** Creature ID -> the mine (trigger ID) it spotted last. */
+	std::map<uint32_t, uint32_t> _lastTrapDetected;
 
 	HeartbeatScheduler _heartbeats;
 

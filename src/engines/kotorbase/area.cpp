@@ -301,6 +301,7 @@ void Area::clear() {
 	_situatedObjects.clear();
 	_staticWalkmeshes.clear();
 	_pendingTriggerChecks.clear();
+	_lastTrapDetected.clear();
 	_heartbeats.clear();
 }
 
@@ -1292,6 +1293,11 @@ void Area::enterTrap(Trigger &trigger, Creature &creature) {
 	trigger.fireTrap(&creature);
 }
 
+uint32_t Area::getLastTrapDetected(uint32_t creatureID) const {
+	auto it = _lastTrapDetected.find(creatureID);
+	return (it != _lastTrapDetected.end()) ? it->second : 0;
+}
+
 void Area::detectTraps(Creature &creature, bool rollDice) {
 	// Only the party looks out for mines (the enemies know where theirs are).
 	if (!creature.isPC() && !_module->isObjectPartyMember(&creature))
@@ -1321,6 +1327,7 @@ void Area::detectTraps(Creature &creature, bool rollDice) {
 
 		const bool wasDetected = trigger->isTrapDetected();
 		trigger->detectTrap(&creature);
+		_lastTrapDetected[creature.getID()] = trigger->getID();
 
 		// The mine's model can now be clicked on.
 		if (!wasDetected)
