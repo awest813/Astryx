@@ -123,10 +123,41 @@ new way:
 - **Combat:** experience is shared by the PC and every companion met so far. Faction
   hostility comes from `repute.2da` (row 0 is the player; reputations are
   shared by both factions and saved as `repute.fac` in `SAVEGAME.sav`, read
-  the way KotOR.js reads them — check against retail saves); timed
-  ability/skill modifier effects and some talent/effect constants are
-  approximated. NPCs now use the stats and Force powers of their `.utc`
-  blueprint, so fights may be harder than in earlier builds.
+  the way KotOR.js reads them — check against retail saves). NPCs now use
+  the stats and Force powers of their `.utc` blueprint, so fights may be
+  harder than in earlier builds.
+- **Force powers, talents, effects and items** follow the rules but are
+  untested with game data; confirm in play:
+  - AI talents (`GetCreatureTalentBest/Random`) pick from known powers the
+    creature has the Force points for, equipped items' powers, consumable
+    items' spells (medpacs, grenades), feats and trained skills, matching the
+    `category` column of `spells/feat/skills.2da` as a bitmask (as KotOR.js)
+    and taking the highest `maxcr` not above nCRMax (KotOR.js takes the
+    lowest). If Dark Jedi or companions never use powers or items, check the
+    categories the AI scripts pass. Spell talents are cast like
+    `ActionCastSpellAtObject`; there's no casting range check.
+  - Force power cost: powers whose `goodevil` is the other side of the
+    caster's alignment (light from 70, dark up to 30) cost 1.5x; no discount
+    for the own side.
+  - Linked effects apply and expire together. AC, attack, damage, ability,
+    skill, save, Force resistance, deflection, immunity and invisibility
+    effects stay for their duration and change the stats; invisibility only
+    sets a flag (perception ignores it). Force shields absorb damage per
+    `forceshields.2da` (`damageflags`, `resistance` per hit, `amount` in
+    total); without it a shield soaks 10 damage per row. Force push throws
+    the target up to 5 m away from the caster (walkmesh permitting), plays
+    `animations.2da` row 84 and knocks it down for 3 s.
+  - Using an item with a CastSpell property runs its `spells.2da` impact
+    script (no Force point cost; `GetSpellCastItem` is the item); grenades
+    are cast at the target location. Without the script the old built-in
+    heal/stim/explosion applies. Equipped items' charges aren't counted.
+  - Item Ability Bonus properties raise the ability scores; item bonus
+    amounts are read from the property's `CostValue`.
+  - Combat feats use the feat.2da rows; Power Attack/Power Blast give -3
+    attack and +5/+8/+10 damage, Flurry/Rapid Shot -4/-2/-1 attack and
+    Defense for an extra attack, Critical Strike -5 Defense, Critical
+    Strike/Sniper Shot a +1/+2/+3 critical threat range (Sniper Shot's
+    effect is assumed to mirror Critical Strike's).
 - **Area encounters** (GIT `Encounter List`, `.ute`) now spawn their
   creatures when the party walks in. Confirm in play: they spawn
   `RecCreatures` creatures (at most `MaxCreatures`) chosen at random — the
