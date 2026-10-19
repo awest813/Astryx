@@ -273,6 +273,35 @@ bool ConfigFile::isValidName(const UString &name) {
 	return true;
 }
 
+bool ConfigFile::isValidValue(const UString &value) {
+	for (UString::iterator it = value.begin(); it != value.end(); ++it) {
+		uint32_t c = *it;
+
+		if ((c == '#') || (c == '\n') || (c == '\r'))
+			return false;
+	}
+
+	// Values are trimmed when loading
+	UString trimmed = value;
+	trimmed.trim();
+
+	return trimmed == value;
+}
+
+bool ConfigFile::findInvalidValue(UString &domainName, UString &key) const {
+	for (const auto &domain : _domainList) {
+		for (const auto &k : domain->_keys) {
+			if (!isValidValue(k.second)) {
+				domainName = domain->_name;
+				key        = k.first;
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 void ConfigFile::clear() {
 	_domainList.clear();
 	_domainMap.clear();
@@ -419,6 +448,14 @@ void ConfigFile::addDomain(ConfigDomain *domain, int lineNumber) {
 	_domainMap.insert(std::make_pair(domain->_name, domain));
 }
 
+static bool isBlank(const UString &str) {
+	for (UString::iterator it = str.begin(); it != str.end(); ++it)
+		if (!String::isSpace(*it))
+			return false;
+
+	return true;
+}
+
 void ConfigFile::parseConfigLine(const UString &line, UString &domainName,
 		UString &key, UString &value, UString &comment, int lineNumber) {
 
@@ -449,14 +486,17 @@ void ConfigFile::parseConfigLine(const UString &line, UString &domainName,
 			// Found a comment
 			state = 1;
 			hasComment = true;
-		} else if (c == '[') {
+		} else if (state == 3) {
+			// Collecting a value. Everything up to a comment belongs to it, including '[', ']' and '='
+			value += c;
+		} else if ((c == '[') && isBlank(key) && domainName.empty()) {
 			// Found the start of a domain name
 			state = 2;
-		} else if (c == ']') {
+		} else if ((c == '[') || (c == ']')) {
 			// Parse error
-			throw Exception("Found extra ']' (line %d)", lineNumber);
+			throw Exception("Found unexpected '%c' (line %d)", (char) c, lineNumber);
 		} else if (c == '=') {
-			// Found the startt of a value
+			// Found the start of a value
 			state = 3;
 		} else {
 			// Collect either a key or a value
@@ -487,7 +527,7 @@ void ConfigFile::parseConfigLine(const UString &line, UString &domainName,
 					lineNumber);
 
 	if (key.empty() && !value.empty())
-		throw Exception("Value with a key (line %d)", lineNumber);
+		throw Exception("Value without a key (line %d)", lineNumber);
 }
 
 void ConfigFile::save(WriteStream &stream) const {

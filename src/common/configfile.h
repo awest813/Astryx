@@ -126,6 +126,22 @@ public:
 	 */
 	static bool isValidName(const UString &name);
 
+	/**
+	 * Check whether the given string can be stored as a value and read
+	 * back unchanged. Values must not contain "#" (which starts a comment)
+	 * or line breaks, and must not begin or end with whitespace.
+	 */
+	static bool isValidValue(const UString &value);
+
+	/**
+	 * Find a value that isValidValue() rejects.
+	 *
+	 * @param  domainName If found, the name of the domain containing the value.
+	 * @param  key        If found, the key of the value.
+	 * @return true if such a value was found.
+	 */
+	bool findInvalidValue(UString &domainName, UString &key) const;
+
 	/** Reset everything stored in this config file. */
 	void clear();
 
