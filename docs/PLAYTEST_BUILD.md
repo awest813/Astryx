@@ -71,18 +71,29 @@ new way:
 
 - **No live playthrough has been verified yet.** Everything below comes from
   code review and unit tests without game data.
-- **Minigames are not playable.** Swoop racing (Taris, Tatooine, Manaan) and
-  the Ebon Hawk turret only exist as script-facing state: no track or
-  turret view, steering, collisions or finish. The Taris swoop race is a
-  likely **progression blocker**. Pazaak uses a simplified turn model.
+- **Minigames (swoop races, Ebon Hawk turret) are untested in play.** Areas
+  with an ARE `MiniGame` struct now load the player/enemy/obstacle models on
+  their LYT tracks; W/S/A/D (or arrows) steer, Space/Return/left mouse fire.
+  A swoop moves along +Y at the SWMG speed and sideways within the tunnel;
+  W runs the player's `OnAccelerate`, S `OnBrake`, fire `OnFire`. The turret
+  turns at 1 rad/s inside its tunnel (degrees) and fires its gun banks;
+  enemies ride their track's first animation, fire when aiming at the
+  player, and `OnTrackLoop` runs each time it loops. Assumptions to check:
+  the player `OnHeartbeat` runs **every frame** (as KotOR.js); swoop
+  collisions are flat (X/Y only) — obstacles by their model's bounding box,
+  enemies/triggers (the likely finish line) by `Sphere_Radius` (1.0 if 0);
+  the camera is the `Camera` model's `camerahook`, else a chase camera;
+  `Start_Offset`/`Target_Offset`, `UseInertia`, `MovementPerSec`, gun
+  spread/inaccuracy, jumping, model animation events (`OnAnimEvent`,
+  `SWMG_GetLastEvent`) and the swoop HUD aren't used. The race ends only
+  when its scripts leave the module. Pazaak uses a simplified turn model.
 - **Galaxy map:** destinations use the retail `planetary.2da` rows; the
   arrival modules (e.g. `tat_m17aa`, `danm13`) and the planet button tags
   are unverified against the retail GUI. Leviathan is script-driven only.
 - **Ending:** `StartCreditSequence` is a no-op; `EndGame` returns to the
   main menu.
 - **Script approximations:** `CutsceneAttack` applies its damage when
-  queued, not on impact; swoop SWMG offsets model only the x axis and
-  bullet hit parts aren't tracked; many natives are simplified (see
+  queued, not on impact; SWMG bullet hit parts aren't tracked; many natives are simplified (see
   [FULL_PARITY_AUDIT_AND_PLAN.md](FULL_PARITY_AUDIT_AND_PLAN.md)).
 - **Cutscene camera assumptions to confirm in play:** animated camera
   shots look for `CUT%03dW` (DLG `CameraAnimation` - 1200; possibly off by
