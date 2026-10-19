@@ -22,6 +22,8 @@
  *  Base in-game HUD for KotOR games.
  */
 
+#include <set>
+
 #include "src/common/util.h"
 #include "src/common/error.h"
 #include "src/common/strutil.h"
@@ -193,6 +195,7 @@ void HUD::reset() {
 	for (size_t i = 0; i < kActionMenuSelfPanels; ++i) {
 		_selfButtons[i] = nullptr;
 		_selfLabels[i] = nullptr;
+		_selfIcons[i].clear();
 	}
 
 	_actionDescription = nullptr;
@@ -567,14 +570,23 @@ void HUD::refreshActionMenus() {
 	updateSelfActionWidgets();
 }
 
+/** Action icons whose texture is missing, so they are reported only once. */
+static std::set<Common::UString> missingActionIcons;
+
 void HUD::setButtonIcon(Odyssey::WidgetButton *button, const Common::UString &icon) {
 	if (!button)
 		return;
+
+	if (missingActionIcons.count(icon) > 0) {
+		button->setIcon("");
+		return;
+	}
 
 	try {
 		button->setIcon(icon);
 	} catch (Common::Exception &e) {
 		warning("HUD: no action icon \"%s\": %s", icon.c_str(), e.what());
+		missingActionIcons.insert(icon);
 		button->setIcon("");
 	}
 }
@@ -582,18 +594,28 @@ void HUD::setButtonIcon(Odyssey::WidgetButton *button, const Common::UString &ic
 void HUD::updateSelfActionWidgets() {
 	for (size_t i = 0; i < kActionMenuSelfPanels; ++i) {
 		const ActionMenuOption *option = _selfPanels[i].getSelected();
-		const Common::UString icon = option ? option->icon : "";
+		Common::UString icon = option ? option->icon : "";
+		if (missingActionIcons.count(icon) > 0)
+			icon.clear();
 
 		// As KotOR.js, the icon fills the panel's label, else the button shows it.
-		if (_selfLabels[i]) {
-			try {
-				_selfLabels[i]->setFill(icon);
-			} catch (Common::Exception &e) {
-				warning("HUD: no action icon \"%s\": %s", icon.c_str(), e.what());
-				_selfLabels[i]->setFill("");
-			}
-		} else
+		if (!_selfLabels[i]) {
 			setButtonIcon(_selfButtons[i], icon);
+			continue;
+		}
+
+		if (_selfIcons[i] == icon)
+			continue;
+
+		try {
+			_selfLabels[i]->setFill(icon);
+			_selfIcons[i] = icon;
+		} catch (Common::Exception &e) {
+			warning("HUD: no action icon \"%s\": %s", icon.c_str(), e.what());
+			missingActionIcons.insert(icon);
+			_selfLabels[i]->setFill("");
+			_selfIcons[i].clear();
+		}
 	}
 }
 

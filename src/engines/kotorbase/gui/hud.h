@@ -145,6 +145,7 @@ private:
 
 	Odyssey::WidgetButton *_selfButtons[kActionMenuSelfPanels] {};
 	Odyssey::WidgetLabel  *_selfLabels[kActionMenuSelfPanels] {};
+	Common::UString        _selfIcons[kActionMenuSelfPanels]; ///< Icon each label shows.
 
 	Odyssey::WidgetLabel *_actionDescription { nullptr };
 	Odyssey::WidgetLabel *_actionDescriptionBackground { nullptr };
