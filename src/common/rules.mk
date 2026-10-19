@@ -46,6 +46,7 @@ src_common_libcommon_la_SOURCES += \
     src/common/blowfish.h \
     src/common/deflate.h \
     src/common/error.h \
+    src/common/fatalerror.h \
     src/common/util.h \
     src/common/strutil.h \
     src/common/encoding.h \
@@ -106,6 +107,7 @@ src_common_libcommon_la_SOURCES += \
     src/common/blowfish.cpp \
     src/common/deflate.cpp \
     src/common/error.cpp \
+    src/common/fatalerror.cpp \
     src/common/util.cpp \
     src/common/strutil.cpp \
     src/common/encoding.cpp \

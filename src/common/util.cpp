@@ -24,6 +24,7 @@
 
 #include "src/common/util.h"
 #include "src/common/debugman.h"
+#include "src/common/fatalerror.h"
 
 #include <cassert>
 #include <cstdarg>
@@ -100,6 +101,9 @@ void info(const char *s, ...) {
 	DebugMan.logString("ERROR: ");
 	DebugMan.logString(buf);
 	DebugMan.logString("!\n");
+
+	// Players starting us from a desktop launcher never see stderr, so tell them here too
+	Common::showFatalErrorDialog(buf, DebugMan.getLogFile());
 
 	std::exit(1);
 }

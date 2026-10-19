@@ -32,6 +32,7 @@
 #include "src/common/util.h"
 #include "src/common/platform.h"
 #include "src/common/configman.h"
+#include "src/common/fatalerror.h"
 
 static void displayUsage(const Common::UString &name) {
 	std::printf("xoreos - A reimplementation of BioWare's Aurora engine\n");
@@ -39,11 +40,12 @@ static void displayUsage(const Common::UString &name) {
 	std::printf("          --help              Display this text and exit.\n");
 	std::printf("          --version           Display version information and exit.\n");
 	std::printf("  -cFILE  --config=FILE       Load the config from file FILE.\n");
-	std::printf("  -pDIR   --path=DIR          Override the game path with DIR.\n");
+	std::printf("  -pDIR   --path=DIR          Override the game path with DIR, the game's main\n");
+	std::printf("                              installation folder.\n");
 	std::printf("  -wSIZE  --width=SIZE        Set the window's width to SIZE.\n");
 	std::printf("  -hSIZE  --height=SIZE       Set the window's height to SIZE.\n");
 	std::printf("  -fBOOL  --fullscreen=BOOL   Switch fullscreen on/off.\n");
-	std::printf("  -kBOOL  --skipvideos=BOOL   Disable videos on/off.\n");
+	std::printf("  -kBOOL  --skipvideos=BOOL   Skip videos on/off.\n");
 	std::printf("  -vVOL   --volume=VOL        Set global volume to VOL.\n");
 	std::printf("  -mVOL   --volume_music=VOL  Set music volume to VOL.\n");
 	std::printf("  -sVOL   --volume_sfx=VOL    Set SFX volume to VOL.\n");
@@ -61,6 +63,7 @@ static void displayUsage(const Common::UString &name) {
 	std::printf("          --nologfile=BOOL    Don't write a log file.\n");
 	std::printf("          --consolelog=FILE   Write all debug console output into this file too.\n");
 	std::printf("          --noconsolelog=BOOL Don't write a debug console log file.\n");
+	std::printf("          --errordialog=BOOL  Show fatal errors in a dialog window (default: true).\n");
 	std::printf("\n");
 	std::printf("FILE: Absolute or relative path to a file.\n");
 	std::printf("DIR:  Absolute or relative path to a directory.\n");
@@ -84,13 +87,16 @@ static void displayUsage(const Common::UString &name) {
 	std::printf("  xoreos will start the game in /path/to/nwn/. If a target \"foobar\"\n");
 	std::printf("  does not yet exist in the config file, xoreos will create it.\n");
 	std::printf("%s nwn\n", name.c_str());
-	std::printf("  xoreos will start the game specified by target \"nwn\", which must exit\n");
+	std::printf("  xoreos will start the game specified by target \"nwn\", which must exist\n");
 	std::printf("  in the config file already.\n");
 	std::printf("\n");
 	std::printf("Configuration directory: %s\n", Common::Platform::getConfigDirectory().c_str());
 	std::printf("User data directory: %s\n", Common::Platform::getUserDataDirectory().c_str());
 	std::printf("Configuration file: %s\n", ConfigMan.getConfigFile().c_str());
 	std::printf("\n");
+
+	// Make sure this comes before any error message printed to stderr
+	std::fflush(stdout);
 }
 
 static void displayVersion() {
@@ -130,8 +136,10 @@ static bool setOption(Common::UString &key, const Common::UString &value) {
 		ConfigMan.setConfigFile(value);
 		if (!ConfigMan.load()) {
 			if (!ConfigMan.fileExists())
-				warning("No such config file \"%s\"", value.c_str());
-			return false;
+				error("The config file \"%s\" given with --config doesn't exist", value.c_str());
+
+			error("The config file \"%s\" given with --config can't be read (see above). "
+			      "Fix the line mentioned above, or delete the file", value.c_str());
 		}
 
 		key.clear();
@@ -144,10 +152,8 @@ static bool setOption(Common::UString &key, const Common::UString &value) {
 }
 
 static bool parseOption(const Common::UString &arg, Common::UString &key) {
-	if (arg.size() < 2) {
-		warning("Unrecognized command line argument \"%s\"", arg.c_str());
-		return false;
-	}
+	if (arg.size() < 2)
+		error("Unrecognized command line argument \"%s\". Run with --help to see all options", arg.c_str());
 
 	Common::UString::iterator start = arg.begin();
 	++start;
@@ -172,10 +178,8 @@ static bool parseOption(const Common::UString &arg, Common::UString &key) {
 		value = arg.substr(start, arg.end());
 	}
 
-	if (key.empty()) {
-		warning("Unrecognized command line argument \"%s\"", arg.c_str());
-		return false;
-	}
+	if (key.empty())
+		error("Unrecognized command line argument \"%s\". Run with --help to see all options", arg.c_str());
 
 	if (value.empty())
 		return true;
@@ -240,19 +244,25 @@ bool parseCommandline(const std::vector<Common::UString> &argv, Common::UString 
 			continue;
 		}
 
-		if (!target.empty()) {
-			warning("Found multiple target (\"%s\" and \"%s\")", target.c_str(), argv[i].c_str());
-			code = 1;
-			return false;
-		}
+		if (!target.empty())
+			error("Found more than one target (\"%s\" and \"%s\"). Only one target can be started. "
+			      "If a path contains spaces, put quotes around it", target.c_str(), argv[i].c_str());
 
 		target = argv[i];
 	}
 
+	if (!key.empty())
+		error("The command line option \"--%s\" is missing its value, or isn't a valid option. "
+		      "Run with --help to see all options", key.c_str());
+
+	// The command line might have changed whether we should show fatal errors in a dialog
+	Common::enableFatalErrorDialog(ConfigMan.getBool("errordialog", true));
+
 	if (target.empty() && !ConfigMan.hasKey("path") && !ConfigMan.getBool("listdebug", false)) {
 		displayUsage(argv[0]);
-		code = 1;
-		return false;
+		error("No game specified. Start xoreos with -p <game folder>, pointing it to the game's main "
+		      "installation folder, or with the name of a target from the config file \"%s\"",
+		      ConfigMan.getConfigFile().c_str());
 	}
 
 	return true;

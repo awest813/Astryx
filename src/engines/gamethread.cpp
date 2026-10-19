@@ -28,6 +28,7 @@
 
 #include "src/common/util.h"
 #include "src/common/error.h"
+#include "src/common/fatalerror.h"
 #include "src/common/ustring.h"
 #include "src/common/configman.h"
 
@@ -52,7 +53,10 @@ void GameThread::init(const Common::UString &baseDir, const std::list<const Engi
 
 	_game.reset(EngineMan.probeGame(baseDir, probes));
 	if (!_game)
-		throw Common::Exception("Unable to detect the game");
+		throw Common::Exception("No game that xoreos supports was found in \"%s\". The game path must be the "
+		                        "game's main installation folder: for KotOR, the folder with chitin.key and "
+		                        "swkotor.exe in it, not a subfolder like \"data\" or \"modules\"",
+		                        baseDir.c_str());
 
 	// Get the game description from the config, or alternatively
 	// construct one from the game name and platform.
@@ -86,10 +90,25 @@ void GameThread::threadMethod() {
 	try {
 		EngineMan.run(*_game);
 	} catch (...) {
+		// Let the main thread report the error to the player and exit with a failure code.
+		// NOTE: Printing the exception empties it, so describe it first.
+		{
+			std::lock_guard<std::mutex> lock(_fatalErrorMutex);
+			_fatalError = Common::describeCurrentException();
+		}
+
 		Common::exceptionDispatcherError();
+
+		EventMan.raiseFatalError();
 	}
 
 	EventMan.doQuit();
+}
+
+Common::UString GameThread::getFatalError() const {
+	std::lock_guard<std::mutex> lock(_fatalErrorMutex);
+
+	return _fatalError;
 }
 
 } // End of namespace Engines

@@ -156,6 +156,8 @@ public:
 	bool openLogFile(const UString &file);
 	/** Close the current log file. */
 	void closeLogFile();
+	/** Return the path of the currently open log file, or "" if none is open. */
+	const UString &getLogFile() const;
 
 	/** Log that string to the current log file. */
 	void logString(const UString &str);
@@ -184,6 +186,7 @@ private:
 	ChannelMap _channelMap;                   ///< Debug channels indexed by name.
 
 	WriteFile _logFile;
+	UString   _logFilePath;
 	bool _logFileStartLine;
 
 	bool _changedConfig;
