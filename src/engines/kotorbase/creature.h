@@ -39,6 +39,7 @@
 #include "src/graphics/aurora/types.h"
 
 #include "src/engines/kotorbase/object.h"
+#include "src/engines/kotorbase/path/pathfollow.h"
 #include "src/engines/kotorbase/inventory.h"
 #include "src/engines/kotorbase/action.h"
 #include "src/engines/kotorbase/creatureinfo.h"
@@ -389,6 +390,8 @@ public:
 	/** Time (s) the current movement has been blocked; reset on progress. */
 	float addBlockedMoveTime(float dt) { return _blockedMoveTime += dt; }
 	void resetBlockedMoveTime() { _blockedMoveTime = 0.0f; }
+	/** The walkmesh route the current movement follows. */
+	MovePath &getMovePath() { return _movePath; }
 
 	/** Apply an active effect tracking struct directly to this creature. */
 	void applyEffect(const ActiveEffect &effect);
@@ -571,6 +574,7 @@ private:
 
 	ActionQueue _actions;
 	float _blockedMoveTime { 0.0f };
+	MovePath _movePath;
 	bool _deathEventPending { false };   ///< OnDeath queued; run outside creature iteration.
 	bool _damagedEventPending { false }; ///< OnDamaged queued; run outside creature iteration.
 	bool _spawnEventPending { false };     ///< OnSpawn queued; run outside creature iteration.

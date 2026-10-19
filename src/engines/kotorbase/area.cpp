@@ -63,6 +63,7 @@
 #include "src/engines/kotorbase/encounter.h"
 #include "src/engines/kotorbase/sound.h"
 #include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/path/pathfollow.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/actionexecutor.h"
@@ -1026,6 +1027,39 @@ bool Area::walkable(const glm::vec3 &orig, const glm::vec3 &dest) const {
 	_localPathfinding->showWalkmesh(!_walkmeshInvisible);
 
 	return _localPathfinding->walkable(dest);
+}
+
+bool Area::findPath(const glm::vec2 &from, const glm::vec2 &to, std::vector<glm::vec2> &waypoints) {
+	waypoints.clear();
+
+	if ((evaluateElevation(from.x, from.y) == FLT_MIN) || (evaluateElevation(to.x, to.y) == FLT_MIN))
+		return false;
+
+	std::vector<glm::vec3> route;
+	try {
+		std::vector<uint32_t> faces;
+		if (!_pathfinding->findPath(from.x, from.y, to.x, to.y, faces, 0.0f, 4000) || faces.empty())
+			return false;
+
+		_pathfinding->smoothPath(from.x, from.y, to.x, to.y, faces, route);
+	} catch (...) {
+		return false;
+	}
+
+	// The route starts where we stand; keep what comes after.
+	for (size_t i = 1; i < route.size(); i++)
+		waypoints.push_back(glm::vec2(route[i].x, route[i].y));
+
+	if (waypoints.empty() || (glm::length(waypoints.back() - to) > 0.01f))
+		waypoints.push_back(to);
+
+	waypoints.insert(waypoints.begin(), from);
+	pushPathOffCorners(waypoints, 0.5f, [this](const glm::vec2 &p) {
+		return evaluateElevation(p.x, p.y) != FLT_MIN;
+	});
+	waypoints.erase(waypoints.begin());
+
+	return true;
 }
 
 void Area::toggleWalkmesh() {

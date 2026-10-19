@@ -30,6 +30,8 @@
 #include <map>
 #include <set>
 
+#include "external/glm/vec2.hpp"
+
 #include "src/common/ustring.h"
 #include "src/common/mutex.h"
 #include <memory>
@@ -144,6 +146,9 @@ public:
 	float evaluateElevation(float x, float y);
 	bool getGroundPointAtScreen(int screenX, int screenY, float &outX, float &outY, float &outZ);
 	bool walkable(const glm::vec3 &orig, const glm::vec3 &dest) const;
+	/** A walkmesh route from @p from to @p to, as waypoints (the last one is @p to).
+	 *  False when either end is off the walkmesh or no route connects them. */
+	bool findPath(const glm::vec2 &from, const glm::vec2 &to, std::vector<glm::vec2> &waypoints);
 	void toggleWalkmesh();
 	bool rayTest(const glm::vec3 &orig, const glm::vec3 &dest, glm::vec3 &intersect) const;
 

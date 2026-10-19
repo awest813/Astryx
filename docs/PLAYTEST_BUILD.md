@@ -125,7 +125,12 @@ new way:
   `encdifficulty.2da` / CR level budget is not applied; without spawn points
   creatures appear at the polygon's far corners; spawned creatures keep their
   `.utc` faction; `OnExhausted` runs once all spawned creatures are gone.
-- Movement is straight-line; a creature that is stuck for 3 s abandons the
-  move and carries on with its next action.
+- **Movement** follows an A* route over the area walkmesh (xoreos'
+  pathfinder), with each corner pushed 0.5 m off the wall; routes are redone
+  when the goal moves 1 m, every 3 s, and 0.5 s after getting blocked.
+  Without a route (an end off the walkmesh) creatures walk straight. A
+  creature still stuck after 3 s abandons the move and carries on with its
+  next action. Other creatures and placeables are only avoided by the local
+  walkability check, not planned around.
 - Area state from before this build: creatures in areas visited with an
   older build respawn once (older saves have no creature state).

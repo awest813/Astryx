@@ -55,6 +55,14 @@ static const float kWalkDistance = 2.0f;
 static const float kMinMoveRange = 0.1f;
 /** Give up on a blocked movement after this many seconds. */
 static const float kMaxBlockedMoveTime = 3.0f;
+/** A chased goal that moved this far (m) gets a new route. */
+static const float kRepathDistance = 1.0f;
+/** Routes are redone this often (s), so they follow doors opening and closing. */
+static const float kRepathTime = 3.0f;
+/** A blocked route is redone after this long (s). */
+static const float kRepathWhenBlocked = 0.5f;
+/** A waypoint closer than this (m) counts as reached. */
+static const float kWaypointReach = 0.3f;
 
 namespace Engines {
 
@@ -411,25 +419,45 @@ bool ActionExecutor::isLocationReached(const glm::vec2 &location, float range, c
 bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx, bool forceRun) {
 	range = MAX(range, kMinMoveRange);
 
+	MovePath &path = ctx.creature->getMovePath();
+
 	if (isLocationReached(location, range, ctx)) {
 		ctx.creature->resetBlockedMoveTime();
+		path.clear();
 		return true;
 	}
-
-	ctx.creature->makeLookAt(location.x, location.y);
 
 	float oX, oY, oZ;
 	ctx.creature->getPosition(oX, oY, oZ);
 	glm::vec2 origin(oX, oY);
 
-	glm::vec2 diff = location - origin;
-	glm::vec2 dir = glm::normalize(diff);
+	// Walk a walkmesh route around walls rather than straight into them. A
+	// goal that moved a lot (a chased creature) or an old route is redone.
+	path.age += ctx.frameTime;
+	if (!path.valid || (glm::length(path.goal - location) > kRepathDistance) || (path.age > kRepathTime)) {
+		path.clear();
+		path.valid = true;
+		if (!ctx.area->findPath(origin, location, path.waypoints))
+			path.waypoints.assign(1, location); // No known route: straight on.
+	}
+	path.goal = location;
+	path.waypoints.back() = location;
 
+	const glm::vec2 target = nextWaypoint(path.waypoints, origin, kWaypointReach);
+
+	glm::vec2 diff = target - origin;
 	float dist = glm::length(diff);
-	bool run = forceRun || dist > kWalkDistance;
+	if (dist < 0.0001f)
+		return false;
+
+	ctx.creature->makeLookAt(target.x, target.y);
+
+	const glm::vec2 dir = diff / dist;
+
+	bool run = forceRun || glm::length(location - origin) > kWalkDistance;
 	float moveRate = run ? ctx.creature->getRunRate() : ctx.creature->getWalkRate();
 
-	// Don't overshoot the destination.
+	// Don't overshoot the waypoint.
 	const float step = MIN(moveRate * ctx.frameTime, dist);
 
 	float x = origin.x + step * dir.x;
@@ -450,24 +478,26 @@ bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const Execut
 		else
 			ctx.area->notifyObjectMoved(*ctx.creature);
 
-		diff = location - glm::vec2(x, y);
-		dist = glm::length(diff);
-
-		if (dist <= range) {
+		if (glm::length(location - glm::vec2(x, y)) <= range) {
 			ctx.creature->playDefaultAnimation();
+			path.clear();
 			return true;
 		}
 
 	} else {
 		ctx.creature->playDefaultAnimation();
 
-		// Straight-line movement can get stuck on walkmesh edges. Rather than
-		// stall the action queue (and any cutscene waiting on it) forever,
-		// give up after a while and let the action proceed from here.
+		// Something (a door, a placeable) is in the way: look for another route.
+		if (path.age > kRepathWhenBlocked)
+			path.valid = false;
+
+		// Rather than stall the action queue (and any cutscene waiting on it)
+		// forever, give up after a while and let the action proceed from here.
 		if (ctx.creature->addBlockedMoveTime(ctx.frameTime) >= kMaxBlockedMoveTime) {
 			debugC(Common::kDebugEngineLogic, 1, "Creature \"%s\" is stuck; abandoning movement",
 			       ctx.creature->getTag().c_str());
 			ctx.creature->resetBlockedMoveTime();
+			path.clear();
 			return true;
 		}
 	}
