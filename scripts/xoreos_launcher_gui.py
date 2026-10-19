@@ -1,705 +1,1229 @@
 #!/usr/bin/env python3
-"""Desktop launcher and first-run setup assistant for xoreos."""
+"""Astryx launcher: find a game install, check it, remember it, and start xoreos.
+
+Run it without arguments to open the launcher window.
+
+  --list          Print the engine, config file and game installs it finds.
+  --check FOLDER  Check whether FOLDER is a game install xoreos can start.
+
+Both work without a window. Everything above the "Window" section is plain
+Python, so it can be tested and used on machines without Tk.
+"""
 
 from __future__ import annotations
 
+import argparse
+from dataclasses import dataclass, field
+import json
 import os
 from pathlib import Path
 import re
 import subprocess
 import sys
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+import tempfile
 
 
-GAME_DEFS = [
-    {
-        "label": "KotOR I",
-        "hints": ["swkotor", "Star Wars - Knights of the Old Republic", "KotOR I"],
-        "target": "kotor",
-        "markers": [
-            ("chitin.key", True),
-            ("dialog.tlk", True),
-            ("modules", True),
-            ("swpc_tex_gui.erf", True),
-            ("texturepacks", True),
-            ("override", False),
-        ],
-    },
-    {
-        "label": "KotOR II",
-        "hints": ["Knights of the Old Republic II", "STAR WARS Knights of the Old Republic II", "KotOR II"],
-        "target": "kotor2",
-        "markers": [
-            ("chitin.key", True),
-            ("dialog.tlk", True),
-            ("modules", True),
-            ("swpc_tex_gui.erf", True),
-            ("texturepacks", True),
-            ("override", False),
-        ],
-    },
-    {
-        "label": "Neverwinter Nights",
-        "hints": ["Neverwinter Nights"],
-        "target": "nwn",
-        "markers": [("chitin.key", True), ("dialog.tlk", True), ("data", True), ("hak", False)],
-    },
-    {
-        "label": "Jade Empire",
-        "hints": ["Jade Empire"],
-        "target": "jade",
-        "markers": [("data", True), ("dialog.tlk", True)],
-    },
-]
+# -- GAMES --
+
+@dataclass(frozen=True)
+class Entry:
+    """A file or directory, relative to the game folder."""
+    path: str
+    is_dir: bool = False
+    case_sensitive: bool = False
 
 
-def get_xoreos_executable(repo_root: Path) -> Path | None:
-    for candidate in [
-        repo_root / "bin" / "Release" / "xoreos.exe",
-        repo_root / "bin" / "Debug" / "xoreos.exe",
-        repo_root / "build-vcpkg-portable" / "bin" / "Release" / "xoreos.exe",
-        repo_root / "build-vcpkg" / "bin" / "Release" / "xoreos.exe",
-        repo_root / "build-vcpkg-portable" / "bin" / "Debug" / "xoreos.exe",
-        repo_root / "build-vcpkg" / "bin" / "Debug" / "xoreos.exe",
-        repo_root / "build" / "bin" / "Debug" / "xoreos.exe",
-        repo_root / "build-vcpkg-linux" / "bin" / "xoreos",
-        repo_root / "build-vcpkg-portable" / "bin" / "xoreos",
-        repo_root / "build" / "bin" / "xoreos",
-    ]:
-        if candidate.exists():
-            return candidate
+def F(path: str, case_sensitive: bool = False) -> Entry:
+    return Entry(path, False, case_sensitive)
+
+
+def D(path: str, case_sensitive: bool = False) -> Entry:
+    return Entry(path, True, case_sensitive)
+
+
+@dataclass(frozen=True)
+class Variant:
+    """One release of a game. The engine recognises it by `identity`; `data`
+    lists what else a complete install has."""
+    platform: str
+    identity: tuple[Entry, ...]
+    data: tuple[Entry, ...] = ()
+
+
+@dataclass(frozen=True)
+class Game:
+    key: str
+    label: str
+    short: str
+    variants: tuple[Variant, ...]
+    main: bool = False
+
+
+# Mirrors the engine probes in src/engines/*/probes.cpp. If the identity files
+# are missing, xoreos refuses the folder with "Unable to detect the game".
+GAMES: tuple[Game, ...] = (
+    Game("kotor", "Star Wars: Knights of the Old Republic", "KotOR I", main=True, variants=(
+        Variant("Windows", (F("swkotor.exe"),), (F("chitin.key"), F("dialog.tlk"), D("modules"), D("texturepacks"))),
+        Variant("macOS", (D("Knights of the Old Republic.app"),)),
+        Variant("macOS", (D("KOTOR.app"),)),
+        Variant("Xbox", (D("dataxbox"), F("players.erf"))),
+        Variant("Android", (F("data/2da.bzf"),)),
+    )),
+    Game("kotor2", "Star Wars: Knights of the Old Republic II", "KotOR II", variants=(
+        Variant("Windows", (F("swkotor2.exe"),), (F("chitin.key"), F("dialog.tlk"), D("modules"), D("texturepacks"))),
+        Variant("Linux", (F("KOTOR2", True), D("resources"), D("steamassets"))),
+        Variant("macOS", (D("MacOS"), D("Resources"), D("GameData"), F("MacOS/KOTOR2", True))),
+        Variant("Xbox", (D("dataxbox"), F("weapons.erf"))),
+    )),
+    Game("nwn", "Neverwinter Nights", "Neverwinter Nights", variants=(
+        Variant("Windows", (F("nwmain.exe"),), (F("chitin.key"), F("dialog.tlk"))),
+        Variant("Linux", (F("nwmain"),), (F("chitin.key"), F("dialog.tlk"))),
+        Variant("macOS", (D("Neverwinter Nights.app"),)),
+        Variant("", (F("nwn.ini"),), (F("chitin.key"), F("dialog.tlk"))),
+        Variant("", (F("nwnplayer.ini"),), (F("chitin.key"), F("dialog.tlk"))),
+    )),
+    Game("jade", "Jade Empire", "Jade Empire", variants=(
+        Variant("Windows", (F("JadeEmpire.exe"),)),
+        Variant("Xbox", (F("jadedirs.ini"),)),
+        Variant("Android", (F("jadeempire.par"),)),
+    )),
+)
+
+GAMES_BY_KEY = {game.key: game for game in GAMES}
+
+
+def find_entry(root: Path, entry: Entry) -> Path | None:
+    """Find `entry` under `root`, matching names case-insensitively like the
+    engine does (unless the entry says otherwise)."""
+    current = root
+    parts = [part for part in entry.path.split("/") if part]
+    for index, part in enumerate(parts):
+        last = index == len(parts) - 1
+        candidate = current / part
+        match = candidate if candidate.exists() else None
+        if match is None and not entry.case_sensitive:
+            try:
+                lowered = part.lower()
+                match = next((child for child in current.iterdir() if child.name.lower() == lowered), None)
+            except OSError:
+                match = None
+        if match is None:
+            return None
+        if last:
+            if entry.is_dir != match.is_dir():
+                return None
+            return match
+        current = match
     return None
 
 
-def get_runtime_dll_dirs(repo_root: Path) -> list[Path]:
-    candidates = [
-        repo_root / "build-vcpkg" / "vcpkg_installed" / "x64-windows" / "bin",
-        repo_root / "build-vcpkg" / "vcpkg_installed" / "x64-windows" / "debug" / "bin",
-        repo_root / "build-vcpkg-portable" / "vcpkg_installed" / "x64-windows" / "bin",
-        repo_root / "build-vcpkg-portable" / "vcpkg_installed" / "x64-windows" / "debug" / "bin",
-        repo_root / ".deps" / "vcpkg" / "installed" / "x64-windows" / "bin",
-        repo_root / ".deps" / "vcpkg" / "installed" / "x64-windows" / "debug" / "bin",
-    ]
-    return [path for path in candidates if path.exists()]
+def match_game(root: Path) -> tuple[Game, Variant, list[str]] | None:
+    """The game and release in `root`, plus any missing data entries."""
+    try:
+        names = {child.name.lower() for child in root.iterdir()}
+    except OSError:
+        return None
+    for game in GAMES:
+        for variant in game.variants:
+            if any(entry.path.split("/")[0].lower() not in names for entry in variant.identity):
+                continue
+            if all(find_entry(root, entry) for entry in variant.identity):
+                missing = [entry.path + ("/" if entry.is_dir else "") for entry in variant.data if not find_entry(root, entry)]
+                return game, variant, missing
+    return None
 
 
-def get_config_path() -> Path:
-    candidates: list[Path] = []
-    if os.name == "nt":
-        if os.environ.get("APPDATA"):
-            candidates.append(Path(os.environ["APPDATA"]) / "xoreos" / "xoreos.conf")
-        if os.environ.get("USERPROFILE"):
-            candidates.append(Path(os.environ["USERPROFILE"]) / ".config" / "xoreos" / "xoreos.conf")
-            candidates.append(Path(os.environ["USERPROFILE"]) / "xoreos" / "xoreos.conf")
+@dataclass
+class Check:
+    state: str  # "empty", "ready", "warning" or "error"
+    title: str
+    summary: str
+    details: list[str] = field(default_factory=list)
+    game: str = ""  # Game key
+    suggestion: str = ""  # A better folder to use, if we found one
+
+    @property
+    def launchable(self) -> bool:
+        return self.state in ("ready", "warning")
+
+
+def _child_dirs(root: Path, limit: int = 300) -> list[Path]:
+    try:
+        children = sorted((child for child in root.iterdir() if child.is_dir()), key=lambda p: p.name.lower())
+    except OSError:
+        return []
+    return children[:limit]
+
+
+def check_game_folder(path_text: str) -> Check:
+    """Check whether xoreos can start the game in this folder, and say why not."""
+    if not path_text.strip():
+        return Check("empty", "No game folder chosen", "Pick a game from the list, or browse to the folder you installed the game in.")
+
+    root = Path(path_text.strip()).expanduser()
+    if not root.exists():
+        return Check("error", "Folder not found", "This folder doesn't exist. It may have moved, or the drive may not be connected.",
+                     [f"Looked for: {display_path(root)}"])
+
+    if not root.is_dir():
+        parent_match = match_game(root.parent)
+        if parent_match:
+            return Check("error", "That's a file, not a folder", "Choose the folder that contains it instead.",
+                         [f"You chose: {display_path(root)}"], game=parent_match[0].key, suggestion=str(root.parent))
+        return Check("error", "That's a file, not a folder", "Choose the folder the game is installed in.", [f"You chose: {display_path(root)}"])
+
+    found = match_game(root)
+    if found:
+        game, variant, missing = found
+        details = [f"Game: {game.label}" + (f" ({variant.platform} version)" if variant.platform else "")]
+        if not game.main:
+            details.append("Astryx is built for KotOR I. This game uses older upstream xoreos code and is mostly not playable yet.")
+        if missing:
+            details.append("Missing: " + ", ".join(missing))
+            details.append("The install may be incomplete or damaged. Try verifying the game files in Steam or GOG, or reinstalling.")
+            return Check("warning", "Some game files are missing", "xoreos recognises this game, but it may fail to start or crash later.",
+                         details, game=game.key)
+        return Check("ready", "Ready to play", f"{game.label} was found in this folder.", details, game=game.key)
+
+    # Not a game folder. See if the user picked a folder next to the right one.
+    for parent in [root.parent, root.parent.parent]:
+        if parent != root and match_game(parent):
+            return Check("error", "This is inside the game folder", "Choose the main game folder instead, the one that contains the game's program file.",
+                         [f"You chose: {display_path(root)}", f"Game folder: {display_path(parent)}"], game=match_game(parent)[0].key, suggestion=str(parent))
+
+    games_inside = [(child, match_game(child)) for child in _child_dirs(root)]
+    games_inside = [(child, match) for child, match in games_inside if match]
+    if len(games_inside) == 1:
+        child, match = games_inside[0]
+        return Check("error", "The game is in a folder inside this one", f"{match[0].label} is in {child.name}.",
+                     [f"You chose: {display_path(root)}", f"Game folder: {display_path(child)}"], game=match[0].key, suggestion=str(child))
+    if games_inside:
+        return Check("error", "Several games are inside this folder", "Choose one of them from the list or with Browse.",
+                     [f"You chose: {display_path(root)}"] + [f"{match[0].label}: {display_path(child)}" for child, match in games_inside])
+
+    details = [f"You chose: {display_path(root)}"]
+    if find_entry(root, F("chitin.key")):
+        details.append("It has game data (chitin.key) but not the game's program file, which xoreos uses to tell the games apart.")
+        details.append("KotOR I needs swkotor.exe in this folder; KotOR II needs swkotor2.exe.")
     else:
-        if os.environ.get("XDG_CONFIG_HOME"):
-            candidates.append(Path(os.environ["XDG_CONFIG_HOME"]) / "xoreos" / "xoreos.conf")
-        candidates.append(Path.home() / ".config" / "xoreos" / "xoreos.conf")
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return candidates[0] if candidates else Path("xoreos.conf")
+        details.append("For KotOR I, choose the folder that contains swkotor.exe, chitin.key and the modules folder.")
+    return Check("error", "No game found here", "This folder doesn't contain a game xoreos knows.", details)
 
 
-def sanitize_target_name(raw: str) -> str:
-    value = re.sub(r"[^-_. A-Za-z0-9]", " ", raw).strip()
-    return re.sub(r"\s+", " ", value)[:64] or "game"
+# -- LOCATIONS --
+
+def display_path(path: str | Path) -> str:
+    """A path for people to read: the home folder shown as ~."""
+    text = str(path)
+    home = str(Path.home())
+    if home not in ("", "/") and (text == home or text.startswith(home + os.sep)):
+        return "~" + text[len(home):]
+    return text
 
 
-def normalized_path_key(path_text: str) -> str:
-    normalized = os.path.normpath(path_text.strip())
-    return os.path.normcase(normalized)
+def config_dir() -> Path:
+    """The folder xoreos reads xoreos.conf from (Platform::getConfigDirectory)."""
+    if os.name == "nt":
+        for variable in ["APPDATA", "USERPROFILE"]:
+            if os.environ.get(variable):
+                return Path(os.environ[variable]) / "xoreos"
+        return Path(".")
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Preferences" / "xoreos"
+    if os.environ.get("XDG_CONFIG_HOME"):
+        return Path(os.environ["XDG_CONFIG_HOME"]) / "xoreos"
+    return Path.home() / ".config" / "xoreos"
 
 
-def scan_roots() -> list[Path]:
+def data_dir() -> Path:
+    """The folder xoreos writes its log to (Platform::getUserDataDirectory)."""
+    if os.name == "nt":
+        return config_dir()
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "xoreos"
+    if os.environ.get("XDG_DATA_HOME"):
+        return Path(os.environ["XDG_DATA_HOME"]) / "xoreos"
+    return Path.home() / ".local" / "share" / "xoreos"
+
+
+def config_path() -> Path:
+    return config_dir() / "xoreos.conf"
+
+
+def engine_log_path() -> Path:
+    return data_dir() / "xoreos.log"
+
+
+def run_output_path() -> Path:
+    return data_dir() / "launcher-last-run.txt"
+
+
+def settings_path() -> Path:
+    return config_dir() / "launcher.json"
+
+
+def load_settings() -> dict[str, str]:
+    try:
+        data = json.loads(settings_path().read_text(encoding="utf-8"))
+        return {str(key): str(value) for key, value in data.items()} if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def save_settings(settings: dict[str, str]) -> None:
+    try:
+        settings_path().parent.mkdir(parents=True, exist_ok=True)
+        settings_path().write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
+    except OSError:
+        pass  # Only convenience state lives here
+
+
+# -- XOREOS.CONF --
+
+# The config format has no escaping: '#' starts a comment anywhere, '[' and ']'
+# delimit section names anywhere on a line, and later '=' are dropped.
+UNSAVABLE_CHARS = "#[]=\r\n"
+
+
+def unsavable_chars(value: str) -> str:
+    return "".join(sorted({char for char in value if char in UNSAVABLE_CHARS}))
+
+
+def is_valid_target_name(name: str) -> bool:
+    """ConfigFile::isValidName: ASCII letters, digits, '-', '_', '.' and spaces."""
+    return bool(name.strip()) and all(not char.isascii() or char.isalnum() or char in "-_. " for char in name)
+
+
+@dataclass
+class Target:
+    name: str
+    values: dict[str, str]  # Lower-case keys
+
+    @property
+    def path(self) -> str:
+        return self.values.get("path", "")
+
+
+def _parse_line(line: str) -> tuple[str | None, str | None, str]:
+    """Returns (section name, key, value) for one config line, roughly like
+    ConfigFile::parseConfigLine."""
+    stripped = line.strip()
+    if not stripped or stripped.startswith(";"):
+        return None, None, ""
+    stripped = stripped.split("#", 1)[0].strip()
+    if stripped.startswith("[") and "]" in stripped:
+        return stripped[1:stripped.index("]")].strip(), None, ""
+    if "=" in stripped:
+        key, value = stripped.split("=", 1)
+        return None, key.strip(), value.replace("=", "").strip()
+    return None, None, ""
+
+
+def read_targets(path: Path) -> list[Target]:
+    """The game targets saved in xoreos.conf, in file order."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    targets: list[Target] = []
+    current: Target | None = None
+    for line in text.splitlines():
+        section, key, value = _parse_line(line)
+        if section is not None:
+            current = Target(section, {})
+            targets.append(current)
+        elif key and current is not None:
+            current.values[key.lower()] = value
+    return [target for target in targets if target.name.lower() != "xoreos" and target.path]
+
+
+def _section_span(lines: list[str], name: str) -> tuple[int, int] | None:
+    start = None
+    for index, line in enumerate(lines):
+        section, _key, _value = _parse_line(line)
+        if section is None:
+            continue
+        if start is not None:
+            return start, index
+        if section.lower() == name.lower():
+            start = index
+    return (start, len(lines)) if start is not None else None
+
+
+def _write_config(path: Path, lines: list[str]) -> None:
+    """Write atomically, keeping the previous version as xoreos.conf.bak."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = "\n".join(lines).rstrip() + "\n"
+    handle, temp_name = tempfile.mkstemp(prefix=".xoreos.conf.", dir=str(path.parent))
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8", newline="\n") as temp:
+            temp.write(text)
+        if path.exists():
+            try:
+                backup = path.with_name(path.name + ".bak")
+                backup.write_bytes(path.read_bytes())
+            except OSError:
+                pass
+        os.replace(temp_name, path)
+    except BaseException:
+        try:
+            os.unlink(temp_name)
+        except OSError:
+            pass
+        raise
+
+
+def save_target(path: Path, name: str, values: dict[str, str]) -> None:
+    """Add or update a target in xoreos.conf. Keys the launcher doesn't set, and
+    comments, are kept, so settings the game saved itself survive."""
+    if not is_valid_target_name(name) or name.strip().lower() == "xoreos":
+        raise ValueError(f'"{name}" can\'t be used as a saved name. Use letters, numbers, spaces, "-", "_" or ".", and not "xoreos".')
+    for key, value in values.items():
+        bad = unsavable_chars(value)
+        if bad:
+            what = "game folder" if key == "path" else key
+            raise ValueError(f"The {what} contains {' '.join(repr(char) for char in bad)}, which xoreos.conf can't store. "
+                             "Move or rename the folder, or launch without remembering the game.")
+
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except FileNotFoundError:
+        lines = []
+
+    span = _section_span(lines, name)
+    if span is None:
+        while lines and not lines[-1].strip():
+            lines.pop()
+        if lines:
+            lines.append("")
+        lines.append(f"[{name}]")
+        lines.extend(f"{key}={value}" for key, value in values.items())
+        _write_config(path, lines)
+        return
+
+    start, end = span
+    body = lines[start + 1:end]
+    pending = dict(values)
+    for index, line in enumerate(body):
+        _section, key, _value = _parse_line(line)
+        if key and key.lower() in pending:
+            body[index] = f"{key}={pending.pop(key.lower())}"
+    insert_at = len(body)
+    while insert_at > 0 and not body[insert_at - 1].strip():
+        insert_at -= 1
+    body[insert_at:insert_at] = [f"{key}={value}" for key, value in pending.items()]
+    _write_config(path, lines[:start + 1] + body + lines[end:])
+
+
+def remove_target(path: Path, name: str) -> bool:
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except FileNotFoundError:
+        return False
+    span = _section_span(lines, name)
+    if span is None:
+        return False
+    start, end = span
+    lines = lines[:start] + lines[end:]
+    _write_config(path, lines)
+    return True
+
+
+def same_path(a: str, b: str) -> bool:
+    try:
+        return os.path.normcase(os.path.realpath(a)) == os.path.normcase(os.path.realpath(b))
+    except (OSError, ValueError):
+        return os.path.normcase(os.path.normpath(a)) == os.path.normcase(os.path.normpath(b))
+
+
+def suggest_target_name(game_key: str, folder: str, targets: list[Target]) -> str:
+    """Reuse the name of a target with the same folder, else a short free name."""
+    for target in targets:
+        if same_path(target.path, folder):
+            return target.name
+    taken = {target.name.lower() for target in targets}
+    base = game_key or re.sub(r"[^A-Za-z0-9]", "", Path(folder).name) or "game"
+    if base.lower() not in taken and base.lower() != "xoreos":
+        return base
+    number = 2
+    while f"{base}_{number}".lower() in taken:
+        number += 1
+    return f"{base}_{number}"
+
+
+# -- FINDING INSTALLS --
+
+def steam_roots() -> list[Path]:
+    home = Path.home()
     roots: list[Path] = []
     if os.name == "nt":
-        for value in [os.environ.get("ProgramFiles(x86)"), os.environ.get("ProgramFiles")]:
-            if value:
-                roots.append(Path(value) / "Steam" / "steamapps" / "common")
-                roots.append(Path(value) / "GOG Galaxy" / "Games")
-        roots.extend([Path("C:/GOG Games"), Path("D:/GOG Games")])
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as key:
+                roots.append(Path(winreg.QueryValueEx(key, "SteamPath")[0]))
+        except (ImportError, OSError):
+            pass
+        for variable in ["ProgramFiles(x86)", "ProgramFiles"]:
+            if os.environ.get(variable):
+                roots.append(Path(os.environ[variable]) / "Steam")
+    elif sys.platform == "darwin":
+        roots.append(home / "Library" / "Application Support" / "Steam")
     else:
-        roots.extend(
-            [
-                Path.home() / ".local" / "share" / "Steam" / "steamapps" / "common",
-                Path.home() / ".steam" / "steam" / "steamapps" / "common",
-                Path.home() / "Games",
-            ]
-        )
-    return [root for root in roots if root.exists()]
+        roots.extend([
+            home / ".local" / "share" / "Steam",
+            home / ".steam" / "steam",
+            home / ".steam" / "root",
+            home / ".var" / "app" / "com.valvesoftware.Steam" / ".local" / "share" / "Steam",
+            home / "snap" / "steam" / "common" / ".local" / "share" / "Steam",
+        ])
+    return [root for root in roots if root.is_dir()]
 
 
-def read_config_targets(config_path: Path) -> list[dict[str, str]]:
-    if not config_path.exists():
+def steam_library_paths(vdf_text: str) -> list[Path]:
+    """Library folders listed in Steam's libraryfolders.vdf."""
+    return [Path(match.replace("\\\\", "\\")) for match in re.findall(r'"path"\s+"([^"]+)"', vdf_text)]
+
+
+def fixed_drives() -> list[str]:
+    """Local hard drive letters. Probing an empty CD drive can pop up a
+    "no disk" dialog, so only fixed drives are searched."""
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        mask = kernel32.GetLogicalDrives()
+        return [letter for index, letter in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                if mask & (1 << index) and kernel32.GetDriveTypeW(f"{letter}:\\") == 3]
+    except (ImportError, AttributeError, OSError):
+        return ["C"]
+
+
+def search_roots() -> list[tuple[Path, str]]:
+    """Folders whose subfolders may be game installs, with where they come from."""
+    found: list[tuple[Path, str]] = []
+    for steam in steam_roots():
+        libraries = [steam]
+        for vdf in [steam / "steamapps" / "libraryfolders.vdf", steam / "config" / "libraryfolders.vdf"]:
+            try:
+                libraries.extend(steam_library_paths(vdf.read_text(encoding="utf-8", errors="replace")))
+            except OSError:
+                pass
+        found.extend((library / "steamapps" / "common", "Steam") for library in libraries)
+
+    home = Path.home()
+    if os.name == "nt":
+        for variable in ["ProgramFiles(x86)", "ProgramFiles"]:
+            if os.environ.get(variable):
+                found.append((Path(os.environ[variable]) / "GOG Galaxy" / "Games", "GOG"))
+        for drive in fixed_drives():
+            found.append((Path(f"{drive}:/GOG Games"), "GOG"))
+            found.append((Path(f"{drive}:/Games"), "Games folder"))
+    else:
+        found.extend([(home / "GOG Games", "GOG"), (home / "Games", "Games folder"), (home / "Games" / "Heroic", "Heroic")])
+
+    unique: list[tuple[Path, str]] = []
+    for root, source in found:
+        if root.is_dir() and not any(same_path(str(root), str(seen)) for seen, _ in unique):
+            unique.append((root, source))
+    return unique
+
+
+@dataclass
+class Install:
+    name: str      # What the list shows
+    path: str
+    source: str    # "Saved", "Steam", "GOG", ...
+    target: str = ""  # Saved target name, if any
+
+
+def find_installs(targets: list[Target]) -> list[Install]:
+    """Saved targets first, then installs found on disk that aren't saved yet."""
+    installs = [Install(target.values.get("description") or target.name, target.path, "Saved", target.name) for target in targets]
+    found: list[tuple[Game, Install]] = []
+    for root, source in search_roots():
+        for child in _child_dirs(root):
+            match = match_game(child)
+            if match and not any(same_path(str(child), install.path) for install in installs + [i for _, i in found]):
+                found.append((match[0], Install(match[0].label, str(child), source)))
+    # KotOR I first: it's the game Astryx is for
+    found.sort(key=lambda pair: (not pair[0].main, pair[0].label.lower(), pair[1].path.lower()))
+    return installs + [install for _game, install in found]
+
+
+# -- ENGINE --
+
+def _engine_names() -> list[str]:
+    return ["xoreos.exe"] if os.name == "nt" else ["xoreos"]
+
+
+def find_engines(repo_root: Path) -> list[Path]:
+    """Every xoreos binary in the usual build folders, newest first. Covers the
+    bootstrap/CI scripts, CMake presets and the portable Windows package."""
+    bases = [repo_root]
+    for pattern in ["build*", "builds/*"]:
+        bases.extend(sorted(path for path in repo_root.glob(pattern) if path.is_dir()))
+    found: list[Path] = []
+    for base in bases:
+        for config in ["", "Release", "RelWithDebInfo", "MinSizeRel", "Debug"]:
+            for name in _engine_names():
+                candidate = base / "bin" / config / name if config else base / "bin" / name
+                if candidate.is_file() and (os.name == "nt" or os.access(candidate, os.X_OK)):
+                    found.append(candidate)
+
+    def mtime(path: Path) -> float:
+        try:
+            return path.stat().st_mtime
+        except OSError:
+            return 0.0
+
+    return sorted(found, key=mtime, reverse=True)
+
+
+def choose_engine(repo_root: Path, settings: dict[str, str]) -> Path | None:
+    for chosen in [os.environ.get("XOREOS_EXE", ""), settings.get("engine", "")]:
+        if chosen and Path(chosen).is_file():
+            return Path(chosen)
+    engines = find_engines(repo_root)
+    return engines[0] if engines else None
+
+
+def build_instructions() -> str:
+    if os.name == "nt":
+        return "Build it first:\n  powershell -ExecutionPolicy Bypass -File scripts\\bootstrap_windows.ps1"
+    return ("Build it first, from the repository folder:\n"
+            "  ./scripts/build_ci_linux.sh     (uses your system's libraries)\n"
+            "  ./scripts/bootstrap_linux.sh    (downloads its own libraries)\n"
+            "See BUILDDEP.md for what to install.")
+
+
+def runtime_dll_dirs(repo_root: Path, engine: Path) -> list[Path]:
+    """vcpkg DLL folders a Windows build may need on PATH."""
+    if os.name != "nt":
         return []
-    entries: list[dict[str, str]] = []
-    name = ""
-    path = ""
-    description = ""
-
-    def emit() -> None:
-        if name and name != "xoreos" and path:
-            entries.append(
-                {
-                    "name": name,
-                    "path": path,
-                    "description": description,
-                    "source": "Saved target",
-                    "launch_kind": "Target",
-                    "launch_value": name,
-                }
-            )
-
-    for raw in config_path.read_text(encoding="utf-8", errors="ignore").splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or line.startswith(";"):
-            continue
-        if line.startswith("[") and line.endswith("]"):
-            emit()
-            name = line[1:-1]
-            path = ""
-            description = ""
-        elif name and line.startswith("path="):
-            path = line[5:].strip()
-        elif name and line.startswith("description="):
-            description = line[12:].strip()
-    emit()
-    return entries
+    debug = "debug" in str(engine).lower()
+    dirs: list[Path] = []
+    for installed in list(repo_root.glob("build*/vcpkg_installed/*")) + list(repo_root.glob("builds/*/vcpkg_installed/*")) + list(repo_root.glob(".deps/vcpkg/installed/*")):
+        release_bin, debug_bin = installed / "bin", installed / "debug" / "bin"
+        dirs.extend(path for path in ([debug_bin, release_bin] if debug else [release_bin]) if path.is_dir())
+    return dirs
 
 
-def detect_installs() -> list[dict[str, str]]:
-    entries: list[dict[str, str]] = []
-    seen: set[str] = set()
-    for root in scan_roots():
-        for game in GAME_DEFS:
-            for hint in game["hints"]:
-                candidate = root / hint
-                if candidate.exists() and str(candidate) not in seen:
-                    seen.add(str(candidate))
-                    entries.append(
-                        {
-                            "name": game["label"],
-                            "path": str(candidate),
-                            "description": str(root),
-                            "source": "Detected install",
-                            "launch_kind": "Path",
-                            "launch_value": str(candidate),
-                        }
-                    )
-    return entries
+@dataclass
+class LaunchOptions:
+    width: int = 0
+    height: int = 0
+    fullscreen: bool = False
+    skip_videos: bool = False
 
 
-def guess_game(path_text: str, selected_name: str) -> dict[str, object]:
-    lowered = f"{selected_name} {Path(path_text).name}".lower()
-    for game in GAME_DEFS:
-        if any(hint.lower() in lowered for hint in game["hints"]):
-            return game
-    best = GAME_DEFS[0]
-    best_score = -1
-    root = Path(path_text)
-    for game in GAME_DEFS:
-        score = sum(2 if required else 1 for marker, required in game["markers"] if (root / marker).exists())
-        if score > best_score:
-            best = game
-            best_score = score
-    return best
+def parse_resolution(text: str) -> tuple[int, int]:
+    match = re.fullmatch(r"\s*(\d{2,5})\s*[xX×*]\s*(\d{2,5})\s*", text)
+    if not match:
+        raise ValueError(f'"{text}" isn\'t a screen size. Use width x height, for example 1280x720.')
+    width, height = int(match.group(1)), int(match.group(2))
+    if width < 320 or height < 240:
+        raise ValueError("The screen size must be at least 320x240.")
+    return width, height
 
 
-def validate_game_path(path_text: str, selected_name: str) -> dict[str, object]:
-    if not path_text.strip():
-        return {
-            "state": "pending",
-            "title": "Choose a game folder",
-            "summary": "Select a detected install or browse to the root game folder first.",
-            "details": ["Examples: KotOR needs chitin.key, dialog.tlk, and modules/ in the selected folder."],
-            "game": "",
-            "target": "",
-        }
-    root = Path(path_text).expanduser()
-    if not root.exists():
-        return {"state": "error", "title": "Folder not found", "summary": "The selected folder does not exist.", "details": [f"Checked path: {root}"], "game": "", "target": ""}
-    if not root.is_dir():
-        return {"state": "error", "title": "Choose a folder", "summary": "xoreos needs the root game directory, not a file.", "details": [f"Checked path: {root}"], "game": "", "target": ""}
-    game = guess_game(str(root), selected_name)
-    found = [marker for marker, _required in game["markers"] if (root / marker).exists()]
-    missing_required = [marker for marker, required in game["markers"] if required and not (root / marker).exists()]
-    target = sanitize_target_name(f"{game['target']} {root.name}")
-    if not missing_required:
-        return {
-            "state": "ready",
-            "title": "Assets look ready",
-            "summary": "The selected folder contains the core files xoreos usually expects.",
-            "details": [f"Detected game: {game['label']}", f"Folder: {root}", "Found markers: " + ", ".join(found)],
-            "game": game["label"],
-            "target": target,
-        }
-    if found:
-        return {
-            "state": "warning",
-            "title": "Folder looks close, but incomplete",
-            "summary": "Some game assets were found, but at least one required marker is missing.",
-            "details": [f"Best guess: {game['label']}", f"Folder: {root}", "Found markers: " + ", ".join(found), "Missing required markers: " + ", ".join(missing_required), "Try the top-level Steam, GOG, or disc install folder."],
-            "game": game["label"],
-            "target": target,
-        }
-    return {
-        "state": "error",
-        "title": "This does not look like a game asset folder",
-        "summary": "The selected directory is missing the common files and folders xoreos expects.",
-        "details": [f"Best guess: {game['label']}", f"Folder: {root}", "Choose the root install directory rather than a subfolder."],
-        "game": game["label"],
-        "target": target,
-    }
+def build_command(engine: str, target: str = "", path: str = "", options: LaunchOptions | None = None, remember: bool = True) -> list[str]:
+    """The xoreos command line. A saved target carries its own settings; a
+    one-off folder launch passes them, and asks xoreos not to save anything."""
+    if target:
+        return [engine, target]
+    if not path:
+        raise ValueError("Choose a game first.")
+    command = [engine, f"--path={path}"]
+    options = options or LaunchOptions()
+    if options.width and options.height:
+        command += [f"--width={options.width}", f"--height={options.height}"]
+    command.append(f"--fullscreen={'true' if options.fullscreen else 'false'}")
+    if options.skip_videos:
+        command.append("--skipvideos=true")
+    if not remember:
+        command.append("--saveconf=false")
+    return command
 
 
-def write_target_config(config_path: Path, target: str, game_path: str, description: str, width: str, height: str, fullscreen: bool, skip_videos: bool) -> None:
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        resolved_path = Path(game_path).resolve().as_posix()
-    except OSError:
-        resolved_path = game_path.replace("\\", "/")
-
-    block = [f"[{target}]", f"path={resolved_path}"]
-    if description:
-        block.append(f"description={description}")
-    if width:
-        block.append(f"width={width}")
-    if height:
-        block.append(f"height={height}")
-    block.append(f"fullscreen={'true' if fullscreen else 'false'}")
-    block.append(f"skipvideos={'true' if skip_videos else 'false'}")
-    block.append("")
-    if not config_path.exists():
-        config_path.write_text("\n".join(block) + "\n", encoding="utf-8")
-        return
-    lines = config_path.read_text(encoding="utf-8", errors="ignore").splitlines()
-    start = None
-    end = len(lines)
-    for index, raw in enumerate(lines):
-        stripped = raw.strip()
-        if stripped.startswith("[") and stripped.endswith("]"):
-            if stripped[1:-1] == target:
-                start = index
-            elif start is not None:
-                end = index
-                break
-    merged = lines[:]
-    if start is None:
-        if merged and merged[-1].strip():
-            merged.append("")
-        merged.extend(block)
-    else:
-        merged = lines[:start]
-        if merged and merged[-1].strip():
-            merged.append("")
-        merged.extend(block)
-        merged.extend(lines[end:])
-    config_path.write_text("\n".join(merged).rstrip() + "\n", encoding="utf-8")
+def quote_command(command: list[str]) -> str:
+    def quote(part: str) -> str:
+        return f'"{part}"' if not part or any(char.isspace() for char in part) else part
+    return " ".join(quote(part) for part in command)
 
 
-def open_path(target: Path) -> None:
-    try:
-        if os.name == "nt":
-            os.startfile(target)  # type: ignore[attr-defined]
-        elif sys.platform == "darwin":
-            subprocess.Popen(["open", str(target)])
-        else:
-            subprocess.Popen(["xdg-open", str(target)])
-    except OSError as exc:
-        raise OSError(f"Could not open path '{target}': {exc}") from exc
+def error_excerpt(output: str, limit: int = 12) -> str:
+    """The lines worth showing when xoreos stops with an error."""
+    lines = [line.rstrip() for line in output.splitlines() if line.strip()]
+    errors = [line for line in lines if line.lstrip().startswith(("ERROR", "FATAL", "terminate called"))]
+    if errors:
+        first = lines.index(errors[0])
+        lines = lines[first:]
+    return "\n".join(lines[-limit:])
 
 
-class XoreosLauncherApp:
-    def __init__(self, root: tk.Tk) -> None:
-        self.root = root
-        self.repo_root = Path(__file__).resolve().parent.parent
-        self.config_path = get_config_path()
-        self.entries: list[dict[str, str]] = []
-        self.saved_targets: set[str] = set()
-        self.selected_name = ""
-        self.prefer_saved_target = False
-        self.last_validation = {"state": "pending", "title": "Choose a game folder", "summary": "Select a detected install or browse to a root game folder.", "details": [], "game": "", "target": ""}
+# -- COMMAND LINE --
 
-        self.path_var = tk.StringVar()
-        self.target_var = tk.StringVar()
-        self.description_var = tk.StringVar()
-        self.width_var = tk.StringVar(value="1280")
-        self.height_var = tk.StringVar(value="720")
-        self.mode_var = tk.StringVar(value="windowed")
-        self.skip_videos_var = tk.BooleanVar(value=False)
-        self.remember_var = tk.BooleanVar(value=True)
-        self.status_var = tk.StringVar()
-        self.preview_var = tk.StringVar()
-        self.exe_var = tk.StringVar()
-        self.config_var = tk.StringVar()
-        self.setup_var = tk.StringVar()
-        self.validation_title_var = tk.StringVar()
-        self.validation_summary_var = tk.StringVar()
+def print_list(repo_root: Path) -> int:
+    settings = load_settings()
+    engine = choose_engine(repo_root, settings)
+    print(f"Engine      : {engine or 'not built yet'}")
+    print(f"Config file : {config_path()}")
+    print(f"Engine log  : {engine_log_path()}")
+    installs = find_installs(read_targets(config_path()))
+    if not installs:
+        print("\nNo saved games and no installs found in the usual Steam and GOG folders.")
+        print("Run with --check FOLDER, or open the launcher window and use Browse.")
+        return 0
+    print()
+    for install in installs:
+        check = check_game_folder(install.path)
+        label = f"{install.name} [{install.target}]" if install.target else install.name
+        print(f"{install.source:<12} {check.title:<28} {label}")
+        print(f"{'':<12} {install.path}")
+    return 0
 
-        self.root.title("xoreos First-Run Launcher")
-        self.root.geometry("1180x760")
-        self.root.minsize(980, 620)
 
-        self.build_ui()
-        self.refresh_sources()
+def print_check(folder: str) -> int:
+    check = check_game_folder(folder)
+    print(f"{check.title}: {check.summary}")
+    for line in check.details:
+        print(f"  {line}")
+    if check.suggestion:
+        print(f"  Try: {check.suggestion}")
+    return 0 if check.state == "ready" else 1
 
-    def build_ui(self) -> None:
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(1, weight=1)
 
-        hero = tk.Frame(self.root, bg="#16324f", padx=22, pady=20)
-        hero.grid(row=0, column=0, sticky="ew")
-        hero.columnconfigure(0, weight=1)
-        tk.Label(hero, text="From first asset scan to game launch, in one place.", bg="#16324f", fg="white", font=("Segoe UI", 18, "bold") if os.name == "nt" else ("TkDefaultFont", 15, "bold")).grid(row=0, column=0, sticky="w")
-        tk.Label(hero, text="Choose a detected install or browse to the root game folder, validate the assets, optionally save a target in xoreos.conf, then launch.", bg="#16324f", fg="#dce7f2", wraplength=1080, justify="left").grid(row=1, column=0, sticky="w", pady=(8, 0))
+# -- WINDOW --
 
-        body = ttk.Frame(self.root, padding=(18, 16, 18, 18))
-        body.grid(row=1, column=0, sticky="nsew")
-        body.columnconfigure(0, weight=5)
-        body.columnconfigure(1, weight=4)
-        body.rowconfigure(1, weight=1)
+RESOLUTIONS = ["1280x720", "1366x768", "1600x900", "1920x1080", "2560x1440", "1024x768", "800x600"]
+STATE_MARKS = {"ready": "✔", "warning": "⚠", "error": "✖", "empty": "•"}
 
-        env = ttk.LabelFrame(body, text="Environment", padding=12)
-        env.grid(row=0, column=0, columnspan=2, sticky="ew")
-        env.columnconfigure(1, weight=1)
-        ttk.Label(env, text="Executable").grid(row=0, column=0, sticky="w", padx=(0, 10))
-        ttk.Label(env, textvariable=self.exe_var).grid(row=0, column=1, sticky="w")
-        ttk.Button(env, text="Open Build Folder", command=self.open_build_folder).grid(row=0, column=2, padx=(12, 0))
-        ttk.Label(env, text="Config file").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=(8, 0))
-        ttk.Label(env, textvariable=self.config_var).grid(row=1, column=1, sticky="w", pady=(8, 0))
-        ttk.Button(env, text="Open Config Folder", command=self.open_config_folder).grid(row=1, column=2, padx=(12, 0), pady=(8, 0))
 
-        left = ttk.LabelFrame(body, text="1. Choose A Game Install", padding=12)
-        left.grid(row=1, column=0, sticky="nsew", padx=(0, 10), pady=(14, 0))
-        left.columnconfigure(0, weight=1)
-        left.rowconfigure(1, weight=1)
-        ttk.Label(left, text="Saved targets come from xoreos.conf. Detected installs come from common Steam and GOG folders. If nothing is listed, browse manually to the root game folder.", wraplength=560, justify="left").grid(row=0, column=0, sticky="w")
-        self.tree = ttk.Treeview(left, columns=("name", "source", "path"), show="headings", height=18)
-        self.tree.heading("name", text="Game")
-        self.tree.heading("source", text="Source")
-        self.tree.heading("path", text="Install path")
-        self.tree.column("name", width=180, anchor="w")
-        self.tree.column("source", width=140, anchor="w")
-        self.tree.column("path", width=430, anchor="w")
-        self.tree.grid(row=1, column=0, sticky="nsew", pady=(10, 0))
-        self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
-        scroll = ttk.Scrollbar(left, orient="vertical", command=self.tree.yview)
-        scroll.grid(row=1, column=1, sticky="ns", pady=(10, 0))
-        self.tree.configure(yscrollcommand=scroll.set)
-        actions = ttk.Frame(left)
-        actions.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(10, 0))
-        ttk.Button(actions, text="Refresh Scan", command=self.refresh_sources).grid(row=0, column=0, sticky="w")
-        ttk.Button(actions, text="Browse For Folder", command=self.browse_for_path).grid(row=0, column=1, padx=(8, 0))
-        ttk.Button(actions, text="Open Selected Folder", command=self.open_selected_folder).grid(row=0, column=2, padx=(8, 0))
+def run_window(repo_root: Path) -> int:
+    import tkinter as tk
+    from tkinter import filedialog, font as tkfont, messagebox, ttk
 
-        right = ttk.Frame(body)
-        right.grid(row=1, column=1, sticky="nsew", pady=(14, 0))
-        right.columnconfigure(0, weight=1)
-        right.rowconfigure(2, weight=1)
+    class LauncherWindow:
+        def __init__(self, root: tk.Tk) -> None:
+            self.root = root
+            self.settings = load_settings()
+            self.targets: list[Target] = []
+            self.installs: list[Install] = []
+            self.check = check_game_folder("")
+            self.selected_target = ""  # Saved target the fields came from
+            self.process: subprocess.Popen | None = None
+            self.process_output = None
+            self.validate_job: str | None = None
+            self.engine: Path | None = None
 
-        checklist = ttk.LabelFrame(right, text="2. First-Run Checklist", padding=12)
-        checklist.grid(row=0, column=0, sticky="ew")
-        ttk.Label(checklist, textvariable=self.setup_var, justify="left", wraplength=420).grid(row=0, column=0, sticky="w")
+            self.path_var = tk.StringVar()
+            self.name_var = tk.StringVar()
+            self.remember_var = tk.BooleanVar(value=True)
+            self.mode_var = tk.StringVar(value="windowed")
+            self.resolution_var = tk.StringVar(value="1280x720")
+            self.skip_videos_var = tk.BooleanVar(value=False)
+            self.check_title_var = tk.StringVar()
+            self.check_summary_var = tk.StringVar()
+            self.command_var = tk.StringVar()
+            self.engine_var = tk.StringVar()
+            self.status_var = tk.StringVar()
 
-        target = ttk.LabelFrame(right, text="3. Asset Folder And Target", padding=12)
-        target.grid(row=1, column=0, sticky="ew", pady=(12, 0))
-        target.columnconfigure(1, weight=1)
-        ttk.Label(target, text="Game folder").grid(row=0, column=0, sticky="w")
-        ttk.Entry(target, textvariable=self.path_var).grid(row=0, column=1, sticky="ew")
-        ttk.Button(target, text="Browse", command=self.browse_for_path).grid(row=0, column=2, padx=(8, 0))
-        ttk.Label(target, text="Target name").grid(row=1, column=0, sticky="w", pady=(8, 0))
-        ttk.Entry(target, textvariable=self.target_var).grid(row=1, column=1, columnspan=2, sticky="ew", pady=(8, 0))
-        ttk.Label(target, text="Description").grid(row=2, column=0, sticky="w", pady=(8, 0))
-        ttk.Entry(target, textvariable=self.description_var).grid(row=2, column=1, columnspan=2, sticky="ew", pady=(8, 0))
-        ttk.Checkbutton(target, text="Remember this game in xoreos.conf", variable=self.remember_var, command=self.update_preview).grid(row=3, column=0, columnspan=3, sticky="w", pady=(10, 0))
-        row = ttk.Frame(target)
-        row.grid(row=4, column=0, columnspan=3, sticky="ew", pady=(10, 0))
-        ttk.Button(row, text="Validate Assets", command=self.validate_current_path).grid(row=0, column=0, sticky="w")
-        ttk.Button(row, text="Save Target", command=self.save_target).grid(row=0, column=1, padx=(8, 0))
+            root.title("Astryx Launcher")
+            root.geometry("1040x660")
+            root.minsize(840, 560)
+            self.build()
+            self.rescan(select_path=self.settings.get("last_path", ""))
 
-        launch = ttk.LabelFrame(right, text="4. Validation And Launch", padding=12)
-        launch.grid(row=2, column=0, sticky="nsew", pady=(12, 0))
-        launch.columnconfigure(0, weight=1)
-        launch.rowconfigure(2, weight=1)
-        ttk.Label(launch, textvariable=self.validation_title_var, font=("Segoe UI", 11, "bold") if os.name == "nt" else ("TkDefaultFont", 10, "bold")).grid(row=0, column=0, sticky="w")
-        ttk.Label(launch, textvariable=self.validation_summary_var, wraplength=430, justify="left").grid(row=1, column=0, sticky="w", pady=(4, 10))
-        self.validation_text = tk.Text(launch, height=10, wrap="word", relief="solid", borderwidth=1)
-        self.validation_text.grid(row=2, column=0, sticky="nsew")
-        options = ttk.Frame(launch)
-        options.grid(row=3, column=0, sticky="ew", pady=(10, 0))
-        ttk.Label(options, text="Video mode").grid(row=0, column=0, sticky="w")
-        mode = ttk.Frame(options)
-        mode.grid(row=0, column=1, sticky="w")
-        ttk.Radiobutton(mode, text="Windowed", variable=self.mode_var, value="windowed", command=self.update_preview).grid(row=0, column=0, padx=(0, 10))
-        ttk.Radiobutton(mode, text="Fullscreen", variable=self.mode_var, value="fullscreen", command=self.update_preview).grid(row=0, column=1)
-        ttk.Label(options, text="Width").grid(row=1, column=0, sticky="w", pady=(8, 0))
-        ttk.Entry(options, textvariable=self.width_var, width=10).grid(row=1, column=1, sticky="w", pady=(8, 0))
-        ttk.Label(options, text="Height").grid(row=2, column=0, sticky="w", pady=(8, 0))
-        ttk.Entry(options, textvariable=self.height_var, width=10).grid(row=2, column=1, sticky="w", pady=(8, 0))
-        ttk.Checkbutton(options, text="Skip intro videos", variable=self.skip_videos_var, command=self.update_preview).grid(row=3, column=0, columnspan=2, sticky="w", pady=(8, 0))
-        ttk.Label(launch, text="Command preview").grid(row=4, column=0, sticky="w", pady=(10, 4))
-        ttk.Label(launch, textvariable=self.preview_var, relief="solid", padding=10, anchor="w", justify="left", wraplength=430).grid(row=5, column=0, sticky="ew")
-        buttons = ttk.Frame(launch)
-        buttons.grid(row=6, column=0, sticky="ew", pady=(10, 0))
-        ttk.Button(buttons, text="Launch Directly", command=self.launch_direct).grid(row=0, column=0, sticky="ew")
-        ttk.Button(buttons, text="Save And Launch", command=self.save_and_launch).grid(row=0, column=1, padx=(8, 0), sticky="ew")
+        # -- Layout --
 
-        footer = ttk.Frame(self.root, padding=(18, 0, 18, 18))
-        footer.grid(row=2, column=0, sticky="ew")
-        ttk.Label(footer, textvariable=self.status_var).grid(row=0, column=0, sticky="w")
-        for variable in [self.path_var, self.target_var, self.description_var, self.width_var, self.height_var]:
-            variable.trace_add("write", self.trace_refresh)
+        def build(self) -> None:
+            base = tkfont.nametofont("TkDefaultFont")
+            self.heading_font = base.copy()
+            self.heading_font.configure(size=base.cget("size") + 6, weight="bold")
+            self.bold_font = base.copy()
+            self.bold_font.configure(weight="bold")
+            self.big_font = base.copy()
+            self.big_font.configure(size=base.cget("size") + 2, weight="bold")
 
-    # -- SOURCE HANDLING --
-    def trace_refresh(self, *_args: object) -> None:
-        self.update_preview()
-        self.update_setup_summary()
+            style = ttk.Style(self.root)
+            style.configure("Ready.TLabel", foreground="#1d7a33")
+            style.configure("Warning.TLabel", foreground="#a15c00")
+            style.configure("Error.TLabel", foreground="#b3261e")
+            style.configure("Empty.TLabel", foreground="#555555")
+            style.configure("Launch.TButton", font=self.bold_font, padding=(18, 6))
 
-    def refresh_sources(self) -> None:
-        saved_entries = read_config_targets(self.config_path)
-        detected_entries = detect_installs()
-        saved_path_keys = {normalized_path_key(entry["path"]) for entry in saved_entries if entry["path"].strip()}
-        filtered_detected = [entry for entry in detected_entries if normalized_path_key(entry["path"]) not in saved_path_keys]
-        self.entries = saved_entries + filtered_detected
-        self.saved_targets = {entry["launch_value"] for entry in self.entries if entry["launch_kind"] == "Target"}
-        self.tree.delete(*self.tree.get_children())
-        for index, entry in enumerate(self.entries):
-            self.tree.insert("", "end", iid=str(index), values=(entry["name"], entry["source"], entry["path"]))
-        exe_path = get_xoreos_executable(self.repo_root)
-        self.exe_var.set(str(exe_path) if exe_path else "<not built yet>")
-        self.config_var.set(str(self.config_path))
-        if self.entries:
-            self.tree.selection_set("0")
-            self.tree.focus("0")
-            self.on_tree_select()
-        else:
-            self.status_var.set("No saved targets or detected installs were found. Browse to a root game folder to get started.")
-            self.validate_current_path(auto_only=True)
-        self.update_setup_summary()
-        self.update_preview()
+            self.root.columnconfigure(0, weight=1)
+            self.root.rowconfigure(1, weight=1)
 
-    def on_tree_select(self, _event: object | None = None) -> None:
-        if not self.tree.selection():
-            return
-        entry = self.entries[int(self.tree.selection()[0])]
-        self.selected_name = entry["name"]
-        self.path_var.set(entry["path"])
-        self.description_var.set(entry["name"] if entry["source"] == "Detected install" else (entry["description"] or entry["name"]))
-        if entry["launch_kind"] == "Target":
-            self.target_var.set(entry["launch_value"])
-            self.prefer_saved_target = True
-        else:
-            self.target_var.set("")
-            self.prefer_saved_target = False
-        self.status_var.set(f"Selected {entry['name']} from {entry['source']}.")
-        self.validate_current_path(auto_only=True)
+            header = ttk.Frame(self.root, padding=(16, 14, 16, 6))
+            header.grid(row=0, column=0, sticky="ew")
+            ttk.Label(header, text="Astryx Launcher", font=self.heading_font).grid(row=0, column=0, sticky="w")
+            ttk.Label(header, text="Pick your copy of Knights of the Old Republic, check it, and play.").grid(row=1, column=0, sticky="w")
 
-    def browse_for_path(self) -> None:
-        selected = filedialog.askdirectory(title="Choose the root game folder")
-        if not selected:
-            return
-        self.selected_name = Path(selected).name
-        self.path_var.set(selected)
-        self.target_var.set("")
-        self.prefer_saved_target = False
-        if not self.description_var.get().strip():
-            self.description_var.set(Path(selected).name)
-        self.status_var.set("Manual game folder selected. Validate it before launch.")
-        self.validate_current_path(auto_only=True)
+            body = ttk.Frame(self.root, padding=(16, 6, 16, 6))
+            body.grid(row=1, column=0, sticky="nsew")
+            body.columnconfigure(0, weight=3)
+            body.columnconfigure(1, weight=2)
+            body.rowconfigure(0, weight=1)
 
-    def open_selected_folder(self) -> None:
-        if not self.path_var.get().strip():
-            messagebox.showinfo("No folder selected", "Choose a detected install or browse to a game folder first.")
-            return
-        target = Path(self.path_var.get().strip())
-        if not target.exists():
-            messagebox.showerror("Folder not found", f"Path does not exist: {target}")
-            return
-        try:
-            open_path(target)
-        except OSError as exc:
-            messagebox.showerror("Cannot open folder", str(exc))
+            # Games list
+            games = ttk.LabelFrame(body, text="Games", padding=10)
+            games.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+            games.columnconfigure(0, weight=1)
+            games.rowconfigure(0, weight=1)
+            self.tree = ttk.Treeview(games, columns=("status", "game", "source", "path"), show="headings", selectmode="browse")
+            for column, title, width, stretch in [("status", "", 28, False), ("game", "Game", 150, False), ("source", "Found in", 130, False), ("path", "Folder", 300, True)]:
+                self.tree.heading(column, text=title, anchor="w")
+                self.tree.column(column, width=width, minwidth=width if not stretch else 120, stretch=stretch, anchor="w")
+            self.tree.grid(row=0, column=0, sticky="nsew")
+            self.tree.bind("<<TreeviewSelect>>", self.on_select)
+            scroll = ttk.Scrollbar(games, orient="vertical", command=self.tree.yview)
+            scroll.grid(row=0, column=1, sticky="ns")
+            self.tree.configure(yscrollcommand=scroll.set)
+            self.empty_label = ttk.Label(games, text="No games found yet.\nUse “Add game folder…” to pick where you installed the game.", justify="center", style="Empty.TLabel")
+            buttons = ttk.Frame(games)
+            buttons.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+            ttk.Button(buttons, text="Add game folder…", command=self.browse).pack(side="left")
+            ttk.Button(buttons, text="Search again", command=lambda: self.rescan(select_path=self.path_var.get())).pack(side="left", padx=(6, 0))
+            self.forget_button = ttk.Button(buttons, text="Forget saved game", command=self.forget)
+            self.forget_button.pack(side="right")
 
-    def open_build_folder(self) -> None:
-        exe = get_xoreos_executable(self.repo_root)
-        if not exe:
-            messagebox.showinfo("Build not found", "xoreos is not in the known build directories yet. Run a bootstrap script first.")
-            return
-        try:
-            open_path(exe.parent)
-        except OSError as exc:
-            messagebox.showerror("Cannot open folder", str(exc))
+            # Selected game
+            panel = ttk.LabelFrame(body, text="Selected game", padding=10)
+            panel.grid(row=0, column=1, sticky="nsew")
+            panel.columnconfigure(1, weight=1)
+            row = 0
+            ttk.Label(panel, text="Game folder").grid(row=row, column=0, sticky="w")
+            path_entry = ttk.Entry(panel, textvariable=self.path_var)
+            path_entry.grid(row=row, column=1, sticky="ew", padx=(8, 6))
+            ttk.Button(panel, text="Browse…", command=self.browse).grid(row=row, column=2)
+            row += 1
+            self.check_title = ttk.Label(panel, textvariable=self.check_title_var, font=self.big_font)
+            self.check_title.grid(row=row, column=0, columnspan=3, sticky="w", pady=(10, 0))
+            row += 1
+            self.check_summary = ttk.Label(panel, textvariable=self.check_summary_var, wraplength=360, justify="left")
+            self.check_summary.grid(row=row, column=0, columnspan=3, sticky="w")
+            row += 1
+            self.details = ttk.Label(panel, wraplength=360, justify="left", style="Empty.TLabel")
+            self.details.grid(row=row, column=0, columnspan=3, sticky="ew", pady=(4, 0))
+            row += 1
+            self.suggest_button = ttk.Button(panel, text="Use the suggested folder", command=self.use_suggestion)
+            self.suggest_button.grid(row=row, column=0, columnspan=3, sticky="w", pady=(4, 0))
+            row += 1
 
-    def open_config_folder(self) -> None:
-        self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            open_path(self.config_path.parent)
-        except OSError as exc:
-            messagebox.showerror("Cannot open folder", str(exc))
+            ttk.Separator(panel).grid(row=row, column=0, columnspan=3, sticky="ew", pady=10)
+            row += 1
+            ttk.Label(panel, text="Display").grid(row=row, column=0, sticky="w")
+            display = ttk.Frame(panel)
+            display.grid(row=row, column=1, columnspan=2, sticky="w", padx=(8, 0))
+            ttk.Radiobutton(display, text="Window", variable=self.mode_var, value="windowed", command=self.refresh_command).pack(side="left")
+            ttk.Radiobutton(display, text="Full screen", variable=self.mode_var, value="fullscreen", command=self.refresh_command).pack(side="left", padx=(10, 0))
+            row += 1
+            ttk.Label(panel, text="Size").grid(row=row, column=0, sticky="w", pady=(6, 0))
+            ttk.Combobox(panel, textvariable=self.resolution_var, values=RESOLUTIONS, width=12).grid(row=row, column=1, sticky="w", padx=(8, 0), pady=(6, 0))
+            row += 1
+            ttk.Checkbutton(panel, text="Skip the intro movies", variable=self.skip_videos_var, command=self.refresh_command).grid(row=row, column=0, columnspan=3, sticky="w", pady=(6, 0))
+            row += 1
+            ttk.Checkbutton(panel, text="Remember this game and these settings", variable=self.remember_var, command=self.refresh_command).grid(row=row, column=0, columnspan=3, sticky="w", pady=(6, 0))
+            row += 1
+            ttk.Label(panel, text="Saved as").grid(row=row, column=0, sticky="w", pady=(6, 0))
+            self.name_entry = ttk.Entry(panel, textvariable=self.name_var)
+            self.name_entry.grid(row=row, column=1, columnspan=2, sticky="ew", padx=(8, 0), pady=(6, 0))
+            row += 1
 
-    # -- VALIDATION --
-    def validate_current_path(self, auto_only: bool = False) -> dict[str, object]:
-        result = validate_game_path(self.path_var.get(), self.selected_name)
-        self.last_validation = result
-        if result["target"] and not self.target_var.get().strip():
-            self.target_var.set(str(result["target"]))
-        if result["game"] and not self.description_var.get().strip():
-            folder = Path(self.path_var.get().strip()).name if self.path_var.get().strip() else str(result["game"])
-            self.description_var.set(f"{result['game']} ({folder})")
-        self.validation_title_var.set(str(result["title"]))
-        self.validation_summary_var.set(str(result["summary"]))
-        self.validation_text.configure(state="normal")
-        self.validation_text.delete("1.0", "end")
-        self.validation_text.insert("1.0", "\n".join(str(item) for item in result["details"]))
-        self.validation_text.configure(state="disabled")
-        self.update_setup_summary()
-        self.update_preview()
-        if not auto_only:
-            self.status_var.set(str(result["summary"]))
-        return result
+            panel.rowconfigure(row, weight=1)
+            row += 1
+            actions = ttk.Frame(panel)
+            actions.grid(row=row, column=0, columnspan=3, sticky="ew", pady=(10, 0))
+            self.launch_button = ttk.Button(actions, text="Play", style="Launch.TButton", command=self.launch)
+            self.launch_button.pack(side="right")
+            self.save_button = ttk.Button(actions, text="Save only", command=self.save_only)
+            self.save_button.pack(side="right", padx=(0, 6))
+            row += 1
+            command = ttk.Entry(panel, textvariable=self.command_var, state="readonly", font=tkfont.nametofont("TkFixedFont"))
+            command.grid(row=row, column=0, columnspan=3, sticky="ew", pady=(8, 0))
 
-    def update_setup_summary(self) -> None:
-        build_ready = get_xoreos_executable(self.repo_root) is not None
-        asset_selected = bool(self.path_var.get().strip())
-        target_saved = self.target_var.get().strip() in self.saved_targets
-        lines = [
-            f"1. Engine build: {'ready' if build_ready else 'missing'}",
-            f"2. Asset folder: {'selected' if asset_selected else 'needed'}",
-            f"3. Asset validation: {self.last_validation['state']}",
-            f"4. Saved target: {'ready' if target_saved else 'optional'}",
-        ]
-        if self.last_validation["state"] == "ready":
-            lines.append("Next: use Save And Launch for a repeatable setup, or Launch Directly for a one-off test.")
-        elif self.last_validation["state"] == "warning":
-            lines.append("Next: try the parent install folder, then validate again.")
-        else:
-            lines.append("Next: point the launcher at the top-level game install directory and validate it.")
-        self.setup_var.set("\n".join(lines))
+            # Footer
+            footer = ttk.Frame(self.root, padding=(16, 4, 16, 12))
+            footer.grid(row=2, column=0, sticky="ew")
+            footer.columnconfigure(1, weight=1)
+            ttk.Label(footer, text="Engine:", font=self.bold_font).grid(row=0, column=0, sticky="w")
+            ttk.Label(footer, textvariable=self.engine_var).grid(row=0, column=1, sticky="w", padx=(6, 0))
+            ttk.Button(footer, text="Choose engine…", command=self.choose_engine).grid(row=0, column=2, padx=(6, 0))
+            ttk.Button(footer, text="Open log", command=self.open_log).grid(row=0, column=3, padx=(6, 0))
+            ttk.Button(footer, text="Open config folder", command=lambda: self.open_folder(config_dir())).grid(row=0, column=4, padx=(6, 0))
+            ttk.Label(footer, textvariable=self.status_var, style="Empty.TLabel").grid(row=1, column=0, columnspan=5, sticky="w", pady=(6, 0))
 
-    # -- SAVE/LAUNCH --
-    def validate_dimension(self, value: str, label: str) -> None:
-        if value and (not value.isdigit() or int(value) <= 0):
-            raise ValueError(f"Please enter a valid {label}.")
+            self.path_var.trace_add("write", lambda *_: self.schedule_check())
+            for variable in [self.name_var, self.resolution_var]:
+                variable.trace_add("write", lambda *_: self.refresh_command())
+            def rewrap(event: tk.Event) -> None:
+                for label in [self.check_summary, self.details]:
+                    label.configure(wraplength=max(240, event.width - 30))
+            panel.bind("<Configure>", rewrap)
 
-    def quote_argument(self, argument: str) -> str:
-        return f'"{argument}"' if argument and any(ch.isspace() for ch in argument) else argument
+        # -- Games --
 
-    def command_should_use_target(self) -> bool:
-        return self.prefer_saved_target and self.target_var.get().strip() in self.saved_targets
+        def rescan(self, select_path: str = "") -> None:
+            self.status_var.set("Searching for games…")
+            self.root.update_idletasks()
+            self.targets = read_targets(config_path())
+            self.installs = find_installs(self.targets)
+            self.tree.delete(*self.tree.get_children())
+            selected = None
+            for index, install in enumerate(self.installs):
+                check = check_game_folder(install.path)
+                game = GAMES_BY_KEY.get(check.game)
+                label = game.short if game else install.name
+                source = f"Saved as {install.target}" if install.target else install.source
+                self.tree.insert("", "end", iid=str(index), values=(STATE_MARKS[check.state], label, source, display_path(install.path)))
+                if selected is None and select_path and same_path(install.path, select_path):
+                    selected = str(index)
+            if self.installs:
+                self.empty_label.grid_forget()
+            else:
+                self.empty_label.grid(row=0, column=0, columnspan=2)
+            self.refresh_engine()
+            if selected is None and self.installs:
+                selected = "0"
+            if selected is not None:
+                self.tree.selection_set(selected)
+                self.tree.see(selected)
+            elif select_path:
+                self.load_folder(select_path)
+            else:
+                self.load_folder("")
+            saved = sum(1 for install in self.installs if install.target)
+            found = len(self.installs) - saved
+            self.status_var.set(f"{saved} saved, {found} found on this computer." if self.installs else "No games found in the usual Steam and GOG folders.")
 
-    def build_command(self, use_saved_target: bool, require_exe: bool) -> list[str]:
-        exe = get_xoreos_executable(self.repo_root)
-        if require_exe and not exe:
-            raise ValueError("xoreos was not found in the known build directories. Run a bootstrap script first.")
-        command = [str(exe) if exe else "<xoreos>"]
-        self.validate_dimension(self.width_var.get().strip(), "width")
-        self.validate_dimension(self.height_var.get().strip(), "height")
-        if use_saved_target:
-            if self.target_var.get().strip() not in self.saved_targets:
-                raise ValueError("Save the target first before launching by target name.")
-            command.append(self.target_var.get().strip())
-        elif self.path_var.get().strip():
-            command.append(f"-p{self.path_var.get().strip()}")
-        else:
-            raise ValueError("Choose a saved target or set a game path.")
-        if self.width_var.get().strip():
-            command.append(f"--width={self.width_var.get().strip()}")
-        if self.height_var.get().strip():
-            command.append(f"--height={self.height_var.get().strip()}")
-        command.append(f"--fullscreen={'true' if self.mode_var.get() == 'fullscreen' else 'false'}")
-        if self.skip_videos_var.get():
-            command.append("--skipvideos=true")
-        return command
-
-    def update_preview(self) -> None:
-        try:
-            command = self.build_command(use_saved_target=self.command_should_use_target(), require_exe=False)
-            self.preview_var.set(" ".join(self.quote_argument(part) for part in command))
-        except ValueError as exc:
-            self.preview_var.set(str(exc))
-
-    def save_target(self) -> bool:
-        try:
-            self.validate_dimension(self.width_var.get().strip(), "width")
-            self.validate_dimension(self.height_var.get().strip(), "height")
-            result = self.validate_current_path(auto_only=True)
-            if result["state"] != "ready":
-                raise ValueError("The selected folder is incomplete. Fix validation issues before saving this target.")
-            if not self.remember_var.get():
-                raise ValueError("Enable 'Remember this game in xoreos.conf' before saving a target.")
-            target = sanitize_target_name(self.target_var.get().strip())
-            if not target or target.lower() == "xoreos":
-                raise ValueError("Enter a valid target name that is not 'xoreos'.")
-            self.target_var.set(target)
-            write_target_config(self.config_path, target, self.path_var.get().strip(), self.description_var.get().strip(), self.width_var.get().strip(), self.height_var.get().strip(), self.mode_var.get() == "fullscreen", self.skip_videos_var.get())
-        except (ValueError, OSError) as exc:
-            messagebox.showerror("Cannot save target", str(exc))
-            return False
-        saved = self.target_var.get().strip()
-        self.refresh_sources()
-        self.prefer_saved_target = True
-        for index, entry in enumerate(self.entries):
-            if entry["launch_kind"] == "Target" and entry["launch_value"] == saved:
-                self.tree.selection_set(str(index))
-                self.tree.focus(str(index))
-                self.on_tree_select()
-                break
-        self.status_var.set(f"Saved target '{saved}' to {self.config_path}.")
-        return True
-
-    def launch_process(self, command: list[str], message: str) -> None:
-        self.status_var.set("Launching xoreos...")
-        env = os.environ.copy()
-        runtime_dirs = get_runtime_dll_dirs(self.repo_root)
-        if runtime_dirs:
-            prepend = os.pathsep.join(str(path) for path in runtime_dirs)
-            env["PATH"] = prepend + os.pathsep + env.get("PATH", "")
-        try:
-            subprocess.Popen(command, cwd=self.repo_root, env=env)
-        except OSError as exc:
-            messagebox.showerror("Launch failed", str(exc))
-            self.status_var.set("Launch failed.")
-            return
-        self.status_var.set(message)
-
-    def launch_direct(self) -> None:
-        try:
-            result = self.validate_current_path(auto_only=True)
-            if result["state"] != "ready":
-                raise ValueError("The selected folder is incomplete. Fix validation issues before launching.")
-            self.prefer_saved_target = False
-            command = self.build_command(use_saved_target=False, require_exe=True)
-        except ValueError as exc:
-            messagebox.showerror("Cannot launch xoreos", str(exc))
-            return
-        self.launch_process(command, "xoreos started with the selected game folder.")
-
-    def save_and_launch(self) -> None:
-        if self.remember_var.get():
-            if not self.save_target():
+        def on_select(self, _event: object = None) -> None:
+            selection = self.tree.selection()
+            if not selection:
                 return
-        try:
-            command = self.build_command(use_saved_target=self.command_should_use_target(), require_exe=True)
-        except ValueError as exc:
-            messagebox.showerror("Cannot launch xoreos", str(exc))
-            return
-        self.launch_process(command, "xoreos started.")
+            install = self.installs[int(selection[0])]
+            if install.target:
+                target = next((t for t in self.targets if t.name == install.target), None)
+                values = target.values if target else {}
+                self.selected_target = install.target
+                self.name_var.set(install.target)
+                self.mode_var.set("fullscreen" if values.get("fullscreen", "").lower() in ("true", "yes", "y", "on", "1") else "windowed")
+                if values.get("width") and values.get("height"):
+                    self.resolution_var.set(f"{values['width']}x{values['height']}")
+                else:
+                    self.resolution_var.set(RESOLUTIONS[0])
+                self.skip_videos_var.set(values.get("skipvideos", "").lower() in ("true", "yes", "y", "on", "1"))
+                self.remember_var.set(True)
+            else:
+                self.selected_target = ""
+                self.name_var.set("")
+            self.path_var.set(install.path)
+            self.run_check()
 
+        def load_folder(self, folder: str) -> None:
+            self.selected_target = ""
+            self.name_var.set("")
+            self.path_var.set(folder)
+            self.run_check()
 
-def main() -> int:
-    root = tk.Tk()
+        def browse(self) -> None:
+            start = self.path_var.get().strip() or str(Path.home())
+            folder = filedialog.askdirectory(title="Choose the folder you installed the game in", initialdir=start if Path(start).is_dir() else str(Path.home()), mustexist=True)
+            if folder:
+                self.tree.selection_remove(*self.tree.selection())
+                self.load_folder(str(Path(folder)))
+
+        def use_suggestion(self) -> None:
+            if self.check.suggestion:
+                self.load_folder(self.check.suggestion)
+
+        def forget(self) -> None:
+            name = self.selected_target
+            if not name:
+                return
+            if not messagebox.askyesno("Forget saved game", f"Remove “{name}” from xoreos.conf?\n\nThe game itself and its saved games are not touched.", parent=self.root):
+                return
+            try:
+                remove_target(config_path(), name)
+            except OSError as exc:
+                messagebox.showerror("Couldn't update xoreos.conf", str(exc), parent=self.root)
+                return
+            self.rescan(select_path=self.path_var.get())
+            self.status_var.set(f"Forgot “{name}”.")
+
+        # -- Checking --
+
+        def schedule_check(self) -> None:
+            if self.validate_job:
+                self.root.after_cancel(self.validate_job)
+            self.validate_job = self.root.after(300, self.run_check)
+
+        def run_check(self) -> None:
+            self.validate_job = None
+            folder = self.path_var.get().strip()
+            if self.selected_target:
+                target = next((t for t in self.targets if t.name == self.selected_target), None)
+                if not target or not same_path(target.path, folder):
+                    self.selected_target = ""
+                    self.name_var.set("")
+            self.check = check_game_folder(folder)
+            if self.check.launchable and not self.name_var.get().strip():
+                self.name_var.set(suggest_target_name(self.check.game, folder, self.targets))
+            self.check_title_var.set(f"{STATE_MARKS[self.check.state]}  {self.check.title}")
+            self.check_title.configure(style=f"{self.check.state.capitalize()}.TLabel")
+            self.check_summary_var.set(self.check.summary)
+            self.details.configure(text="\n".join(self.check.details))
+            if self.check.suggestion:
+                self.suggest_button.configure(text=f"Use {Path(self.check.suggestion).name}")
+                self.suggest_button.grid()
+            else:
+                self.suggest_button.grid_remove()
+            self.forget_button.state(["!disabled"] if self.selected_target else ["disabled"])
+            self.launch_button.state(["!disabled"] if self.check.launchable else ["disabled"])
+            self.save_button.state(["!disabled"] if self.check.launchable else ["disabled"])
+            self.refresh_command()
+
+        def refresh_engine(self) -> None:
+            self.engine = choose_engine(repo_root, self.settings)
+            self.engine_var.set(display_path(self.engine) if self.engine else "not built yet")
+
+        def options(self) -> LaunchOptions:
+            width, height = parse_resolution(self.resolution_var.get())
+            return LaunchOptions(width, height, self.mode_var.get() == "fullscreen", self.skip_videos_var.get())
+
+        def target_values(self) -> dict[str, str]:
+            options = self.options()
+            game = GAMES_BY_KEY.get(self.check.game)
+            values = {"path": Path(self.path_var.get().strip()).expanduser().resolve().as_posix()}
+            if game:
+                values["description"] = game.label
+            values.update({
+                "width": str(options.width), "height": str(options.height),
+                "fullscreen": "true" if options.fullscreen else "false",
+                "skipvideos": "true" if options.skip_videos else "false",
+            })
+            return values
+
+        def refresh_command(self) -> None:
+            self.name_entry.state(["!disabled"] if self.remember_var.get() else ["disabled"])
+            try:
+                engine = str(self.engine) if self.engine else "xoreos"
+                if self.remember_var.get():
+                    command = build_command(engine, target=self.name_var.get().strip() or "<name>")
+                else:
+                    command = build_command(engine, path=self.path_var.get().strip(), options=self.options(), remember=False)
+                self.command_var.set(quote_command(command))
+            except ValueError as exc:
+                self.command_var.set(str(exc))
+
+        # -- Saving and launching --
+
+        def save(self) -> str | None:
+            """Save the selected game to xoreos.conf. Returns its name, or None."""
+            name = self.name_var.get().strip()
+            try:
+                if not name:
+                    raise ValueError("Enter a name to save the game under.")
+                values = self.target_values()
+                for target in self.targets:
+                    if target.name.lower() == name.lower() and not same_path(target.path, values["path"]) and target.name != self.selected_target:
+                        raise ValueError(f"“{target.name}” is already saved for a different folder:\n{target.path}\n\nPick another name.")
+                old = next((t for t in self.targets if t.name == self.selected_target), None)
+                if old and old.name.lower() != name.lower():
+                    # Renamed: carry over what the game saved under the old name
+                    values = {**old.values, **values}
+                    save_target(config_path(), name, values)
+                    remove_target(config_path(), old.name)
+                else:
+                    save_target(config_path(), name, values)
+            except (ValueError, OSError) as exc:
+                messagebox.showerror("Couldn't save the game", str(exc), parent=self.root)
+                return None
+            self.rescan(select_path=self.path_var.get())
+            return name
+
+        def save_only(self) -> None:
+            if self.save():
+                self.status_var.set(f"Saved to {config_path()}.")
+
+        def launch(self) -> None:
+            if not self.check.launchable:
+                return
+            if not self.engine:
+                messagebox.showerror("xoreos isn't built yet", "The launcher couldn't find the xoreos program.\n\n" + build_instructions()
+                                     + "\n\nIf you built it somewhere else, use “Choose engine…”.", parent=self.root)
+                return
+            if self.process and self.process.poll() is None:
+                if not messagebox.askyesno("Already running", "xoreos is already running. Start another copy?", parent=self.root):
+                    return
+            if self.check.state == "warning":
+                if not messagebox.askyesno("Some game files are missing", self.check.summary + "\n\nStart anyway?", icon="warning", parent=self.root):
+                    return
+            try:
+                if self.remember_var.get():
+                    name = self.save()
+                    if not name:
+                        return
+                    command = build_command(str(self.engine), target=name)
+                else:
+                    command = build_command(str(self.engine), path=self.path_var.get().strip(), options=self.options(), remember=False)
+            except ValueError as exc:
+                messagebox.showerror("Can't start the game", str(exc), parent=self.root)
+                return
+            self.start(command)
+
+        def start(self, command: list[str]) -> None:
+            self.settings["last_path"] = self.path_var.get().strip()
+            save_settings(self.settings)
+            env = os.environ.copy()
+            dll_dirs = runtime_dll_dirs(repo_root, Path(command[0]))
+            if dll_dirs:
+                env["PATH"] = os.pathsep.join(str(path) for path in dll_dirs) + os.pathsep + env.get("PATH", "")
+            try:
+                run_output_path().parent.mkdir(parents=True, exist_ok=True)
+                self.process_output = open(run_output_path(), "w", encoding="utf-8", errors="replace")
+                self.process_output.write("Command: " + quote_command(command) + "\n\n")
+                self.process_output.flush()
+                flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
+                self.process = subprocess.Popen(command, cwd=str(Path(command[0]).parent), env=env, stdin=subprocess.DEVNULL,
+                                                stdout=self.process_output, stderr=subprocess.STDOUT, creationflags=flags)
+            except OSError as exc:
+                messagebox.showerror("Couldn't start xoreos", f"{exc}\n\nProgram: {command[0]}", parent=self.root)
+                self.status_var.set("Couldn't start xoreos.")
+                return
+            self.status_var.set("xoreos is running. Its output goes to " + str(run_output_path()))
+            self.root.after(500, self.watch)
+
+        def watch(self) -> None:
+            if not self.process:
+                return
+            code = self.process.poll()
+            if code is None:
+                self.root.after(500, self.watch)
+                return
+            if self.process_output:
+                self.process_output.close()
+                self.process_output = None
+            self.process = None
+            if code == 0:
+                self.status_var.set("xoreos closed.")
+                return
+            try:
+                output = run_output_path().read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                output = ""
+            excerpt = error_excerpt(output.split("\n\n", 1)[-1]) or "(xoreos printed nothing.)"
+            self.status_var.set(f"xoreos stopped with an error (exit code {code}).")
+            self.show_failure(code, excerpt)
+
+        def show_failure(self, code: int, excerpt: str) -> None:
+            dialog = tk.Toplevel(self.root)
+            dialog.title("xoreos stopped with an error")
+            dialog.transient(self.root)
+            dialog.columnconfigure(0, weight=1)
+            dialog.rowconfigure(1, weight=1)
+            ttk.Label(dialog, text=f"xoreos stopped with an error (exit code {code}).", font=self.big_font, padding=(14, 12, 14, 4)).grid(row=0, column=0, sticky="w")
+            text = tk.Text(dialog, height=min(12, excerpt.count("\n") + 2), width=90, wrap="word")
+            text.insert("1.0", excerpt)
+            text.configure(state="disabled")
+            text.grid(row=1, column=0, sticky="nsew", padx=14)
+            ttk.Label(dialog, text="If the message mentions the game folder, check it in the launcher. Otherwise the full output and\n"
+                                   "the engine log have the details; include them if you report the problem.\n\n"
+                                   f"Full output: {display_path(run_output_path())}\nEngine log: {display_path(engine_log_path())}",
+                      padding=(14, 8), justify="left").grid(row=2, column=0, sticky="w")
+            buttons = ttk.Frame(dialog, padding=(14, 0, 14, 12))
+            buttons.grid(row=3, column=0, sticky="e")
+            ttk.Button(buttons, text="Open full output", command=lambda: self.open_file(run_output_path())).pack(side="left")
+            ttk.Button(buttons, text="Close", command=dialog.destroy).pack(side="left", padx=(6, 0))
+            dialog.bind("<Escape>", lambda _event: dialog.destroy())
+
+        # -- Files and folders --
+
+        def choose_engine(self) -> None:
+            pattern = [("xoreos", "xoreos.exe"), ("All files", "*.*")] if os.name == "nt" else [("All files", "*")]
+            chosen = filedialog.askopenfilename(title="Choose the xoreos program", filetypes=pattern, parent=self.root)
+            if not chosen:
+                return
+            self.settings["engine"] = chosen
+            save_settings(self.settings)
+            self.refresh_engine()
+            self.refresh_command()
+
+        def open_log(self) -> None:
+            for path in [engine_log_path(), run_output_path()]:
+                if path.exists():
+                    self.open_file(path)
+                    return
+            messagebox.showinfo("No log yet", f"xoreos hasn't written a log yet. It will be here:\n{engine_log_path()}", parent=self.root)
+
+        def open_folder(self, folder: Path) -> None:
+            try:
+                folder.mkdir(parents=True, exist_ok=True)
+            except OSError:
+                pass
+            self.open_file(folder)
+
+        def open_file(self, path: Path) -> None:
+            try:
+                if os.name == "nt":
+                    os.startfile(str(path))  # type: ignore[attr-defined]
+                elif sys.platform == "darwin":
+                    subprocess.Popen(["open", str(path)])
+                else:
+                    subprocess.Popen(["xdg-open", str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except OSError as exc:
+                messagebox.showerror("Couldn't open it", f"{exc}\n\n{path}", parent=self.root)
+
+    try:
+        root = tk.Tk()
+    except tk.TclError as exc:
+        print(f"The launcher window can't open: {exc}", file=sys.stderr)
+        print("Without a display, use: scripts/xoreos_launcher_gui.py --list, or scripts/run_xoreos_linux.sh", file=sys.stderr)
+        return 1
     try:
         style = ttk.Style(root)
         if os.name == "nt" and "vista" in style.theme_names():
             style.theme_use("vista")
+        elif "clam" in style.theme_names() and sys.platform != "darwin":
+            style.theme_use("clam")
     except tk.TclError:
         pass
-    app = XoreosLauncherApp(root)
-    app.update_preview()
+    LauncherWindow(root)
     root.mainloop()
     return 0
+
+
+def missing_tk_message() -> str:
+    lines = ["The launcher window needs Python's Tk support (tkinter), which isn't installed."]
+    if os.name == "nt":
+        lines.append("Reinstall Python from python.org and keep \"tcl/tk and IDLE\" ticked.")
+    elif sys.platform == "darwin":
+        lines.append("Install it with: brew install python-tk")
+    else:
+        lines.append("Install it with one of:")
+        lines.append("  sudo apt install python3-tk      (Debian, Ubuntu)")
+        lines.append("  sudo dnf install python3-tkinter (Fedora)")
+        lines.append("  sudo pacman -S tk                (Arch)")
+        lines.append("Or start the game from the terminal: scripts/run_xoreos_linux.sh")
+    return "\n".join(lines)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Find, check and start games with xoreos.")
+    parser.add_argument("--list", action="store_true", help="print the engine, config file and game installs found, then exit")
+    parser.add_argument("--check", metavar="FOLDER", help="check whether FOLDER is a game install xoreos can start")
+    args = parser.parse_args(argv)
+    repo_root = Path(__file__).resolve().parent.parent
+
+    if args.check is not None:
+        return print_check(args.check)
+    if args.list:
+        return print_list(repo_root)
+    try:
+        import tkinter  # noqa: F401
+    except ImportError:
+        print(missing_tk_message(), file=sys.stderr)
+        return 1
+    return run_window(repo_root)
 
 
 if __name__ == "__main__":
