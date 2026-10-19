@@ -36,11 +36,13 @@
 #include "src/common/util.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/placeable.h"
 #include "src/engines/kotorbase/situated.h"
+#include "src/engines/kotorbase/trigger.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/location.h"
@@ -130,14 +132,26 @@ void Functions::getClickingObject(Aurora::NWScript::FunctionContext &ctx) {
 	ctx.getReturn() = ctx.getTriggerer();
 }
 
+/** A trigger remembers who last entered/left it, also for scripts it runs
+ *  later (ExecuteScript, its heartbeat); elsewhere it's the triggerer. */
+static Aurora::NWScript::Object *getLastTriggerOccupant(Aurora::NWScript::FunctionContext &ctx, bool entered) {
+	Trigger *trigger = dynamic_cast<Trigger *>(ctx.getCaller());
+	if (trigger) {
+		const uint32_t id = entered ? trigger->getLastEnteredID() : trigger->getLastExitedID();
+		Aurora::NWScript::Object *object = (id != 0) ? ObjectMan.findObject(id) : nullptr;
+		if (object)
+			return object;
+	}
+
+	return ctx.getTriggerer();
+}
+
 void Functions::getEnteringObject(Aurora::NWScript::FunctionContext &ctx) {
-	// TODO: This should return the *last* entered object, i.e. it should remember past triggerers.
-	ctx.getReturn() = ctx.getTriggerer();
+	ctx.getReturn() = getLastTriggerOccupant(ctx, true);
 }
 
 void Functions::getExitingObject(Aurora::NWScript::FunctionContext &ctx) {
-	// TODO: This should return the *last* exited object, i.e. it should remember past triggerers.
-	ctx.getReturn() = ctx.getTriggerer();
+	ctx.getReturn() = getLastTriggerOccupant(ctx, false);
 }
 
 void Functions::getIsObjectValid(Aurora::NWScript::FunctionContext &ctx) {

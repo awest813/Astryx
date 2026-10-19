@@ -23,12 +23,18 @@
  */
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/engines/kotorbase/action.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/situated.h"
+#include "src/engines/kotorbase/trigger.h"
+#include "src/engines/kotorbase/trap.h"
+#include "src/engines/kotorbase/area.h"
+#include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/objectcontainer.h"
 
@@ -87,76 +93,110 @@ void Functions::getLastUsedBy(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 
+/** The trap of a door, placeable or trigger (a mine). */
+static Trap *getObjectTrap(Aurora::NWScript::Object *object) {
+	if (Situated *situated = ObjectContainer::toSituated(object))
+		return &situated->getTrap();
+
+	if (Trigger *trigger = dynamic_cast<Trigger *>(object))
+		return &trigger->getTrap();
+
+	return nullptr;
+}
+
 void Functions::getTrapDisarmable(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated && situated->getTrapDisarmable() ? 1 : 0;
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	ctx.getReturn() = trap && trap->isDisarmable() ? 1 : 0;
 }
 
 void Functions::getTrapDetectable(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated && situated->getTrapDetectable() ? 1 : 0;
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	ctx.getReturn() = trap && trap->isDetectable() ? 1 : 0;
 }
 
 void Functions::getTrapDetectedBy(Aurora::NWScript::FunctionContext &ctx) {
 	// GetTrapDetectedBy(object oTrapObject, object oCreature) -> int
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	Aurora::NWScript::Object *creature = getParamObject(ctx, 1);
-	ctx.getReturn() = (situated && creature &&
-	                   (static_cast<Aurora::NWScript::Object *>(situated->getTrapDetectedBy()) == creature)) ? 1 : 0;
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	Object *creature = ObjectContainer::toObject(getParamObject(ctx, 1));
+	if (!trap || !creature) {
+		ctx.getReturn() = 0;
+		return;
+	}
+
+	// A trap the party had found before the game was saved and loaded again.
+	const bool partyFound = trap->isFlagged() && ObjectContainer::toPartyMember(creature);
+
+	ctx.getReturn() = (trap->isDetectedBy(creature->getID()) || partyFound) ? 1 : 0;
 }
 
 void Functions::getTrapFlagged(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated && situated->getTrapFlagged() ? 1 : 0;
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	ctx.getReturn() = trap && trap->isFlagged() ? 1 : 0;
 }
 
 void Functions::getTrapBaseType(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated ? situated->getTrapBaseType() : 0;
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	ctx.getReturn() = trap ? trap->getType() : 0;
 }
 
 void Functions::getTrapOneShot(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated && situated->getTrapOneShot() ? 1 : 0;
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	ctx.getReturn() = trap && trap->isOneShot() ? 1 : 0;
 }
 
 void Functions::getTrapCreator(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated ? situated->getTrapCreator() : static_cast<Aurora::NWScript::Object *>(nullptr);
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	const uint32_t creator = trap ? trap->getCreatorID() : 0;
+	ctx.getReturn() = (creator != 0) ? ObjectMan.findObject(creator) : static_cast<Aurora::NWScript::Object *>(nullptr);
 }
 
 void Functions::getTrapKeyTag(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated ? situated->getTrapKeyTag() : Common::UString("");
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	ctx.getReturn() = trap ? trap->getKeyTag() : Common::UString("");
 }
 
 void Functions::getTrapDisarmDC(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated ? situated->getTrapDisarmDC() : 0;
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	ctx.getReturn() = trap ? trap->getDisarmDC() : 0;
 }
 
 void Functions::getTrapDetectDC(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated ? situated->getTrapDetectDC() : 0;
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	ctx.getReturn() = trap ? trap->getDetectDC() : 0;
 }
 
 void Functions::setTrapDetectedBy(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	Aurora::NWScript::Object *target = getParamObject(ctx, 0);
 	Object *detector = ObjectContainer::toObject(getParamObject(ctx, 1));
-	if (situated)
-		situated->setTrapDetectedBy(detector);
+	if (!detector)
+		return;
+
+	// A mine also shows its model once found.
+	if (Trigger *trigger = dynamic_cast<Trigger *>(target)) {
+		trigger->detectTrap(detector);
+		if (Area *area = _game->getModule().getCurrentArea())
+			area->addToObjectMap(trigger);
+		return;
+	}
+
+	if (Trap *trap = getObjectTrap(target))
+		trap->setDetectedBy(detector->getID());
 }
 
 void Functions::getIsTrapped(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	ctx.getReturn() = situated && situated->getIsTrapped() ? 1 : 0;
+	Trap *trap = getObjectTrap(getParamObject(ctx, 0));
+	ctx.getReturn() = trap && trap->isTrapped() ? 1 : 0;
 }
 
 void Functions::setTrapDisabled(Aurora::NWScript::FunctionContext &ctx) {
-	Situated *situated = ObjectContainer::toSituated(getParamObject(ctx, 0));
-	if (situated)
-		situated->setTrapDisabled();
+	Aurora::NWScript::Object *target = getParamObject(ctx, 0);
+
+	if (Trigger *trigger = dynamic_cast<Trigger *>(target))
+		trigger->disableTrap();
+	else if (Trap *trap = getObjectTrap(target))
+		trap->disable();
 }
+
 void Functions::getLockKeyRequired(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 0; }
 void Functions::getLockLockable(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 1; }
 void Functions::getLockLockDC(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 20; }

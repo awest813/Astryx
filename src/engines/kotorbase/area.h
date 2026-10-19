@@ -51,6 +51,7 @@ class GFF3WriterStruct;
 
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/trigger.h"
+#include "src/engines/kotorbase/heartbeatscheduler.h"
 
 namespace Engines {
 
@@ -155,7 +156,17 @@ public:
 	// Triggers
 
 	void toggleTriggers();
-	void evaluateTriggers(float x, float y, bool allowTransitions = true);
+	/** A creature moved: check the triggers for it at the next safe point (see
+	 *  processTriggerChecks()). @p allowTransitions is false when it arrived by
+	 *  teleport, so that an area transition it lands in doesn't move it on. */
+	void queueTriggerCheck(const Object &creature, bool allowTransitions = true);
+	/** Run the trigger OnExit/OnEnter (and mine) events of the creatures that
+	 *  moved. Call outside of any iteration over objects. */
+	void processTriggerChecks();
+	/** The triggers in the area, mines included. */
+	const std::vector<Trigger *> &getTriggers() const;
+	/** The creature tries to spot the mines around it (Awareness). */
+	void detectTraps(Creature &creature, bool rollDice);
 
 	// Encounters
 
@@ -178,8 +189,8 @@ public:
 	void removeObject(Object *object);
 	/** Destroy an object at the end of the frame (DestroyObject), after an optional delay. */
 	void destroyObjectDeferred(Object *object, float delay = 0.0f);
-	/** Queue OnHeartbeat for every NPC; run with the other creature events. */
-	void queueCreatureHeartbeats();
+	/** Run the OnHeartbeat of the creatures, placeables, doors and triggers that are due. */
+	void runHeartbeats();
 	/** Run queued OnSpawn scripts now (before the area's OnEnter, as in the original). */
 	void runPendingSpawnEvents();
 	/** Remove objects whose deferred destruction is due. Call outside object iteration. */
@@ -331,7 +342,12 @@ private:
 
 	std::vector<Trigger *> _triggers;
 	bool _triggersVisible;
-	Trigger *_activeTrigger;
+
+	/** Creatures (ID) whose triggers need checking -> may they use area transitions. */
+	std::map<uint32_t, bool> _pendingTriggerChecks;
+	bool _processingTriggers { false };
+
+	HeartbeatScheduler _heartbeats;
 
 	std::vector<Encounter *> _encounters;
 
@@ -385,6 +401,20 @@ private:
 
 	void updateRoomsVisiblity();
 	void updatePerception(Creature &subject);
+
+	// Trigger helpers
+
+	Trigger *findTrigger(uint32_t id) const;
+	Creature *findCreature(uint32_t id) const;
+	/** Put the creatures standing in triggers at load time inside them, without events. */
+	void seedTriggerOccupants();
+	/** Check the triggers for one creature. */
+	void checkTriggers(uint32_t creatureID, bool allowTransitions);
+	/** A creature entered a mine. */
+	void enterTrap(Trigger &trigger, Creature &creature);
+	/** The object leaves the area: it is no longer inside any trigger. */
+	void forgetTriggerOccupant(uint32_t id);
+	void runHeartbeat(Object &object);
 
 
 	friend class Console;

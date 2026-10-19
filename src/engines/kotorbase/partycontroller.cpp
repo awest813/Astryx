@@ -191,13 +191,6 @@ bool PartyController::handleEvent(const Events::Event &e) {
 	}
 }
 
-void PartyController::raiseHeartbeatEvent() {
-	// ⚡ Bolt: Use const auto & to prevent unnecessary copies of std::pair<int, Creature *>
-	for (const auto &partyMember : _party) {
-		partyMember.second->runScript("k_ai_master", partyMember.second, _module->getCurrentArea());
-	}
-}
-
 void PartyController::leftShiftPartyMembers() {
 	std::pair<int, Creature *> prevLeader = _party[0];
 	size_t partySize = _party.size();

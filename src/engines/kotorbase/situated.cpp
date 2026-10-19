@@ -123,87 +123,94 @@ void Situated::setLocked(bool locked) {
 }
 
 bool Situated::getIsTrapped() const {
-	return _trapFlag;
+	return _trap.isTrapped();
 }
 
 bool Situated::getTrapActive() const {
-	return _trapFlag && _trapActive;
+	return _trap.isActive();
 }
 
 bool Situated::getTrapDetectable() const {
-	return _trapDetectable;
+	return _trap.isDetectable();
 }
 
 bool Situated::getTrapDisarmable() const {
-	return _trapDisarmable;
+	return _trap.isDisarmable();
 }
 
 bool Situated::getTrapFlagged() const {
-	return _trapFlag && _trapFlagged;
+	return _trap.isFlagged();
 }
 
 bool Situated::getTrapOneShot() const {
-	return _trapOneShot;
+	return _trap.isOneShot();
 }
 
 uint8_t Situated::getTrapBaseType() const {
-	return _trapType;
+	return _trap.getType();
 }
 
 uint8_t Situated::getTrapDetectDC() const {
-	return _trapDetectDC;
+	return _trap.getDetectDC();
 }
 
 uint8_t Situated::getTrapDisarmDC() const {
-	return _trapDisarmDC;
+	return _trap.getDisarmDC();
 }
 
 const Common::UString &Situated::getTrapKeyTag() const {
-	return _trapKeyTag;
+	return _trap.getKeyTag();
 }
 
 Object *Situated::getTrapDetectedBy() const {
-	return _trapDetectedBy;
+	if (_trap.getDetectors().empty())
+		return nullptr;
+
+	return ObjectContainer::toObject(ObjectMan.findObject(_trap.getDetectors().front()));
 }
 
 Object *Situated::getTrapCreator() const {
-	if (_trapCreatedBy == 0)
+	if (_trap.getCreatorID() == 0)
 		return nullptr;
 
-	return ObjectContainer::toObject(ObjectMan.findObject(_trapCreatedBy));
+	return ObjectContainer::toObject(ObjectMan.findObject(_trap.getCreatorID()));
 }
 
 void Situated::setTrapDetectedBy(Object *detector) {
-	_trapDetectedBy = detector;
+	if (detector)
+		_trap.setDetectedBy(detector->getID());
 }
 
 void Situated::setTrapDisabled() {
-	_trapFlag = false;
-	_trapActive = false;
-	_trapFlagged = false;
-	_trapDetectedBy = nullptr;
+	_trap.disable();
 }
 
 void Situated::triggerTrap(Object *triggerer) {
 	if (!getTrapActive())
 		return;
 
+	_trap.fire();
 	runScript(kScriptTrapTriggered, this, triggerer);
+}
 
-	if (_trapOneShot)
-		_trapActive = false;
+Trap &Situated::getTrap() {
+	return _trap;
+}
+
+const Trap &Situated::getTrap() const {
+	return _trap;
 }
 
 void Situated::saveState(Aurora::GFF3WriterStruct &gff) const {
 	Object::saveState(gff);
 	gff.addByte("Locked", _locked ? 1 : 0);
-	saveTrapState(gff);
+	_trap.saveState(gff);
 }
 
 void Situated::loadState(const Aurora::GFF3Struct &gff) {
 	Object::loadState(gff);
 	_locked = gff.getBool("Locked", _locked);
-	loadTrapState(gff);
+	_trap.loadState(gff);
 }
 
 Object *Situated::getLastOpenedBy() const {
@@ -221,8 +228,6 @@ void Situated::forgetObject(const Object *object) {
 		_lastClosedBy = nullptr;
 	if (_lastUsedBy == object)
 		_lastUsedBy = nullptr;
-	if (_trapDetectedBy == object)
-		_trapDetectedBy = nullptr;
 }
 
 Object *Situated::getLastUsedBy() const {
@@ -344,7 +349,7 @@ void Situated::loadProperties(const Aurora::GFF3Struct &gff) {
 	// Lock Skill
 	_lockSkill = gff.getUint("LockSkill", _lockSkill);
 
-	loadTrapState(gff);
+	_trap.load(gff);
 
 	// Conversation
 	_conversation = gff.getString("Conversation", _conversation);
@@ -367,34 +372,6 @@ void Situated::loadPortrait(const Aurora::GFF3Struct &gff) {
 	}
 
 	_portrait = gff.getString("Portrait", _portrait);
-}
-
-void Situated::loadTrapState(const Aurora::GFF3Struct &gff) {
-	_trapType = static_cast<uint8_t>(gff.getUint("TrapType", _trapType));
-	_trapFlag = gff.getBool("TrapFlag", _trapFlag);
-	_trapDetectable = gff.getBool("TrapDetectable", _trapDetectable);
-	_trapDisarmable = gff.getBool("TrapDisarmable", _trapDisarmable);
-	_trapRecoverable = gff.getBool("TrapRecoverable", _trapRecoverable);
-	_trapOneShot = gff.getBool("TrapOneShot", _trapOneShot);
-	_trapActive = gff.getBool("TrapActive", _trapFlag);
-	_trapFlagged = gff.getBool("TrapFlagged", _trapFlagged);
-	_trapDetectDC = static_cast<uint8_t>(gff.getUint("TrapDetectDC", _trapDetectDC));
-	_trapDisarmDC = static_cast<uint8_t>(gff.getUint("DisarmDC", _trapDisarmDC));
-	_trapKeyTag = gff.getString("KeyName", _trapKeyTag);
-}
-
-void Situated::saveTrapState(Aurora::GFF3WriterStruct &gff) const {
-	gff.addByte("TrapFlag", _trapFlag ? 1 : 0);
-	gff.addByte("TrapDetectable", _trapDetectable ? 1 : 0);
-	gff.addByte("TrapDisarmable", _trapDisarmable ? 1 : 0);
-	gff.addByte("TrapRecoverable", _trapRecoverable ? 1 : 0);
-	gff.addByte("TrapOneShot", _trapOneShot ? 1 : 0);
-	gff.addByte("TrapActive", _trapActive ? 1 : 0);
-	gff.addByte("TrapFlagged", _trapFlagged ? 1 : 0);
-	gff.addUint32("TrapType", _trapType);
-	gff.addUint32("TrapDetectDC", _trapDetectDC);
-	gff.addUint32("DisarmDC", _trapDisarmDC);
-	gff.addExoString("KeyName", _trapKeyTag);
 }
 
 void Situated::loadSounds() {

@@ -2081,10 +2081,8 @@ void Module::movedPartyLeader() {
 	if (!leader || !_area)
 		return;
 
-	float x, y, _;
-	leader->getPosition(x, y, _);
-
-	_area->evaluateTriggers(x, y, !_teleportingParty);
+	// The triggers are checked at the next safe point of the frame.
+	_area->queueTriggerCheck(*leader, !_teleportingParty);
 	_area->notifyPartyLeaderMoved();
 
 	_cameraController.updateTarget();
