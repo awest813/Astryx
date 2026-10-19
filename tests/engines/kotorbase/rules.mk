@@ -182,3 +182,13 @@ check_PROGRAMS                                           += tests/engines/kotorb
 tests_engines_kotorbase_test_worldscript_SOURCES          = tests/engines/kotorbase/worldscript.cpp
 tests_engines_kotorbase_test_worldscript_LDADD            = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_worldscript_CXXFLAGS         = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_animationevents
+tests_engines_kotorbase_test_animationevents_SOURCES      = tests/engines/kotorbase/animationevents.cpp
+tests_engines_kotorbase_test_animationevents_LDADD        = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_animationevents_CXXFLAGS     = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_creaturesounds
+tests_engines_kotorbase_test_creaturesounds_SOURCES       = tests/engines/kotorbase/creaturesounds.cpp
+tests_engines_kotorbase_test_creaturesounds_LDADD         = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_creaturesounds_CXXFLAGS      = $(test_CXXFLAGS)
