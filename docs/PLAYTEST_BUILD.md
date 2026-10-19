@@ -158,6 +158,47 @@ new way:
     Defense for an extra attack, Critical Strike -5 Defense, Critical
     Strike/Sniper Shot a +1/+2/+3 critical threat range (Sniper Shot's
     effect is assumed to mirror Critical Strike's).
+- **Combat sounds and visual effects** are untested with game data; confirm
+  in play:
+  - Model animation events (MDL event lists: `snd_footstep`, `Swingshort`,
+    `Swinglong`, `Swingtwirl`, `HitParry`, `Clash`/`Contact`, `Hit`) are
+    queued by the animation thread and played once a frame by the game
+    thread (3D-positioned). Other event names (`blur_start`, `detonate`,
+    `snd_hitground`, ...) are only logged (debug level 3); emitters aren't
+    detonated.
+  - Footsteps: `footstepsounds.2da` row = `appearance.2da` `footsteptype`,
+    column by the walkmesh surface underfoot (surfacemat rows as KotOR.js:
+    1 dirt, 3 grass, 4 stone, 5 wood, 6 water, 9 carpet, 10 metal, 11/13
+    puddles, 14 leaves, anything else dirt), falling back to `rolling`.
+    Multi-level walkmeshes take the first walkable face at the X/Y spot.
+  - Weapon sounds: `weaponsounds.2da` row = the weapon's `baseitems.2da`
+    `weaponmattype` (KotOR.js reads `powereditem`; used only when
+    `weaponmattype` is empty — if lightsabers sound like clubs, this is
+    why). Hits use `leather`, `metal` against droids and objects. The `Hit`
+    sound plays on the swing even when the attack misses (damage is still
+    resolved at the end of the round).
+  - Barks from the soundset: a battle cry (1 in 3) on entering combat, an
+    attack grunt (1 in 3) per round, pain when hurt, critical hit, death.
+    A bark doesn't cut off a playing one, except death.
+  - `EffectVisualEffect`: `visualeffects.2da` `imp_impact_node` goes on the
+    `impact` node, `imp_headcon_node` on `headconjure` (else `headhook`),
+    `imp_root_*_node` (by `sizecategory`) at the model's root; `soundimpact`
+    plays. Instant ones play their `impact` animation once; duration (`D`)
+    ones loop `duration` for as long as the effects they're linked to.
+    Beams (`EffectBeam`, type `B`) and the `progfx_*` Force shield shells
+    aren't shown. `ApplyEffectAtLocation` with a lone visual plays it at the
+    place. Particle emitters in effect models are not rendered by the
+    engine, so many effects may show little.
+  - Casting a power shows the `spells.2da` conjure visuals (hand/head/ground,
+    read as `conjhandvfx` or `conjhandvisual`; numbers are
+    `visualeffects.2da` rows) and sounds (`conjsoundvfx`, by gender
+    `conjsoundmale/female`), then the cast visuals and `castsound` after
+    `conjtime` (at most 1.5 s). No projectiles (blaster bolts, thrown
+    grenades) yet.
+  - Attack animations: duelling melee fighters play `c<w>a1`-`5` and the
+    defender the matching parry `c<w>p<n>`; others `g<w>a1`/`a2`, ranged
+    `b<w>a1`. Animations are still chosen at the start of the round, before
+    the attack is rolled, so there are no hit (`g<w>d1`) reactions yet.
 - **Action menus** (built as KotOR.js' `ActionMenuManager`): above a
   hostile target, `BTN_TARGET0` offers attack and the leader's melee or
   ranged combat feats (`feat.2da` `category` 0x1104 / 0x1111, only the last
