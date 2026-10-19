@@ -46,6 +46,7 @@ namespace KotORBase {
 
 static const char *kAttackIcon   = "i_attack";
 static const char *kSecurityIcon = "isk_security";
+static const char *kDemolitionsIcon = "isk_demolitions";
 
 bool ActionMenuOption::operator==(const ActionMenuOption &other) const {
 	return (type == other.type) && (id == other.id) && (itemTag == other.itemTag);
@@ -408,6 +409,21 @@ ActionMenuTargetPanels buildTargetActionMenu(const ActionMenuInput &input, const
 		panels[kTargetPanelPower].add(option);
 	}
 
+	// Demolitions on a mine the party has spotted.
+	if (input.targetIsMine) {
+		ActionMenuOption disarm;
+		disarm.type = kActionMenuDisarmMine;
+		disarm.icon = kDemolitionsIcon;
+		disarm.name = "Disarm Mine";
+		panels[kTargetPanelPower].add(disarm);
+
+		ActionMenuOption recover;
+		recover.type = kActionMenuRecoverMine;
+		recover.icon = kDemolitionsIcon;
+		recover.name = "Recover Mine";
+		panels[kTargetPanelPower].add(recover);
+	}
+
 	// Hostile actions are only offered against hostile creatures.
 	if (input.target != kActionMenuTargetHostile)
 		return panels;
@@ -452,6 +468,21 @@ ActionMenuSelfPanels buildSelfActionMenu(const ActionMenuInput &input, const Act
 
 			panels[kSelfPanelPower].add(makeTalentOption(kActionMenuPower, power, info->icon, info->name));
 		}
+	}
+
+	// Powers of equipped items (energy shields and the like): used on oneself.
+	for (const auto &power : input.itemPowers) {
+		const ActionMenuPowerInfo *info = talents.getPower(static_cast<uint32_t>(power.first));
+		if (info && info->hostile && !info->friendly)
+			continue;
+
+		ActionMenuOption option = makeTalentOption(kActionMenuItemPower, static_cast<uint32_t>(power.first),
+		                                           info ? info->icon : Common::UString(),
+		                                           info ? info->name : Common::UString());
+		option.itemTag = power.second;
+		if (option.name.empty())
+			option.name = power.second;
+		panels[kSelfPanelPower].add(option);
 	}
 
 	for (const ActionMenuItemEntry &item : input.items) {

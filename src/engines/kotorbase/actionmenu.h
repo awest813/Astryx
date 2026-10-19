@@ -28,6 +28,7 @@
 
 #include <array>
 #include <map>
+#include <utility>
 #include <vector>
 #include <cstdint>
 
@@ -74,7 +75,10 @@ enum ActionMenuOptionType {
 	kActionMenuFeat,     ///< Attack using a combat feat.
 	kActionMenuPower,    ///< Cast a Force power.
 	kActionMenuOpenLock, ///< Security: open the target's lock.
-	kActionMenuItem      ///< Use an inventory item (medpac, stim, grenade).
+	kActionMenuItem,     ///< Use an inventory item (medpac, stim, grenade).
+	kActionMenuItemPower,///< Cast the Force power of an equipped item (armband).
+	kActionMenuDisarmMine, ///< Demolitions: disarm a detected mine.
+	kActionMenuRecoverMine ///< Demolitions: recover a detected mine (harder; gives the mine).
 };
 
 struct ActionMenuOption {
@@ -190,6 +194,9 @@ struct ActionMenuInput {
 	const CreatureInfo *leader { nullptr }; ///< The party leader's feats and powers.
 	ActionMenuTarget target { kActionMenuTargetNone };
 	bool targetCanBeUnlocked { false }; ///< The target is locked and needs no key.
+	bool targetIsMine { false };        ///< The target is a detected, disarmable mine.
+	/** Force powers of the leader's equipped items (armbands): spell ID and item tag. */
+	std::vector<std::pair<int, Common::UString>> itemPowers;
 	bool rangedWeapon { false };        ///< The leader wields a ranged weapon.
 	std::vector<ActionMenuItemEntry> items;
 };

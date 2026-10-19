@@ -361,3 +361,39 @@ GTEST_TEST(KotORBaseActionMenu, defaultsWithoutGameData) {
 	EXPECT_EQ(optionIDs(buildTargetActionMenu(input, talents)[kTargetPanelPower]), (std::vector<int>{ 5 }));
 	EXPECT_EQ(optionIDs(buildSelfActionMenu(input, talents)[kSelfPanelPower]), (std::vector<int>{ 1 }));
 }
+
+GTEST_TEST(KotORBaseActionMenu, detectedMineOffersDisarmAndRecover) {
+	const ActionMenuTalents talents = makeTalents();
+	const CreatureInfo leader = makeLeader();
+
+	ActionMenuInput input;
+	input.leader = &leader;
+	input.target = kActionMenuTargetObject;
+	input.targetIsMine = true;
+
+	const ActionMenuTargetPanels panels = buildTargetActionMenu(input, talents);
+	EXPECT_TRUE(panels[kTargetPanelAttack].empty());
+	ASSERT_EQ(panels[kTargetPanelPower].size(), 2u);
+	EXPECT_EQ(panels[kTargetPanelPower].getOptions()[0].type, kActionMenuDisarmMine);
+	EXPECT_EQ(panels[kTargetPanelPower].getOptions()[1].type, kActionMenuRecoverMine);
+}
+
+GTEST_TEST(KotORBaseActionMenu, equippedItemPowersAreSelfOptions) {
+	const ActionMenuTalents talents = makeTalents();
+	const CreatureInfo leader = makeLeader();
+
+	ActionMenuInput input;
+	input.leader = &leader;
+	input.itemPowers = { { 1, "g_i_frarmbnds01" }, { 5, "g_i_hostile01" }, { 42, "g_i_unknown01" } };
+
+	const ActionMenuSelfPanels panels = buildSelfActionMenu(input, talents);
+
+	// The leader's friendly powers, then the item powers that aren't purely hostile.
+	const std::vector<ActionMenuOption> &options = panels[kSelfPanelPower].getOptions();
+	ASSERT_EQ(options.size(), 4u);
+	EXPECT_EQ(options[2].type, kActionMenuItemPower);
+	EXPECT_EQ(options[2].id, 1);
+	EXPECT_EQ(options[2].itemTag, "g_i_frarmbnds01");
+	EXPECT_EQ(options[3].id, 42);
+	EXPECT_EQ(options[3].name, "g_i_unknown01"); // No spells.2da name: the item tag.
+}

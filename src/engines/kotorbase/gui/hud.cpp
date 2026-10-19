@@ -38,6 +38,7 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/object.h"
 #include "src/engines/kotorbase/module.h"
+#include "src/engines/kotorbase/trigger.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
@@ -523,7 +524,14 @@ ActionMenuInput HUD::gatherActionMenuInput() {
 		for (int action : target->getPossibleActions())
 			if (action == kActionOpenLock)
 				input.targetCanBeUnlocked = true;
+
+		Trigger *trigger = dynamic_cast<Trigger *>(target);
+		input.targetIsMine = trigger && trigger->isTrap() && trigger->isTrapActive() &&
+		                     trigger->isTrapDetected() && trigger->isTrapDisarmable();
 	}
+
+	for (const Creature::ItemPower &power : leader->getEquippedItemPowers())
+		input.itemPowers.push_back(std::make_pair(power.spellId, power.item));
 
 	// The party shares the PC's inventory.
 	Creature *pc = _module.getPC();

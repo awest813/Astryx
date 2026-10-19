@@ -958,6 +958,32 @@ void Module::useActionMenuOption(const ActionMenuOption &option, Object *target)
 			break;
 		}
 
+		case kActionMenuItemPower: {
+			// An equipped item's power: free, and the item stays.
+			KotORBase::Action action(kActionCastSpell, option.id);
+			action.object = leader;
+			action.cheat  = true;
+			action.item   = option.itemTag;
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
+		case kActionMenuDisarmMine:
+		case kActionMenuRecoverMine: {
+			if (!target)
+				return;
+
+			KotORBase::Action action(option.type == kActionMenuDisarmMine ? kActionDisableTrap : kActionRecoverTrap);
+			action.object = target;
+			action.range  = 1.0f;
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
 		case kActionMenuOpenLock: {
 			if (!target)
 				return;

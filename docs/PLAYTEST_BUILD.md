@@ -169,8 +169,9 @@ new way:
   friendly powers into the second panel, so check the order against retail.
   Icons go on the target buttons and fill `LBL_ACTION0`-`3`; the up/down
   arrows cycle options and `LBL_ACTIONDESC` names the chosen one for 2 s.
-  Not offered yet: bashing locked objects, security tunnelers, setting,
-  disarming or recovering mines. Feat IDs are K1's nwscript `FEAT_*`
+  A detected mine offers Disarm/Recover Mine (Demolitions), and equipped
+  items' powers (armbands) are on the self power panel. Not offered yet:
+  bashing locked objects, security tunnelers, setting mines. Feat IDs are K1's nwscript `FEAT_*`
   values (`feat.2da` rows, e.g. Flurry 11, Power Attack 28); saves from
   builds before this one stored the old invented numbers for the PC's feats.
 - **Pause:** Space (or `TB_PAUSE`) pauses; `PauseGame` pauses/unpauses.
