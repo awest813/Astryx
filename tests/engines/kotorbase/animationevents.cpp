@@ -22,6 +22,7 @@
  *  Unit tests for the events of model animations.
  */
 
+#include <set>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -30,7 +31,13 @@
 
 #include "src/graphics/aurora/animation.h"
 
+#include "src/engines/kotorbase/animationnames.h"
+
 using Graphics::Aurora::Animation;
+using Engines::KotORBase::HasAnimation;
+using Engines::KotORBase::chooseAttackAnimation;
+using Engines::KotORBase::chooseDefenseAnimation;
+using Engines::KotORBase::isMeleeWeaponAnimation;
 
 /** A walk cycle: two footsteps, and events at both ends of the loop. */
 static void makeWalk(Animation &anim) {
@@ -156,4 +163,66 @@ GTEST_TEST(AnimationEvents, noEventsNoNames) {
 
 	EXPECT_TRUE(collect(anim, 0.0f, 2.0f, true).empty());
 	EXPECT_TRUE(collect(anim, 1.5f, 0.5f, false).empty());
+}
+
+// --- Combat animations ---
+
+static HasAnimation modelWith(const std::set<Common::UString> &anims) {
+	return [anims](const Common::UString &anim) { return anims.count(anim) > 0; };
+}
+
+GTEST_TEST(KotORCombatAnimations, meleeOrRanged) {
+	EXPECT_TRUE(isMeleeWeaponAnimation(1));
+	EXPECT_TRUE(isMeleeWeaponAnimation(4));
+	EXPECT_TRUE(isMeleeWeaponAnimation(8));
+	EXPECT_FALSE(isMeleeWeaponAnimation(5));
+	EXPECT_FALSE(isMeleeWeaponAnimation(7));
+	EXPECT_FALSE(isMeleeWeaponAnimation(-1));
+}
+
+GTEST_TEST(KotORCombatAnimations, attackByWeaponAndEngagement) {
+	const HasAnimation human = modelWith({ "g2a1", "g2a2", "c2a1", "c2a2", "c2a3", "c2a4", "c2a5",
+	                                       "b5a1", "g8a1", "g8a2", "b7a1" });
+
+	// Ranged weapons shoot
+	EXPECT_STREQ(chooseAttackAnimation(5, false, 0, human).c_str(), "b5a1");
+	EXPECT_STREQ(chooseAttackAnimation(7, true , 3, human).c_str(), "b7a1");
+
+	// Melee, not engaged: the plain attacks
+	EXPECT_STREQ(chooseAttackAnimation(2, false, 0, human).c_str(), "g2a1");
+	EXPECT_STREQ(chooseAttackAnimation(2, false, 1, human).c_str(), "g2a2");
+
+	// Dueling: one of the five dueling attacks
+	EXPECT_STREQ(chooseAttackAnimation(2, true, 0, human).c_str(), "c2a1");
+	EXPECT_STREQ(chooseAttackAnimation(2, true, 7, human).c_str(), "c2a3");
+
+	// Unarmed has no dueling attacks
+	EXPECT_STREQ(chooseAttackAnimation(8, true, 1, human).c_str(), "g8a2");
+}
+
+GTEST_TEST(KotORCombatAnimations, attackFallsBackToWhatTheModelHas) {
+	const HasAnimation beast = modelWith({ "g8a1" });
+
+	EXPECT_STREQ(chooseAttackAnimation(8, false, 1, beast).c_str(), "g8a1");
+	EXPECT_TRUE (chooseAttackAnimation(2, true , 1, beast).empty());
+	EXPECT_TRUE (chooseAttackAnimation(-1, false, 0, beast).empty());
+
+	// A model without the second variant uses the first
+	const HasAnimation plain = modelWith({ "g1a1" });
+	EXPECT_STREQ(chooseAttackAnimation(1, true, 1, plain).c_str(), "g1a1");
+}
+
+GTEST_TEST(KotORCombatAnimations, defenseAnswersTheAttack) {
+	const HasAnimation human = modelWith({ "g2g1", "c2p1", "c2p3", "g5g1", "g8g1" });
+
+	// The matching parry of a dueling attack
+	EXPECT_STREQ(chooseDefenseAnimation(2, "c2a3", human).c_str(), "c2p3");
+	// No such parry in the model, or another kind of weapon: the plain dodge
+	EXPECT_STREQ(chooseDefenseAnimation(2, "c2a4", human).c_str(), "g2g1");
+	EXPECT_STREQ(chooseDefenseAnimation(5, "c2a1", human).c_str(), "g5g1");
+	EXPECT_STREQ(chooseDefenseAnimation(2, "g2a1", human).c_str(), "g2g1");
+	EXPECT_STREQ(chooseDefenseAnimation(8, ""    , human).c_str(), "g8g1");
+
+	EXPECT_TRUE(chooseDefenseAnimation(7, "b7a1", human).empty());
+	EXPECT_TRUE(chooseDefenseAnimation(-1, "c2a1", human).empty());
 }

@@ -739,6 +739,9 @@ private:
 		bool linkSeen { false };  ///< Have the linked effects been active?
 	};
 
+	/** The attack animation this creature faces this round, for its defense. */
+	Common::UString _incomingAttackAnimation;
+
 	CreatureVisualEffects _visualEffects;
 	std::vector<LastingVisual> _lastingVisuals;
 	Sound::ChannelHandle _barkSound;

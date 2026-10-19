@@ -892,40 +892,49 @@ static const int kAnimationForcePushed = 84;
 			// An occasional grunt with the swing
 			if (RNG.getNext(0, 3) == 0)
 				playRandomSoundSetBark(kSoundSetAttack1, 3);
-			const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
-			const Item *leftWeapon = getEquipedItem(kInventorySlotLeftWeapon);
-			if (rightWeapon && !leftWeapon) {
-				switch (rightWeapon->getWeaponWield()) {
-					case kWeaponWieldBaton:				_model->playAnimation("g1a1");
-					break;
-					case kWeaponWieldSword:				_model->playAnimation("g2a1");
-					break;
-					case kWeaponWieldStaff:				_model->playAnimation("g3a1");
-					break;
-					case kWeaponWieldPistol:				_model->playAnimation("b5a1");
-					break;
-					case kWeaponWieldRifle:				_model->playAnimation("b7a1");
-					break;
-					default:				break;
-				}
+
+			const int weapon = getWeaponAnimationNumber();
+
+			// Dueling: both fight in melee, each the other's target
+			Creature *target = ObjectContainer::toCreature(_attemptedAttackTarget ? _attemptedAttackTarget : _attackTarget);
+			const bool engaged = target && !target->isDead() && (target->getAttackTarget() == this) &&
+			                     isMeleeWeaponAnimation(weapon) &&
+			                     isMeleeWeaponAnimation(target->getWeaponAnimationNumber());
+
+			const HasAnimation hasAnimation = [this](const Common::UString &anim) {
+				return _model->canPlayAnimation(anim);
+			};
+
+			if (weapon == -1)
 				return;
-			}
-			if (rightWeapon && leftWeapon) {
-				switch (rightWeapon->getWeaponWield()) {
-					case kWeaponWieldSword:				_model->playAnimation("g4a1");
-					break;
-					case kWeaponWieldPistol:				_model->playAnimation("b6a1");
-					break;
-					default:				break;
-				}
-				return;
-			}
-			_model->playAnimation("g8a1");
+
+			Common::UString anim = chooseAttackAnimation(weapon, engaged, RNG.getNext(0, 1000), hasAnimation);
+			if (anim.empty())
+				anim = (weapon >= 5 && weapon <= 7) ? Common::String::format("b%da1", weapon) :
+				                                       Common::String::format("g%da1", weapon);
+
+			_model->playAnimation(anim);
+
+			// The target answers this attack in playDodgeAnimation()
+			if (target)
+				target->_incomingAttackAnimation = anim;
 		}
 		void Creature::playDodgeAnimation() {
 			if (!_model)		return;
-			int number = getWeaponAnimationNumber();
-			if (number != -1)		_model->playAnimation(Common::String::format("g%dg1", number));
+
+			// Attacking this round: the attack animation shows, not a dodge
+			if (_attemptedAttackTarget) {
+				_incomingAttackAnimation.clear();
+				return;
+			}
+
+			const int number = getWeaponAnimationNumber();
+			const Common::UString anim = chooseDefenseAnimation(number, _incomingAttackAnimation,
+				[this](const Common::UString &name) { return _model->canPlayAnimation(name); });
+			_incomingAttackAnimation.clear();
+
+			if (!anim.empty())
+				_model->playAnimation(anim);
 		}
 		void Creature::playAnimation(
 		const Common::UString &anim,
