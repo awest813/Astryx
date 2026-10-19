@@ -363,9 +363,12 @@ void WindowManager::setGamma(float gamma) {
 	SDL_CalculateGammaRamp(gamma, gammaRamp);
 
 	int result = SDL_SetWindowGammaRamp(_window, gammaRamp, gammaRamp, gammaRamp);
-	if (result < 0)
-		error("Failed to set gamma to %f: %s", gamma, SDL_GetError());
-	else
+	if (result < 0) {
+		/* Not all platforms support gamma ramps (Wayland, for example). That's no
+		 * reason to quit, and with the default gamma of 1.0, nothing is lost at all. */
+		if (gamma != 1.0f)
+			warning("Failed to set gamma to %f: %s", gamma, SDL_GetError());
+	} else
 		_gamma = gamma;
 }
 
