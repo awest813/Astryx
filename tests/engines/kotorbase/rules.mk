@@ -197,3 +197,8 @@ check_PROGRAMS                                           += tests/engines/kotorb
 tests_engines_kotorbase_test_creaturesounds_SOURCES       = tests/engines/kotorbase/creaturesounds.cpp
 tests_engines_kotorbase_test_creaturesounds_LDADD         = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_creaturesounds_CXXFLAGS      = $(test_CXXFLAGS)
+
+check_PROGRAMS                                           += tests/engines/kotorbase/test_endar_spire_flow
+tests_engines_kotorbase_test_endar_spire_flow_SOURCES     = tests/engines/kotorbase/endar_spire_flow.cpp
+tests_engines_kotorbase_test_endar_spire_flow_LDADD       = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_endar_spire_flow_CXXFLAGS    = $(test_CXXFLAGS)

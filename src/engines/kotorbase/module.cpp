@@ -280,6 +280,19 @@ void Module::holdWorldFadeInForDialog() {
 	_fade->setHoldFadeIn(true);
 }
 
+void Module::startModuleFadeIn() {
+	// A module comes up from black. A fade-out the previous module's scripts
+	// left behind (SetGlobalFadeOut, then StartNewModule) must not keep the new
+	// one dark; its OnEnter scripts run after this and may fade as they like.
+	_holdWorldFadeInForDialog = false;
+	_fade->setHoldFadeIn(false);
+
+	_fade->setColor(0.0f, 0.0f, 0.0f);
+	_fade->setWaitTime(0.0f);
+	_fade->setRunTime(kModuleFadeInTime);
+	_fade->fadeIn();
+}
+
 void Module::releaseWorldFadeInForDialog() {
 	if (!_holdWorldFadeInForDialog)
 		return;
@@ -792,6 +805,13 @@ void Module::enter() {
 	_hasSavedPCPosition = false;
 
 	moveParty(entryX, entryY, entryZ, _);
+
+	startModuleFadeIn();
+
+	// SetAreaUnescapable() changes the current area only: a new area starts
+	// with its own flag (a loaded save keeps the one it was saved with).
+	if (_area && !_loadedFromSaveGame)
+		setGlobalBoolean("__area_unescapable", _area->isUnescapable());
 
 	// A loaded save resumes inside the triggers it was saved in: their
 	// OnEnter already ran before the save.
@@ -2557,6 +2577,12 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 		_ingame->hideSelection();
 	}
 
+	// Only roster slots can be forced (the GUI indexes its slots with them).
+	if ((forceNPC1 < -1) || (forceNPC1 >= 10))
+		forceNPC1 = -1;
+	if ((forceNPC2 < -1) || (forceNPC2 >= 10))
+		forceNPC2 = -1;
+
 	PartyConfiguration config;
 
 	for (int i = 0; i < 10; ++i) {
@@ -2676,45 +2702,32 @@ void Module::addPartyMember(int npc, Creature *creature) {
 }
 
 void Module::removePartyMember(int npc) {
-	size_t count = _partyController.getPartyMemberCount();
-
-	// Collect all members we want to keep
-	std::vector<std::pair<int, Creature *>> remaining;
-	remaining.reserve(count);
-	for (size_t i = 0; i < count; ++i) {
+	// Like the original, the creature leaves the party but stays in the world
+	// as an ordinary NPC: scripts keep using it (k_pend_traskdie1 gives Trask
+	// a sword for his last fight) or destroy it themselves (UT_StoreParty).
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
 		const auto &pair = _partyController.getPartyMemberByIndex(static_cast<int>(i));
-		if (pair.first != npc) {
-			remaining.push_back(pair);
-		} else if (pair.second && _area) {
-			_area->removeObject(pair.second);
+		if (pair.first == npc) {
+			removeCreatureFromParty(pair.second);
+			return;
 		}
 	}
-
-	_partyController.clearCurrentParty();
-	for (auto &pair : remaining)
-		_partyController.addPartyMember(pair.first, pair.second);
-
-	updateCurrentPartyGUI();
 }
 
 void Module::removeCreatureFromParty(Creature *creature) {
-	if (!creature)
+	// The PC always stays in the party.
+	if (!creature || (creature == _pc))
 		return;
 
-	size_t count = _partyController.getPartyMemberCount();
-	std::vector<std::pair<int, Creature *>> remaining;
-	remaining.reserve(count);
-	for (size_t i = 0; i < count; ++i) {
-		const auto &pair = _partyController.getPartyMemberByIndex(static_cast<int>(i));
-		if (pair.second != creature)
-			remaining.push_back(pair);
-	}
+	const bool wasLeader = creature && (creature == _partyController.getPartyLeader());
 
-	_partyController.clearCurrentParty();
-	for (auto &pair : remaining)
-		_partyController.addPartyMember(pair.first, pair.second);
+	if (!_partyController.removePartyMember(creature))
+		return;
 
-	updateCurrentPartyGUI();
+	if (wasLeader)
+		notifyPartyLeaderChanged();
+	else
+		updateCurrentPartyGUI();
 }
 
 void Module::addAvailableNPCByObject(int npc, Creature *creature) {
@@ -3425,11 +3438,9 @@ void Module::updateCurrentPartyGUI() {
 	if (partySize > 0)
 		_ingame->setPartyLeader(_partyController.getPartyLeader());
 
-	if (partySize > 1)
-		_ingame->setPartyMember1(_partyController.getPartyMemberByIndex(1).second);
-
-	if (partySize > 2)
-		_ingame->setPartyMember2(_partyController.getPartyMemberByIndex(2).second);
+	// Empty the portraits of members who left.
+	_ingame->setPartyMember1((partySize > 1) ? _partyController.getPartyMemberByIndex(1).second : nullptr);
+	_ingame->setPartyMember2((partySize > 2) ? _partyController.getPartyMemberByIndex(2).second : nullptr);
 }
 
 Creature *Module::createCreatureByTemplate(const Common::UString &resRef) const {

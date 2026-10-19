@@ -92,7 +92,7 @@ void PartyController::addPartyMember(int npc, Creature *creature) {
 		// Scripts often add a creature that is already in the area
 		// (AddPartyMember(NPC_X, GetObjectByTag(...))). Adding it twice would
 		// give it two owners and delete it twice.
-		Area *area = _module->getCurrentArea();
+		Area *area = _module ? _module->getCurrentArea() : nullptr;
 		if (area) {
 			const std::vector<Creature *> &creatures = area->getCreatures();
 			if (std::find(creatures.begin(), creatures.end(), creature) == creatures.end())
@@ -104,6 +104,27 @@ void PartyController::addPartyMember(int npc, Creature *creature) {
 		}
 		creature->show();
 	}
+}
+
+bool PartyController::removePartyMember(Creature *creature) {
+	auto it = std::find_if(_party.begin(), _party.end(),
+	                       [creature](const std::pair<int, Creature *> &member) {
+		return member.second == creature;
+	});
+	if (!creature || (it == _party.end()))
+		return false;
+
+	const bool wasLeader = (it == _party.begin());
+	_party.erase(it);
+
+	// Only the controlled character can't be clicked on.
+	creature->setUsable(true);
+	if (wasLeader && !_party.empty() && _party[0].second) {
+		_party[0].second->setUsable(false);
+		_party[0].second->clearActions();
+	}
+
+	return true;
 }
 
 void PartyController::setPartyLeader(int npc) {
@@ -139,7 +160,8 @@ void PartyController::setPartyLeaderByIndex(int index) {
 	nextLeader.second->setUsable(false);
 	nextLeader.second->clearActions();
 
-	_module->notifyPartyLeaderChanged();
+	if (_module)
+		_module->notifyPartyLeaderChanged();
 }
 
 const Common::UString &PartyController::getAvailableNPCTemplate(int npc) const {

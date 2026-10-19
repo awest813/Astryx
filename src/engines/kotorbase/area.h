@@ -93,6 +93,8 @@ public:
 
 	/** Get the north axis id. */
 	int getNorthAxis();
+	/** The area's own Unescapable flag (ARE), before any SetAreaUnescapable. */
+	bool isUnescapable() const { return _unescapable; }
 	/** Get the first map point. */
 	void getMapPoint1(float &x, float &y);
 	/** Get the second map point. */
@@ -336,6 +338,7 @@ private:
 	float _worldPt1X, _worldPt1Y, _worldPt2X, _worldPt2Y;
 	float _mapPt1X, _mapPt1Y, _mapPt2X, _mapPt2Y;
 	int _northAxis;
+	bool _unescapable { false };
 
 	Sound::ChannelHandle _ambientSound; ///< Sound handle of the currently playing sound.
 	Sound::ChannelHandle _ambientMusic; ///< Sound handle of the currently playing music.

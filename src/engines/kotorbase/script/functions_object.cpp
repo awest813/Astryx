@@ -264,7 +264,8 @@ void Functions::changeToStandardFaction(Aurora::NWScript::FunctionContext &ctx) 
 void Functions::createItemOnObject(Aurora::NWScript::FunctionContext &ctx) {
 	const Common::UString &itemTag = ctx.getParams()[0].getString();
 	Aurora::NWScript::Object *object = ctx.getParams()[1].getObject();
-	int32_t count = ctx.getParams()[2].getInt();
+	// A stack of at least one (Inventory asserts a positive count).
+	const int32_t count = MAX<int32_t>(ctx.getParams()[2].getInt(), 1);
 
 	Creature *creature = ObjectContainer::toCreature(object);
 	if (creature) {
@@ -566,16 +567,20 @@ void Functions::getItemPossessedBy(Aurora::NWScript::FunctionContext &ctx) {
 
 	const Common::UString &tag = ctx.getParams()[1].getString();
 
-	// Check equipped items first (live Item objects)
-	Item *item = creature->findInventoryItemByTag(tag);
-	if (item) {
-		ctx.getReturn() = item;
-		return;
+	// Equipped items first
+	for (int slot = 0; slot < kInventorySlotMAX; ++slot) {
+		Item *equipped = creature->getEquipedItem(static_cast<InventorySlot>(slot));
+		if (equipped && (equipped->getTag() == tag)) {
+			ctx.getReturn() = equipped;
+			return;
+		}
 	}
 
-	// If tag is in inventory (tag+count), create a live Item object for scripting
+	// Then the inventory (tag+count): hand out a live Item object for scripting.
+	// Only while the item is still carried: the live object of an item since
+	// used up (HealingDone's medpack) must not make it look possessed.
 	if (_game->getModule().getInventoryOf(*creature).hasItem(tag)) {
-		item = creature->addScriptItem(tag);
+		Item *item = creature->addScriptItem(tag);
 		if (item)
 			ctx.getReturn() = item;
 	}

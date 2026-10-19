@@ -152,6 +152,9 @@ public:
 	Graphics::Aurora::FadeQuad &getFadeQuad();
 	void holdWorldFadeInForDialog();
 	void releaseWorldFadeInForDialog();
+	/** Fade a freshly entered module in from black (seconds). */
+	static constexpr float kModuleFadeInTime = 1.0f;
+	void startModuleFadeIn();
 
 	void removeObject(Object &object);
 

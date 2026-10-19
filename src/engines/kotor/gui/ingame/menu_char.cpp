@@ -25,6 +25,8 @@
 #include "src/engines/aurora/widget.h"
 
 #include "src/engines/kotorbase/creature.h"
+#include "src/engines/kotorbase/game.h"
+#include "src/engines/kotorbase/levelup.h"
 #include "src/engines/kotorbase/module.h"
 
 #include "src/engines/kotor/gui/ingame/menu_char.h"
@@ -51,6 +53,22 @@ void MenuCharacter::update() {
 void MenuCharacter::callbackActive(Widget &widget) {
 	if (widget.getTag() == "BTN_EXIT") {
 		_returnCode = 1;
+		return;
+	}
+
+	// The level-up buttons of the character sheet (the Endar Spire tutorial
+	// sends the player here before the bridge door opens).
+	if ((widget.getTag() == "BTN_LEVELUP") || (widget.getTag() == "BTN_AUTO")) {
+		KotORBase::Creature *leader = _module->getPartyLeader();
+		if (!leader || !KotORBase::canLevelUp(*leader))
+			return;
+
+		if (widget.getTag() == "BTN_AUTO")
+			KotORBase::autoLevelUp(*leader);
+		else
+			_module->getGame().showLevelUpGUI(leader);
+
+		update();
 		return;
 	}
 

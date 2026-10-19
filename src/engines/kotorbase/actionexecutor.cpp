@@ -206,8 +206,10 @@ void ActionExecutor::executeMoveToPoint(Action &action, const ExecutionContext &
 }
 
 void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext &ctx) {
+	// A creature that left the party (RemovePartyMember) stops following.
 	Creature *partyLeader = ctx.area->_module->getPartyLeader();
-	if (!partyLeader || partyLeader == ctx.creature) {
+	if (!partyLeader || partyLeader == ctx.creature ||
+	    !ctx.area->_module->isObjectPartyMember(ctx.creature)) {
 		ctx.creature->popAction();
 		return;
 	}

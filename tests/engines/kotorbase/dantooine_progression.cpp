@@ -476,9 +476,9 @@ TEST(DantooineProgression, TarisDepartureGlobalSetBeforeTransition) {
 // 11. Area unescapable flag cleared on module exit
 // ---------------------------------------------------------------------------
 // setAreaUnescapable uses a global boolean under the key "__area_unescapable".
-// On a normal module transition (partial unload) the flag persists, so the
-// new module's OnEnter must explicitly reset it to FALSE if needed.
-// A full unload (menu return) clears it automatically.
+// A partial unload (module transition) leaves it alone; Module::enter() then
+// resets it to the new area's own ARE "Unescapable" flag (except when a save
+// is loaded). A full unload (menu return) clears it automatically.
 
 TEST(DantooineProgression, AreaUnescapableFlagClearedOnFullUnload) {
 	ModuleGlobals g;
@@ -489,7 +489,7 @@ TEST(DantooineProgression, AreaUnescapableFlagClearedOnFullUnload) {
 }
 
 TEST(DantooineProgression, AreaUnescapableFlagSurvivesModuleTransition) {
-	// Partial unload keeps it — the receiving module is responsible for clearing.
+	// Partial unload keeps it; entering the next area resets it.
 	ModuleGlobals g;
 	g.booleans["__area_unescapable"] = true;
 	g.unload(false);

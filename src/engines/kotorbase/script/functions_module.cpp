@@ -338,6 +338,9 @@ void Functions::setGlobalFadeOut(Aurora::NWScript::FunctionContext &ctx) {
 
 	Graphics::Aurora::FadeQuad &fadeQuad = _game->getModule().getFadeQuad();
 
+	// A scripted fade takes over from HoldWorldFadeInForDialog (as KotOR.js).
+	_game->getModule().releaseWorldFadeInForDialog();
+
 	fadeQuad.setColor(r, g, b);
 	fadeQuad.setWaitTime(wait);
 	fadeQuad.setRunTime(run);
@@ -352,6 +355,9 @@ void Functions::setGlobalFadeIn(Aurora::NWScript::FunctionContext &ctx) {
 	float b = ctx.getParams()[4].getFloat();
 
 	Graphics::Aurora::FadeQuad &fadeQuad = _game->getModule().getFadeQuad();
+
+	// A scripted fade takes over from HoldWorldFadeInForDialog (as KotOR.js).
+	_game->getModule().releaseWorldFadeInForDialog();
 
 	fadeQuad.setColor(r, g, b);
 	fadeQuad.setWaitTime(wait);
