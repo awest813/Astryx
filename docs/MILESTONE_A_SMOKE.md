@@ -35,6 +35,12 @@ Check these on the way; note the DLG line or script when one is off.
 - [ ] New Game plays the opening movie (`01A`, started by the Endar Spire's
       OnEnter script) once after character creation, without having to
       press ESC, then fades in on Trask's wake-up conversation.
+- [ ] When Trask joins, the party selection screen shows over the black
+      fade, Trask is preselected, and he talks to you after it closes.
+- [ ] Before the level-2 door, `end_levelup` makes you level up; the
+      character sheet's Level Up button works.
+- [ ] Before the Dark Jedi duel, Trask leaves the party, the door closes
+      behind him and the duel cutscene plays; afterwards you can go on.
 - [ ] Saving in the first Endar Spire module and loading that save does not
       replay the movie or the wake-up conversation, and the footlocker does
       not get a second set of starting gear.

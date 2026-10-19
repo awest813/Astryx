@@ -124,6 +124,20 @@ new way:
   row 42 (movement keys, Endar Spire) and 0 → row 9 (swoop race). Other
   numbers are used as the row, which may show the wrong text. The text is
   read from `message0` (KotOR II: `message_pc0`).
+- **Fades:** every module now comes up from black over 1 s (the length is a
+  guess; KotOR.js waits 1 s, then fades over 2.5 s), so a fade-out a script
+  left before `StartNewModule` can't keep the next module dark. Its OnEnter
+  scripts can still fade as they like. `SetGlobalFadeIn(wait, length)`
+  covers the screen from the moment it's called. Check that the party
+  selection screen is readable when a script opens it over a black fade
+  (Trask joining).
+- **Party members removed by scripts** (`RemovePartyMember`, e.g. Trask
+  before the Dark Jedi duel) stay in the area as NPCs, as in the original;
+  scripts that want them gone destroy them. They used to be deleted, which
+  broke the Endar Spire: the cutscene queued on Trask never ran and the
+  door after the bridge stayed locked.
+- **`SetMinOneHP` isn't saved:** after loading a save made on the Endar
+  Spire, the PC can die there.
 - **Script variables of areas and modules** (e.g. the "has never
   triggered" flags of OnEnter scripts) are now saved; saves from earlier
   builds don't have them, so loading one may replay a module's opening.
