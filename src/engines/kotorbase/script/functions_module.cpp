@@ -28,6 +28,7 @@
 #include "src/common/debug.h"
 
 #include "src/aurora/nwscript/functioncontext.h"
+#include "src/aurora/nwscript/objectman.h"
 
 #include "src/engines/kotorbase/types.h"
 #include "src/engines/kotorbase/area.h"
@@ -36,6 +37,7 @@
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
 #include "src/engines/kotorbase/waypoint.h"
+#include "src/engines/kotorbase/store.h"
 
 #include "src/aurora/2dareg.h"
 #include "src/aurora/2dafile.h"
@@ -428,14 +430,24 @@ void Functions::setJournalQuestEntryPicture(Aurora::NWScript::FunctionContext &c
 void Functions::openStore(Aurora::NWScript::FunctionContext &ctx) {
 	// OpenStore(object oStore, object oPC, int nBonusMarkUp=0, int nMarkDown=0)
 	// Presents the store GUI to the player. The store is addressed by object;
-	// the GUI path looks stores up by tag. Mark-up/mark-down are not modelled.
+	// the GUI path looks stores up by tag. The bonuses add to the store's own
+	// percentages for this visit only.
 	Object *store = ObjectContainer::toObject(getParamObject(ctx, 0));
 	if (!store) {
 		warning("Functions::openStore(): invalid store object");
 		return;
 	}
 
+	const uint32_t storeID = store->getID();
+	Store *shop = ObjectContainer::toStore(store);
+	if (shop)
+		shop->setBonusMarks(ctx.getParams()[2].getInt(), ctx.getParams()[3].getInt());
+
 	_game->openStoreGUI(store->getTag());
+
+	// The GUI may have been closed by a script that destroyed the store.
+	if (shop && ObjectMan.findObject(storeID) == shop)
+		shop->setBonusMarks(0, 0);
 }
 
 void Functions::setReturnStrref(Aurora::NWScript::FunctionContext &ctx) {
