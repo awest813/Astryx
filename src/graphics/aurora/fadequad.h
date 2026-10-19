@@ -59,6 +59,17 @@ public:
 	void setHoldFadeIn(bool hold);
 	bool isHoldFadeIn() const;
 
+	/** Opacity of a fade @p elapsed ms after it was started from @p startOpacity.
+	 *  Until @p wait ms have passed, the start opacity holds; then the fade runs
+	 *  for @p run ms (0: a cut) from there to opaque (fade out) or clear (fade in). */
+	static float getFadeOpacity(bool fadeIn, float startOpacity,
+	                            uint32_t elapsed, uint32_t wait, uint32_t run);
+
+	/** Opacity a fade starts from: a fade in comes from the color (as in the
+	 *  original, the screen stays covered during its wait), a fade out from
+	 *  the current opacity. */
+	static float getFadeStartOpacity(bool fadeIn, float currentOpacity, uint32_t run);
+
 	void calculateDistance();
 	void render(RenderPass pass);
 
@@ -73,6 +84,7 @@ private:
 
 	float _r, _g, _b;
 	float _opacity;
+	float _startOpacity; ///< Opacity held during the wait of the current fade.
 	uint32_t _wait;
 	uint32_t _run;
 	uint32_t _start;

@@ -35,7 +35,7 @@ namespace Aurora {
 
 FadeQuad::FadeQuad() : Renderable(kRenderableTypeGUIFront),
 	_fadeType(kFadeNone), _r(1.0f), _g(0.0f), _b(0.0f),
-	_opacity(0.0f), _wait(0), _run(0), _start(0) {
+	_opacity(0.0f), _startOpacity(0.0f), _wait(0), _run(0), _start(0) {
 }
 
 void FadeQuad::getColor(float &r, float &g, float &b) const {
@@ -66,15 +66,52 @@ void FadeQuad::setRunTime(float run) {
 	_run = run * 1000;
 }
 
+float FadeQuad::getFadeStartOpacity(bool fadeIn, float currentOpacity, uint32_t run) {
+	// SetGlobalFadeIn(fWait, fLength): "a Fade In that starts after fWait
+	// seconds and fades for fLength seconds ... from a color". The screen is
+	// covered from the call on, whatever was rendered before.
+	if (fadeIn && (run > 0))
+		return 1.0f;
+
+	return currentOpacity;
+}
+
+float FadeQuad::getFadeOpacity(bool fadeIn, float startOpacity,
+                               uint32_t elapsed, uint32_t wait, uint32_t run) {
+
+	if (elapsed <= wait)
+		return startOpacity;
+
+	const float time = static_cast<float>(elapsed - wait);
+
+	if (run == 0)
+		return fadeIn ? 0.0f : 1.0f;
+
+	const float progress = MIN(1.0f, time / run);
+
+	// From wherever the fade started, so an already covered screen doesn't flash.
+	if (fadeIn)
+		return MAX(0.0f, startOpacity * (1.0f - progress));
+
+	return MIN(1.0f, startOpacity + (1.0f - startOpacity) * progress);
+}
+
 void FadeQuad::fadeIn() {
 	_fadeType = kFadeIn;
 	_start = EventMan.getTimestamp();
+	_opacity = getFadeStartOpacity(true, _opacity, _run);
+	_startOpacity = _opacity;
 	show();
 }
 
 void FadeQuad::fadeOut() {
 	_fadeType = kFadeOut;
 	_start = EventMan.getTimestamp();
+	_opacity = getFadeStartOpacity(false, _opacity, _run);
+	// An immediate cut covers the screen at once, not at the next frame.
+	if ((_wait == 0) && (_run == 0))
+		_opacity = 1.0f;
+	_startOpacity = _opacity;
 	show();
 }
 
@@ -98,23 +135,9 @@ void FadeQuad::render(Graphics::RenderPass pass) {
 	if (_fadeType == kFadeNone)
 		return;
 
-	uint32_t time = EventMan.getTimestamp() - _start;
+	const uint32_t time = EventMan.getTimestamp() - _start;
 
-	if (time > _wait) {
-		time = time - _wait;
-
-		if (_run == 0.0f) {
-			if (_fadeType == kFadeOut)
-				_opacity = 1.0f;
-			if (_fadeType == kFadeIn)
-				_opacity = 0.0f;
-		} else {
-			if (_fadeType == kFadeOut)
-				_opacity = MIN(1.0f, static_cast<float>(time) / _run);
-			if (_fadeType == kFadeIn)
-				_opacity = MAX(0.0f, (_run - static_cast<float>(time)) / _run);
-		}
-	}
+	_opacity = getFadeOpacity(_fadeType == kFadeIn, _startOpacity, time, _wait, _run);
 
 	if (_holdFadeIn && _fadeType == kFadeIn)
 		_opacity = 1.0f;

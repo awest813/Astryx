@@ -774,6 +774,9 @@ void Area::loadARE(const Aurora::GFF3Struct &are) {
 	_worldPt2Y = map.getDouble("WorldPt2Y");
 	_northAxis = map.getSint("NorthAxis");
 
+	// Can't leave the area (by the map's travel option) until scripts allow it.
+	_unescapable = are.getBool("Unescapable", false);
+
 	// Camera style
 	loadCameraStyle(are.getUint("CameraStyle"));
 
