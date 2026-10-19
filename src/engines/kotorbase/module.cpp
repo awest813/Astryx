@@ -824,6 +824,9 @@ void Module::enter() {
 	const bool resumingSave = _hasSavedPCPosition && _loadedFromSaveGame;
 	_hasSavedPCPosition = false;
 
+	if (_loadedFromSaveGame && _pc)
+		_pc->setMinOneHitPoints(getGlobalBoolean("__pc_min1hp"));
+
 	moveParty(entryX, entryY, entryZ, _);
 
 	startModuleFadeIn();
@@ -1464,6 +1467,11 @@ void Module::saveGame(const Common::UString &slot, const Common::UString &name) 
 
 	Common::WriteFile nfoFile(nfoPath);
 	nfoWriter.write(nfoFile);
+
+	// SetMinOneHP on the PC lasts while the save is in this module (the
+	// Endar Spire keeps the PC alive this way). It isn't carried to other
+	// modules: the PC is rebuilt from its character record there.
+	setGlobalBoolean("__pc_min1hp", pc && pc->getMinOneHitPoints());
 
 	Common::MemoryWriteStreamDynamic globalsMem(true);
 	{
@@ -2606,6 +2614,13 @@ void Module::showPartySelectionGUI(int forceNPC1, int forceNPC2) {
 	for (int i = 0; i < 10; ++i) {
 		if (_partyController.isAvailableCreature(i))
 			config.slotTemplate[i] = _partyController.getAvailableNPCTemplate(i);
+	}
+
+	// The current companions start out ticked
+	for (size_t i = 0; i < _partyController.getPartyMemberCount(); ++i) {
+		const int npc = _partyController.getPartyMemberByIndex(static_cast<int>(i)).first;
+		if ((npc >= 0) && (npc < 10) && !config.slotTemplate[npc].empty())
+			config.slotSelected[npc] = true;
 	}
 
 	config.forceNPC1 = forceNPC1;

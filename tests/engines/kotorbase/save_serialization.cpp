@@ -535,6 +535,27 @@ GTEST_TEST(KotORSaveSerialization, creatureFactionPersists) {
 	EXPECT_EQ(loaded.getFaction(), Engines::KotORBase::kFactionSurrender1);
 }
 
+// Cutscene actors kept alive with SetMinOneHP stay that way after a load.
+GTEST_TEST(KotORSaveSerialization, creatureMinOneHPPersists) {
+	StateTestCreature creature;
+	creature.setMinOneHitPoints(true);
+
+	Aurora::GFF3Writer writer(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer.getTopLevel());
+	Aurora::GFF3File gff = roundTrip(writer);
+
+	StateTestCreature loaded;
+	loaded.loadState(gff.getTopLevel());
+	EXPECT_TRUE(loaded.getMinOneHitPoints());
+
+	creature.setMinOneHitPoints(false);
+	Aurora::GFF3Writer writer2(MKTAG('G', 'F', 'F', ' '));
+	creature.saveState(*writer2.getTopLevel());
+	Aurora::GFF3File gff2 = roundTrip(writer2);
+	loaded.loadState(gff2.getTopLevel());
+	EXPECT_FALSE(loaded.getMinOneHitPoints());
+}
+
 GTEST_TEST(KotORSaveSerialization, blueprintForcePointsAndKnownPowers) {
 	// UTC layout: ForcePoints / CurrentForce and ClassList[].KnownList0[].Spell
 	Aurora::GFF3Writer writer(MKTAG('U', 'T', 'C', ' '));

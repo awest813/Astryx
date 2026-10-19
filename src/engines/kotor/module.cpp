@@ -51,10 +51,7 @@
 #include "src/engines/kotor/gui/ingame/menu_jou.h"
 #include "src/engines/kotor/gui/ingame/galaxymap.h"
 #include "src/engines/kotor/gui/ingame/workbench.h"
-#include "src/engines/kotor/encounters_dan.h"
 #include "src/engines/kotor/encounters_end.h"
-#include "src/engines/kotor/encounters_tar.h"
-#include "src/engines/kotor/encounters_ebon.h"
 #include "src/engines/kotor/pazaak.h"
 #include "src/engines/kotor/gui/ingame/pazaak.h"
 #include "src/engines/kotorbase/area.h"
@@ -235,28 +232,6 @@ void Module::showWorkbench() {
 void Module::signalEncounter(const Common::UString &id) {
 	if (id == "end_opening") {
 		KotOR::performEndarSpireOpening(*this);
-	} else if (id == "tar_ambush") {
-		KotOR::performTarisAmbush(*this);
-	} else if (id == "tar_duel_intro") {
-		KotOR::performDuelRingIntro(*this);
-	} else if (id == "dan14_mand") {
-		KotOR::performMandalorianAmbush(*this);
-	} else if (id == "dan14_kinrath") {
-		KotOR::performKinrathSwarm(*this);
-	} else if (id == "dan17_reveal") {
-		KotOR::performStarMapReveal(*this);
-	} else if (id == "ebon_galaxymap") {
-		showGalaxyMap();
-	} else if (id == "ebon_hyperspace") {
-		performHyperspaceJump(*this);
-	} else if (id == "ebon_arrival") {
-		performPlanetArrival(*this);
-	} else if (id == "ebon_turret") {
-		performTurretMinigame(*this);
-	} else if (id == "turret_combat_start") {
-		setGlobalBoolean("__swmg_gunbank_targeting", true);
-	} else if (id == "tar_brejik_post_race") {
-		KotOR::performBrejikShowdown(*this);
 	} else if (id == "pazaak_start") {
 		const int sideIndex = getGlobalNumber("__pazaak_side");
 		const std::vector<int> playerDeck = PazaakEngine::sideDeckForIndex(sideIndex);

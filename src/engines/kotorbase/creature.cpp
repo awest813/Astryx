@@ -2248,6 +2248,7 @@ static const int kAnimationForcePushed = 84;
 			getOrientation(x, y, z, angle);
 			gff.addDouble("Facing", angle);
 			gff.addSint32("FactionID", static_cast<int32_t>(getFaction()));
+			gff.addByte("Min1HP", getMinOneHitPoints() ? 1 : 0);
 		}
 		void Creature::loadState(const Aurora::GFF3Struct &gff) {
 			Object::loadState(gff);
@@ -2258,6 +2259,9 @@ static const int kAnimationForcePushed = 84;
 			// Scripts change factions (hostile on insult, surrender, ...).
 			if (gff.hasField("FactionID"))
 				setFaction(Faction(gff.getSint("FactionID")));
+			// Scripts keep cutscene actors alive with SetMinOneHP.
+			if (gff.hasField("Min1HP"))
+				setMinOneHitPoints(gff.getBool("Min1HP"));
 			// A restored creature already spawned once; don't run OnSpawn again.
 			_spawnEventPending = false;
 			if (gff.getBool("IsDead", false)) {

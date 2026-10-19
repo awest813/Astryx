@@ -617,7 +617,6 @@ protected:
 	void setAIArchetype(Aurora::NWScript::FunctionContext &ctx);
 
 
-	void signalEncounter(Aurora::NWScript::FunctionContext &ctx);
 
 	void showUpgradeScreen(Aurora::NWScript::FunctionContext &ctx);
 	void getEncounterActive(Aurora::NWScript::FunctionContext &ctx);

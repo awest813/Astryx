@@ -46,19 +46,10 @@
 #include "src/aurora/talkman.h"
 #include "src/engines/kotorbase/script/functions.h"
 
-#include "src/engines/kotor/encounters_dan.h"
-#include "src/engines/kotor/encounters_end.h"
 
 namespace Engines {
 
 namespace KotORBase {
-
-void Functions::signalEncounter(Aurora::NWScript::FunctionContext &ctx) {
-	Common::UString encounterID = ctx.getParams()[0].getString();
-	Module &module = _game->getModule();
-
-	module.signalEncounter(encounterID);
-}
 
 void Functions::actionWorkbench(Aurora::NWScript::FunctionContext &ctx) {
 	_game->getModule().setGlobalBoolean("__open_workbench", true);
