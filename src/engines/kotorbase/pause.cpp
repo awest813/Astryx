@@ -190,7 +190,13 @@ static bool updateSet(std::set<uint32_t> &known, const std::vector<uint32_t> &cu
 }
 
 bool AutoPauseMonitor::updateSightedEnemies(const std::vector<uint32_t> &visibleHostiles, bool leaderInCombat) {
-	const bool added = updateSet(_sightedEnemies, visibleHostiles);
+	// An enemy pauses the game the first time it is seen, not each time it
+	// steps back into view (around a pillar, at the edge of perception).
+	bool added = false;
+	for (uint32_t id : visibleHostiles)
+		if (_sightedEnemies.insert(id).second)
+			added = true;
+
 	return added && !leaderInCombat;
 }
 

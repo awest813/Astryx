@@ -219,11 +219,7 @@ void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext 
 
 /** The inventory a party member's finds go to (the party's), or the creature's own. */
 static Inventory &getLootInventory(Module &module, Creature &creature) {
-	Creature *pc = module.getPC();
-	if (pc && module.isObjectPartyMember(&creature))
-		return pc->getInventory();
-
-	return creature.getInventory();
+	return module.getInventoryOf(creature);
 }
 
 /** The Thieves' Tools bonus of a security tunneler, which is used up. */

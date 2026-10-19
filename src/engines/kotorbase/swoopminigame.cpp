@@ -203,8 +203,9 @@ void SwoopMinigame::reset() {
 	_lastFollowerHit = nullptr;
 	_lastObstacleHit = nullptr;
 
-	// Create the player's script object, so SWMG_GetPlayer() has something to return.
-	_player.object = std::make_unique<MinigameObject>(kMinigameObjectPlayer, 0, "");
+	// The player's script object is created when it's first asked for
+	// (getPlayer()), so none outlives the object manager at exit.
+	_player.object.reset();
 }
 
 void SwoopMinigame::initFollower(MinigameFollower &follower, const MinigameFollowerDesc &desc,
@@ -276,6 +277,10 @@ void SwoopMinigame::start(const MinigameDesc &desc, const std::vector<Common::US
 // .--- Objects
 
 MinigameObject *SwoopMinigame::getPlayer() {
+	// SWMG_GetPlayer() always has something to return.
+	if (!_player.object)
+		_player.object = std::make_unique<MinigameObject>(kMinigameObjectPlayer, 0, "");
+
 	return _player.object.get();
 }
 

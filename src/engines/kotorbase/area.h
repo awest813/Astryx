@@ -151,6 +151,8 @@ public:
 	/** A walkmesh route from @p from to @p to, as waypoints (the last one is @p to).
 	 *  False when either end is off the walkmesh or no route connects them. */
 	bool findPath(const glm::vec2 &from, const glm::vec2 &to, std::vector<glm::vec2> &waypoints);
+	/** Put every living creature into the triggers it stands in, without OnEnter. */
+	void seedTriggerOccupants();
 	void toggleWalkmesh();
 	bool rayTest(const glm::vec3 &orig, const glm::vec3 &dest, glm::vec3 &intersect) const;
 
@@ -200,6 +202,8 @@ public:
 	void processPendingDestruction();
 	/** The game was paused for @p ms: push deferred destructions back as long. */
 	void delayPendingDestruction(uint32_t ms);
+	/** Push every heartbeat back by @p ms (the game was paused). */
+	void delayHeartbeats(uint32_t ms);
 
 	// Persistence
 	void loadPersistence();
@@ -423,7 +427,6 @@ private:
 	Trigger *findTrigger(uint32_t id) const;
 	Creature *findCreature(uint32_t id) const;
 	/** Put the creatures standing in triggers at load time inside them, without events. */
-	void seedTriggerOccupants();
 	/** Check the triggers for one creature. */
 	void checkTriggers(uint32_t creatureID, bool allowTransitions);
 	/** A creature entered a mine. */

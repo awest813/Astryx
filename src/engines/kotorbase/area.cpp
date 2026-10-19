@@ -141,6 +141,12 @@ void Area::load() {
 
 	loadPersistence();
 
+	// Mines spotted before a save: their models were added after the object
+	// map was built, so they must be added again to be clicked on.
+	for (Trigger *trigger : _triggers)
+		if (trigger->isTrap() && trigger->isTrapDetected())
+			addToObjectMap(trigger);
+
 	seedTriggerOccupants();
 }
 
@@ -1884,6 +1890,10 @@ void Area::processPendingDestruction() {
 void Area::delayPendingDestruction(uint32_t ms) {
 	for (auto &pending : _pendingDestruction)
 		pending.second += ms;
+}
+
+void Area::delayHeartbeats(uint32_t ms) {
+	_heartbeats.delay(ms);
 }
 
 void Area::releaseFromPersistence(Object &object) {

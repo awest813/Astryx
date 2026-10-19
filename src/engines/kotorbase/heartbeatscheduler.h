@@ -59,6 +59,8 @@ public:
 
 	/** Append the objects whose heartbeat is due, and schedule their next one. */
 	void collectDue(uint32_t now, std::vector<uint32_t> &due);
+	/** Push every heartbeat back by @p ms. */
+	void delay(uint32_t ms);
 
 	/** When, within an interval, an object's heartbeats fall (ms, below interval). */
 	static uint32_t getPhase(uint32_t id, uint32_t interval);

@@ -201,17 +201,17 @@ void Functions::getLockKeyRequired(Aurora::NWScript::FunctionContext &ctx) { ctx
 void Functions::getLockLockable(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 1; }
 void Functions::getLockLockDC(Aurora::NWScript::FunctionContext &ctx) { ctx.getReturn() = 20; }
 
-static bool creatureHasDoorKey(Creature *creature, const Situated *situated) {
+static bool creatureHasDoorKey(Module &module, Creature *creature, const Situated *situated) {
 	return creature && situated && situated->isKeyRequired() &&
-	       creature->getInventory().hasItem(situated->getKeyTag());
+	       module.getInventoryOf(*creature).hasItem(situated->getKeyTag());
 }
 
-static bool canOpenDoor(Creature *creature, Door *door) {
+static bool canOpenDoor(Module &module, Creature *creature, Door *door) {
 	if (!door || door->isOpen() || door->getPlotFlag())
 		return false;
 	if (!door->isLocked())
 		return true;
-	return creatureHasDoorKey(creature, door);
+	return creatureHasDoorKey(module, creature, door);
 }
 
 static bool canUnlockDoor(Creature *creature, Situated *situated) {
@@ -244,7 +244,7 @@ void Functions::getIsDoorActionPossible(Aurora::NWScript::FunctionContext &ctx) 
 
 	switch (action) {
 		case kDoorActionOpen:
-			ctx.getReturn() = canOpenDoor(creature, door) ? 1 : 0;
+			ctx.getReturn() = canOpenDoor(_game->getModule(), creature, door) ? 1 : 0;
 			break;
 		case kDoorActionUnlock:
 			ctx.getReturn() = canUnlockDoor(creature, door) ? 1 : 0;
@@ -276,7 +276,7 @@ void Functions::doDoorAction(Aurora::NWScript::FunctionContext &ctx) {
 
 	switch (action) {
 		case kDoorActionOpen:
-			if (canOpenDoor(creature, door))
+			if (canOpenDoor(_game->getModule(), creature, door))
 				door->open(creature);
 			break;
 		case kDoorActionUnlock: {
