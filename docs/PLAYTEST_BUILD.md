@@ -135,14 +135,22 @@ new way:
     and taking the highest `maxcr` not above nCRMax (KotOR.js takes the
     lowest). If Dark Jedi or companions never use powers or items, check the
     categories the AI scripts pass. Spell talents are cast like
-    `ActionCastSpellAtObject`; there's no casting range check.
+    `ActionCastSpellAtObject`.
+  - Casting range: the caster first walks into range, `spells.2da` `range`
+    S/M/L through `ranges.2da` `primaryrange` of the `SpellRngShrt/Med/Long`
+    rows (by label, else rows 2-4; without the table KotOR.js' 10/15/28 m),
+    `W` (thrown) 15 m. Personal and touch powers (as KotOR.js) and scripted
+    `bCheat` casts (cutscenes) don't walk. A hostile power in range but out
+    of sight walks to 2 m; a target that can't be reached drops the cast.
   - Force power cost: powers whose `goodevil` is the other side of the
     caster's alignment (light from 70, dark up to 30) cost 1.5x; no discount
     for the own side.
   - Linked effects apply and expire together. AC, attack, damage, ability,
     skill, save, Force resistance, deflection, immunity and invisibility
-    effects stay for their duration and change the stats; invisibility only
-    sets a flag (perception ignores it). Force shields absorb damage per
+    effects stay for their duration and change the stats. Invisible
+    creatures go unseen by enemies without True Seeing (`EffectTrueSeeing`
+    / `EffectSeeInvisible`); friends always see them; they can still be
+    heard. Attacking doesn't end an invisibility effect. Force shields absorb damage per
     `forceshields.2da` (`damageflags`, `resistance` per hit, `amount` in
     total); without it a shield soaks 10 damage per row. Force push throws
     the target up to 5 m away from the caster (walkmesh permitting), plays
@@ -211,8 +219,11 @@ new way:
   Icons go on the target buttons and fill `LBL_ACTION0`-`3`; the up/down
   arrows cycle options and `LBL_ACTIONDESC` names the chosen one for 2 s.
   A detected mine offers Disarm/Recover Mine (Demolitions), and equipped
-  items' powers (armbands) are on the self power panel. Not offered yet:
-  bashing locked objects, security tunnelers, setting mines. Feat IDs are K1's nwscript `FEAT_*`
+  items' powers (armbands) are on the self power panel. A locked door or
+  container that isn't plot or `NotBlastable` offers Bash (`BTN_TARGET0`).
+  Mine items (`baseitems.2da` row 58, as KotOR.js, or a Trap item property)
+  are on the mine self panel. Not offered yet: security tunnelers, setting
+  a mine on a locked door/container (KotOR.js offers it). Feat IDs are K1's nwscript `FEAT_*`
   values (`feat.2da` rows, e.g. Flurry 11, Power Attack 28); saves from
   builds before this one stored the old invented numbers for the PC's feats.
 - **Pause:** Space (or `TB_PAUSE`) pauses; `PauseGame` pauses/unpauses.
@@ -261,8 +272,39 @@ new way:
     `TrapDetectDC`; the `traps.2da` model then appears. Disarming is
     Demolitions + 10 (d20 in combat) against `DisarmDC`, recovering
     `DisarmDC` + 5 (gives the `traps.2da` `resref` item); failing by 5 sets
-    the mine off. No HUD button for it yet; setting mines isn't implemented.
-    Triggers (and so mines) now keep their state between visits.
+    the mine off. Triggers (and so mines) now keep their state between visits.
+  - setting a mine plays `animations.2da` row 52 (KotOR.js' SET_MINE) for
+    1.5 s and lays a 1.5 m square trap trigger 1 m ahead of the leader (at
+    the leader's feet when that spot isn't walkable), of the leader's
+    faction, so enemies set it off. Its `traps.2da` row is the one whose
+    `resref` is the mine item (else the Trap property subtype), its script
+    `trapscript`; detect/disarm DCs are 10 + Demolitions + `detectdcmod` /
+    `disarmdcmod` (column names to check). No Demolitions check to set it.
+    The party sees its own mines and can recover them; armed ones are kept
+    between visits and in saves.
+  - bashing: the leader attacks the object in normal rounds (melee reach
+    +1 m, as the object's position is its middle; AC 10); every blow loses
+    the blueprint's `Hardness`; `OnMeleeAttacked`, `OnDamaged` and
+    `OnDeath` run, then at 0 HP a door is destroyed — open for good, its
+    walkmesh and line-of-sight block gone, playing `die` if the model has it
+    (else `opening1`) — and a container is unlocked and left open with its
+    contents (nothing is destroyed). The broken state is saved. Doors now
+    read `HP`/`CurrentHP`, doors and placeables `Plot`, `Hardness` and
+    `NotBlastable`; plot objects can't be bashed. `GetLastAttacker` /
+    `GetLastDamager` work on bashed objects.
+- **Computer terminals** (DLG `ConversationType` 1) run in the `computer`
+  GUI over the `comp0` background (as KotOR.js' InGameComputer): the line
+  in `LB_MESSAGE`, the replies in `LB_REPLIES`, no letterbox and no
+  cinematic camera. `LBL_COMP_SPIKES_VAL` / `LBL_REP_UNITS_VAL` count the
+  party's `K_COMPUTER_SPIKE` / `K_REPAIR_PART` items (tags to check),
+  `LBL_COMP_SKILL_VAL` / `LBL_REP_SKILL_VAL` show the leader's Computer Use
+  / Repair. Camera-view nodes (the `computercamera` GUI) aren't shown.
+- **Stealth:** `TB_STEALTH` toggles the leader's stealth mode (no Stealth
+  Field Generator needed, no slower movement, no stealth XP). Enemies see a
+  sneaking creature only if their Awareness + 10 beats its Stealth + 10 +1
+  per 4 m (no rolls); attacking or a hostile power ends stealth. NPCs lose
+  a target that turns invisible or stealthy; the enemy-sighted auto-pause
+  ignores what the leader can't see.
   - picking locks takes 1.5 s, Security + 20 out of combat (a d20 in combat)
     against the lock DC; failure runs `OnFailToOpen`, success `OnUnlock`.
     `ActionRandomWalk` strolls 2-8 m around its start, pausing 1-4 s.
