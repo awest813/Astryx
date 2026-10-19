@@ -104,9 +104,20 @@ Makefile.in
 # Windows binary
 /src/xoreos.exe
 
-# CMake build directory
+# CMake build directories (scripts, presets and ad-hoc builds)
 /build/
-/build-vcpkg-linux/
-/build-vcpkg-portable/
-/build-vcpkg-release/
-build-linux/
+/build-*/
+/builds/
+/out/
+/.vs/
+/CMakeUserPresets.json
+
+# Repo-local vcpkg checkout (scripts/bootstrap_*)
+/.deps/
+
+# Runtime logs from the launch scripts
+/logs/
+
+# Python bytecode (scripts/*.py)
+__pycache__/
+*.py[co]
