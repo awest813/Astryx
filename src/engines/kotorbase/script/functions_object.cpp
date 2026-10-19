@@ -159,7 +159,12 @@ void Functions::getIsObjectValid(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getIsPC(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = KotORBase::ObjectContainer::toPC(getParamObject(ctx, 0)) != 0;
+	// The player character, or the party member the player controls instead.
+	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
+	const Creature *leader = _game->getModule().getPartyLeader();
+
+	ctx.getReturn() = (KotORBase::ObjectContainer::toPC(object) != 0) ||
+	                  (object && (object == static_cast<const Aurora::NWScript::Object *>(leader)));
 }
 
 void Functions::getObjectByTag(Aurora::NWScript::FunctionContext &ctx) {

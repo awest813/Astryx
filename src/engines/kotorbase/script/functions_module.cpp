@@ -69,7 +69,12 @@ void Functions::getModule(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getFirstPC(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = (Aurora::NWScript::Object *) _game->getModule().getPC();
+	// The character the player controls: the party leader (as in KotOR.js),
+	// which is the player character unless the player switched to a companion.
+	Module &module = _game->getModule();
+	Creature *leader = module.getPartyLeader();
+
+	ctx.getReturn() = (Aurora::NWScript::Object *) (leader ? leader : module.getPC());
 }
 
 void Functions::getNextPC(Aurora::NWScript::FunctionContext &ctx) {
