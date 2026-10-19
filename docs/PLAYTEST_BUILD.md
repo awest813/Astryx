@@ -23,7 +23,19 @@ playtesting: they catch table/signature mistakes early.
 
 ## 2. Run
 
-You need a retail KotOR I install (Steam/GOG `swkotor`).
+You need a retail KotOR I install (Steam/GOG `swkotor`): the folder that
+contains `swkotor.exe`, `chitin.key`, `data/`, `modules/` and `rims/`.
+
+The launcher window finds Steam and GOG installs, checks them, and shows the
+engine's error if it stops:
+
+```bash
+python3 scripts/xoreos_launcher_gui.py          # Windows: py -3 scripts\xoreos_launcher_gui.py
+python3 scripts/xoreos_launcher_gui.py --list   # what it finds, without a window
+python3 scripts/xoreos_launcher_gui.py --check "/path/to/swkotor"
+```
+
+From a terminal:
 
 ```bash
 scripts/run_xoreos_linux.sh --game-path "/path/to/swkotor" --windowed
@@ -38,6 +50,21 @@ Useful options:
 | `--logfile=FILE` | Keep the full log for bug reports |
 | `--debug=EScripts:1,ELogic:1` | Log script and game-logic decisions |
 | `--skipvideos=true` | Skip movies (faster iteration; not for acceptance runs) |
+| `--errordialog=false` | Don't open a dialog window on fatal errors (for scripted runs) |
+
+If xoreos can't start, it says why in a dialog window and in the terminal,
+and exits with code 1. The usual causes:
+
+| Message starts with | Fix |
+|---------------------|-----|
+| `No game that xoreos supports was found` | Point it at the main install folder, not `data` or `modules` |
+| `Failed to find the required game file/folder` | The install is incomplete: verify the files in Steam/GOG |
+| `Could not open the game window with OpenGL graphics` | Update the graphics driver; OpenGL 2.1 is needed |
+| `There is no target` | Use `-p <game folder>`, or one of the targets the message lists |
+
+The log is `~/.local/share/xoreos/xoreos.log` on Linux and
+`%APPDATA%\xoreos\xoreos.log` on Windows; the config file is
+`~/.config/xoreos/xoreos.conf` or `%APPDATA%\xoreos\xoreos.conf`.
 
 Saves are written to `<game path>/saves/`. Autosaves go to
 `000001 - AUTOSAVE` when scripts request them (and the Gameplay option is on).

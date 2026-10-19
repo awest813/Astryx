@@ -200,10 +200,10 @@ UString Platform::getConfigDirectory() {
 		directory = ".";
 
 #elif defined(UNIX)
-	// Default Unixoid: $XDG_CONFIG_HOME/xoreos/ or ~/.config/xoreos/
+	// Default Unixoid: $XDG_CONFIG_HOME/xoreos/ (if set and not empty) or ~/.config/xoreos/
 
 	const char *pathStr = getenv("XDG_CONFIG_HOME");
-	if (pathStr) {
+	if (pathStr && *pathStr) {
 		directory = UString(pathStr) + "/xoreos";
 	} else {
 		directory = getHomeDirectory();
@@ -240,10 +240,10 @@ UString Platform::getUserDataDirectory() {
 		directory = ".";
 
 #elif defined(UNIX)
-	// Default Unixoid: $XDG_DATA_HOME/xoreos/ or ~/.local/share/xoreos/
+	// Default Unixoid: $XDG_DATA_HOME/xoreos/ (if set and not empty) or ~/.local/share/xoreos/
 
 	const char *pathStr = getenv("XDG_DATA_HOME");
-	if (pathStr) {
+	if (pathStr && *pathStr) {
 		directory = UString(pathStr) + "/xoreos";
 	} else {
 		directory = getHomeDirectory();

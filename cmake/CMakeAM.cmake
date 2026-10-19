@@ -21,6 +21,10 @@ function(am_read_lines FILE_NAME OUTPUT_VARIABLE)
   message(STATUS "Parsing ${FILE_NAME}...")
   file(READ ${FILE_NAME} FILE_CONTENTS)
 
+  # Re-run CMake when a rules.mk changes, so new source files get built
+  get_filename_component(FILE_PATH ${FILE_NAME} ABSOLUTE)
+  set_property(DIRECTORY "${PROJECT_SOURCE_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${FILE_PATH}")
+
   string(REGEX REPLACE "\\$\\(([^ )]+)\\)"    "\${\\1}" FILE_CONTENTS "${FILE_CONTENTS}")
   string(REGEX REPLACE "\\$\\(shell [^)]+\\)" ""        FILE_CONTENTS "${FILE_CONTENTS}")
   string(REGEX REPLACE "\\\\\n" "  "                    FILE_CONTENTS "${FILE_CONTENTS}")

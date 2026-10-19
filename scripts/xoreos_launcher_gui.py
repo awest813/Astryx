@@ -59,18 +59,19 @@ class Game:
     main: bool = False
 
 
-# Mirrors the engine probes in src/engines/*/probes.cpp. If the identity files
-# are missing, xoreos refuses the folder with "Unable to detect the game".
+# Mirrors the engine probes in src/engines/*/probes.cpp: without the identity
+# files xoreos doesn't recognise the folder. The data entries are what the
+# engines index as mandatory at startup (e.g. KotOR::initResources).
 GAMES: tuple[Game, ...] = (
     Game("kotor", "Star Wars: Knights of the Old Republic", "KotOR I", main=True, variants=(
-        Variant("Windows", (F("swkotor.exe"),), (F("chitin.key"), F("dialog.tlk"), D("modules"), D("texturepacks"))),
+        Variant("Windows", (F("swkotor.exe"),), (F("chitin.key"), F("dialog.tlk"), D("data"), D("lips"), D("modules"), D("rims"), D("texturepacks"))),
         Variant("macOS", (D("Knights of the Old Republic.app"),)),
         Variant("macOS", (D("KOTOR.app"),)),
         Variant("Xbox", (D("dataxbox"), F("players.erf"))),
         Variant("Android", (F("data/2da.bzf"),)),
     )),
     Game("kotor2", "Star Wars: Knights of the Old Republic II", "KotOR II", variants=(
-        Variant("Windows", (F("swkotor2.exe"),), (F("chitin.key"), F("dialog.tlk"), D("modules"), D("texturepacks"))),
+        Variant("Windows", (F("swkotor2.exe"),), (F("chitin.key"), F("dialog.tlk"), D("data"), D("lips"), D("modules"), D("texturepacks"))),
         Variant("Linux", (F("KOTOR2", True), D("resources"), D("steamassets"))),
         Variant("macOS", (D("MacOS"), D("Resources"), D("GameData"), F("MacOS/KOTOR2", True))),
         Variant("Xbox", (D("dataxbox"), F("weapons.erf"))),
@@ -280,9 +281,9 @@ def save_settings(settings: dict[str, str]) -> None:
 
 # -- XOREOS.CONF --
 
-# The config format has no escaping: '#' starts a comment anywhere, '[' and ']'
-# delimit section names anywhere on a line, and later '=' are dropped.
-UNSAVABLE_CHARS = "#[]=\r\n"
+# The config format has no escaping: '#' starts a comment anywhere, and a value
+# can't span lines (ConfigFile::isValidValue).
+UNSAVABLE_CHARS = "#\r\n"
 
 
 def unsavable_chars(value: str) -> str:
@@ -315,7 +316,7 @@ def _parse_line(line: str) -> tuple[str | None, str | None, str]:
         return stripped[1:stripped.index("]")].strip(), None, ""
     if "=" in stripped:
         key, value = stripped.split("=", 1)
-        return None, key.strip(), value.replace("=", "").strip()
+        return None, key.strip(), value.strip()
     return None, None, ""
 
 
@@ -380,6 +381,9 @@ def save_target(path: Path, name: str, values: dict[str, str]) -> None:
         raise ValueError(f'"{name}" can\'t be used as a saved name. Use letters, numbers, spaces, "-", "_" or ".", and not "xoreos".')
     for key, value in values.items():
         bad = unsavable_chars(value)
+        if value != value.strip():
+            raise ValueError(f"The {'game folder' if key == 'path' else key} starts or ends with a space, which xoreos.conf can't store. "
+                             "Rename the folder, or launch without remembering the game.")
         if bad:
             what = "game folder" if key == "path" else key
             raise ValueError(f"The {what} contains {' '.join(repr(char) for char in bad)}, which xoreos.conf can't store. "
@@ -627,12 +631,13 @@ def parse_resolution(text: str) -> tuple[int, int]:
 
 def build_command(engine: str, target: str = "", path: str = "", options: LaunchOptions | None = None, remember: bool = True) -> list[str]:
     """The xoreos command line. A saved target carries its own settings; a
-    one-off folder launch passes them, and asks xoreos not to save anything."""
+    one-off folder launch passes them, and asks xoreos not to save anything.
+    The launcher shows errors itself, so xoreos's own error dialog is off."""
     if target:
-        return [engine, target]
+        return [engine, target, "--errordialog=false"]
     if not path:
         raise ValueError("Choose a game first.")
-    command = [engine, f"--path={path}"]
+    command = [engine, f"--path={path}", "--errordialog=false"]
     options = options or LaunchOptions()
     if options.width and options.height:
         command += [f"--width={options.width}", f"--height={options.height}"]
@@ -1122,7 +1127,7 @@ def run_window(repo_root: Path) -> int:
             dialog.columnconfigure(0, weight=1)
             dialog.rowconfigure(1, weight=1)
             ttk.Label(dialog, text=f"xoreos stopped with an error (exit code {code}).", font=self.big_font, padding=(14, 12, 14, 4)).grid(row=0, column=0, sticky="w")
-            text = tk.Text(dialog, height=min(12, excerpt.count("\n") + 2), width=90, wrap="word")
+            text = tk.Text(dialog, height=min(12, sum(len(line) // 88 + 1 for line in excerpt.splitlines()) + 1), width=90, wrap="word")
             text.insert("1.0", excerpt)
             text.configure(state="disabled")
             text.grid(row=1, column=0, sticky="nsew", padx=14)

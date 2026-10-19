@@ -89,6 +89,19 @@ finishes. Re-run the unit tests at any time with
 `cmake --build <build-dir> --target check`. If CMake stops because a library is
 missing, its message names the package to install.
 
+## Playing
+
+```bash
+python3 scripts/xoreos_launcher_gui.py     # Windows: py -3 scripts\xoreos_launcher_gui.py
+```
+
+The launcher finds your Steam or GOG copy of KotOR, checks that the install is
+complete, remembers it, and starts the game. If the game stops with an error,
+the launcher shows the message. Without a window, use
+`scripts/run_xoreos_linux.sh` or `scripts\run_xoreos_windows.ps1`, or run
+`xoreos -p <game folder>` directly. See
+[docs/PLAYTEST_BUILD.md](docs/PLAYTEST_BUILD.md) for options and common errors.
+
 ## Links
 
 - [Detailed Roadmap](ROADMAP.md)

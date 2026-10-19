@@ -30,8 +30,8 @@ def make_tree(root: Path, entries: list[str]) -> Path:
     return root
 
 
-KOTOR = ["swkotor.exe", "chitin.key", "dialog.tlk", "modules/", "texturepacks/swpc_tex_gui.erf", "override/"]
-KOTOR2 = ["swkotor2.exe", "chitin.key", "dialog.tlk", "modules/", "texturepacks/", "streamvoice/"]
+KOTOR = ["swkotor.exe", "chitin.key", "dialog.tlk", "data/", "lips/", "modules/", "rims/", "texturepacks/swpc_tex_gui.erf", "override/"]
+KOTOR2 = ["swkotor2.exe", "chitin.key", "dialog.tlk", "data/", "lips/", "modules/", "texturepacks/", "streamvoice/"]
 
 
 class TempDirTest(unittest.TestCase):
@@ -52,11 +52,11 @@ class CheckGameFolderTest(TempDirTest):
 
     def test_texture_pack_in_subfolder_is_enough(self) -> None:
         # Regression: the old launcher wanted swpc_tex_gui.erf in the top folder
-        folder = make_tree(self.tmp / "game", ["swkotor.exe", "chitin.key", "dialog.tlk", "modules/", "texturepacks/"])
+        folder = make_tree(self.tmp / "game", ["swkotor.exe", "chitin.key", "dialog.tlk", "data/", "lips/", "modules/", "rims/", "texturepacks/"])
         self.assertEqual(launcher.check_game_folder(str(folder)).state, "ready")
 
     def test_names_match_case_insensitively(self) -> None:
-        folder = make_tree(self.tmp / "game", ["SWKotOR.EXE", "Chitin.key", "DIALOG.TLK", "Modules/", "TexturePacks/"])
+        folder = make_tree(self.tmp / "game", ["SWKotOR.EXE", "Chitin.key", "DIALOG.TLK", "Data/", "LIPS/", "Modules/", "Rims/", "TexturePacks/"])
         self.assertEqual(launcher.check_game_folder(str(folder)).state, "ready")
 
     def test_kotor2_folder_named_swkotor2_is_kotor2(self) -> None:
@@ -72,7 +72,7 @@ class CheckGameFolderTest(TempDirTest):
         check = launcher.check_game_folder(str(folder))
         self.assertEqual(check.state, "warning")
         self.assertTrue(check.launchable)
-        self.assertTrue(any("modules/" in line for line in check.details))
+        self.assertTrue(any("modules/" in line and "data/" in line for line in check.details))
 
     def test_data_without_program_explains_why(self) -> None:
         folder = make_tree(self.tmp / "game", ["chitin.key", "dialog.tlk", "modules/"])
@@ -140,10 +140,15 @@ class ConfigFileTest(TempDirTest):
         self.assertEqual(launcher.read_targets(self.conf), [])
 
     def test_refuses_values_the_format_cannot_store(self) -> None:
-        for bad in ["/games/Star Wars [GOG]/swkotor", "/games/#1/swkotor", "/a=b"]:
+        for bad in ["/games/#1/swkotor", "/a\nb"]:
             with self.assertRaises(ValueError):
                 launcher.save_target(self.conf, "kotor", {"path": bad})
         self.assertFalse(self.conf.exists())
+
+    def test_brackets_and_equals_in_values_round_trip(self) -> None:
+        path = "/games/Star Wars [GOG]/a=b"
+        launcher.save_target(self.conf, "kotor", {"path": path})
+        self.assertEqual(launcher.read_targets(self.conf)[0].path, path)
 
     def test_refuses_bad_names(self) -> None:
         for bad in ["xoreos", "", "a/b", "ko[tor]"]:
@@ -197,12 +202,12 @@ class FindingTest(TempDirTest):
 
 class CommandTest(unittest.TestCase):
     def test_saved_target_command(self) -> None:
-        self.assertEqual(launcher.build_command("xoreos", target="kotor"), ["xoreos", "kotor"])
+        self.assertEqual(launcher.build_command("xoreos", target="kotor"), ["xoreos", "kotor", "--errordialog=false"])
 
     def test_one_off_command(self) -> None:
         options = launcher.LaunchOptions(1920, 1080, True, True)
         command = launcher.build_command("xoreos", path="/g/sw kotor", options=options, remember=False)
-        self.assertEqual(command, ["xoreos", "--path=/g/sw kotor", "--width=1920", "--height=1080",
+        self.assertEqual(command, ["xoreos", "--path=/g/sw kotor", "--errordialog=false", "--width=1920", "--height=1080",
                                    "--fullscreen=true", "--skipvideos=true", "--saveconf=false"])
         self.assertEqual(launcher.quote_command(command[:2]), 'xoreos "--path=/g/sw kotor"')
 
