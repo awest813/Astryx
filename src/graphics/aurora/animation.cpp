@@ -27,6 +27,7 @@
 
 #include "src/common/readstream.h"
 #include "src/common/debug.h"
+#include "src/common/util.h"
 
 #include "src/graphics/graphics.h"
 #include "src/graphics/camera.h"
@@ -71,13 +72,36 @@ void Animation::setTransTime(float transtime) {
 	_transtime = transtime;
 }
 
+void Animation::addEvent(float time, const Common::UString &name) {
+	_events.push_back(AnimationEvent(time, name));
+}
+
+const std::vector<AnimationEvent> &Animation::getEvents() const {
+	return _events;
+}
+
+void Animation::collectEvents(float from, float to, bool includeEnd,
+                              std::vector<Common::UString> &names) const {
+
+	if (to < from) {
+		// Wrapped around the end of the loop
+		collectEvents(from, MAX(_length, from), true, names);
+		collectEvents(0.0f, to, includeEnd, names);
+		return;
+	}
+
+	for (const AnimationEvent &event : _events) {
+		if ((event.time >= from) && ((event.time < to) || (includeEnd && (event.time == to))))
+			names.push_back(event.name);
+	}
+}
+
+/* Events are fired by the AnimationChannel playing the animation, which knows
+ * where loops start and end; update() only poses the nodes. */
 void Animation::update(Model *model,
                        float UNUSED(lastFrame),
                        float nextFrame,
                        const std::vector<ModelNode *> &modelNodeMap) {
-	// TODO: Also need to fire off associated events
-	//       for event in _events event->fire()
-
 
 	float scale = model->getAnimationScale(_name);
 	for (NodeList::iterator n = nodeList.begin(); n != nodeList.end(); ++n) {

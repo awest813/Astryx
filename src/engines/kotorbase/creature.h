@@ -44,6 +44,8 @@
 #include "src/engines/kotorbase/action.h"
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/actionqueue.h"
+#include "src/engines/kotorbase/creaturesounds.h"
+#include "src/engines/kotorbase/visualeffects.h"
 
 namespace Engines {
 
@@ -282,6 +284,25 @@ public:
 	                       bool restart = true,
 	                       float length = 0.0f,
 	                       float speed = 1.0f);
+
+	// Sounds and visual effects
+
+	/** Once a frame, for the dead as well: play the sounds of the animation
+	 *  events the model passed (footsteps, weapon swings and hits), delayed
+	 *  sounds, and advance the visual effects. */
+	void updatePresentation(float dt, Area *area);
+	/** Bark a soundset entry where the creature stands. Unless @p interrupt,
+	 *  nothing plays while an earlier bark still does. */
+	bool playSoundSetBark(SoundSetEntry entry, bool interrupt = false);
+	/** Bark one of @p count soundset entries from @p first on, at random. */
+	bool playRandomSoundSetBark(SoundSetEntry first, int count, bool interrupt = false);
+	/** Play visualeffects.2da effect @p id on the creature. With @p lasting,
+	 *  a duration effect plays until stopVisualEffect(). */
+	void playVisualEffect(int id, bool lasting = false);
+	/** Stop a lasting visual effect. */
+	void stopVisualEffect(int id);
+	/** Show the conjuring and casting visuals of spells.2da row @p spell. */
+	void playSpellCastVisuals(int spell);
 
 	// Actions
 
@@ -707,6 +728,49 @@ private:
 	/** Add (@p sign 1) or take away (@p sign -1) the modifiers of a kEffectModifier effect. */
 	void adjustEffectModifiers(const ActiveEffect &effect, int sign);
 	int computeWeaponDamage(const Item *weapon) const;
+
+	// Sounds and visual effects
+
+	/** A sound to play after a delay (a power's casting sound). */
+	struct DelayedSound {
+		float delay { 0.0f };
+		Common::UString sound;
+	};
+
+	/** A duration visual effect applied with a duration (EffectVisualEffect). */
+	struct LastingVisual {
+		int id { -1 };            ///< visualeffects.2da row.
+		int linkId { 0 };         ///< The effects it's linked to, 0 if none.
+		float timeLeft { 0.0f };
+		bool linkSeen { false };  ///< Have the linked effects been active?
+	};
+
+	/** The attack animation this creature faces this round, for its defense. */
+	Common::UString _incomingAttackAnimation;
+
+	CreatureVisualEffects _visualEffects;
+	std::vector<LastingVisual> _lastingVisuals;
+	Sound::ChannelHandle _barkSound;
+	std::vector<DelayedSound> _delayedSounds;
+	int _footstepType { -1 };       ///< footstepsounds.2da row.
+	int _sizeCategory { 3 };        ///< appearance.2da "sizecategory".
+	/** The appearance _footstepType and _sizeCategory were read for. */
+	uint32_t _appearanceSoundsFor { 0xFFFFFFFF };
+
+	/** End the lasting visual effects whose time or linked effects ran out. */
+	void updateLastingVisuals(float dt);
+	/** End all lasting visual effects. */
+	void stopLastingVisuals();
+	/** Read the footstep type and size category from appearance.2da. */
+	void loadAppearanceSounds();
+	/** Play the sound of an animation event. */
+	void handleAnimationEvent(const Common::UString &event, Area *area);
+	/** The weapon whose sounds the creature's attacks make. */
+	const Item *getSoundWeapon() const;
+	/** Play a sound where the creature stands. */
+	void playSoundHere(const Common::UString &sound, float minDistance, float maxDistance);
+	/** Show a spells.2da casting visual: a model, or a visualeffects.2da row when numeric. */
+	void playSpellVisual(const Common::UString &visual, VisualEffectHook hook, float delay);
 
 	int _influence { 50 };
 	int _skillPointBonus { 0 };

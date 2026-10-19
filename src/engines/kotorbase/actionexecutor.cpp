@@ -989,6 +989,7 @@ bool ActionExecutor::castSpell(const Action &action, const ExecutionContext &ctx
 
 	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->setLastForcePowerUsed(action.actionID);
+	caster->playSpellCastVisuals(action.actionID);
 
 	// Using the Force on someone gives a sneaking caster away.
 	if (harmful && caster->getStealthMode())

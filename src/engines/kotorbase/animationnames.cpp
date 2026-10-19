@@ -23,6 +23,10 @@
  */
 
 #include <map>
+#include <string>
+#include <vector>
+
+#include "src/common/string.h"
 
 #include "src/aurora/2dafile.h"
 #include "src/aurora/2dareg.h"
@@ -102,6 +106,57 @@ Common::UString getAnimationNameById(int animID) {
 		return it->second;
 
 	return getHardcodedAnimationName(animID);
+}
+
+bool isMeleeWeaponAnimation(int weapon) {
+	return ((weapon >= 1) && (weapon <= 4)) || (weapon == 8);
+}
+
+Common::UString chooseAttackAnimation(int weapon, bool engaged, uint32_t roll,
+                                      const HasAnimation &hasAnimation) {
+
+	if ((weapon < 1) || (weapon > 8))
+		return "";
+
+	std::vector<Common::UString> candidates;
+
+	if (!isMeleeWeaponAnimation(weapon)) {
+		candidates.push_back(Common::String::format("b%da1", weapon));
+		candidates.push_back(Common::String::format("g%da1", weapon));
+	} else {
+		if (engaged && (weapon <= 4))
+			candidates.push_back(Common::String::format("c%da%u", weapon, 1 + (roll % 5)));
+
+		candidates.push_back(Common::String::format("g%da%u", weapon, 1 + (roll % 2)));
+		candidates.push_back(Common::String::format("g%da1", weapon));
+	}
+
+	for (const Common::UString &anim : candidates)
+		if (hasAnimation(anim))
+			return anim;
+
+	return "";
+}
+
+Common::UString chooseDefenseAnimation(int weapon, const Common::UString &attack,
+                                       const HasAnimation &hasAnimation) {
+
+	if ((weapon < 1) || (weapon > 8))
+		return "";
+
+	// A dueling attack "c<weapon>a<n>" is answered by the parry "c<weapon>p<n>"
+	const std::string a = attack.toString();
+	if ((a.size() == 4) && (a[0] == 'c') && (a[2] == 'a') && ((a[1] - '0') == weapon)) {
+		const Common::UString parry = Common::String::format("c%cp%c", a[1], a[3]);
+		if (hasAnimation(parry))
+			return parry;
+	}
+
+	const Common::UString dodge = Common::String::format("g%dg1", weapon);
+	if (hasAnimation(dodge))
+		return dodge;
+
+	return "";
 }
 
 } // End of namespace KotORBase

@@ -27,6 +27,7 @@
 
 #include <list>
 #include <map>
+#include <vector>
 
 #include "external/glm/ext/quaternion_float.hpp"
 
@@ -49,6 +50,15 @@ namespace Aurora {
 
 class AnimNode;
 
+/** An event of an animation: a name ("snd_footstep", "Hit", ...) fired at a time. */
+struct AnimationEvent {
+	float time { 0.0f };  ///< Time into the animation, in seconds.
+	Common::UString name; ///< The event's name, as stored in the model.
+
+	AnimationEvent() = default;
+	AnimationEvent(float t, const Common::UString &n) : time(t), name(n) { }
+};
+
 class Animation {
 public:
 	Animation();
@@ -66,6 +76,23 @@ public:
 
 	/** Update the model position and orientation */
 	virtual void update(Model *model, float lastFrame, float nextFrame, const std::vector<ModelNode *> &modelNodeMap);
+
+	// Events
+
+	/** Add an event, fired when the animation passes @p time. */
+	void addEvent(float time, const Common::UString &name);
+	/** All events of this animation, in the order they were added. */
+	const std::vector<AnimationEvent> &getEvents() const;
+
+	/** Collect the names of the events an animation step passes over.
+	 *
+	 *  Events at times in [from, to) are collected, and those at @p to as well
+	 *  when @p includeEnd is set (the step that finishes a loop).
+	 *  When @p to is smaller than @p from, the step wrapped around the end of
+	 *  the loop: events in [from, length] and in [0, to) are collected.
+	 */
+	void collectEvents(float from, float to, bool includeEnd,
+	                   std::vector<Common::UString> &names) const;
 
 	// Nodes
 
@@ -93,6 +120,8 @@ protected:
 	Common::UString _name; ///< The model's name.
 	float _length;
 	float _transtime;
+
+	std::vector<AnimationEvent> _events; ///< Events fired while the animation plays.
 
 	glm::vec3 interpolatePosition(ModelNode *animNode, float time) const;
 	glm::quat interpolateOrientation(ModelNode *animNode, float time) const;

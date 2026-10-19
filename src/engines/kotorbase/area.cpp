@@ -75,6 +75,8 @@
 #include "src/engines/kotorbase/path/pathfinding.h"
 #include "src/engines/kotorbase/path/objectwalkmesh.h"
 #include "src/engines/kotorbase/path/doorwalkmesh.h"
+#include "src/engines/kotorbase/visualeffects.h"
+#include "src/engines/kotorbase/creaturesounds.h"
 
 namespace Engines {
 
@@ -91,7 +93,8 @@ Area::Area(Module &module, const Common::UString &resRef) :
 		_activeObject(0),
 		_highlightAll(false),
 		_triggersVisible(false),
-		_walkmeshInvisible(true) {
+		_walkmeshInvisible(true),
+		_worldVisualEffects(std::make_unique<WorldVisualEffects>()) {
 
 	_pathfinding = new Pathfinding(_module->getWalkableSurfaces());
 	_pathfinding->showWalkmesh(!_walkmeshInvisible);
@@ -115,6 +118,8 @@ Area::~Area() {
 	hide();
 
 	removeFocus();
+
+	_worldVisualEffects->clear();
 
 	clear();
 
@@ -700,6 +705,8 @@ void Area::hide() {
 	removeFocus();
 
 	stopSound();
+
+	_worldVisualEffects->clear();
 
 	GfxMan.lockFrame();
 
@@ -1647,8 +1654,14 @@ void Area::processCreaturesActions(float dt) {
 
 	// Actions run scripts that may spawn creatures (reallocating _creatures),
 	// so iterate by index rather than with iterators.
+	_worldVisualEffects->update(dt);
+
 	for (size_t i = 0; i < _creatures.size(); ++i) {
 		Creature *c = _creatures[i];
+
+		// Footsteps, weapon sounds and visual effects, the dead's included.
+		c->updatePresentation(dt, this);
+
 		if (c->isDead())
 			continue;
 
@@ -1672,6 +1685,30 @@ void Area::processCreaturesActions(float dt) {
 
 	// Trigger scripts run here, outside of the loop over the creatures.
 	processTriggerChecks();
+}
+
+uint32_t Area::getSurfaceAt(float x, float y) const {
+	if (!_pathfinding)
+		return UINT32_MAX;
+
+	return _pathfinding->getSurfaceAt(x, y);
+}
+
+void Area::playVisualEffectAt(int id, float x, float y, float z, float duration) {
+	VisualEffectInfo effect;
+	try {
+		if (!loadVisualEffect(TwoDAReg.get2DA("visualeffects"), id, effect))
+			return;
+	} catch (...) {
+		Common::exceptionDispatcherWarning("Failed to read visual effect %d", id);
+		return;
+	}
+
+	if (effect.isBeam())
+		return;
+
+	_worldVisualEffects->playEffect(effect, x, y, z, effect.isDuration() ? duration : 0.0f);
+	playSoundAt(effect.impactSound, x, y, z, Sound::kSoundTypeSFX, 3.0f, 30.0f);
 }
 
 Creature *Area::findNearestEnemy(Creature *origin) {

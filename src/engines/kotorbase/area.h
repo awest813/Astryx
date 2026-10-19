@@ -67,6 +67,7 @@ class Creature;
 class Item;
 class Placeable;
 class Encounter;
+class WorldVisualEffects;
 class Pathfinding;
 struct CreatureSearchCriteria;
 
@@ -270,6 +271,12 @@ public:
 	 *  being bashed, and break open those that fell to 0 hit points. */
 	void handleSituatedEvents();
 
+	/** The walkmesh surface (a surfacemat.2da row) at a point, UINT32_MAX if none. */
+	uint32_t getSurfaceAt(float x, float y) const;
+	/** Play visualeffects.2da effect @p id at a place (ApplyEffectAtLocation).
+	 *  @param duration How long a lasting effect lasts; 0 plays it once. */
+	void playVisualEffectAt(int id, float x, float y, float z, float duration = 0.0f);
+
 	Creature *findNearestEnemy(Creature *origin);
 
 	/** True if no closed door blocks the XY segment between the two points. */
@@ -381,6 +388,9 @@ private:
 
 	Pathfinding *_pathfinding;
 	Engines::LocalPathfinding *_localPathfinding;
+
+	/** Visual effects played at places in the area. */
+	std::unique_ptr<WorldVisualEffects> _worldVisualEffects;
 
 	// Loading helpers
 

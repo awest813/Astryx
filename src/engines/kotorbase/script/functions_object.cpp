@@ -948,6 +948,15 @@ void Functions::applyEffectAtLocation(Aurora::NWScript::FunctionContext &ctx) {
 
 	float lx, ly, lz;
 	loc->getPosition(lx, ly, lz);
+
+	// A visual effect (an explosion, a Force wave) plays at the place itself.
+	if ((effect->getType() == kKotOREffectVisual) && effect->getLinkedEffects().empty()) {
+		const int durationType = ctx.getParams()[0].getInt();
+		const float duration = (ctx.getParams().size() > 3) ? ctx.getParams()[3].getFloat() : 0.0f;
+		area->playVisualEffectAt(effect->getAmount(), lx, ly, lz, (durationType == 1) ? duration : 0.0f);
+		return;
+	}
+
 	const float radius = 5.0f;
 
 	const std::vector<Creature *> &creatures = area->getCreatures();

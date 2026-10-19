@@ -306,6 +306,20 @@ bool Model_KotOR::readAnim(ParserContext &ctx, uint32_t offset) {
 
 	ctx.mdl->skip(4); // Padding + Unknown
 
+	// Events: a time and a 32-character name each ("snd_footstep", "Hit", ...)
+	std::vector<AnimationEvent> events;
+	if ((eventCount > 0) && (eventCount < 1024)) {
+		ctx.mdl->seek(ctx.offModelData + eventOffset);
+
+		events.reserve(eventCount);
+		for (uint32_t i = 0; i < eventCount; i++) {
+			const float time = ctx.mdl->readIEEEFloatLE();
+			const Common::UString name = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
+
+			events.push_back(AnimationEvent(time, name));
+		}
+	}
+
 	ModelNode_KotOR *rootNode = new ModelNode_KotOR(*this);
 	ctx.nodes.push_back(rootNode);
 
@@ -317,6 +331,9 @@ bool Model_KotOR::readAnim(ParserContext &ctx, uint32_t offset) {
 	anim->setName(ctx.state->name);
 	anim->setLength(animLength);
 	anim->setTransTime(transTime);
+
+	for (const AnimationEvent &event : events)
+		anim->addEvent(event.time, event.name);
 
 	_animationMap.insert(std::make_pair(ctx.state->name, anim));
 	_animationNames.push_back(ctx.state->name);
