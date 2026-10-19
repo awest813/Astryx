@@ -6,6 +6,8 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include <cassert>
 #include <cfloat>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
 #include "external/glm/gtc/type_ptr.hpp"
 #include "src/common/util.h"
 #include "src/common/maths.h"
@@ -20,11 +22,14 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/aurora/gff3writer.h"
 #include "src/aurora/locstring.h"
 #include "src/aurora/resman.h"
+#include "src/aurora/talkman.h"
+#include "src/aurora/ssffile.h"
 #include "src/graphics/aurora/modelnode.h"
 #include "src/graphics/aurora/model.h"
 #include "src/graphics/aurora/animationchannel.h"
 #include "src/engines/aurora/util.h"
 #include "src/engines/aurora/model.h"
+#include "src/sound/sound.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/item.h"
@@ -36,6 +41,8 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
 #include "src/engines/kotorbase/animationnames.h"
+#include "src/engines/kotorbase/creaturesounds.h"
+#include "src/engines/kotorbase/visualeffects.h"
 namespace Engines {
 namespace KotORBase {
 
@@ -501,6 +508,8 @@ static const int kAnimationForcePushed = 84;
 			_ids.push_back(_model->getID());
 			_model->setTag(_tag);
 			_model->setClickable(isClickable());
+			// Footsteps and weapon sounds: taken in updatePresentation()
+			_model->setAnimationEventsEnabled(true);
 			if (_modelType != "B" && _modelType != "P")		_model->addAnimationChannel(Graphics::Aurora::kAnimationChannelHead);
 		}
 		void Creature::loadHead(PartModels &parts) {
@@ -880,6 +889,9 @@ static const int kAnimationForcePushed = 84;
 		}
 		void Creature::playAttackAnimation() {
 			if (!_model)		return;
+			// An occasional grunt with the swing
+			if (RNG.getNext(0, 3) == 0)
+				playRandomSoundSetBark(kSoundSetAttack1, 3);
 			const Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
 			const Item *leftWeapon = getEquipedItem(kInventorySlotLeftWeapon);
 			if (rightWeapon && !leftWeapon) {
@@ -990,8 +1002,11 @@ static const int kAnimationForcePushed = 84;
 			_lastDamageType = damageType;
 			if (damager)
 				_lastHostileActor = damager;
-			if (amount > 0 && !_dead)
+			if (amount > 0 && !_dead) {
 				_damagedEventPending = true;
+				if (_model)
+					playRandomSoundSetBark(kSoundSetPain1, 2);
+			}
 		}
 
 		int Creature::getDamageDealtByType(int damageType) const {
@@ -1421,6 +1436,8 @@ static const int kAnimationForcePushed = 84;
 			// notifyCombatRoundBegan() already scheduled for this round.
 			if (_attackTarget != target)
 				_attemptedAttackTarget = nullptr;
+			if (!_inCombat && _model && !_dead && (RNG.getNext(0, 3) == 0))
+				playRandomSoundSetBark(kSoundSetBattleCry1, 6);
 			_inCombat = true;
 			_attackTarget = target;
 			_attackRound = round;
@@ -1501,6 +1518,9 @@ static const int kAnimationForcePushed = 84;
 					break;
 				case kEffectModifier:
 					adjustEffectModifiers(effect, 1);
+					break;
+				case kEffectVFX:
+					playVisualEffect(effect.value, true);
 					break;
 				default:
 					break;
@@ -1822,6 +1842,24 @@ static const int kAnimationForcePushed = 84;
 				case kKotOREffectDispelMagicAll:
 					clearActiveEffects();
 					break;
+				case kKotOREffectVisual: {
+					// Instant: play once. With a duration, a duration visual lasts
+					// as long as the effects it's linked to (see updateEffects()).
+					const float duration = durationOverride > 0.0f ? durationOverride : 0.0f;
+					if (duration <= 0.0f) {
+						playVisualEffect(effect.getAmount());
+						break;
+					}
+
+					LastingVisual visual;
+					visual.id = effect.getAmount();
+					visual.linkId = linkId;
+					visual.timeLeft = duration;
+					_lastingVisuals.push_back(visual);
+
+					playVisualEffect(visual.id, true);
+					break;
+				}
 				case kKotOREffectAreaOfEffect:
 				case kKotOREffectForceJump:
 				case kKotOREffectBeam:
@@ -2089,6 +2127,8 @@ static const int kAnimationForcePushed = 84;
 			if (_assuredHit)
 				_assuredHit = false;
 			recordAttackResult(isCrit ? kAttackResultCriticalHitSuccessful : kAttackResultHitSuccessful, weaponUsed);
+			if (isCrit && _model)
+				playSoundSetBark(kSoundSetCriticalHit);
 			int hp    = target->getCurrentHitPoints() - damage;
 			int minHp = target->getMinOneHitPoints() ? 1 : 0;
 			if (hp < minHp)		hp = minHp;
@@ -2132,10 +2172,12 @@ static const int kAnimationForcePushed = 84;
 					_model->clearDefaultAnimations();
 					_model->addDefaultAnimation("dead", 100);
 					_model->playAnimation("die", false);
+					playSoundSetBark(kSoundSetDead, true);
 				}
 				else {
 					warning("Creature::handleDeath(): \"%s\" has no model; applying logical death only", _tag.c_str());
 				}
+				stopLastingVisuals();
 				return true;
 			}
 			return false;
@@ -2591,6 +2633,9 @@ static const int kAnimationForcePushed = 84;
 				case kEffectModifier:
 					adjustEffectModifiers(effect, -1);
 					break;
+				case kEffectVFX:
+					stopVisualEffect(effect.value);
+					break;
 				default:
 					break;
 			}
@@ -2635,6 +2680,38 @@ static const int kAnimationForcePushed = 84;
 					++it;
 				}
 			}
+			updateLastingVisuals(dt);
+		}
+
+		void Creature::updateLastingVisuals(float dt) {
+			for (auto v = _lastingVisuals.begin(); v != _lastingVisuals.end(); ) {
+				v->timeLeft -= dt;
+
+				// A linked visual ends with the last of the effects it's linked to
+				bool linkAlive = false;
+				if (v->linkId != 0)
+					for (const ActiveEffect &e : _effects)
+						if (e.linkId == v->linkId)
+							linkAlive = true;
+
+				if (linkAlive)
+					v->linkSeen = true;
+
+				if ((v->timeLeft > 0.0f) && (linkAlive || !v->linkSeen)) {
+					++v;
+					continue;
+				}
+
+				stopVisualEffect(v->id);
+				v = _lastingVisuals.erase(v);
+			}
+		}
+
+		void Creature::stopLastingVisuals() {
+			for (const LastingVisual &visual : _lastingVisuals)
+				stopVisualEffect(visual.id);
+
+			_lastingVisuals.clear();
 		}
 		bool Creature::hasEffect(EffectType type)
 		const {
@@ -2665,6 +2742,280 @@ static const int kAnimationForcePushed = 84;
 			if (isDead())		return;
 			updateEffects(dt);
 			if (_aiCooldown > 0.0f)		_aiCooldown -= dt;
+		}
+
+		// --- Sounds and visual effects ---
+
+		/** Footsteps carry this far, in metres. */
+		static const float kFootstepMinDistance = 1.0f;
+		static const float kFootstepMaxDistance = 12.0f;
+		/** Weapons and voices carry this far, in metres. */
+		static const float kCombatSoundMinDistance = 3.0f;
+		static const float kCombatSoundMaxDistance = 30.0f;
+
+		void Creature::updatePresentation(float dt, Area *area) {
+			for (auto s = _delayedSounds.begin(); s != _delayedSounds.end(); ) {
+				s->delay -= dt;
+				if (s->delay > 0.0f) {
+					++s;
+					continue;
+				}
+
+				playSoundHere(s->sound, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+				s = _delayedSounds.erase(s);
+			}
+
+			_visualEffects.update(_model.get(), dt);
+
+			if (!_model)
+				return;
+
+			std::vector<Graphics::Aurora::Model::FiredAnimationEvent> events;
+			_model->takeAnimationEvents(events);
+
+			for (const auto &event : events)
+				handleAnimationEvent(event.name, area);
+		}
+
+		void Creature::loadAppearanceSounds() {
+			if (_appearanceSoundsFor == _appearance)
+				return;
+
+			_appearanceSoundsFor = _appearance;
+			_footstepType = -1;
+			_sizeCategory = 3;
+
+			try {
+				const Aurora::TwoDARow &row = TwoDAReg.get2DA("appearance").getRow(_appearance);
+
+				if (!row.empty("footsteptype"))
+					_footstepType = row.getInt("footsteptype");
+				if (!row.empty("sizecategory"))
+					_sizeCategory = row.getInt("sizecategory");
+			} catch (...) {
+				Common::exceptionDispatcherWarning("Failed to read the sounds of appearance %u", _appearance);
+			}
+		}
+
+		const Item *Creature::getSoundWeapon() const {
+			static const InventorySlot kSlots[] = {
+				kInventorySlotRightWeapon, kInventorySlotLeftWeapon,
+				kInventorySlotCWeaponR, kInventorySlotCWeaponL, kInventorySlotCWeaponB
+			};
+
+			for (InventorySlot slot : kSlots) {
+				const Item *item = getEquipedItem(slot);
+				if (item)
+					return item;
+			}
+
+			return nullptr;
+		}
+
+		/** What a weapon hitting @p target sounds like hitting. */
+		static WeaponHitMaterial getHitMaterial(const Object *target) {
+			if (!target)
+				return kWeaponHitLeather;
+
+			const Creature *creature = dynamic_cast<const Creature *>(target);
+			if (!creature)
+				return kWeaponHitMetal; // Doors and containers
+
+			if (creature->getRace() == kRaceDroid)
+				return kWeaponHitMetal;
+
+			return kWeaponHitLeather;
+		}
+
+		void Creature::playSoundHere(const Common::UString &sound, float minDistance, float maxDistance) {
+			if (sound.empty())
+				return;
+
+			float x, y, z;
+			getPosition(x, y, z);
+
+			playSoundAt(sound, x, y, z, Sound::kSoundTypeSFX, minDistance, maxDistance);
+		}
+
+		void Creature::handleAnimationEvent(const Common::UString &event, Area *area) {
+			const AnimationEventSound sound = getAnimationEventSound(event);
+			if (sound == kAnimationEventSoundNone) {
+				debugC(Common::kDebugEngineLogic, 3, "Creature \"%s\": animation event \"%s\"",
+				       _tag.c_str(), event.c_str());
+				return;
+			}
+
+			float x, y, z;
+			getPosition(x, y, z);
+
+			try {
+				if (sound == kAnimationEventSoundFootstep) {
+					loadAppearanceSounds();
+					if (_footstepType < 0)
+						return;
+
+					const uint32_t surface = area ? area->getSurfaceAt(x, y) : UINT32_MAX;
+					const Common::UString footstep = getFootstepSound(TwoDAReg.get2DA("footstepsounds"),
+					                                                  _footstepType, surface, RNG.getNext(0, 3));
+
+					playSoundAt(footstep, x, y, z, Sound::kSoundTypeSFX, kFootstepMinDistance, kFootstepMaxDistance);
+					return;
+				}
+
+				const Item *weapon = getSoundWeapon();
+				if (!weapon)
+					return;
+
+				const int row = getWeaponSoundRow(TwoDAReg.get2DA("baseitems"), weapon->getBaseItem());
+				if (row < 0)
+					return;
+
+				const Object *target = _attemptedAttackTarget ? _attemptedAttackTarget : _attackTarget;
+				const int variant = RNG.getNext(0, MAX(getWeaponSoundVariantCount(sound), 1));
+
+				const Common::UString weaponSound = getWeaponSound(TwoDAReg.get2DA("weaponsounds"), row, sound,
+				                                                   getHitMaterial(target), variant);
+
+				playSoundAt(weaponSound, x, y, z, Sound::kSoundTypeSFX, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+
+			} catch (...) {
+				Common::exceptionDispatcherWarning("Failed to play the sound of animation event \"%s\"", event.c_str());
+			}
+		}
+
+		bool Creature::playSoundSetBark(SoundSetEntry entry, bool interrupt) {
+			if (!_model)
+				return false;
+
+			if (!interrupt && SoundMan.isPlaying(_barkSound))
+				return false;
+
+			loadSSF();
+			if (!_ssf)
+				return false;
+
+			const uint32_t strRef = _ssf->getStrRef(entry);
+			if (strRef == Aurora::kStrRefInvalid)
+				return false;
+
+			const Common::UString &sound = TalkMan.getSoundResRef(strRef);
+			if (sound.empty())
+				return false;
+
+			if (interrupt)
+				SoundMan.stopChannel(_barkSound);
+
+			float x, y, z;
+			getPosition(x, y, z);
+
+			// Raise the voice to head height
+			_barkSound = playSoundAt(sound, x, y, z + 1.5f, Sound::kSoundTypeVoice,
+			                         kCombatSoundMinDistance, kCombatSoundMaxDistance);
+			return true;
+		}
+
+		bool Creature::playRandomSoundSetBark(SoundSetEntry first, int count, bool interrupt) {
+			if (!_model || (count <= 0))
+				return false;
+
+			if (!interrupt && SoundMan.isPlaying(_barkSound))
+				return false;
+
+			// Not every soundset has every entry: try them all, starting at random
+			const int start = RNG.getNext(0, count);
+			for (int i = 0; i < count; i++) {
+				const SoundSetEntry entry = static_cast<SoundSetEntry>(first + ((start + i) % count));
+				if (playSoundSetBark(entry, interrupt))
+					return true;
+			}
+
+			return false;
+		}
+
+		void Creature::playVisualEffect(int id, bool lasting) {
+			if (!_model)
+				return;
+
+			VisualEffectInfo effect;
+			try {
+				if (!loadVisualEffect(TwoDAReg.get2DA("visualeffects"), id, effect))
+					return;
+			} catch (...) {
+				Common::exceptionDispatcherWarning("Failed to read visual effect %d", id);
+				return;
+			}
+
+			if (effect.isBeam()) {
+				debugC(Common::kDebugEngineLogic, 2, "Creature \"%s\": beam visual effect %d is not shown",
+				       _tag.c_str(), id);
+				return;
+			}
+
+			loadAppearanceSounds();
+
+			_visualEffects.playEffect(*_model, effect, _sizeCategory, lasting && effect.isDuration());
+			playSoundHere(effect.impactSound, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+		}
+
+		void Creature::stopVisualEffect(int id) {
+			_visualEffects.stopEffect(_model.get(), id);
+		}
+
+		void Creature::playSpellVisual(const Common::UString &visual, VisualEffectHook hook, float delay) {
+			if (visual.empty())
+				return;
+
+			const char *text = visual.c_str();
+			if (std::strspn(text, "0123456789") == std::strlen(text)) {
+				// A visualeffects.2da row
+				if (delay <= 0.0f)
+					playVisualEffect(std::atoi(text));
+				return;
+			}
+
+			_visualEffects.playModel(*_model, visual, hook, delay);
+		}
+
+		void Creature::playSpellCastVisuals(int spell) {
+			if (!_model)
+				return;
+
+			SpellCastVisuals visuals;
+			try {
+				if (!loadSpellCastVisuals(TwoDAReg.get2DA("spells"), spell, visuals) || visuals.empty())
+					return;
+			} catch (...) {
+				Common::exceptionDispatcherWarning("Failed to read the casting visuals of spell %d", spell);
+				return;
+			}
+
+			// Powers resolve at once: show the conjuring, then the casting a moment later
+			const float castDelay = MIN(visuals.conjureTime, 1.5f);
+
+			playSpellVisual(visuals.conjureHand  , kVisualEffectHookHand, 0.0f);
+			playSpellVisual(visuals.conjureHead  , kVisualEffectHookHead, 0.0f);
+			playSpellVisual(visuals.conjureGround, kVisualEffectHookRoot, 0.0f);
+
+			playSpellVisual(visuals.castHand  , kVisualEffectHookHand, castDelay);
+			playSpellVisual(visuals.castHead  , kVisualEffectHookHead, castDelay);
+			playSpellVisual(visuals.castGround, kVisualEffectHookRoot, castDelay);
+
+			playSoundHere(visuals.conjureSound, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+
+			const Common::UString &voice = (getGender() == kGenderFemale) ?
+				visuals.conjureSoundFemale : visuals.conjureSoundMale;
+			playSoundHere(voice, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+
+			if (!visuals.castSound.empty()) {
+				if (castDelay <= 0.0f) {
+					playSoundHere(visuals.castSound, kCombatSoundMinDistance, kCombatSoundMaxDistance);
+				} else {
+					DelayedSound delayed;
+					delayed.delay = castDelay;
+					delayed.sound = visuals.castSound;
+					_delayedSounds.push_back(delayed);
+				}
+			}
 		}
 
 		void Creature::equipMostDamagingMelee() {

@@ -851,6 +851,7 @@ bool ActionExecutor::castSpell(const Action &action, const ExecutionContext &ctx
 
 	caster->setForcePoints(caster->getForcePoints() - cost);
 	caster->setLastForcePowerUsed(action.actionID);
+	caster->playSpellCastVisuals(action.actionID);
 
 	// The item casting the spell (GetSpellCastItem), used up when it's a consumable.
 	Object *castItem = nullptr;
