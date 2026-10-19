@@ -25,6 +25,7 @@
 #ifndef ENGINES_KOTORBASE_MODULE_H
 #define ENGINES_KOTORBASE_MODULE_H
 
+#include <functional>
 #include <list>
 #include <map>
 #include <set>
@@ -60,6 +61,8 @@ class GFF3WriterStruct;
 #include "src/engines/kotorbase/creatureinfo.h"
 #include "src/engines/kotorbase/partystate.h"
 #include "src/engines/kotorbase/round.h"
+#include "src/engines/kotorbase/pause.h"
+#include "src/engines/kotorbase/actionmenu.h"
 
 #include "src/engines/kotorbase/gui/ingame.h"
 #include "src/engines/kotorbase/gui/dialog.h"
@@ -410,6 +413,26 @@ public:
 	void updateFrameTimestamp();
 	Common::UString getMinimapMapId() const;
 
+	// Pause
+
+	/** Is the world paused (by the player, a script or auto-pause)? */
+	bool isGamePaused() const;
+	/** Why the world is paused. */
+	PauseReason getPauseReason() const;
+	/** Pause for @p reason, if its auto-pause option is on and nothing forbids
+	 *  pausing (conversations, cutscenes, minigames). True if now paused. */
+	bool pauseGame(PauseReason reason = kPauseReasonGeneric);
+	/** Resume the world; actions queued while paused run from now on. */
+	void unpauseGame();
+	/** Pause or unpause, as the pause key does. */
+	void toggleGamePaused();
+
+	// Action menus
+
+	/** Have the party leader use an option of the HUD's action menus on @p target
+	 *  (nullptr: on the leader). Queued actions wait for the game to be unpaused. */
+	void useActionMenuOption(const ActionMenuOption &option, Object *target);
+
 protected:
 	/** Per-frame hook for game-specific systems (minigames, etc.). */
 	virtual void onFrameUpdate(float frameTime);
@@ -682,6 +705,12 @@ protected:
 	Object *_lastAoECreator { nullptr };
 
 	bool _moviePlaying { false }; ///< Is a full-screen movie currently playing?
+
+	PauseState _pause;
+	AutoPauseMonitor _autoPauseMonitor;
+	float _autoPauseScanTimer { 0.0f };
+	/** Item uses from the action menus, waiting for the game to be unpaused. */
+	std::vector<std::function<void()>> _unpauseCommands;
 	std::vector<Common::UString> _movieQueue; ///< Movies queued for PlayMovieQueue.
 
 private:
@@ -746,6 +775,17 @@ private:
 
 	void handleEvents();
 	void handleActions();
+
+	/** What currently forbids pausing. */
+	PauseBlockers getPauseBlockers() const;
+	/** Push the world's timers (DelayCommand, combat rounds, ...) back by @p ms. */
+	void shiftWorldTimers(uint32_t ms);
+	/** Look for the events that auto-pause the game. */
+	void updateAutoPause();
+	/** Run an item use now, or once the game is unpaused. */
+	void runWhenUnpaused(const std::function<void()> &command);
+	/** Use an item from the action menus: on the user, or thrown at the target. */
+	void useActionMenuItem(const Common::UString &tag, uint32_t userID, uint32_t targetID);
 
 	void updateSoundListener();
 	void updateSelection();

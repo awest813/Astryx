@@ -46,6 +46,9 @@ public:
 	void pause();
 	void resume();
 
+	/** Stop (or restart) animation time: frozen models keep their pose. */
+	void setTimeFrozen(bool frozen);
+
 	// Processing pool
 
 	/** Add a model to the processing pool. */
@@ -85,6 +88,7 @@ private:
 
 	std::atomic<PauseStatus> _pause { kPauseResumed };
 	std::atomic<FlushStatus> _flush { kFlushReady };
+	std::atomic<bool> _timeFrozen { false };
 
 	std::recursive_mutex _modelsMutex;   ///< Mutex protecting access to the model map.
 	std::recursive_mutex _registerMutex; ///< Mutex protecting access to the registration queue.

@@ -1397,6 +1397,10 @@ void GraphicsManager::resumeAnimations() {
 	_animationThread.resume();
 }
 
+void GraphicsManager::setAnimationTimeFrozen(bool frozen) {
+	_animationThread.setTimeFrozen(frozen);
+}
+
 void GraphicsManager::registerAnimatedModel(Aurora::Model *model) {
 	_animationThread.registerModel(model);
 }
