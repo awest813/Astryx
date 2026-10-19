@@ -255,6 +255,9 @@ public:
 
 	void processCreaturesActions(float dt);
 	void handleCreaturesDeath();
+	/** Run the OnMeleeAttacked/OnDamaged/OnDeath scripts of doors and containers
+	 *  being bashed, and break open those that fell to 0 hit points. */
+	void handleSituatedEvents();
 
 	Creature *findNearestEnemy(Creature *origin);
 

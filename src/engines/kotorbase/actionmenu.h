@@ -57,7 +57,7 @@ static const size_t kActionMenuSelfPanels   = 4;
 
 /** Target panels, as KotOR.js fills them. */
 enum ActionMenuTargetPanel {
-	kTargetPanelAttack = 0, ///< Attack and the combat feats.
+	kTargetPanelAttack = 0, ///< Attack and the combat feats; bashing a locked object.
 	kTargetPanelPower  = 1, ///< Hostile Force powers, Security on a locked object.
 	kTargetPanelItem   = 2  ///< Grenades.
 };
@@ -78,7 +78,8 @@ enum ActionMenuOptionType {
 	kActionMenuItem,     ///< Use an inventory item (medpac, stim, grenade).
 	kActionMenuItemPower,///< Cast the Force power of an equipped item (armband).
 	kActionMenuDisarmMine, ///< Demolitions: disarm a detected mine.
-	kActionMenuRecoverMine ///< Demolitions: recover a detected mine (harder; gives the mine).
+	kActionMenuRecoverMine,///< Demolitions: recover a detected mine (harder; gives the mine).
+	kActionMenuBash        ///< Attack a locked door or container to break it open.
 };
 
 struct ActionMenuOption {
@@ -195,6 +196,7 @@ struct ActionMenuInput {
 	ActionMenuTarget target { kActionMenuTargetNone };
 	bool targetCanBeUnlocked { false }; ///< The target is locked and needs no key.
 	bool targetIsMine { false };        ///< The target is a detected, disarmable mine.
+	bool targetCanBeBashed { false };   ///< The target is a locked door or container that can be broken open.
 	/** Force powers of the leader's equipped items (armbands): spell ID and item tag. */
 	std::vector<std::pair<int, Common::UString>> itemPowers;
 	bool rangedWeapon { false };        ///< The leader wields a ranged weapon.

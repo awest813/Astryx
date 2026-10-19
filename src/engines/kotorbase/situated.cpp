@@ -43,6 +43,25 @@ namespace Engines {
 
 namespace KotORBase {
 
+namespace BashRules {
+
+const float kExtraReach = 1.0f;
+
+bool canBash(bool locked, bool plot, bool notBlastable, bool broken, int hitPoints) {
+	return locked && !plot && !notBlastable && !broken && (hitPoints > 0);
+}
+
+int damageAfterHardness(int damage, int hardness) {
+	return MAX(damage - MAX(hardness, 0), 0);
+}
+
+int hitPointsAfterDamage(int hitPoints, int damage, bool minOneHitPoint) {
+	const int left = hitPoints - MAX(damage, 0);
+	return MAX(left, minOneHitPoint ? MIN(hitPoints, 1) : 0);
+}
+
+} // End of namespace BashRules
+
 Situated::Situated(ObjectType type) :
 		Object(type),
 		_appearanceID(Aurora::kFieldIDInvalid),
@@ -120,6 +139,85 @@ int Situated::getLockRequiredSkill() const {
 
 void Situated::setLocked(bool locked) {
 	_locked = locked;
+}
+
+int Situated::getHardness() const {
+	return _hardness;
+}
+
+bool Situated::isNotBlastable() const {
+	return _notBlastable;
+}
+
+bool Situated::isBroken() const {
+	return _broken;
+}
+
+bool Situated::isDead() const {
+	return _broken;
+}
+
+bool Situated::canBeBashed() const {
+	return BashRules::canBash(_locked, _plotFlag, _notBlastable, _broken, _currentHitPoints);
+}
+
+void Situated::takeBashDamage(int damage, Object *attacker) {
+	if (_broken)
+		return;
+
+	damage = BashRules::damageAfterHardness(damage, _hardness);
+
+	if (attacker)
+		_lastHostileActor = attacker;
+
+	// Plot objects can't be harmed.
+	if (_plotFlag || (damage <= 0))
+		return;
+
+	_currentHitPoints = BashRules::hitPointsAfterDamage(_currentHitPoints, damage, _minOneHitPoint);
+	_damagedEventPending = true;
+
+	if (_currentHitPoints <= 0) {
+		// Dead at once, so nobody swings at it again; it opens once its OnDeath ran.
+		_broken = true;
+		_deathEventPending = true;
+	}
+}
+
+void Situated::notifyAttacked(Object *attacker) {
+	if (attacker)
+		_lastHostileActor = attacker;
+
+	_attackedEventPending = true;
+}
+
+Object *Situated::getLastHostileActor() const {
+	return _lastHostileActor;
+}
+
+bool Situated::consumeAttackedEvent() {
+	const bool pending = _attackedEventPending;
+	_attackedEventPending = false;
+	return pending;
+}
+
+bool Situated::consumeDamagedEvent() {
+	const bool pending = _damagedEventPending;
+	_damagedEventPending = false;
+	return pending;
+}
+
+bool Situated::consumeDeathEvent() {
+	const bool pending = _deathEventPending;
+	_deathEventPending = false;
+	return pending;
+}
+
+void Situated::breakOpen(Object *UNUSED(breaker)) {
+	_broken = true;
+	_locked = false;
+
+	playSound(_soundDestroyed);
 }
 
 bool Situated::getIsTrapped() const {
@@ -204,12 +302,14 @@ const Trap &Situated::getTrap() const {
 void Situated::saveState(Aurora::GFF3WriterStruct &gff) const {
 	Object::saveState(gff);
 	gff.addByte("Locked", _locked ? 1 : 0);
+	gff.addByte("Bashed", _broken ? 1 : 0);
 	_trap.saveState(gff);
 }
 
 void Situated::loadState(const Aurora::GFF3Struct &gff) {
 	Object::loadState(gff);
 	_locked = gff.getBool("Locked", _locked);
+	_broken = gff.getBool("Bashed", _broken);
 	_trap.loadState(gff);
 }
 
@@ -228,6 +328,8 @@ void Situated::forgetObject(const Object *object) {
 		_lastClosedBy = nullptr;
 	if (_lastUsedBy == object)
 		_lastUsedBy = nullptr;
+	if (_lastHostileActor == object)
+		_lastHostileActor = nullptr;
 }
 
 Object *Situated::getLastUsedBy() const {
@@ -348,6 +450,11 @@ void Situated::loadProperties(const Aurora::GFF3Struct &gff) {
 
 	// Lock Skill
 	_lockSkill = gff.getUint("LockSkill", _lockSkill);
+
+	// Plot (indestructible), and what bashing it open takes
+	_plotFlag     = gff.getBool("Plot", _plotFlag);
+	_hardness     = gff.getUint("Hardness", _hardness);
+	_notBlastable = gff.getBool("NotBlastable", _notBlastable);
 
 	_trap.load(gff);
 

@@ -85,6 +85,11 @@ static const int   kRandomWalkAttempts = 4;
 /** ActionRandomWalk: closer than this (m) to the destination counts as there. */
 static const float kRandomWalkReach = 0.5f;
 
+/** A power is cast from this far (m) inside its range, so a target that moves a little stays in it. */
+static const float kCastRangeMargin = 1.0f;
+/** In range but out of sight (a closed door, a corner): walk up this close (m). */
+static const float kCastSightApproach = 2.0f;
+
 /** Item property: Thieves' Tools (security tunnelers), itempropdef.2da. */
 static const int kItemPropertyThievesTools = 37;
 
@@ -596,7 +601,8 @@ void ActionExecutor::executeAttackObject(Action &action, const ExecutionContext 
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
-	const float range = ctx.creature->getMaxAttackRange();
+	const float range = ctx.creature->getMaxAttackRange() +
+	                    (ObjectContainer::toSituated(action.object) ? BashRules::kExtraReach : 0.0f);
 	if (!moveTo(glm::vec2(x, y), range, ctx))
 		return;
 
@@ -797,11 +803,76 @@ void ActionExecutor::executeWait(Action &action, const ExecutionContext &ctx) {
 		ctx.creature->popAction();
 }
 
+ActionExecutor::CastApproach ActionExecutor::approachCastTarget(Action &action, const ExecutionContext &ctx) {
+	Creature *caster = ctx.creature;
+
+	// Scripted casts with bCheat (cutscenes) happen where the caster stands.
+	if (action.cheat && action.item.empty())
+		return kCastNow;
+
+	Object *target = action.object;
+	if (target == caster)
+		return kCastNow;
+
+	// A power cast at nothing (no object, no location) is cast on oneself.
+	glm::vec2 goal(action.location.x, action.location.y);
+	if (target) {
+		float x, y, _;
+		target->getPosition(x, y, _);
+		goal = glm::vec2(x, y);
+	} else if (action.location == glm::vec3(0.0f))
+		return kCastNow;
+
+	const SpellInfo *spell = getSpellInfo(action.actionID);
+	if (!spell || (spell->range < 0.0f))
+		return kCastNow;
+
+	const bool needSight = spell->hostile && target;
+
+	const bool inRange = isLocationReached(goal, spell->range, ctx);
+	if (inRange && (!needSight || ctx.area->hasLineOfSight(caster, target)))
+		return kCastNow;
+
+	// Out of range: walk until well inside it. In range but out of sight: walk closer.
+	const float approach = inRange ? MIN(kCastSightApproach, spell->range)
+	                               : MAX(spell->range - kCastRangeMargin, kMinMoveRange);
+	if (!moveTo(goal, approach, ctx))
+		return kCastWalking;
+
+	// moveTo() also "arrives" when it gives up on a blocked path.
+	if (!isLocationReached(goal, spell->range, ctx))
+		return kCastAbandon;
+
+	// Arrived at the edge of the range, but still out of sight: get closer first.
+	if (needSight && (approach > kCastSightApproach) && !ctx.area->hasLineOfSight(caster, target))
+		return kCastWalking;
+
+	// castSpell() refuses a hostile power without line of sight.
+	return kCastNow;
+}
+
 void ActionExecutor::executeCastSpell(Action &queuedAction, const ExecutionContext &ctx) {
+	// The dead are past any Force power cast at them.
+	Creature *targetCreature = ObjectContainer::toCreature(queuedAction.object);
+	if (targetCreature && (targetCreature != ctx.creature) && targetCreature->isDead()) {
+		ctx.creature->popAction();
+		return;
+	}
+
+	const CastApproach approach = approachCastTarget(queuedAction, ctx);
+	if (approach == kCastWalking)
+		return;
+
 	// Casting always consumes the action. Pop it before anything runs: impact
 	// scripts and effects (stun, ClearAllActions, ...) may clear the queue.
 	const Action action = queuedAction;
 	ctx.creature->popAction();
+
+	if (approach == kCastAbandon) {
+		debugC(Common::kDebugEngineLogic, 1, "\"%s\" cannot get into range of power %d",
+		       ctx.creature->getTag().c_str(), action.actionID);
+		return;
+	}
 
 	castSpell(action, ctx);
 }
@@ -1082,6 +1153,13 @@ void ActionExecutor::loadSpells() {
 	if (_spellsLoaded)
 		return;
 
+	const Aurora::TwoDAFile *ranges = nullptr;
+	try {
+		ranges = &TwoDAReg.get2DA("ranges");
+	} catch (...) {
+		ranges = nullptr;
+	}
+
 	try {
 		const Aurora::TwoDAFile &twoda = TwoDAReg.get2DA("spells");
 		for (size_t i = 0; i < twoda.getRowCount(); ++i) {
@@ -1096,6 +1174,7 @@ void ActionExecutor::loadSpells() {
 			info.impactScript = row.getString("impactscript");
 			info.hostile = row.getInt("hostile") != 0;
 			info.goodEvil = row.getString("goodevil");
+			info.range = getSpellRangeFromTable(row.getString("range"), ranges);
 			
 			_spells[info.id] = info;
 		}

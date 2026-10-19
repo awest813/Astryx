@@ -525,6 +525,9 @@ ActionMenuInput HUD::gatherActionMenuInput() {
 			if (action == kActionOpenLock)
 				input.targetCanBeUnlocked = true;
 
+		Situated *situated = ObjectContainer::toSituated(target);
+		input.targetCanBeBashed = situated && situated->canBeBashed();
+
 		Trigger *trigger = dynamic_cast<Trigger *>(target);
 		input.targetIsMine = trigger && trigger->isTrap() && trigger->isTrapActive() &&
 		                     trigger->isTrapDetected() && trigger->isTrapDisarmable();

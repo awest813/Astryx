@@ -1699,6 +1699,8 @@ void Area::handleCreaturesDeath() {
 			c->runScript(kScriptEndRound, c, c);
 	}
 
+	handleSituatedEvents();
+
 	// As in the original: when the leader falls, a living party member takes
 	// over (the fallen get up after the fight); only when the whole party is
 	// down is the game lost.
@@ -1716,6 +1718,43 @@ void Area::handleCreaturesDeath() {
 			_module->setPartyLeaderByIndex(living);
 		else
 			_module->showDeathGUI();
+	}
+}
+
+void Area::handleSituatedEvents() {
+	// Doors and containers being bashed: their scripts may destroy objects, so
+	// work on IDs and look each one up again.
+	std::vector<uint32_t> ids;
+	for (Situated *situated : _situatedObjects)
+		ids.push_back(situated->getID());
+
+	for (uint32_t id : ids) {
+		Situated *situated = ObjectContainer::toSituated(ObjectMan.findObject(id));
+		if (!situated)
+			continue;
+
+		Object *attacker = situated->getLastHostileActor();
+
+		if (situated->consumeAttackedEvent() && situated->hasScript(kScriptAttacked))
+			situated->runScript(kScriptAttacked, situated, attacker ? attacker : situated);
+
+		situated = ObjectContainer::toSituated(ObjectMan.findObject(id));
+		if (situated && situated->consumeDamagedEvent() && situated->hasScript(kScriptDamaged))
+			situated->runScript(kScriptDamaged, situated, attacker ? attacker : situated);
+
+		situated = ObjectContainer::toSituated(ObjectMan.findObject(id));
+		if (!situated || !situated->consumeDeathEvent())
+			continue;
+
+		debugC(Common::kDebugEngineLogic, 1, "\"%s\" was bashed open", situated->getTag().c_str());
+
+		// As KotOR.js' destroyDoor: OnDeath first, then it breaks open.
+		if (situated->hasScript(kScriptDeath))
+			situated->runScript(kScriptDeath, situated, attacker ? attacker : situated);
+
+		situated = ObjectContainer::toSituated(ObjectMan.findObject(id));
+		if (situated)
+			situated->breakOpen(situated->getLastHostileActor());
 	}
 }
 

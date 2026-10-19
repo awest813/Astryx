@@ -22,6 +22,8 @@
  *  Talent engine type for KotOR games.
  */
 
+#include <cctype>
+
 #include "src/common/error.h"
 
 #include "src/aurora/2dafile.h"
@@ -118,6 +120,59 @@ int getTalentMaxCR(const Aurora::TwoDAFile &table, int id) {
 
 	const Aurora::TwoDARow &row = table.getRow(id);
 	return row.empty("maxcr") ? 0 : row.getInt("maxcr");
+}
+
+/** A spell range code: its ranges.2da row (label and index) and KotOR.js' distance. */
+struct SpellRangeCode {
+	char code;
+	const char *label;
+	size_t row;
+	float fallback;
+};
+
+static const SpellRangeCode kSpellRangeCodes[] = {
+	{ 'S', "SpellRngShrt", 2, 10.0f },
+	{ 'M', "SpellRngMed" , 3, 15.0f },
+	{ 'L', "SpellRngLong", 4, 28.0f },
+	{ 'W', ""            , 0, 15.0f } // Thrown: no ranges.2da row known.
+};
+
+float getSpellRangeFromTable(const Common::UString &code, const Aurora::TwoDAFile *ranges) {
+	if (code.empty())
+		return kSpellRangeUnlimited;
+
+	const char c = toupper(*code.begin());
+
+	for (const SpellRangeCode &range : kSpellRangeCodes) {
+		if (range.code != c)
+			continue;
+
+		if (!ranges || !*range.label)
+			return range.fallback;
+
+		// The row by its label, else by its place in the table.
+		const size_t labelColumn = ranges->headerToColumn("label");
+		for (size_t i = 0; i < ranges->getRowCount(); ++i) {
+			const Aurora::TwoDARow &row = ranges->getRow(i);
+			if (row.getString(labelColumn).equalsIgnoreCase(range.label) && !row.empty("primaryrange"))
+				return row.getFloat("primaryrange");
+		}
+
+		if ((range.row < ranges->getRowCount()) && !ranges->getRow(range.row).empty("primaryrange"))
+			return ranges->getRow(range.row).getFloat("primaryrange");
+
+		return range.fallback;
+	}
+
+	// P(ersonal), T(ouch) and anything else: no walk.
+	return kSpellRangeUnlimited;
+}
+
+Common::UString getSpellRangeCode(const Aurora::TwoDAFile &spells, int id) {
+	if ((id < 0) || (static_cast<size_t>(id) >= spells.getRowCount()))
+		return "";
+
+	return spells.getRow(id).getString("range");
 }
 
 bool isTalentInCategory(int talentCategory, int category) {

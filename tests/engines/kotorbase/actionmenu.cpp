@@ -378,6 +378,28 @@ GTEST_TEST(KotORBaseActionMenu, detectedMineOffersDisarmAndRecover) {
 	EXPECT_EQ(panels[kTargetPanelPower].getOptions()[1].type, kActionMenuRecoverMine);
 }
 
+GTEST_TEST(KotORBaseActionMenu, lockedObjectOffersBashAndSecurity) {
+	const ActionMenuTalents talents = makeTalents();
+	const CreatureInfo leader = makeLeader();
+
+	ActionMenuInput input;
+	input.leader = &leader;
+	input.target = kActionMenuTargetObject;
+	input.targetCanBeUnlocked = true;
+	input.targetCanBeBashed = true;
+
+	const ActionMenuTargetPanels panels = buildTargetActionMenu(input, talents);
+	ASSERT_EQ(panels[kTargetPanelAttack].size(), 1u);
+	EXPECT_EQ(panels[kTargetPanelAttack].getOptions()[0].type, kActionMenuBash);
+	EXPECT_EQ(panels[kTargetPanelAttack].getOptions()[0].icon, "i_attack");
+	ASSERT_EQ(panels[kTargetPanelPower].size(), 1u);
+	EXPECT_EQ(panels[kTargetPanelPower].getOptions()[0].type, kActionMenuOpenLock);
+
+	// Plot, NotBlastable or already broken: Security only.
+	input.targetCanBeBashed = false;
+	EXPECT_TRUE(buildTargetActionMenu(input, talents)[kTargetPanelAttack].empty());
+}
+
 GTEST_TEST(KotORBaseActionMenu, equippedItemPowersAreSelfOptions) {
 	const ActionMenuTalents talents = makeTalents();
 	const CreatureInfo leader = makeLeader();

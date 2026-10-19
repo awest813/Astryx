@@ -40,6 +40,28 @@ namespace Engines {
 
 namespace KotORBase {
 
+/** Bashing locked doors and containers open (KotOR.js' physical attack on a
+ *  locked target). Every blow loses the object's Hardness off its damage; at
+ *  0 hit points the object breaks: a door opens for good (and no longer blocks
+ *  the way), a container is left unlocked and open for the taking. */
+namespace BashRules {
+
+/** A melee attacker reaches a door or container from this much (m) farther
+ *  than a creature: its position is the middle of the object. */
+extern const float kExtraReach;
+
+/** Can an object be bashed open? It has to be locked, have hit points, and be
+ *  neither plot (indestructible) nor "NotBlastable", nor broken already. */
+bool canBash(bool locked, bool plot, bool notBlastable, bool broken, int hitPoints);
+
+/** The damage a blow of @p damage does to an object with @p hardness. */
+int damageAfterHardness(int damage, int hardness);
+
+/** The hit points an object has left after @p damage; a Min1HP object keeps one. */
+int hitPointsAfterDamage(int hitPoints, int damage, bool minOneHitPoint);
+
+} // End of namespace BashRules
+
 class Situated : public Object {
 public:
 	// Basic visuals
@@ -112,6 +134,36 @@ public:
 	/** Lock/Unlock the situated object. */
 	virtual void setLocked(bool locked);
 
+	// Bashing
+
+	/** The blueprint's "Hardness": soaked off every blow's damage. */
+	int getHardness() const;
+	/** The blueprint's "NotBlastable": can't be bashed or blown open. */
+	bool isNotBlastable() const;
+	/** Has the object been bashed open (broken)? */
+	bool isBroken() const;
+	/** A broken door or container counts as dead for the attacker. */
+	bool isDead() const override;
+	/** Can the party bash this (locked) object open? */
+	bool canBeBashed() const;
+
+	/** A blow of @p damage (before Hardness) by @p attacker landed. The OnDamaged
+	 *  and OnDeath scripts run later, from the area (see consume*Event()). */
+	void takeBashDamage(int damage, Object *attacker);
+	/** @p attacker swung at the object (its OnMeleeAttacked script runs later). */
+	void notifyAttacked(Object *attacker);
+
+	/** The last object that attacked or damaged this one (GetLastAttacker/Damager). */
+	Object *getLastHostileActor() const;
+
+	bool consumeAttackedEvent();
+	bool consumeDamagedEvent();
+	bool consumeDeathEvent();
+
+	/** The object broke under the blows of @p breaker: open it for good. Runs
+	 *  after its OnDeath script. */
+	virtual void breakOpen(Object *breaker);
+
 	// Positioning
 
 	/** Set the situated object's position. */
@@ -144,6 +196,14 @@ protected:
 	Common::UString _keyTag;
 	int  _lockDC { 20 };
 	int  _lockSkill { kSkillSecurity };
+
+	int  _hardness { 0 };          ///< Damage soaked off every blow.
+	bool _notBlastable { false };  ///< Can't be bashed or blown open.
+	bool _broken { false };        ///< Bashed open.
+	bool _attackedEventPending { false };
+	bool _damagedEventPending { false };
+	bool _deathEventPending { false };
+	Object *_lastHostileActor { nullptr };
 
 	Common::UString _soundOpened;    ///< The sound the object makes when opened.
 	Common::UString _soundClosed;    ///< The sound the object makes when closed.

@@ -57,7 +57,7 @@ public:
 
 	// Basic properties
 
-	/** Is the door open? */
+	/** Is the door open? A door bashed open (destroyed) stays open. */
 	bool isOpen() const;
 
 	/** The opener object opens this door. */
@@ -69,6 +69,9 @@ public:
 	Object *getTransitionTarget() const;
 	/** The unlocker object unlocks this door. */
 	bool unlock(Object *unlocker);
+
+	/** Bashed down: the door is destroyed, open for good (as KotOR.js' destroyDoor). */
+	void breakOpen(Object *breaker) override;
 
 	void saveState(Aurora::GFF3WriterStruct &gff) const override;
 	void loadState(const Aurora::GFF3Struct &gff) override;

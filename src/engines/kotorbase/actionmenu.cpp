@@ -424,6 +424,15 @@ ActionMenuTargetPanels buildTargetActionMenu(const ActionMenuInput &input, const
 		panels[kTargetPanelPower].add(recover);
 	}
 
+	// A physical attack on a locked door or container, as in KotOR.js.
+	if (input.targetCanBeBashed) {
+		ActionMenuOption bash;
+		bash.type = kActionMenuBash;
+		bash.icon = kAttackIcon;
+		bash.name = "Bash";
+		panels[kTargetPanelAttack].add(bash);
+	}
+
 	// Hostile actions are only offered against hostile creatures.
 	if (input.target != kActionMenuTargetHostile)
 		return panels;

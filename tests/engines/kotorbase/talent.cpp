@@ -291,3 +291,65 @@ GTEST_TEST(KotORTalent, itemSpellResolution) {
 	// Without game data an item template has no spells.
 	EXPECT_TRUE(Item::getConsumableSpells("no_such_item").empty());
 }
+
+GTEST_TEST(KotORTalent, spellRangeFromRangesTable) {
+	// ranges.2da: the spell ranges by label, whatever their place in the table.
+	std::unique_ptr<Aurora::TwoDAFile> ranges(makeTwoDA(
+		"2DA V2.0\n"
+		"\n"
+		"   label         primaryrange secondaryrange\n"
+		"0  SpellRngPers  0            0\n"
+		"1  SpellRngTouch 2.25         0\n"
+		"2  SpellRngShrt  8            0\n"
+		"3  SpellRngLong  30           0\n"
+		"4  SpellRngMed   18           0\n"));
+
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("S", ranges.get()), 8.0f);
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("m", ranges.get()), 18.0f);
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("L", ranges.get()), 30.0f);
+
+	// Personal and touch powers need no walk (as in KotOR.js), nor do unknown codes.
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("P", ranges.get()), kSpellRangeUnlimited);
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("T", ranges.get()), kSpellRangeUnlimited);
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("", ranges.get()), kSpellRangeUnlimited);
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("X", ranges.get()), kSpellRangeUnlimited);
+
+	// Thrown: no ranges.2da row.
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("W", ranges.get()), 15.0f);
+}
+
+GTEST_TEST(KotORTalent, spellRangeFallbacks) {
+	// No ranges.2da: KotOR.js' distances.
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("S", nullptr), 10.0f);
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("M", nullptr), 15.0f);
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("L", nullptr), 28.0f);
+
+	// Unlabelled rows: by their place in the table (short, medium, long are rows 2-4).
+	std::unique_ptr<Aurora::TwoDAFile> ranges(makeTwoDA(
+		"2DA V2.0\n"
+		"\n"
+		"   primaryrange\n"
+		"0  0\n"
+		"1  2\n"
+		"2  9\n"
+		"3  16\n"
+		"4  ****\n"));
+
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("S", ranges.get()), 9.0f);
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("M", ranges.get()), 16.0f);
+	EXPECT_FLOAT_EQ(getSpellRangeFromTable("L", ranges.get()), 28.0f); // Empty cell.
+
+	// spells.2da "range" column.
+	std::unique_ptr<Aurora::TwoDAFile> spells(makeTwoDA(
+		"2DA V2.0\n"
+		"\n"
+		"   label          range\n"
+		"0  FORCE_PUSH     M\n"
+		"1  BURST_OF_SPEED P\n"
+		"2  NOTHING        ****\n"));
+
+	EXPECT_EQ(getSpellRangeCode(*spells, 0), "M");
+	EXPECT_EQ(getSpellRangeCode(*spells, 1), "P");
+	EXPECT_EQ(getSpellRangeCode(*spells, 2), "");
+	EXPECT_EQ(getSpellRangeCode(*spells, 9), "");
+}

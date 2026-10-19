@@ -58,6 +58,11 @@ tests_engines_kotorbase_test_talent_SOURCES           = tests/engines/kotorbase/
 tests_engines_kotorbase_test_talent_LDADD             = $(kotorbase_LIBS)
 tests_engines_kotorbase_test_talent_CXXFLAGS          = $(test_CXXFLAGS)
 
+check_PROGRAMS                                       += tests/engines/kotorbase/test_interaction
+tests_engines_kotorbase_test_interaction_SOURCES      = tests/engines/kotorbase/interaction.cpp
+tests_engines_kotorbase_test_interaction_LDADD        = $(kotorbase_LIBS)
+tests_engines_kotorbase_test_interaction_CXXFLAGS     = $(test_CXXFLAGS)
+
 check_PROGRAMS                                       += tests/engines/kotorbase/test_effect_rules
 tests_engines_kotorbase_test_effect_rules_SOURCES     = tests/engines/kotorbase/effect_rules.cpp
 tests_engines_kotorbase_test_effect_rules_LDADD       = $(kotorbase_LIBS)

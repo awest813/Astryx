@@ -1339,6 +1339,8 @@ void Functions::getLastDamager(Aurora::NWScript::FunctionContext &ctx) {
 	Creature *c = ObjectContainer::toCreature(ctx.getCaller());
 	if (c)
 		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(c->getLastHostileActor());
+	else if (Situated *situated = ObjectContainer::toSituated(ctx.getCaller()))
+		ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(situated->getLastHostileActor());
 }
 
 void Functions::beginConversation(Aurora::NWScript::FunctionContext &ctx) {

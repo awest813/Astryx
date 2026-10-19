@@ -88,6 +88,11 @@ void Door::loadObject(const Aurora::GFF3Struct &gff) {
 
 	_transitionDestination = gff.getString("TransitionDestin", _transitionDestination);
 
+	// Hit points (for bashing it down)
+	_maxHitPoints     = gff.getSint("HP", _maxHitPoints);
+	_currentHitPoints = gff.getSint("CurrentHP", _currentHitPoints);
+	_minOneHitPoint   = gff.getBool("Min1HP", _minOneHitPoint);
+
 	_linkedToType = (ObjectType) (kObjectTypeDoor | kObjectTypeWaypoint);
 }
 
@@ -136,7 +141,27 @@ void Door::highlight(bool enabled) {
 }
 
 bool Door::isOpen() const {
-	return (_state == kStateOpened1) || (_state == kStateOpened2);
+	return (_state == kStateOpened1) || (_state == kStateOpened2) || (_state == kStateDestroyed);
+}
+
+void Door::breakOpen(Object *breaker) {
+	if (_state == kStateDestroyed)
+		return;
+
+	Situated::breakOpen(breaker);
+
+	if (Creature *creature = ObjectContainer::toCreature(breaker))
+		if (creature->getBlockingDoor() == this)
+			creature->setBlockingDoor(nullptr);
+
+	_lastOpenedBy = breaker;
+
+	// Its walkmesh no longer blocks the way (DoorWalkmesh asks isOpen()).
+	_state = kStateDestroyed;
+	setUsable(false);
+
+	if (_model)
+		_model->playAnimation(_model->hasAnimation("die") ? "die" : "opening1");
 }
 
 Object *Door::getTransitionTarget() const {
@@ -244,9 +269,10 @@ void Door::loadState(const Aurora::GFF3Struct &gff) {
 
 	// Snap visuals / usability to the restored open/closed/destroyed state.
 	if (_state == kStateDestroyed) {
+		_broken = true;
 		setUsable(false);
 		if (_model)
-			_model->playAnimation("dead");
+			_model->playAnimation(_model->hasAnimation("dead") ? "dead" : "opened1");
 	} else if (isOpen()) {
 		setUsable(false);
 		if (_model)

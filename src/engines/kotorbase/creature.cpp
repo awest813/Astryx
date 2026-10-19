@@ -29,6 +29,7 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/engines/kotorbase/effect.h"
 #include "src/engines/kotorbase/item.h"
 #include "src/engines/kotorbase/objectcontainer.h"
+#include "src/engines/kotorbase/situated.h"
 #include "src/engines/kotorbase/creaturesearch.h"
 #include "src/engines/kotorbase/gui/chargeninfo.h"
 #include "src/engines/kotorbase/levelup.h"
@@ -1337,7 +1338,7 @@ static const int kAnimationForcePushed = 84;
 
 			// Decide action
 			float dist = getDistanceTo(_attackTarget);
-			if (dist > getMaxAttackRange()) {
+			if (dist > getMaxAttackRange() + (ObjectContainer::toSituated(_attackTarget) ? BashRules::kExtraReach : 0.0f)) {
 				// Move closer, unless already on the way (this runs every round).
 				const Action *current = _actions.getCurrent();
 				if (current && (current->type == kActionMoveToPoint ||
@@ -1887,6 +1888,12 @@ static const int kAnimationForcePushed = 84;
 				// OnAttacked runs later, outside the creature iteration.
 				targetCreature->_lastAttacker = this;
 				targetCreature->_attackedEventPending = true;
+			} else if (Situated *situated = ObjectContainer::toSituated(target)) {
+				if (situated->isDead()) {
+					cancelCombat();
+					return;
+				}
+				situated->notifyAttacked(this);
 			}
 			Item *rightWeapon = getEquipedItem(kInventorySlotRightWeapon);
 			Item *leftWeapon  = getEquipedItem(kInventorySlotLeftWeapon);
@@ -2089,6 +2096,13 @@ static const int kAnimationForcePushed = 84;
 			if (_assuredHit)
 				_assuredHit = false;
 			recordAttackResult(isCrit ? kAttackResultCriticalHitSuccessful : kAttackResultHitSuccessful, weaponUsed);
+			// Bashing a door or container: its Hardness soaks the blow; it breaks at 0 HP.
+			if (Situated *situated = ObjectContainer::toSituated(target)) {
+				situated->takeBashDamage(damage, this);
+				if (situated->isDead())
+					cancelCombat();
+				return;
+			}
 			int hp    = target->getCurrentHitPoints() - damage;
 			int minHp = target->getMinOneHitPoints() ? 1 : 0;
 			if (hp < minHp)		hp = minHp;

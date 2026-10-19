@@ -111,6 +111,19 @@ bool isTalentInCategory(int talentCategory, int category);
  *  caster's cost half again as much. */
 int getForcePowerCost(int baseCost, const Common::UString &goodEvil, int casterAlignment);
 
+/** A power that reaches as far as needed: it needs no walk to the target. */
+static const float kSpellRangeUnlimited = -1.0f;
+
+/** How far (m) a power with the spells.2da "range" code @p code reaches.
+ *  The codes are S(hort), M(edium), L(ong), (thro)W, P(ersonal) and T(ouch);
+ *  short, medium and long are the "primaryrange" of the SpellRngShrt/Med/Long
+ *  rows of @p ranges (ranges.2da), falling back to KotOR.js' distances without
+ *  the table. Personal and touch powers, as in KotOR.js, and unknown codes are
+ *  kSpellRangeUnlimited. */
+float getSpellRangeFromTable(const Common::UString &code, const Aurora::TwoDAFile *ranges);
+/** The spells.2da "range" code of power @p id, or an empty string. */
+Common::UString getSpellRangeCode(const Aurora::TwoDAFile &spells, int id);
+
 /** Every talent @p creature can use right now: known Force powers it has the Force
  *  points for, Force powers of equipped items, spells of usable inventory items,
  *  feats and trained skills, each with its category and challenge rating. */

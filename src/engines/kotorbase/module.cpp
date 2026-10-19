@@ -970,6 +970,21 @@ void Module::useActionMenuOption(const ActionMenuOption &option, Object *target)
 			break;
 		}
 
+		case kActionMenuBash: {
+			Situated *situated = ObjectContainer::toSituated(target);
+			if (!situated || !situated->canBeBashed())
+				return;
+
+			// Break it open with melee or ranged rounds (Creature::executeAttack()).
+			KotORBase::Action action(kActionAttackObject);
+			action.object = target;
+			action.range  = leader->getMaxAttackRange();
+
+			leader->clearActions();
+			leader->addAction(action);
+			break;
+		}
+
 		case kActionMenuDisarmMine:
 		case kActionMenuRecoverMine: {
 			if (!target)
@@ -1752,7 +1767,8 @@ void Module::notifyCombatRoundBegan(int round) {
 			continue;
 		}
 
-		if (!target || c->getDistanceTo(target) > c->getMaxAttackRange())
+		if (!target || c->getDistanceTo(target) > (c->getMaxAttackRange() +
+		                (ObjectContainer::toSituated(target) ? BashRules::kExtraReach : 0.0f)))
 			continue;
 
 		c->setAttemptedAttackTarget(target);

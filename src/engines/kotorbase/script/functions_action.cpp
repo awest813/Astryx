@@ -792,11 +792,15 @@ void Functions::cutsceneMove(Aurora::NWScript::FunctionContext &ctx) {
 
 void Functions::getLastAttacker(Aurora::NWScript::FunctionContext &ctx) {
 
-	Creature *creature = ObjectContainer::toCreature(ctx.getParams()[0].getObject());
+	Aurora::NWScript::Object *object = ctx.getParams()[0].getObject();
 
-	ctx.getReturn() = creature ? creature->getLastHostileActor()
+	ctx.getReturn() = static_cast<Aurora::NWScript::Object *>(nullptr);
 
-	                           : static_cast<Aurora::NWScript::Object *>(nullptr);
+	// A door or container being bashed knows who hit it, too.
+	if (Creature *creature = ObjectContainer::toCreature(object))
+		ctx.getReturn() = creature->getLastHostileActor();
+	else if (Situated *situated = ObjectContainer::toSituated(object))
+		ctx.getReturn() = situated->getLastHostileActor();
 
 }
 

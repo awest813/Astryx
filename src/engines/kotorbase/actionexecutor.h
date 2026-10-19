@@ -57,6 +57,9 @@ public:
 		Common::UString impactScript;
 		bool hostile;
 		Common::UString goodEvil; ///< spells.2da "goodevil": G (light side), E (dark side) or -.
+		/** How far (m) the power reaches (spells.2da "range" via ranges.2da), or
+		 *  kSpellRangeUnlimited for personal and touch powers. */
+		float range { -1.0f };
 	};
 
 	static const SpellInfo *getSpellInfo(uint32_t id);
@@ -69,6 +72,13 @@ public:
 	static bool castSpell(const Action &action, const ExecutionContext &ctx);
 
 private:
+	/** What a queued cast does this frame. */
+	enum CastApproach {
+		kCastNow,     ///< In range (and sight): cast.
+		kCastWalking, ///< Still walking into range.
+		kCastAbandon  ///< The target can't be reached: give up.
+	};
+
 	static std::map<uint32_t, SpellInfo> _spells;
 	static bool _spellsLoaded;
 	/** Get if the current creature has reached a specified location. */
@@ -89,6 +99,9 @@ private:
 	static void executeDropItem(Action &action, const ExecutionContext &ctx);
 	static void executeWait(Action &action, const ExecutionContext &ctx);
 	static void executeCastSpell(Action &action, const ExecutionContext &ctx);
+	/** Walk the caster into the power's range (and line of sight, for a hostile
+	 *  power), as KotOR.js' ActionCastSpell does. */
+	static CastApproach approachCastTarget(Action &action, const ExecutionContext &ctx);
 	static void executeRest(Action &action, const ExecutionContext &ctx);
 	static void executeCutsceneAttack(Action &action, const ExecutionContext &ctx);
 	static void executePlayAnimation(Action &action, const ExecutionContext &ctx);

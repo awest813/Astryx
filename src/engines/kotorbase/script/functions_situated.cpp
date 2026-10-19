@@ -223,7 +223,7 @@ static bool canUnlockDoor(Creature *creature, Situated *situated) {
 }
 
 static bool canBashDoor(Door *door) {
-	return door && !door->isOpen() && !door->getPlotFlag();
+	return door && !door->isOpen() && !door->getPlotFlag() && !door->isNotBlastable();
 }
 
 static bool canKnockDoor(Creature *creature, Situated *situated) {
