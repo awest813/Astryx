@@ -26,7 +26,9 @@
 #include "src/common/util.h"
 
 #include "src/aurora/resman.h"
+#include "src/aurora/talkman.h"
 
+#include "src/engines/odyssey/checkbox.h"
 #include "src/engines/odyssey/label.h"
 #include "src/engines/odyssey/progressbar.h"
 
@@ -202,6 +204,7 @@ HUD::HUD(KotORBase::Module &module, Engines::Console *console) :
 
 void HUD::reset() {
 	_minimapPointer = nullptr;
+	_combatModeMessage.clear();
 	KotORBase::HUD::reset();
 }
 
@@ -405,8 +408,21 @@ void HUD::updateLevelUpIndicators() {
 	}
 }
 
-void HUD::updateGrenadeTargetingPrompt() {
-	const bool active = _module.isGrenadeTargeting();
+void HUD::updateCombatModeMessage() {
+	// The grenade prompt, else the pause reason, in the combat message box.
+	const bool grenade = _module.isGrenadeTargeting();
+	const bool paused  = _module.isGamePaused();
+	const bool active  = grenade || paused;
+
+	Common::UString text;
+	if (grenade)
+		text = "Select where to throw the grenade. Press Esc to cancel.";
+	else if (paused) {
+		const KotORBase::PauseReason reason = _module.getPauseReason();
+		text = TalkMan.getString(KotORBase::getPauseReasonStrRef(reason));
+		if (text.empty())
+			text = KotORBase::getPauseReasonFallbackText(reason);
+	}
 
 	if (Odyssey::WidgetLabel *bg = getLabel("LBL_CMBTMSGBG")) {
 		bg->setInvisible(!active);
@@ -417,21 +433,28 @@ void HUD::updateGrenadeTargetingPrompt() {
 	}
 
 	if (Odyssey::WidgetLabel *msg = getLabel("LBL_CMBTMODEMSG")) {
-		if (active)
-			msg->setText("Select where to throw the grenade. Press Esc to cancel.");
+		if (active && (text != _combatModeMessage))
+			msg->setText(text);
+		_combatModeMessage = active ? text : "";
+
 		msg->setInvisible(!active);
 		if (active && _visible)
 			msg->show();
 		else
 			msg->hide();
 	}
+
+	// The pause toggle button shows the pause state.
+	if (Odyssey::WidgetCheckBox *pause = getCheckBox("TB_PAUSE"))
+		if (pause->getState() != paused)
+			pause->setState(paused);
 }
 
 void HUD::update(float dt) {
 	KotORBase::HUD::update(dt);
 	updatePartyVitals();
 	updateLevelUpIndicators();
-	updateGrenadeTargetingPrompt();
+	updateCombatModeMessage();
 }
 
 void HUD::update(int width, int height) {
@@ -539,10 +562,14 @@ void HUD::initWidget(Engines::Widget &widget) {
 }
 
 void HUD::callbackActive(Widget &widget) {
-	KotORBase::HUD::callbackActive(widget);
-
-	if (widget.getTag().beginsWith("BTN_TARGET"))
+	// Target and self action menus
+	if (handleActionMenuWidget(widget.getTag()))
 		return;
+
+	if (widget.getTag() == "TB_PAUSE") {
+		_module.toggleGamePaused();
+		return;
+	}
 
 	if (widget.getTag() == "LBL_CHAR1") {
 		_module.setPartyLeaderByIndex(0);

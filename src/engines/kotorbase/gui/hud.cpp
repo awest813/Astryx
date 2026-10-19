@@ -22,6 +22,10 @@
  *  Base in-game HUD for KotOR games.
  */
 
+#include "src/common/util.h"
+#include "src/common/error.h"
+#include "src/common/strutil.h"
+
 #include "src/graphics/graphics.h"
 #include "src/graphics/aurora/cursorman.h"
 
@@ -35,6 +39,8 @@
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/creature.h"
 #include "src/engines/kotorbase/door.h"
+#include "src/engines/kotorbase/item.h"
+#include "src/engines/kotorbase/inventory.h"
 
 #include "src/engines/kotorbase/gui/hud.h"
 
@@ -52,7 +58,6 @@ HUD::HUD(Module &module, ::Engines::Console *console) :
 	_hoveredCircle->setHovered(true);
 	_targetCircle->setTarget(true);
 	_grenadeReticle->setTarget(true);
-	clearTargetButtonActions();
 }
 
 void HUD::setMinimap(const Common::UString &UNUSED(map), int UNUSED(northAxis),
@@ -176,7 +181,24 @@ void HUD::reset() {
 	_hoveredCircle->setHovered(true);
 	_targetCircle->setTarget(true);
 
-	clearTargetButtonActions();
+	for (ActionMenuPanel &panel : _targetPanels)
+		panel.clear();
+	for (ActionMenuPanel &panel : _selfPanels)
+		panel.clear();
+
+	for (size_t i = 0; i < kActionMenuTargetPanels; ++i) {
+		_targetUp[i] = ArrowWidget();
+		_targetDown[i] = ArrowWidget();
+	}
+	for (size_t i = 0; i < kActionMenuSelfPanels; ++i) {
+		_selfButtons[i] = nullptr;
+		_selfLabels[i] = nullptr;
+	}
+
+	_actionDescription = nullptr;
+	_actionDescriptionBackground = nullptr;
+	_actionDescriptionTime = 0.0f;
+	_actionMenuRefreshTime = 0.0f;
 
 	_targetDirty = false;
 
@@ -197,25 +219,73 @@ void HUD::init() {
 	_firstTargetButton = getButton("BTN_TARGET0");
 	_secondTargetButton = getButton("BTN_TARGET1");
 	_thirdTargetButton = getButton("BTN_TARGET2");
+
+	for (size_t i = 0; i < kActionMenuTargetPanels; ++i) {
+		const Common::UString n = Common::composeString(i);
+		initArrow(_targetUp[i],   "BTN_TARGETUP"   + n, getTargetButton(i));
+		initArrow(_targetDown[i], "BTN_TARGETDOWN" + n, getTargetButton(i));
+	}
+
+	for (size_t i = 0; i < kActionMenuSelfPanels; ++i) {
+		const Common::UString n = Common::composeString(i);
+		_selfButtons[i] = getButton("BTN_ACTION" + n);
+		_selfLabels[i]  = getLabel("LBL_ACTION" + n);
+	}
+
+	_actionDescription = getLabel("LBL_ACTIONDESC");
+	_actionDescriptionBackground = getLabel("LBL_ACTIONDESCBG");
+
+	// Fill the menus at the next update.
+	_actionMenuRefreshTime = 0.0f;
 }
 
 void HUD::callbackActive(Widget &widget) {
-	if (widget.getTag() == "BTN_TARGET0") {
-		return;
-	}
-	if (widget.getTag() == "BTN_TARGET1") {
-		if (_targetButtonActions[1] == kActionOpenLock) {
-			Action action(kActionOpenLock);
-			action.object = _targetObject;
-			action.range = 1.0f;
+	handleActionMenuWidget(widget.getTag());
+}
 
-			_module.getPartyLeader()->addAction(action);
+/** Does @p tag name the widget @p prefix followed by a panel index below @p count? */
+static bool matchPanelTag(const Common::UString &tag, const char *prefix, size_t count, size_t &panel) {
+	for (size_t i = 0; i < count; ++i) {
+		if (tag == (Common::UString(prefix) + Common::composeString(i))) {
+			panel = i;
+			return true;
 		}
-		return;
 	}
-	if (widget.getTag() == "BTN_TARGET2") {
-		return;
+
+	return false;
+}
+
+bool HUD::handleActionMenuWidget(const Common::UString &tag) {
+	size_t panel = 0;
+
+	if (matchPanelTag(tag, "BTN_TARGETUP", kActionMenuTargetPanels, panel)) {
+		cycleTargetPanel(panel, false);
+		return true;
 	}
+	if (matchPanelTag(tag, "BTN_TARGETDOWN", kActionMenuTargetPanels, panel)) {
+		cycleTargetPanel(panel, true);
+		return true;
+	}
+	if (matchPanelTag(tag, "BTN_TARGET", kActionMenuTargetPanels, panel)) {
+		useTargetAction(panel);
+		return true;
+	}
+
+	if (matchPanelTag(tag, "BTN_ACTIONUP", kActionMenuSelfPanels, panel)) {
+		cycleSelfPanel(panel, false);
+		return true;
+	}
+	if (matchPanelTag(tag, "BTN_ACTIONDOWN", kActionMenuSelfPanels, panel)) {
+		cycleSelfPanel(panel, true);
+		return true;
+	}
+	if (matchPanelTag(tag, "BTN_ACTION", kActionMenuSelfPanels, panel) ||
+	    matchPanelTag(tag, "LBL_ACTION", kActionMenuSelfPanels, panel)) {
+		useSelfAction(panel);
+		return true;
+	}
+
+	return false;
 }
 
 void HUD::updateTargetObject() {
@@ -315,10 +385,72 @@ void HUD::updateTargetButtons(float originX, float originY) {
 	_secondTargetButton->setPosition(originX - halfWidth, y, -100.0f);
 	_thirdTargetButton->setPosition(originX + dist - halfWidth, y, -100.0f);
 
-	if (_targetDirty) {
-		_firstTargetButton->setIcon("");
-		_secondTargetButton->setIcon((_targetButtonActions[1] == kActionOpenLock) ? "isk_security" : "");
-		_thirdTargetButton->setIcon("");
+	for (size_t i = 0; i < kActionMenuTargetPanels; ++i) {
+		Odyssey::WidgetButton *button = getTargetButton(i);
+
+		const ActionMenuOption *option = _targetPanels[i].getSelected();
+		setButtonIcon(button, option ? option->icon : "");
+
+		// The arrows cycle the options; only shown when there is a choice.
+		const bool cycle = _targetPanels[i].size() > 1;
+		placeArrow(_targetUp[i], button, cycle);
+		placeArrow(_targetDown[i], button, cycle);
+	}
+}
+
+Odyssey::WidgetButton *HUD::getTargetButton(size_t panel) const {
+	switch (panel) {
+		case 0:
+			return _firstTargetButton;
+		case 1:
+			return _secondTargetButton;
+		case 2:
+			return _thirdTargetButton;
+		default:
+			break;
+	}
+
+	return nullptr;
+}
+
+void HUD::initArrow(ArrowWidget &arrow, const Common::UString &tag, Odyssey::WidgetButton *button) {
+	arrow = ArrowWidget();
+	arrow.button = getButton(tag);
+	if (!arrow.button || !button)
+		return;
+
+	// Keep the arrow where the GUI file puts it relative to its button.
+	float bx, by, bz, ax, ay, az;
+	button->getPosition(bx, by, bz);
+	arrow.button->getPosition(ax, ay, az);
+
+	arrow.offsetX = ax - bx;
+	arrow.offsetY = ay - by;
+
+	// An offset far off the button would be a guess of the GUI layout: put
+	// the arrows over and under the button instead, as KotOR.js does.
+	const float maxOffset = 2.0f * MAX(button->getWidth(), button->getHeight());
+	if ((ABS(arrow.offsetX) > maxOffset) || (ABS(arrow.offsetY) > maxOffset)) {
+		const bool up = tag.contains("UP");
+		arrow.offsetX = (button->getWidth() - arrow.button->getWidth()) / 2.0f;
+		arrow.offsetY = up ? button->getHeight() : -arrow.button->getHeight();
+	}
+}
+
+void HUD::placeArrow(ArrowWidget &arrow, Odyssey::WidgetButton *button, bool visible) {
+	if (!arrow.button || !button)
+		return;
+
+	if (visible) {
+		float x, y, z;
+		button->getPosition(x, y, z);
+		arrow.button->setPosition(x + arrow.offsetX, y + arrow.offsetY, z);
+		arrow.button->setInvisible(false);
+		if (_visible)
+			arrow.button->show();
+	} else {
+		arrow.button->setInvisible(true);
+		arrow.button->hide();
 	}
 }
 
@@ -350,23 +482,207 @@ void HUD::hideTargetButtons() {
 		_thirdTargetButton->setInvisible(true);
 		_thirdTargetButton->hide();
 	}
-}
 
-void HUD::clearTargetButtonActions() {
-	for (int i = 0; i < 3; ++i) {
-		_targetButtonActions[i] = kActionInvalid;
+	for (size_t i = 0; i < kActionMenuTargetPanels; ++i) {
+		placeArrow(_targetUp[i], getTargetButton(i), false);
+		placeArrow(_targetDown[i], getTargetButton(i), false);
 	}
 }
 
-void HUD::fillTargetButtonActions() {
-	for (int action : _targetObject->getPossibleActions()) {
-		switch (action) {
-			case kActionOpenLock:
-				_targetButtonActions[1] = kActionOpenLock;
-				break;
-			default:
-				break;
+bool HUD::hasTargetActions() const {
+	for (const ActionMenuPanel &panel : _targetPanels)
+		if (!panel.empty())
+			return true;
+
+	return false;
+}
+
+ActionMenuInput HUD::gatherActionMenuInput() {
+	ActionMenuInput input;
+
+	Creature *leader = _module.getPartyLeader();
+	if (!leader)
+		return input;
+
+	input.leader = &leader->getCreatureInfo();
+
+	const Item *weapon = leader->getEquipedItem(kInventorySlotRightWeapon);
+	input.rangedWeapon = weapon && weapon->isRangedWeapon();
+
+	Object *target = _targetObject;
+	if (target && (target != leader)) {
+		Creature *creature = ObjectContainer::toCreature(target);
+		if (creature && !creature->isDead())
+			input.target = target->isEnemy() ? kActionMenuTargetHostile : kActionMenuTargetFriendly;
+		else
+			input.target = kActionMenuTargetObject;
+
+		for (int action : target->getPossibleActions())
+			if (action == kActionOpenLock)
+				input.targetCanBeUnlocked = true;
+	}
+
+	// The party shares the PC's inventory.
+	Creature *pc = _module.getPC();
+	if (pc) {
+		for (const auto &group : pc->getInventory().getItems()) {
+			if (group.second.count <= 0)
+				continue;
+
+			auto described = _itemDescriptions.find(group.first);
+			if (described == _itemDescriptions.end()) {
+				ActionMenuItemEntry entry;
+				entry.tag = group.first;
+				try {
+					const Item item(group.first);
+					entry = describeActionMenuItem(item);
+					entry.tag = group.first;
+				} catch (...) {
+					entry.kind = ActionMenuItemEntry::kKindNone;
+				}
+
+				described = _itemDescriptions.insert(std::make_pair(group.first, entry)).first;
+			}
+
+			if (described->second.kind != ActionMenuItemEntry::kKindNone)
+				input.items.push_back(described->second);
 		}
+	}
+
+	return input;
+}
+
+void HUD::refreshActionMenus() {
+	const ActionMenuInput input = gatherActionMenuInput();
+	const ActionMenuTalents &talents = ActionMenuTalents::get();
+
+	const ActionMenuTargetPanels target = buildTargetActionMenu(input, talents);
+	for (size_t i = 0; i < kActionMenuTargetPanels; ++i)
+		_targetPanels[i].replace(target[i]);
+
+	const ActionMenuSelfPanels self = buildSelfActionMenu(input, talents);
+	for (size_t i = 0; i < kActionMenuSelfPanels; ++i)
+		_selfPanels[i].replace(self[i]);
+
+	updateSelfActionWidgets();
+}
+
+void HUD::setButtonIcon(Odyssey::WidgetButton *button, const Common::UString &icon) {
+	if (!button)
+		return;
+
+	try {
+		button->setIcon(icon);
+	} catch (Common::Exception &e) {
+		warning("HUD: no action icon \"%s\": %s", icon.c_str(), e.what());
+		button->setIcon("");
+	}
+}
+
+void HUD::updateSelfActionWidgets() {
+	for (size_t i = 0; i < kActionMenuSelfPanels; ++i) {
+		const ActionMenuOption *option = _selfPanels[i].getSelected();
+		const Common::UString icon = option ? option->icon : "";
+
+		// As KotOR.js, the icon fills the panel's label, else the button shows it.
+		if (_selfLabels[i]) {
+			try {
+				_selfLabels[i]->setFill(icon);
+			} catch (Common::Exception &e) {
+				warning("HUD: no action icon \"%s\": %s", icon.c_str(), e.what());
+				_selfLabels[i]->setFill("");
+			}
+		} else
+			setButtonIcon(_selfButtons[i], icon);
+	}
+}
+
+void HUD::useTargetAction(size_t panel) {
+	if ((panel >= kActionMenuTargetPanels) || !_targetObject)
+		return;
+
+	const ActionMenuOption *option = _targetPanels[panel].getSelected();
+	if (!option)
+		return;
+
+	const ActionMenuOption chosen = *option;
+	showActionDescription(&chosen);
+	_module.useActionMenuOption(chosen, _targetObject);
+
+	// Items may be gone, powers unaffordable: rebuild soon.
+	_actionMenuRefreshTime = 0.0f;
+}
+
+void HUD::useSelfAction(size_t panel) {
+	if (panel >= kActionMenuSelfPanels)
+		return;
+
+	const ActionMenuOption *option = _selfPanels[panel].getSelected();
+	if (!option)
+		return;
+
+	const ActionMenuOption chosen = *option;
+	showActionDescription(&chosen);
+	_module.useActionMenuOption(chosen, nullptr);
+
+	_actionMenuRefreshTime = 0.0f;
+}
+
+void HUD::cycleTargetPanel(size_t panel, bool forward) {
+	if (panel >= kActionMenuTargetPanels)
+		return;
+
+	if (forward)
+		_targetPanels[panel].next();
+	else
+		_targetPanels[panel].previous();
+
+	setButtonIcon(getTargetButton(panel), _targetPanels[panel].getSelected() ?
+	              _targetPanels[panel].getSelected()->icon : "");
+	showActionDescription(_targetPanels[panel].getSelected());
+}
+
+void HUD::cycleSelfPanel(size_t panel, bool forward) {
+	if (panel >= kActionMenuSelfPanels)
+		return;
+
+	if (forward)
+		_selfPanels[panel].next();
+	else
+		_selfPanels[panel].previous();
+
+	updateSelfActionWidgets();
+	showActionDescription(_selfPanels[panel].getSelected());
+}
+
+void HUD::showActionDescription(const ActionMenuOption *option) {
+	if (!_actionDescription || !option || option->name.empty())
+		return;
+
+	_actionDescription->setText(option->name);
+	_actionDescription->setInvisible(false);
+	if (_actionDescriptionBackground)
+		_actionDescriptionBackground->setInvisible(false);
+
+	if (_visible) {
+		if (_actionDescriptionBackground)
+			_actionDescriptionBackground->show();
+		_actionDescription->show();
+	}
+
+	_actionDescriptionTime = 2.0f;
+}
+
+void HUD::hideActionDescription() {
+	_actionDescriptionTime = 0.0f;
+
+	if (_actionDescriptionBackground) {
+		_actionDescriptionBackground->setInvisible(true);
+		_actionDescriptionBackground->hide();
+	}
+	if (_actionDescription) {
+		_actionDescription->setInvisible(true);
+		_actionDescription->hide();
 	}
 }
 
@@ -391,14 +707,10 @@ void HUD::showTargetInformation(Object *UNUSED(object)) {
 }
 
 void HUD::updateTargetInformation(KotORBase::Object *object, float x, float y) {
-	if (_targetDirty) {
-		clearTargetButtonActions();
-		fillTargetButtonActions();
-	}
+	if (_targetDirty)
+		refreshActionMenus();
 
-	bool hasActions = (_targetButtonActions[0] != kActionInvalid) ||
-	                  (_targetButtonActions[1] != kActionInvalid) ||
-	                  (_targetButtonActions[2] != kActionInvalid);
+	const bool hasActions = hasTargetActions();
 
 	float halfSelectionSize = kSelectionCircleSize / 2.0f;
 	float elementY = y + halfSelectionSize + 1.0f;
@@ -487,6 +799,20 @@ void HUD::notifyJournalUpdated() {
 
 void HUD::update(float dt) {
 	_floatingText.update(dt);
+
+	// The leader, its target, inventory, feats and powers change: rebuild
+	// the action menus a few times a second, keeping each panel's selection.
+	_actionMenuRefreshTime -= dt;
+	if (_actionMenuRefreshTime <= 0.0f) {
+		_actionMenuRefreshTime = 0.5f;
+		refreshActionMenus();
+	}
+
+	if (_actionDescriptionTime > 0.0f) {
+		_actionDescriptionTime -= dt;
+		if (_actionDescriptionTime <= 0.0f)
+			hideActionDescription();
+	}
 
 	if (_journalNotificationTime > 0.0f) {
 		_journalNotificationTime -= dt;
