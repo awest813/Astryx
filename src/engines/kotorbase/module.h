@@ -152,6 +152,11 @@ public:
 	Graphics::Aurora::FadeQuad &getFadeQuad();
 	void holdWorldFadeInForDialog();
 	void releaseWorldFadeInForDialog();
+
+	/** Whether the current area can't be left (GetAreaUnescapable): the area
+	 *  file's flag, unless a script set it for this area. */
+	bool getAreaUnescapable() const;
+	void setAreaUnescapable(bool unescapable);
 	/** Fade a freshly entered module in from black (seconds). */
 	static constexpr float kModuleFadeInTime = 1.0f;
 	void startModuleFadeIn();

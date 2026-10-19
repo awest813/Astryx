@@ -24,6 +24,7 @@
 
 #include "src/common/configman.h"
 #include "src/common/strutil.h"
+#include "src/common/debug.h"
 
 #include "src/events/types.h"
 
@@ -503,10 +504,17 @@ void DialogGUI::playParticipantAnimations(const Aurora::DLGFile::Line &entry) {
 			continue;
 		}
 
-		// Numbers from 10000 are looping animations, the others play once.
+		// Numbers from 10000 are looping conversation animations with their
+		// own numbering; the others are animations.2da rows and play once.
 		const bool looping = animation.animation >= 10000;
-		const Common::UString name = getAnimationNameById(
-			static_cast<int>(looping ? animation.animation - 10000 : animation.animation));
+		const int row = looping ? getDialogAnimationRow(static_cast<int>(animation.animation))
+		                        : static_cast<int>(animation.animation);
+		if (row < 0) {
+			debugC(Common::kDebugEngineLogic, 1, "Unknown DLG animation %u", animation.animation);
+			continue;
+		}
+
+		const Common::UString name = getAnimationNameById(row);
 		if (name.empty())
 			continue;
 

@@ -131,6 +131,31 @@ new way:
   covers the screen from the moment it's called. Check that the party
   selection screen is readable when a script opens it over a black fade
   (Trask joining).
+- **Script facings and animations** were wrong in earlier builds and are
+  fixed; confirm in play:
+  - `SetFacing`/`GetFacing`/`Location()` use script degrees (0 = east, 90 =
+    north). Everything a script turned used to end up 90° off. Trask and
+    the player should face each other when he joins.
+  - `ActionPlayAnimation`/`PlayAnimation` constants map to `animations.2da`
+    rows as KotOR.js maps them (READY uses the held weapon's stance; droids
+    and beasts have their own rows); they used to be read as row numbers.
+    Fire-and-forget animations play once, a duration loops that long.
+  - DLG participant animations from 10000 use KotOR.js' conversation
+    numbering (10038 talk normal → row 25); unknown numbers are logged
+    (`--debug=ELogic:1`) and skipped.
+  - `CutsceneAttack` plays the animation row it's given; `CancelCombat` acts
+    on the creature given (it used to cancel the caller).
+- **Screen shake:** a visual effect shakes the camera if its
+  `visualeffects.2da` row has `shaketype`/`shakeduration` (as NWN's does) or
+  a label containing "shake" (the Endar Spire's explosions). Strength and
+  the 1 s default are guesses. `PlayRumblePattern` does nothing.
+- **Damage to doors and placeables** from effects runs their OnDamaged and
+  OnDeath scripts and breaks them (the exploding barrel in the opening
+  cutscene); plot objects and ones without HP aren't harmed.
+- **Endar Spire progress counters:** the doors after the Sith fights open
+  when `END_ROOM7_DEAD`/`END_ROOM8_DEAD` count up, which needs the Sith's
+  default death script to signal user event 1007. If a door stays shut after
+  a fight, that's where to look.
 - **Party members removed by scripts** (`RemovePartyMember`, e.g. Trask
   before the Dark Jedi duel) stay in the area as NPCs, as in the original;
   scripts that want them gone destroy them. They used to be deleted, which

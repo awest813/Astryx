@@ -46,6 +46,9 @@ Item::Item(const Common::UString &item) : Object(kObjectTypeItem), _stackSize(1)
 	std::unique_ptr<Aurora::GFF3File> uti = std::make_unique<Aurora::GFF3File>(item, Aurora::kFileTypeUTI);
 
 	load(uti->getTopLevel());
+
+	// Inventories are keyed by the template an item was made from
+	_templateResRef = item;
 }
 
 int Item::getCost() const {

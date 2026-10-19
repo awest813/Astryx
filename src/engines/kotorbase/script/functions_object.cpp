@@ -576,10 +576,19 @@ void Functions::getItemPossessedBy(Aurora::NWScript::FunctionContext &ctx) {
 		}
 	}
 
-	// Then the inventory (tag+count): hand out a live Item object for scripting.
-	// Only while the item is still carried: the live object of an item since
-	// used up (HealingDone's medpack) must not make it look possessed.
-	if (_game->getModule().getInventoryOf(*creature).hasItem(tag)) {
+	// Then the inventory, which is keyed by template, not tag. Hand out a live
+	// Item object for scripting, but only while its template is still carried:
+	// the live object of an item since used up (HealingDone's medpack) must not
+	// make it look possessed. Its tag may differ from the template.
+	const Inventory &inventory = _game->getModule().getInventoryOf(*creature);
+	if (Item *live = creature->findInventoryItemByTag(tag)) {
+		if (inventory.countItems(live->getTemplateResRef()) > 0) {
+			ctx.getReturn() = live;
+			return;
+		}
+	}
+
+	if (inventory.countItems(tag) > 0) {
 		Item *item = creature->addScriptItem(tag);
 		if (item)
 			ctx.getReturn() = item;

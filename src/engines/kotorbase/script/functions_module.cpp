@@ -130,12 +130,11 @@ void Functions::setTime(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::setAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
-	const bool unescapable = ctx.getParams()[0].getInt() != 0;
-	_game->getModule().setGlobalBoolean("__area_unescapable", unescapable);
+	_game->getModule().setAreaUnescapable(ctx.getParams()[0].getInt() != 0);
 }
 
 void Functions::getAreaUnescapable(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = _game->getModule().getGlobalBoolean("__area_unescapable") ? 1 : 0;
+	ctx.getReturn() = _game->getModule().getAreaUnescapable() ? 1 : 0;
 }
 
 void Functions::getCurrentForcePoints(Aurora::NWScript::FunctionContext &ctx) {

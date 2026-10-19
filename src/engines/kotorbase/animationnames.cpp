@@ -24,6 +24,7 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "src/common/string.h"
@@ -191,6 +192,23 @@ Common::UString getAnimationRowName(int row, const char *fallback) {
 }
 
 } // End of anonymous namespace
+
+int getDialogAnimationRow(int number) {
+	static const std::pair<int, int> kDialogAnimations[] = {
+		{  30,  18 }, {  35,  24 }, {  38,  25 }, {  39,  27 }, {  40,  26 }, {  41,  29 },
+		{  42,  28 }, { 121,  44 }, { 127,  38 }, { 403, 462 }, { 404, 463 }, { 405, 464 },
+		{ 406, 465 }, { 407, 466 }, { 408, 467 }, { 409, 468 }, { 410, 469 }, { 411, 470 },
+		{ 412, 471 }, { 413, 472 }, { 424, 316 }, { 425, 317 }, { 426, 318 }, { 427, 319 },
+		{ 428, 320 }, { 499, 557 }, { 500, 558 }, { 501, 559 }, { 502, 560 }, { 503, 561 },
+		{ 504, 562 }, { 507, 565 }, { 508, 566 }
+	};
+
+	for (const auto &animation : kDialogAnimations)
+		if (number == 10000 + animation.first)
+			return animation.second;
+
+	return -1;
+}
 
 Common::UString getScriptAnimationName(int animation, int weapon, bool simple) {
 	if (animation == kScriptAnimationReady) {

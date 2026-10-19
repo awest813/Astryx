@@ -293,6 +293,23 @@ void Module::startModuleFadeIn() {
 	_fade->fadeIn();
 }
 
+bool Module::getAreaUnescapable() const {
+	if (!_area)
+		return false;
+
+	// SetAreaUnescapable() overrides the area file's flag for that area only
+	const int override = getGlobalNumber("__area_unescapable_" + _area->getResRef());
+	if (override != 0)
+		return override == 2;
+
+	return _area->isUnescapable();
+}
+
+void Module::setAreaUnescapable(bool unescapable) {
+	if (_area)
+		setGlobalNumber("__area_unescapable_" + _area->getResRef(), unescapable ? 2 : 1);
+}
+
 void Module::releaseWorldFadeInForDialog() {
 	if (!_holdWorldFadeInForDialog)
 		return;
@@ -786,9 +803,12 @@ void Module::enter() {
 	// game, not again when coming back or loading a save made in it.
 	const Common::UString startMovie = _ifo.getStartMovie();
 	const Common::UString startMoviePlayed = "__startmovie_" + _module;
-	if (!startMovie.empty() && !_loadedFromSaveGame && !getGlobalBoolean(startMoviePlayed)) {
+	if (!startMovie.empty() && !getGlobalBoolean(startMoviePlayed)) {
+		// A save made in the module (even by an older build without this
+		// flag) is past the movie.
 		setGlobalBoolean(startMoviePlayed, true);
-		playMovie(startMovie);
+		if (!_loadedFromSaveGame)
+			playMovie(startMovie);
 	}
 
 	float entryX, entryY, entryZ, _;
@@ -807,11 +827,6 @@ void Module::enter() {
 	moveParty(entryX, entryY, entryZ, _);
 
 	startModuleFadeIn();
-
-	// SetAreaUnescapable() changes the current area only: a new area starts
-	// with its own flag (a loaded save keeps the one it was saved with).
-	if (_area && !_loadedFromSaveGame)
-		setGlobalBoolean("__area_unescapable", _area->isUnescapable());
 
 	// A loaded save resumes inside the triggers it was saved in: their
 	// OnEnter already ran before the save.
@@ -914,12 +929,15 @@ void Module::leaveArea() {
 	_minigame.reset();
 
 	if (_area) {
-		_area->savePersistence();
 		_area->runScript(kScriptExit, _area.get(), _pc);
 
 		_area->hide();
 
 		runScript(kScriptExit, this, _pc);
+
+		// After the OnExit scripts, so what they set on the area, the module
+		// or the area's objects is kept for the next visit.
+		_area->savePersistence();
 	}
 }
 
@@ -3163,8 +3181,11 @@ void Module::startConversation(const Common::UString &name, Aurora::NWScript::Ob
 			finalName = situated->getConversation();
 	}
 
-	if (finalName.empty())
+	if (finalName.empty()) {
+		// HoldWorldFadeInForDialog waits for a conversation that won't come
+		releaseWorldFadeInForDialog();
 		return;
+	}
 
 	_lastConversation = finalName;
 	_conversationPausedSince = 0;
@@ -3188,6 +3209,9 @@ void Module::startConversation(const Common::UString &name, Aurora::NWScript::Ob
 		releaseWorldFadeInForDialog();
 
 		updateFrameTimestamp();
+	} else {
+		// No start entry applied: don't leave the screen held black
+		releaseWorldFadeInForDialog();
 	}
 }
 

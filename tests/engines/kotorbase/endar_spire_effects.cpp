@@ -632,3 +632,13 @@ GTEST_TEST(EndarSpireEffects, setLightsaberPoweredOverride) {
 	call(0, 0); // Back to the game's say.
 	EXPECT_TRUE(bandon.isLightsaberPowered());
 }
+
+// DLG participant animations from 10000 have their own numbering, not the
+// script constants' nor animations.2da's (as KotOR.js maps them).
+GTEST_TEST(EndarSpireEffects, dialogAnimationNumbersMapToTheirRows) {
+	EXPECT_EQ(Engines::KotORBase::getDialogAnimationRow(10038), 25); // Talk normal
+	EXPECT_EQ(Engines::KotORBase::getDialogAnimationRow(10030), 18);
+	EXPECT_EQ(Engines::KotORBase::getDialogAnimationRow(10508), 566);
+	EXPECT_EQ(Engines::KotORBase::getDialogAnimationRow(10001), -1);
+	EXPECT_EQ(Engines::KotORBase::getDialogAnimationRow(38), -1);
+}

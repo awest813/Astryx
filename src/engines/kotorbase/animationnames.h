@@ -49,6 +49,11 @@ Common::UString getAnimationNameById(int animID);
  */
 Common::UString getScriptAnimationName(int animation, int weapon, bool simple);
 
+/** The animations.2da row of a DLG participant animation number from 10000
+ *  (looping conversation animations, e.g. 10038 talk normal), as KotOR.js'
+ *  CutsceneManager.getDialogAnimation maps them; -1 for an unknown number. */
+int getDialogAnimationRow(int number);
+
 /** Is this script ANIMATION_* constant a fire-and-forget (play once) one? */
 bool isFireAndForgetScriptAnimation(int animation);
 
