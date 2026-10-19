@@ -92,8 +92,9 @@ new way:
   are unverified against the retail GUI. Leviathan is script-driven only.
 - **Ending:** `StartCreditSequence` is a no-op; `EndGame` returns to the
   main menu.
-- **Script approximations:** `CutsceneAttack` applies its damage when
-  queued, not on impact; SWMG bullet hit parts aren't tracked; many natives are simplified (see
+- **Script approximations:** `CutsceneAttack` damage lands when the
+  attacker reaches its target and starts the swing, not at the animation's
+  hit frame; SWMG bullet hit parts aren't tracked; many natives are simplified (see
   [FULL_PARITY_AUDIT_AND_PLAN.md](FULL_PARITY_AUDIT_AND_PLAN.md)).
 - **Cutscene assumptions to confirm in play:** animated camera shots and
   cutscene participant animations (DLG numbers from 1200) are named
