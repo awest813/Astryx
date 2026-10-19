@@ -184,6 +184,8 @@ public:
 	void runPendingSpawnEvents();
 	/** Remove objects whose deferred destruction is due. Call outside object iteration. */
 	void processPendingDestruction();
+	/** The game was paused for @p ms: push deferred destructions back as long. */
+	void delayPendingDestruction(uint32_t ms);
 
 	// Persistence
 	void loadPersistence();

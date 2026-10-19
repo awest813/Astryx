@@ -1568,6 +1568,11 @@ void Area::processPendingDestruction() {
 	}
 }
 
+void Area::delayPendingDestruction(uint32_t ms) {
+	for (auto &pending : _pendingDestruction)
+		pending.second += ms;
+}
+
 void Area::releaseFromPersistence(Object &object) {
 	// Mark the GIT instance as gone for future visits, and stop tracking it.
 	if (object.isPersistent() && !object.getPersistenceKey().empty()) {
