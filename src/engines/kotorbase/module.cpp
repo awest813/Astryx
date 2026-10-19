@@ -633,6 +633,7 @@ void Module::unloadIFO() {
 }
 
 void Module::unloadArea() {
+	_minigame.reset(); // It refers to the area.
 	_area.reset();
 }
 
