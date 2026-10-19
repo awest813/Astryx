@@ -158,6 +158,7 @@ public:
 	// Inventory
 
 	Inventory &getInventory();
+	const Inventory &getInventory() const;
 
 	void addInventoryItem(const Common::UString &tag, int count = 1);
 	void removeInventoryItem(const Common::UString &tag, int count = 1);

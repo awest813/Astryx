@@ -22,6 +22,8 @@
  *  Inventory item in KotOR games.
  */
 
+#include <map>
+
 #include "src/common/string.h"
 #include "src/common/strutil.h"
 
@@ -62,7 +64,7 @@ int Item::getPropertyBonusSum(int propertyType) const {
 	int sum = 0;
 	for (const ItemPropertyData &prop : _properties) {
 		if (prop.type == propertyType)
-			sum += prop.param1Value;
+			sum += prop.amount();
 	}
 	return sum;
 }
@@ -118,6 +120,7 @@ void Item::load(const Aurora::GFF3Struct &gff) {
 		prop.subtype = (*it)->getUint("Subtype");
 		prop.param1 = (*it)->getUint("Param1");
 		prop.param1Value = (*it)->getUint("Param1Value");
+		prop.costValue = (*it)->getUint("CostValue", 0);
 		_properties.push_back(prop);
 	}
 }
@@ -179,6 +182,81 @@ int Item::getItemPropertySubtype(int propertyType, int fallback) const {
 			return prop.subtype;
 	}
 	return fallback;
+}
+
+int Item::getAbilityBonus(Ability ability) const {
+	int bonus = 0;
+	for (const ItemPropertyData &prop : _properties) {
+		if ((prop.type == kItemPropertyAbilityBonus) && (prop.subtype == ability))
+			bonus += prop.amount();
+	}
+	return bonus;
+}
+
+int resolveCastSpellSubtype(int subtype, const Aurora::TwoDAFile *subtypeTable) {
+	if (!subtypeTable || (subtype < 0) || (static_cast<size_t>(subtype) >= subtypeTable->getRowCount()))
+		return subtype;
+
+	const Aurora::TwoDARow &row = subtypeTable->getRow(subtype);
+	if (row.empty("spellindex"))
+		return subtype;
+
+	return row.getInt("spellindex");
+}
+
+/** The subtype 2DA of the CastSpell property, when it isn't spells.2da itself. */
+static const Aurora::TwoDAFile *getCastSpellSubtypeTable() {
+	try {
+		const Aurora::TwoDARow &def = TwoDAReg.get2DA("itempropdef").getRow(kItemPropertyCastSpell);
+		const Common::UString &table = def.getString("subtyperesref");
+		if (table.empty() || table.equalsIgnoreCase("spells"))
+			return nullptr;
+
+		return &TwoDAReg.get2DA(table);
+	} catch (...) {
+		return nullptr;
+	}
+}
+
+std::vector<int> Item::getCastSpells() const {
+	std::vector<int> spells;
+
+	const Aurora::TwoDAFile *subtypeTable = nullptr;
+	bool haveTable = false;
+
+	for (const ItemPropertyData &prop : _properties) {
+		if (prop.type != kItemPropertyCastSpell)
+			continue;
+
+		if (!haveTable) {
+			subtypeTable = getCastSpellSubtypeTable();
+			haveTable = true;
+		}
+
+		const int spell = resolveCastSpellSubtype(prop.subtype, subtypeTable);
+		if (spell >= 0)
+			spells.push_back(spell);
+	}
+
+	return spells;
+}
+
+const std::vector<int> &Item::getConsumableSpells(const Common::UString &resRef) {
+	static std::map<Common::UString, std::vector<int>> cache;
+
+	std::map<Common::UString, std::vector<int>>::iterator it = cache.find(resRef);
+	if (it != cache.end())
+		return it->second;
+
+	std::vector<int> spells;
+	try {
+		const Item item(resRef);
+		if (item._equipableSlotsMask == 0)
+			spells = item.getCastSpells();
+	} catch (...) {
+	}
+
+	return cache.emplace(resRef, spells).first->second;
 }
 
 int Item::getStackSize() const {

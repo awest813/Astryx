@@ -58,8 +58,10 @@ struct Action {
 	bool  cheat { false };     ///< CastSpell: bCheat, cast without spending Force points.
 	int   step { 0 };          ///< Progress of an action done in steps (random walk, lock picking, mines).
 	glm::vec3 origin { 0.0f, 0.0f, 0.0f }; ///< RandomWalk: where the walk started.
-	/** OpenLock: tag of the security tunneler used (its Thieves' Tools bonus applies). */
+	/** Inventory tag of the item involved: OpenLock, the security tunneler used (its
+	 *  Thieves' Tools bonus applies); CastSpell, the item casting the spell. */
 	Common::UString item;
+	bool  consumeItem { false }; ///< CastSpell: use up one of @c item from the inventory.
 
 	/** kActionDoCommand: the script closure to run when the action is reached. */
 	Common::UString script;

@@ -1410,6 +1410,10 @@ KotOREffectType activeEffectToKotOR(EffectType type) {
 }
 
 Effect wrapActiveEffect(const Creature::ActiveEffect &active) {
+	if (active.type == kEffectModifier)
+		return Effect(static_cast<KotOREffectType>(active.kotorType), active.value, active.subType,
+		              active.spellId, active.limit);
+
 	return Effect(activeEffectToKotOR(active.type), active.value, 0, active.spellId);
 }
 
@@ -1454,7 +1458,7 @@ void Functions::removeEffect(Aurora::NWScript::FunctionContext &ctx) {
 
 	const auto &effects = creature->getActiveEffects();
 	for (size_t i = 0; i < effects.size(); ++i) {
-		Effect wrapped(activeEffectToKotOR(effects[i].type), effects[i].value, 0, effects[i].spellId);
+		const Effect wrapped = wrapActiveEffect(effects[i]);
 		if (wrapped.getType() == effect->getType() &&
 		    wrapped.getAmount() == effect->getAmount() &&
 		    wrapped.getSpellId() == effect->getSpellId()) {
@@ -1911,21 +1915,17 @@ void Functions::getIsPlayableRacialType(Aurora::NWScript::FunctionContext &ctx) 
 
 void Functions::effectLinkEffects(Aurora::NWScript::FunctionContext &ctx) {
 	// EffectLinkEffects(effect eChildEffect, effect eParentEffect) → effect
-	// Linked effects are not modelled; return a copy of the first usable
-	// (non-null, non-visual) effect, preferring the child (param 0) so that
-	// scripts linking a gameplay effect with a VFX still get the gameplay part.
+	// The parent with the child (and whatever is linked to it) linked to it:
+	// applied together with one duration, removed together.
 	const Effect *child  = dynamic_cast<const Effect *>(ctx.getParams()[0].getEngineType());
 	const Effect *parent = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
 
-	const Effect *result = nullptr;
-	if (child && (child->getType() != kKotOREffectVisual))
-		result = child;
-	else if (parent && (parent->getType() != kKotOREffectVisual))
-		result = parent;
-	else
-		result = child ? child : parent;
+	if (child && parent) {
+		ctx.getReturn() = linkEffects(*child, *parent);
+		return;
+	}
 
-	ctx.getReturn() = static_cast<const Aurora::NWScript::EngineType *>(result);
+	ctx.getReturn() = static_cast<const Aurora::NWScript::EngineType *>(child ? child : parent);
 }
 
 void Functions::getTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
@@ -1961,18 +1961,24 @@ int immunityForEffect(KotOREffectType type) {
 
 void Functions::getIsLinkImmune(Aurora::NWScript::FunctionContext &ctx) {
 	// GetIsLinkImmune(object oTarget, effect eEffect) → int
-	// Linked effects are not modelled, so only the effect itself is checked.
+	// TRUE if the target is immune to the effect or to any effect linked to it.
 	ctx.getReturn() = 0;
 	Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 0));
 	const Effect *effect = dynamic_cast<const Effect *>(ctx.getParams()[1].getEngineType());
 	if (!creature || !effect)
 		return;
 
-	const int immunityType = immunityForEffect(effect->getType());
-	if (immunityType == kImmunityTypeNone)
-		return;
+	std::vector<KotOREffectType> types(1, effect->getType());
+	for (const Effect &linked : effect->getLinkedEffects())
+		types.push_back(linked.getType());
 
-	ctx.getReturn() = creature->isImmune(immunityType) ? 1 : 0;
+	for (KotOREffectType type : types) {
+		const int immunityType = immunityForEffect(type);
+		if ((immunityType != kImmunityTypeNone) && creature->isImmune(immunityType)) {
+			ctx.getReturn() = 1;
+			return;
+		}
+	}
 }
 
 } // End of namespace KotORBase

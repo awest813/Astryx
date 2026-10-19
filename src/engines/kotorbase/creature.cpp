@@ -4,6 +4,7 @@ either version 3 * of the License, or (at your option) any later version. * * xo
 without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the * GNU General Public License for more details. * * You should have received a copy of the GNU General Public License * along with xoreos. If not, see <http://www.gnu.org/licenses/>. */
 /** @file *  Creature within an area in KotOR games. */
 #include <cassert>
+#include <cfloat>
 #include <cmath>
 #include "external/glm/gtc/type_ptr.hpp"
 #include "src/common/util.h"
@@ -34,8 +35,13 @@ without even the implied warranty of * MERCHANTABILITY or FITNESS FOR A PARTICUL
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotorbase/module.h"
 #include "src/engines/kotorbase/game.h"
+#include "src/engines/kotorbase/animationnames.h"
 namespace Engines {
 namespace KotORBase {
+
+/** animations.2da row of the fall a Force push throws a creature into (as KotOR.js plays it). */
+static const int kAnimationForcePushed = 84;
+
 		Creature::Creature(
 		const Common::UString &resRef) :		Object(kObjectTypeCreature),		_commandable(true),		_walkRate(0.0f),		_runRate(0.0f) {
 			init();
@@ -143,8 +149,22 @@ namespace KotORBase {
 			debugC(Common::kDebugEngineLogic, 1, 	       "Saving Throw (%d): d20(%d) + bonus(%d) = %d vs DC %d -> %s",	       (int)type, d20, bonus, d20 + bonus, dc, success ? "SUCCESS" : "FAILED");
 			return success;
 		}
-		int Creature::getSavingThrowBonus(SavingThrow type) {
-			return _info.getSavingThrowBonus(type);
+		int Creature::getSavingThrowBonus(SavingThrow type) const {
+			// The class bonus, with the current ability modifier instead of the base one.
+			Ability ability = kAbilityConstitution;
+			if (type == kSavingThrowReflex)
+				ability = kAbilityDexterity;
+			else if (type == kSavingThrowWill)
+				ability = kAbilityWisdom;
+
+			int bonus = _info.getSavingThrowBonus(type) - _info.getAbilityModifier(ability) + getAbilityModifier(ability);
+
+			// Saving throw effects: SAVING_THROW_ALL, then the specific one.
+			bonus += _savingThrowModifiers[0];
+			if ((type >= kSavingThrowFortitude) && (type <= kSavingThrowWill))
+				bonus += _savingThrowModifiers[type + 1];
+
+			return bonus;
 		}
 		void Creature::setAIArchetype(AIArchetype archetype) {
 			_aiArchetype = archetype;
@@ -175,14 +195,41 @@ namespace KotORBase {
 		const {
 			return _runRate;
 		}
-		int Creature::getSkillRank(Skill skill) {
+		int Creature::getSkillRank(Skill skill) const {
 			int baseRank = _info.getSkillRank(skill);
 			int modified = baseRank + getSkillModifier(skill);
 			return (modified < 0) ? 0 : modified;
 		}
 
-		int Creature::getAbilityScore(Ability ability) {
-			return _info.getAbilityScore(ability);
+		int Creature::getAbilityScore(Ability ability) const {
+			const int base = _info.getAbilityScore(ability);
+			if ((ability < kAbilityStrength) || (ability > kAbilityCharisma))
+				return base;
+
+			const int bonus = _abilityModifiers[ability] + getEquipmentAbilityBonus(ability);
+
+			// Penalties never take a score below 3.
+			if (bonus < 0)
+				return MAX(base + bonus, MIN(base, 3));
+
+			return base + bonus;
+		}
+
+		int Creature::getAbilityModifier(Ability ability) const {
+			const int delta = getAbilityScore(ability) - 10;
+			if (delta >= 0)
+				return delta / 2;
+
+			return -(((-delta) + 1) / 2);
+		}
+
+		int Creature::getEquipmentAbilityBonus(Ability ability) const {
+			int bonus = 0;
+			for (const auto &equipped : _equipment)
+				if (equipped.second)
+					bonus += equipped.second->getAbilityBonus(ability);
+
+			return bonus;
 		}
 
 		void Creature::setForcePoints(
@@ -725,6 +772,40 @@ namespace KotORBase {
 			}
 			return nullptr;
 		}
+		std::vector<Creature::ItemPower> Creature::getEquippedItemPowers() const {
+			std::vector<ItemPower> powers;
+
+			for (const auto &equipped : _equipment) {
+				if (!equipped.second)
+					continue;
+
+				const Common::UString &item = _info.getEquippedItem(equipped.first);
+				for (int spell : equipped.second->getCastSpells()) {
+					ItemPower power;
+					power.spellId = spell;
+					power.item    = item;
+					powers.push_back(power);
+				}
+			}
+
+			return powers;
+		}
+
+		std::vector<Creature::ItemPower> Creature::getInventoryItemPowers() const {
+			std::vector<ItemPower> powers;
+
+			for (const auto &item : _info.getInventory().getItems()) {
+				for (int spell : Item::getConsumableSpells(item.first)) {
+					ItemPower power;
+					power.spellId = spell;
+					power.item    = item.first;
+					powers.push_back(power);
+				}
+			}
+
+			return powers;
+		}
+
 		float Creature::getChallengeRating()
 		const {
 			if (_challengeRating >= 0.0f)
@@ -748,7 +829,7 @@ namespace KotORBase {
 		}
 		int Creature::getAC()
 		const {
-			int ac = 10 + _info.getAbilityModifier(kAbilityDexterity);
+			int ac = 10 + getAbilityModifier(kAbilityDexterity);
 			const Item *armor = getEquipedItem(kInventorySlotBody);
 			if (armor)		ac += armor->getACBonus();
 			ac += _armorClassModifier;
@@ -1038,7 +1119,100 @@ namespace KotORBase {
 
 		int Creature::getDamageResistance(int damageType) const {
 			std::map<int, int>::const_iterator it = _damageResistance.find(damageType);
-			return it != _damageResistance.end() ? it->second : 0;
+			int resistance = (it != _damageResistance.end()) ? it->second : 0;
+
+			for (const ActiveEffect &e : _effects)
+				if ((e.type == kEffectModifier) && !e.expired &&
+				    (e.kotorType == kKotOREffectDamageResistance) && (e.subType & damageType))
+					resistance += e.value;
+
+			return resistance;
+		}
+
+		int Creature::absorbDamage(int damage, int damageType) {
+			if (damage <= 0)
+				return 0;
+
+			// Innate resistance (SetDamageResistance) takes its share of every hit.
+			std::map<int, int>::const_iterator it = _damageResistance.find(damageType);
+			if (it != _damageResistance.end())
+				damage = MAX(0, damage - it->second);
+
+			static const int kPhysicalDamage = kDamageTypeBludgeoning | kDamageTypePiercing | kDamageTypeSlashing;
+
+			for (ActiveEffect &e : _effects) {
+				if (damage <= 0)
+					break;
+				if ((e.type != kEffectModifier) || e.expired)
+					continue;
+
+				const bool resistance = (e.kotorType == kKotOREffectDamageResistance) ||
+				                        (e.kotorType == kKotOREffectForceShield);
+				const bool reduction  = (e.kotorType == kKotOREffectDamageReduction);
+				if (!resistance && !reduction)
+					continue;
+
+				// Resistance and shields cover their damage types (all for 0),
+				// damage reduction stops physical damage.
+				if (resistance && (e.subType != 0) && !(e.subType & damageType))
+					continue;
+				if (reduction && !(damageType & kPhysicalDamage))
+					continue;
+
+				// value: absorbed per hit (0: all of it); limit: in total (0: no limit).
+				int absorbed = (e.value > 0) ? MIN(e.value, damage) : damage;
+				if (e.limit > 0) {
+					absorbed = MIN(absorbed, e.limit);
+					e.limit -= absorbed;
+					if (e.limit <= 0) {
+						// Used up: the effect ends at the next update.
+						e.expired  = true;
+						e.duration = 0.0f;
+					}
+				}
+
+				damage -= absorbed;
+			}
+
+			return MAX(0, damage);
+		}
+
+		float Creature::knockBack(Area &area, float fromX, float fromY, float distance) {
+			float x, y, z;
+			getPosition(x, y, z);
+
+			float dirX = x - fromX;
+			float dirY = y - fromY;
+			float length = std::sqrt(dirX * dirX + dirY * dirY);
+			if (length < 0.001f) {
+				// No source to push away from: push backwards from the creature's facing.
+				float ox, oy, oz, angle;
+				getOrientation(ox, oy, oz, angle);
+				const float rad = Common::deg2rad(angle);
+				dirX =  std::sin(rad);
+				dirY = -std::cos(rad);
+				length = 1.0f;
+			}
+
+			dirX /= length;
+			dirY /= length;
+
+			// Land as far away as possible, but only where the walkmesh goes.
+			for (float d = distance; d >= 1.0f; d -= 1.0f) {
+				const float nx = x + dirX * d;
+				const float ny = y + dirY * d;
+				const float nz = area.evaluateElevation(nx, ny);
+				if (nz == FLT_MIN)
+					continue;
+				if (!area.walkable(glm::vec3(x, y, z + 0.1f), glm::vec3(nx, ny, nz + 0.1f)))
+					continue;
+
+				setPosition(nx, ny, nz);
+				area.notifyObjectMoved(*this);
+				return d;
+			}
+
+			return 0.0f;
 		}
 
 		void Creature::setDamageResistance(int damageType, int amount) {
@@ -1111,17 +1285,17 @@ namespace KotORBase {
 				case kSkillDemolitions:
 				case kSkillRepair:
 				case kSkillSecurity:
-					bonus += _info.getAbilityModifier(kAbilityIntelligence);
+					bonus += getAbilityModifier(kAbilityIntelligence);
 					break;
 				case kSkillStealth:
-					bonus += _info.getAbilityModifier(kAbilityDexterity);
+					bonus += getAbilityModifier(kAbilityDexterity);
 					break;
 				case kSkillAwareness:
 				case kSkillTreatInjury:
-					bonus += _info.getAbilityModifier(kAbilityWisdom);
+					bonus += getAbilityModifier(kAbilityWisdom);
 					break;
 				case kSkillPersuade:
-					bonus += _info.getAbilityModifier(kAbilityCharisma);
+					bonus += getAbilityModifier(kAbilityCharisma);
 					break;
 				default:
 					break;
@@ -1325,27 +1499,145 @@ namespace KotORBase {
 				case kEffectSpeed:
 					// Movement speed increase - future implementation
 					break;
+				case kEffectModifier:
+					adjustEffectModifiers(effect, 1);
+					break;
 				default:
 					break;
 			}
 		}
+
+		/** Duration of DURATION_TYPE_PERMANENT effects. */
+		static const float kPermanentEffectDuration = 1.0e9f;
+
 		void Creature::applyEffect(
 		const Engines::KotORBase::Effect &effect,
 		float durationOverride) {
+			// Linked effects share their duration and a link id, so that removing
+			// one of them removes them all.
+			const int linkId = effect.getLinkedEffects().empty() ? 0 : ++_nextEffectLinkId;
+
+			applyEffectPart(effect, durationOverride, linkId);
+			for (const Effect &part : effect.getLinkedEffects()) {
+				if (_dead && (part.getType() != kKotOREffectResurrection))
+					break;
+
+				applyEffectPart(part, durationOverride, linkId);
+			}
+		}
+
+		void Creature::addActiveEffect(const ActiveEffect &effect) {
+			_effects.push_back(effect);
+			applyEffect(effect);
+		}
+
+		void Creature::adjustEffectModifiers(const ActiveEffect &effect, int sign) {
+			const int value = effect.value * sign;
+
+			switch (effect.kotorType) {
+				case kKotOREffectACIncrease:
+					adjustArmorClassModifier(value);
+					break;
+				case kKotOREffectACDecrease:
+					adjustArmorClassModifier(-value);
+					break;
+				case kKotOREffectAttackIncrease:
+					adjustAttackModifier(value);
+					break;
+				case kKotOREffectAttackDecrease:
+					adjustAttackModifier(-value);
+					break;
+				case kKotOREffectDamageIncrease:
+					_damageModifier += value;
+					break;
+				case kKotOREffectDamageDecrease:
+					_damageModifier -= value;
+					break;
+				case kKotOREffectAbilityIncrease:
+				case kKotOREffectAbilityDecrease:
+					if ((effect.subType >= kAbilityStrength) && (effect.subType <= kAbilityCharisma))
+						_abilityModifiers[effect.subType] +=
+							(effect.kotorType == kKotOREffectAbilityIncrease) ? value : -value;
+					break;
+				case kKotOREffectSkillIncrease:
+					adjustSkillModifier(static_cast<Skill>(effect.subType), value);
+					break;
+				case kKotOREffectSkillDecrease:
+					adjustSkillModifier(static_cast<Skill>(effect.subType), -value);
+					break;
+				case kKotOREffectSavingThrowIncrease:
+				case kKotOREffectSavingThrowDecrease:
+					// SAVING_THROW_ALL (0), FORT (1), REFLEX (2), WILL (3).
+					if ((effect.subType >= 0) && (effect.subType < static_cast<int>(_savingThrowModifiers.size())))
+						_savingThrowModifiers[effect.subType] +=
+							(effect.kotorType == kKotOREffectSavingThrowIncrease) ? value : -value;
+					break;
+				case kKotOREffectForceResistanceIncrease:
+					adjustForceResistance(value);
+					break;
+				case kKotOREffectForceResistanceDecrease:
+					adjustForceResistance(-value);
+					break;
+				case kKotOREffectBlasterDeflectionIncrease:
+					adjustBlasterDeflection(value);
+					break;
+				case kKotOREffectBlasterDeflectionDecrease:
+					adjustBlasterDeflection(-value);
+					break;
+				case kKotOREffectDamageImmunityIncrease:
+					adjustDamageImmunity(effect.subType, value);
+					break;
+				case kKotOREffectDamageImmunityDecrease:
+					adjustDamageImmunity(effect.subType, -value);
+					break;
+				case kKotOREffectInvisibility:
+					_invisibility += sign;
+					break;
+				default:
+					// Damage resistance/reduction and Force shields act in absorbDamage().
+					break;
+			}
+		}
+		void Creature::applyEffectPart(
+		const Engines::KotORBase::Effect &effect,
+		float durationOverride,
+		int linkId) {
 			auto timed = [&](EffectType type, float defaultDuration, int value = 0) {
 				const float duration = durationOverride >= 0.0f ? durationOverride : defaultDuration;
+				ActiveEffect e;
+				e.type = type;
+				e.duration = duration;
+				e.value = value;
+				e.spellId = effect.getSpellId();
+				e.linkId = linkId;
 				if (duration <= 0.0f) {
 					// DURATION_TYPE_INSTANT: apply mechanical impact, do not linger.
-					ActiveEffect e;
-					e.type = type;
-					e.duration = 0.0f;
-					e.value = value;
-					e.spellId = effect.getSpellId();
 					applyEffect(e);
 					removeEffect(e);
 					return;
 				}
-				applyEffect(type, duration, value, effect.getSpellId());
+				e.permanent = duration >= kPermanentEffectDuration;
+				addActiveEffect(e);
+			};
+
+			// Lasting modifiers (AC, attack, abilities, resistances...): engine
+			// calls without a duration make them permanent, instant ones do nothing.
+			auto modifier = [&](int value, int subType, int limit) {
+				const float duration = durationOverride >= 0.0f ? durationOverride : kPermanentEffectDuration;
+				if (duration <= 0.0f)
+					return;
+
+				ActiveEffect e;
+				e.type = kEffectModifier;
+				e.duration = duration;
+				e.value = value;
+				e.spellId = effect.getSpellId();
+				e.kotorType = effect.getType();
+				e.subType = subType;
+				e.limit = limit;
+				e.linkId = linkId;
+				e.permanent = duration >= kPermanentEffectDuration;
+				addActiveEffect(e);
 			};
 
 			int current = getCurrentHitPoints();
@@ -1364,6 +1656,7 @@ namespace KotORBase {
 					int immunity = getDamageImmunityPercent(damageType);
 					if (immunity > 0)
 						amount = amount - (amount * immunity) / 100;
+					amount = absorbDamage(amount, damageType);
 					if (amount < 0)
 						amount = 0;
 					recordDamageTaken(amount, damageType);
@@ -1397,8 +1690,7 @@ namespace KotORBase {
 						_lastKiller = _lastHostileActor;
 					handleDeath();
 					break;
-				case kKotOREffectTemporaryHitpoints:
-				case kKotOREffectForceShield: {
+				case kKotOREffectTemporaryHitpoints: {
 					int maxHP = getMaxHitPoints();
 					int boosted = current + effect.getAmount();
 					if (boosted > maxHP)
@@ -1406,6 +1698,60 @@ namespace KotORBase {
 					setCurrentHitPoints(boosted);
 					break;
 				}
+				case kKotOREffectForceShield: {
+					// forceshields.2da: the damage types it stops, how much of each hit
+					// ("resistance", 0 for all of it) and how much in total ("amount").
+					// Without the table: a shield that soaks 10 damage per shield row.
+					int damageFlags = 0, perHit = 0, total = 10 * (MAX(effect.getAmount(), 0) + 1);
+					try {
+						const Aurora::TwoDAFile &shields = TwoDAReg.get2DA("forceshields");
+						if ((effect.getAmount() >= 0) && (static_cast<size_t>(effect.getAmount()) < shields.getRowCount())) {
+							const Aurora::TwoDARow &row = shields.getRow(effect.getAmount());
+							damageFlags = row.getInt("damageflags");
+							perHit      = row.getInt("resistance");
+							total       = row.getInt("amount");
+						}
+					} catch (...) {
+					}
+					modifier(perHit, damageFlags, total);
+					break;
+				}
+				case kKotOREffectForcePointsHeal:
+					setForcePoints(MIN(getForcePoints() + MAX(effect.getAmount(), 0), getMaxForcePoints()));
+					break;
+				case kKotOREffectForcePointsDamage:
+				case kKotOREffectForceDrain:
+					setForcePoints(getForcePoints() - MAX(effect.getAmount(), 0));
+					break;
+				case kKotOREffectForcePush:
+					// The knockback itself needs the area (see knockBack()); here the
+					// target falls and is stunned while it gets up.
+					if (!isImmune(kImmunityTypeKnockdown)) {
+						const Common::UString anim = getAnimationNameById(kAnimationForcePushed);
+						if (!anim.empty())
+							playAnimation(anim, true);
+						timed(kEffectKnockdown, 3.0f);
+					}
+					break;
+				case kKotOREffectACIncrease:
+				case kKotOREffectACDecrease:
+				case kKotOREffectAttackIncrease:
+				case kKotOREffectAttackDecrease:
+				case kKotOREffectDamageIncrease:
+				case kKotOREffectDamageDecrease:
+				case kKotOREffectAbilityIncrease:
+				case kKotOREffectAbilityDecrease:
+				case kKotOREffectSkillIncrease:
+				case kKotOREffectSkillDecrease:
+				case kKotOREffectSavingThrowIncrease:
+				case kKotOREffectSavingThrowDecrease:
+				case kKotOREffectInvisibility:
+				case kKotOREffectDamageImmunityDecrease:
+					modifier(effect.getAmount(), effect.getDamageType(), 0);
+					break;
+				case kKotOREffectDamageReduction:
+					modifier(effect.getAmount(), 0, effect.getLimit());
+					break;
 				case kKotOREffectKnockdown:
 					timed(kEffectKnockdown, 3.0f);
 					break;
@@ -1429,7 +1775,7 @@ namespace KotORBase {
 					addSpellImmunity(effect.getAmount());
 					break;
 				case kKotOREffectDamageImmunityIncrease:
-					adjustDamageImmunity(effect.getDamageType(), effect.getAmount());
+					modifier(effect.getAmount(), effect.getDamageType(), 0);
 					break;
 				case kKotOREffectSleep:
 					if (!isImmune(kImmunityTypeSleep) && !isImmune(kImmunityTypeMindSpells))
@@ -1447,7 +1793,7 @@ namespace KotORBase {
 					break;
 				}
 				case kKotOREffectDamageResistance:
-					setDamageResistance(effect.getDamageType(), effect.getAmount());
+					modifier(effect.getAmount(), effect.getDamageType(), effect.getLimit());
 					break;
 				case kKotOREffectConcealment:
 					_concealment = effect.getAmount();
@@ -1467,20 +1813,11 @@ namespace KotORBase {
 				case kKotOREffectBodyFuel:
 					applyEffect(kEffectHeal, 0.0f, effect.getAmount() > 0 ? effect.getAmount() : 5, effect.getSpellId());
 					break;
-				case kKotOREffectDamageIncrease:
-					adjustAttackModifier(0); // damage tracked via effect amount on apply path
-					break;
 				case kKotOREffectForceResistanceIncrease:
-					adjustForceResistance(effect.getAmount());
-					break;
 				case kKotOREffectForceResistanceDecrease:
-					adjustForceResistance(-effect.getAmount());
-					break;
 				case kKotOREffectBlasterDeflectionIncrease:
-					adjustBlasterDeflection(effect.getAmount());
-					break;
 				case kKotOREffectBlasterDeflectionDecrease:
-					adjustBlasterDeflection(-effect.getAmount());
+					modifier(effect.getAmount(), 0, 0);
 					break;
 				case kKotOREffectDispelMagicAll:
 					clearActiveEffects();
@@ -1508,8 +1845,22 @@ namespace KotORBase {
 		bool Creature::removeActiveEffectAt(size_t index) {
 			if (index >= _effects.size())
 				return false;
+
+			const int linkId = _effects[index].linkId;
 			removeEffect(_effects[index]);
 			_effects.erase(_effects.begin() + static_cast<std::ptrdiff_t>(index));
+
+			// Removing one part of a linked effect removes the whole link.
+			if (linkId != 0) {
+				for (size_t i = _effects.size(); i-- > 0; ) {
+					if (_effects[i].linkId != linkId)
+						continue;
+
+					removeEffect(_effects[i]);
+					_effects.erase(_effects.begin() + static_cast<std::ptrdiff_t>(i));
+				}
+			}
+
 			return true;
 		}
 		void Creature::executeAttack(Object *target,
@@ -1544,8 +1895,8 @@ namespace KotORBase {
 			// Determine attack stat: Dex for ranged, Str for melee.
 			bool ranged = (rightWeapon && rightWeapon->isRangedWeapon()) ||
 			              (leftWeapon  && leftWeapon->isRangedWeapon());
-			int abMod = ranged ? _info.getAbilityModifier(kAbilityDexterity)
-			                   : _info.getAbilityModifier(kAbilityStrength);
+			int abMod = ranged ? getAbilityModifier(kAbilityDexterity)
+			                   : getAbilityModifier(kAbilityStrength);
 
 			// Flanking bonus (+2)
 			int flankingMod = 0;
@@ -1568,20 +1919,17 @@ namespace KotORBase {
 			// (Sneak Attack damage is rolled once, after the hit is confirmed —
 			//  see the "Sneak Attack" block further down.)
 
-			// caller may pass per-attack bonuses
-			const
-			bool hasActivePowerAttack = (activeFeat == kFeatPowerAttack || activeFeat == kFeatImprovedPowerAttack);
-			const
-			bool hasActiveCriticalStrike = (activeFeat == kFeatCriticalStrike || activeFeat == kFeatImprovedCriticalStrike);
-			if (!ranged && hasActivePowerAttack) {
-				if (activeFeat == kFeatImprovedPowerAttack && _info.hasFeat(kFeatImprovedPowerAttack)) {
-					featAttackMod -= 3;
-					featDamageMod += 6;
-				}
-				else
-				if (_info.hasFeat(kFeatPowerAttack)) {
-					featAttackMod -= 3;
-					featDamageMod += 3;
+			// The round's activated combat feat (Power Attack/Blast, Critical
+			// Strike, Sniper Shot...). Flurry and Rapid Shot penalties come in
+			// babPenalty with the round's extra attack.
+			int featThreatRange = 0;
+			if ((activeFeat >= 0) && _info.hasFeat(static_cast<uint32_t>(activeFeat))) {
+				const CombatFeatModifiers feat = getCombatFeatModifiers(activeFeat);
+				if (ranged ? feat.ranged : feat.melee) {
+					if (feat.extraAttacks == 0)
+						featAttackMod += feat.attack;
+					featDamageMod   += feat.damage;
+					featThreatRange += feat.threatRange;
 				}
 			}
 			// Weapon Focus / Specialization bonuses.
@@ -1589,6 +1937,10 @@ namespace KotORBase {
 				if (ranged) {
 					if (_info.hasFeat(kFeatWeaponFocusBlaster) || _info.hasFeat(kFeatWeaponFocusBlasterRifle))				featAttackMod += 1;
 					if (_info.hasFeat(kFeatWeaponSpecializationBlaster) || _info.hasFeat(kFeatWeaponSpecializationBlasterRifle))				featDamageMod += 2;
+				}
+				else if (hasLightsaberEquipped()) {
+					if (_info.hasFeat(kFeatWeaponFocusLightsaber))				featAttackMod += 1;
+					if (_info.hasFeat(kFeatWeaponSpecializationLightsaber))				featDamageMod += 2;
 				}
 				else {
 					if (_info.hasFeat(kFeatWeaponFocusMelee))				featAttackMod += 1;
@@ -1612,7 +1964,7 @@ namespace KotORBase {
 			if (ranged && targetCreature && targetCreature->hasLightsaberEquipped()) {
 				// Rule: Opposed roll. If Deflect roll >= Attack roll, the bolt is deflected.
 				int deflectD20 = RNG.getNext(1, 21);
-				int deflectBonus = targetCreature->getBAB() + targetCreature->getCreatureInfo().getAbilityModifier(kAbilityDexterity);
+				int deflectBonus = targetCreature->getBAB() + targetCreature->getAbilityModifier(kAbilityDexterity);
 				if (targetCreature->getCreatureInfo().hasFeat(kFeatMasterJediDefense))			deflectBonus += 10;
 				else
 				if (targetCreature->getCreatureInfo().hasFeat(kFeatImprovedJediDefense))			deflectBonus += 6;
@@ -1638,10 +1990,7 @@ namespace KotORBase {
 			}
 			// --- Critical hit system ---	// Threat on natural 20 (weapons may lower this, but 20 is the universal minimum).	// Critical Strike feat: threat on 19-20;
 			// Improved: 18-20.
-			int critThreat = 20;
-			if (hasActiveCriticalStrike && activeFeat == kFeatImprovedCriticalStrike && _info.hasFeat(kFeatImprovedCriticalStrike))		critThreat = 18;
-			else
-			if (hasActiveCriticalStrike && _info.hasFeat(kFeatCriticalStrike))		critThreat = 19;
+			int critThreat = 20 - featThreatRange;
 			bool isThreat = (d20 >= critThreat);
 			bool isCrit   = false;
 			if (isThreat) {
@@ -1657,34 +2006,34 @@ namespace KotORBase {
 			if (rightWeapon)		damage = computeWeaponDamage(rightWeapon);
 			else
 				// Unarmed: 1 + Str modifier (minimum 1 die).
-				damage = 1 + _info.getAbilityModifier(kAbilityStrength);
+				damage = 1 + getAbilityModifier(kAbilityStrength);
 			// On a confirmed critical, double the weapon dice (not the fixed modifiers).
 			if (isCrit) {
 				int dieDamage;
 				int modDamage;
 				if (rightWeapon && leftWeapon) {
-					int rMod = _info.getAbilityModifier(kAbilityStrength);
-					int lMod = _info.getAbilityModifier(kAbilityStrength);
+					int rMod = getAbilityModifier(kAbilityStrength);
+					int lMod = getAbilityModifier(kAbilityStrength);
 					dieDamage = damage - rMod - lMod;
 					modDamage  = rMod + lMod;
 				}
 				else
 				if (rightWeapon) {
-					int mod = ranged ? _info.getAbilityModifier(kAbilityDexterity)			                 : _info.getAbilityModifier(kAbilityStrength);
+					int mod = ranged ? getAbilityModifier(kAbilityDexterity)			                 : getAbilityModifier(kAbilityStrength);
 					dieDamage = damage - mod;
 					modDamage  = mod;
 				}
 				else {
 					// Unarmed: the "1" is the die, Str mod is the modifier.
-					int mod = _info.getAbilityModifier(kAbilityStrength);
+					int mod = getAbilityModifier(kAbilityStrength);
 					dieDamage = damage - mod;
 					modDamage  = mod;
 				}
 				// Double the dice portion only.
 					damage = dieDamage * 2 + modDamage;
 			}
-			// Apply feat damage bonus.
-			damage += featDamageMod;
+			// Apply feat and effect damage bonuses.
+			damage += featDamageMod + _damageModifier;
 			// Sneak Attack (Scoundrel class feature): roll +1d6 per rank when the
 			// target is flat-footed (not currently in combat), flanked, or
 			// knocked down/stunned.
@@ -1719,9 +2068,6 @@ namespace KotORBase {
 			else if (rightWeapon)
 				damageType = kDamageTypeSlashing;
 			if (targetCreature) {
-				int resist = targetCreature->getDamageResistance(damageType);
-				if (resist > 0)
-					damage = damage > resist ? damage - resist : 0;
 				int immunity = targetCreature->getDamageImmunityPercent(damageType);
 				if (immunity > 0)
 					damage = damage - (damage * immunity) / 100;
@@ -1736,6 +2082,8 @@ namespace KotORBase {
 						return;
 					}
 				}
+				// Damage resistance, damage reduction and Force shields.
+				damage = targetCreature->absorbDamage(damage, damageType);
 				targetCreature->recordDamageTaken(damage, damageType, this);
 			}
 			if (_assuredHit)
@@ -2101,7 +2449,7 @@ namespace KotORBase {
 		const {
 			int result = 0;
 			Ability ability = weapon->isRangedWeapon() ? kAbilityDexterity : kAbilityStrength;
-			int mod = _info.getAbilityModifier(ability);
+			int mod = getAbilityModifier(ability);
 			for (
 			int i = 0;
 			i < weapon->getNumDice();
@@ -2139,6 +2487,62 @@ namespace KotORBase {
 		Object *Creature::getBlockingDoor() const {
 			return _blockingDoor;
 		}
+		CombatFeatModifiers getCombatFeatModifiers(int feat) {
+			// Penalties as KotOR.js TalentFeat applies them (attack and Defense for
+			// one round); Power Attack/Blast damage as KotOR.js CombatAttackData.
+			CombatFeatModifiers mods;
+			switch (feat) {
+				case kFeatFlurry:
+				case kFeatImprovedFlurry:
+				case kFeatMasterFlurry:
+				case kFeatRapidShot:
+				case kFeatImprovedRapidShot:
+				case kFeatMasterRapidShot: {
+					const bool flurry = (feat == kFeatFlurry) || (feat == kFeatImprovedFlurry) || (feat == kFeatMasterFlurry);
+					const int penalty = ((feat == kFeatFlurry) || (feat == kFeatRapidShot)) ? 4 :
+					                    (((feat == kFeatImprovedFlurry) || (feat == kFeatImprovedRapidShot)) ? 2 : 1);
+					mods.melee        = flurry;
+					mods.ranged       = !flurry;
+					mods.attack       = -penalty;
+					mods.armorClass   = -penalty;
+					mods.extraAttacks = 1;
+					break;
+				}
+				case kFeatPowerAttack:
+				case kFeatImprovedPowerAttack:
+				case kFeatMasterPowerAttack:
+				case kFeatPowerBlast:
+				case kFeatImprovedPowerBlast:
+				case kFeatMasterPowerBlast: {
+					const bool melee = (feat == kFeatPowerAttack) || (feat == kFeatImprovedPowerAttack) ||
+					                   (feat == kFeatMasterPowerAttack);
+					mods.melee  = melee;
+					mods.ranged = !melee;
+					mods.attack = -3;
+					mods.damage = ((feat == kFeatPowerAttack) || (feat == kFeatPowerBlast)) ? 5 :
+					              (((feat == kFeatImprovedPowerAttack) || (feat == kFeatImprovedPowerBlast)) ? 8 : 10);
+					break;
+				}
+				case kFeatCriticalStrike:
+				case kFeatImprovedCriticalStrike:
+				case kFeatMasterCriticalStrike:
+					mods.melee       = true;
+					mods.armorClass  = -5;
+					mods.threatRange = (feat == kFeatCriticalStrike) ? 1 : ((feat == kFeatImprovedCriticalStrike) ? 2 : 3);
+					break;
+				case kFeatSniperShot:
+				case kFeatImprovedSniperShot:
+				case kFeatMasterSniperShot:
+					// The ranged Critical Strike.
+					mods.ranged      = true;
+					mods.threatRange = (feat == kFeatSniperShot) ? 1 : ((feat == kFeatImprovedSniperShot) ? 2 : 3);
+					break;
+				default:
+					break;
+			}
+			return mods;
+		}
+
 		void Creature::think(Area *area) {
 			if (_aiArchetype == kAIArchetypeNone || isPC() || isDead() || !area)
 				return;
@@ -2166,21 +2570,6 @@ namespace KotORBase {
 				_actions.add(Action(kActionAttackObject, target));
 				_aiCooldown = 2.0f;
 				break;
-				case kAIArchetypeForceUser: {
-					_actions.clear();
-					const std::vector<uint32_t> &powers = getCreatureInfo().getForcePowers();
-					const bool canCast = !powers.empty() && getForcePoints() >= 10;
-					if (canCast && getDistanceTo(target) <= 12.0f) {
-						Action spell(kActionCastSpell, target);
-						spell.actionID = static_cast<int>(powers[static_cast<size_t>(RNG.getNext(0, static_cast<int>(powers.size())))]);
-						_actions.add(spell); // executeCastSpell() deducts the Force point cost.
-						_aiCooldown = 2.0f;
-					} else {
-						_actions.add(Action(kActionAttackObject, target));
-						_aiCooldown = 1.0f;
-					}
-					break;
-				}
 				default:			break;
 			}
 		}
@@ -2198,6 +2587,9 @@ namespace KotORBase {
 					break;
 				case kEffectConfusion:
 					adjustArmorClassModifier(4);
+					break;
+				case kEffectModifier:
+					adjustEffectModifiers(effect, -1);
 					break;
 				default:
 					break;

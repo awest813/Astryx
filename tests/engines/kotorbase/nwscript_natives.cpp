@@ -167,7 +167,7 @@ GTEST_TEST(KotORNWScriptNatives, effectSeeInvisibleTakesNoParameters) {
 	EXPECT_EQ(effect->getType(), kKotOREffectSeeInvisible);
 }
 
-GTEST_TEST(KotORNWScriptNatives, effectLinkEffectsPrefersGameplayEffect) {
+GTEST_TEST(KotORNWScriptNatives, effectLinkEffectsKeepsBothParts) {
 	NativeFixture f;
 	FunctionContext ctx("EffectLinkEffects");
 	ctx.setSignature(Signature { kTypeEngineType, kTypeEngineType, kTypeEngineType });
@@ -175,6 +175,7 @@ GTEST_TEST(KotORNWScriptNatives, effectLinkEffectsPrefersGameplayEffect) {
 	const Effect visual(kKotOREffectVisual, 42);
 	const Effect damage(kKotOREffectDamage, 7);
 
+	// EffectLinkEffects(eChild, eParent): the parent, with the child linked to it.
 	ctx.getParams()[0] = &visual;
 	ctx.getParams()[1] = &damage;
 	f.functions.effectLinkEffects(ctx);
@@ -183,6 +184,9 @@ GTEST_TEST(KotORNWScriptNatives, effectLinkEffectsPrefersGameplayEffect) {
 	ASSERT_NE(linked, nullptr);
 	EXPECT_EQ(linked->getType(), kKotOREffectDamage);
 	EXPECT_EQ(linked->getAmount(), 7);
+	ASSERT_EQ(linked->getLinkedEffects().size(), 1u);
+	EXPECT_EQ(linked->getLinkedEffects()[0].getType(), kKotOREffectVisual);
+	EXPECT_EQ(linked->getLinkedEffects()[0].getAmount(), 42);
 
 	ctx.getParams()[0] = &damage;
 	ctx.getParams()[1] = &visual;
@@ -190,7 +194,8 @@ GTEST_TEST(KotORNWScriptNatives, effectLinkEffectsPrefersGameplayEffect) {
 
 	linked = dynamic_cast<const Effect *>(ctx.getReturn().getEngineType());
 	ASSERT_NE(linked, nullptr);
-	EXPECT_EQ(linked->getType(), kKotOREffectDamage);
+	EXPECT_EQ(linked->getType(), kKotOREffectVisual);
+	EXPECT_TRUE(linked->hasPart(kKotOREffectDamage));
 }
 
 GTEST_TEST(KotORNWScriptNatives, setEffectIconReturnsEffect) {

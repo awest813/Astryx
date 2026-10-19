@@ -58,31 +58,8 @@ Talent createInvalidTalent() {
 	return Talent();
 }
 
-bool hasAnySkillTalent(const Creature *creature) {
-	for (int skill = kSkillComputerUse; skill < kSkillMAX; ++skill) {
-		if (creature->getCreatureInfo().getSkillRank(static_cast<Skill>(skill)) > 0)
-			return true;
-	}
-
-	return false;
-}
-
-int getBestSkillTalentID(const Creature *creature) {
-	int bestSkill = -1;
-	int bestRank = -1;
-
-	for (int skill = kSkillComputerUse; skill < kSkillMAX; ++skill) {
-		const int rank = creature->getCreatureInfo().getSkillRank(static_cast<Skill>(skill));
-		if (rank > bestRank) {
-			bestRank = rank;
-			bestSkill = skill;
-		}
-	}
-
-	if (bestRank <= 0)
-		return -1;
-
-	return bestSkill;
+Talent toTalent(const TalentEntry &entry) {
+	return Talent(entry.type, entry.id, entry.item);
 }
 
 } // End of anonymous namespace
@@ -316,39 +293,16 @@ void Functions::talentSkill(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getCreatureHasTalent(Aurora::NWScript::FunctionContext &ctx) {
+	// GetCreatureHasTalent(talent tTalent, object oCreature=OBJECT_SELF) → int
 	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
 	const Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
-	if (!talent || !talent->isValid() || !creature) {
-		ctx.getReturn() = 0;
-		return;
-	}
 
-	switch (talent->getType()) {
-		case kTalentTypeFeat:
-			ctx.getReturn() = static_cast<int32_t>(creature->hasFeat(static_cast<uint32_t>(talent->getID())));
-			return;
-
-		case kTalentTypeSkill: {
-			const int skillID = talent->getID();
-			if (skillID < kSkillComputerUse || skillID >= kSkillMAX) {
-				ctx.getReturn() = 0;
-				return;
-			}
-
-			ctx.getReturn() = static_cast<int32_t>(
-				creature->getCreatureInfo().getSkillRank(static_cast<Skill>(skillID)) > 0);
-			return;
-		}
-
-		case kTalentTypeSpell:
-		case kTalentTypeInvalid:
-		default:
-			ctx.getReturn() = 0;
-			return;
-	}
+	ctx.getReturn() = (talent && creature && creatureHasTalent(*creature, *talent)) ? 1 : 0;
 }
 
 void Functions::getCreatureTalentRandom(Aurora::NWScript::FunctionContext &ctx) {
+	// GetCreatureTalentRandom(int nCategory, object oCreature=OBJECT_SELF, int nInclusion=0) → talent
+	// A random usable talent whose spells/feat/skills.2da category matches nCategory.
 	const int category = ctx.getParams()[0].getInt();
 	const Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 1));
 	if (!creature) {
@@ -356,56 +310,34 @@ void Functions::getCreatureTalentRandom(Aurora::NWScript::FunctionContext &ctx) 
 		return;
 	}
 
-	// Ignore visibility gating until combat perception masks are implemented.
-	const std::vector<uint32_t> &feats = creature->getCreatureInfo().getFeats();
-	if ((category == kTalentTypeFeat || category == kTalentTypeInvalid) && !feats.empty()) {
-		const int index = getRandom(0, static_cast<int>(feats.size()) - 1);
-		ctx.getReturn() = Talent(kTalentTypeFeat, static_cast<int>(feats[index]));
+	const std::vector<TalentEntry> talents = getCreatureTalents(*creature, TalentTables::fromGameData());
+	const std::vector<const TalentEntry *> found = findTalentsInCategory(talents, category);
+	if (found.empty()) {
+		ctx.getReturn() = createInvalidTalent();
 		return;
 	}
 
-	if ((category == kTalentTypeSkill || category == kTalentTypeInvalid) && hasAnySkillTalent(creature)) {
-		std::vector<int> skills;
-		for (int skill = kSkillComputerUse; skill < kSkillMAX; ++skill) {
-			if (creature->getCreatureInfo().getSkillRank(static_cast<Skill>(skill)) > 0)
-				skills.push_back(skill);
-		}
-
-		if (!skills.empty()) {
-			const int index = getRandom(0, static_cast<int>(skills.size()) - 1);
-			ctx.getReturn() = Talent(kTalentTypeSkill, skills[index]);
-			return;
-		}
-	}
-
-	ctx.getReturn() = createInvalidTalent();
+	ctx.getReturn() = toTalent(*found[getRandom(0, static_cast<int>(found.size()) - 1)]);
 }
 
 void Functions::getCreatureTalentBest(Aurora::NWScript::FunctionContext &ctx) {
+	// GetCreatureTalentBest(int nCategory, int nCRMax, object oCreature=OBJECT_SELF,
+	//                       int nInclusion=0, int nExcludeType=-1, int nExcludeId=-1) → talent
+	// The usable talent of nCategory whose maxcr is closest to nCRMax without going over.
 	const int category = ctx.getParams()[0].getInt();
+	const int crMax    = ctx.getParams()[1].getInt();
 	const Creature *creature = ObjectContainer::toCreature(getParamObject(ctx, 2));
+	const int excludeType = (ctx.getParams().size() > 4) ? ctx.getParams()[4].getInt() : -1;
+	const int excludeId   = (ctx.getParams().size() > 5) ? ctx.getParams()[5].getInt() : -1;
 	if (!creature) {
 		ctx.getReturn() = createInvalidTalent();
 		return;
 	}
 
-	// nCRMax/nClass/bOffensive filters are ignored until full feat/spell
-	// metadata and combat scoring are implemented.
-	const std::vector<uint32_t> &feats = creature->getCreatureInfo().getFeats();
-	if ((category == kTalentTypeFeat || category == kTalentTypeInvalid) && !feats.empty()) {
-		ctx.getReturn() = Talent(kTalentTypeFeat, static_cast<int>(feats.front()));
-		return;
-	}
+	const std::vector<TalentEntry> talents = getCreatureTalents(*creature, TalentTables::fromGameData());
+	const TalentEntry *best = findBestTalent(talents, category, crMax, excludeType, excludeId);
 
-	if (category == kTalentTypeSkill || category == kTalentTypeInvalid) {
-		const int bestSkill = getBestSkillTalentID(creature);
-		if (bestSkill >= 0) {
-			ctx.getReturn() = Talent(kTalentTypeSkill, bestSkill);
-			return;
-		}
-	}
-
-	ctx.getReturn() = createInvalidTalent();
+	ctx.getReturn() = best ? toTalent(*best) : createInvalidTalent();
 }
 
 void Functions::getIsTalentValid(Aurora::NWScript::FunctionContext &ctx) {
@@ -414,8 +346,9 @@ void Functions::getIsTalentValid(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getTypeFromTalent(Aurora::NWScript::FunctionContext &ctx) {
+	// TALENT_TYPE_FORCE (0), TALENT_TYPE_FEAT (1) or TALENT_TYPE_SKILL (2).
 	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
-	ctx.getReturn() = talent ? static_cast<int32_t>(talent->getType()) : 0;
+	ctx.getReturn() = (talent && talent->isValid()) ? static_cast<int32_t>(talent->getType()) : -1;
 }
 
 void Functions::getIdFromTalent(Aurora::NWScript::FunctionContext &ctx) {
@@ -424,8 +357,9 @@ void Functions::getIdFromTalent(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getCategoryFromTalent(Aurora::NWScript::FunctionContext &ctx) {
+	// The talent's "category" column in spells.2da, feat.2da or skills.2da.
 	const Talent *talent = ObjectContainer::toTalent(ctx.getParams()[0].getEngineType());
-	ctx.getReturn() = talent ? static_cast<int32_t>(talent->getCategory()) : 0;
+	ctx.getReturn() = talent ? static_cast<int32_t>(talent->getCategory()) : -1;
 }
 
 void Functions::getLastCombatFeatUsed(Aurora::NWScript::FunctionContext &ctx) {
@@ -551,11 +485,10 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 	if (!effect || !target)
 		return;
 
-	int spellId = effect->getSpellId();
-	if (spellId < 0)
-		spellId = _game->getModule().getSpellScriptId();
-
-	Effect applied(effect->getType(), effect->getAmount(), effect->getDamageType(), spellId);
+	// Effects record the spell whose script applied them (GetHasSpellEffect, GetEffectSpellId).
+	Effect applied(*effect);
+	if (applied.getSpellId() < 0)
+		applied.setSpellId(_game->getModule().getSpellScriptId());
 
 	Creature *targetCreature = ObjectContainer::toCreature(target);
 	if (targetCreature) {
@@ -566,6 +499,24 @@ void Functions::applyEffectToObject(Aurora::NWScript::FunctionContext &ctx) {
 			durationOverride = duration > 0.0f ? duration : 6.0f;
 		else if (durationType == 2) // DURATION_TYPE_PERMANENT
 			durationOverride = 1.0e9f;
+
+		// Force push: thrown back away from the caster, as far as the walkmesh allows.
+		Area *area = _game->getModule().getCurrentArea();
+		if (area && applied.hasPart(kKotOREffectForcePush) && !targetCreature->isDead() &&
+		    !targetCreature->isImmune(kImmunityTypeKnockdown)) {
+			Object *source = _game->getModule().getSpellScriptCaster();
+			if (!source)
+				source = ObjectContainer::toObject(ctx.getCaller());
+
+			float fromX, fromY, fromZ;
+			if (source && (source != targetCreature)) {
+				source->getPosition(fromX, fromY, fromZ);
+			} else {
+				targetCreature->getPosition(fromX, fromY, fromZ);
+			}
+			targetCreature->knockBack(*area, fromX, fromY, 5.0f);
+		}
+
 		targetCreature->applyEffect(applied, durationOverride);
 	} else {
 		// Fallback for non-creature objects (e.g. placeable damage)
@@ -1058,7 +1009,10 @@ void Functions::getLastSpellHarmful(Aurora::NWScript::FunctionContext &ctx) {
 void Functions::getSpellTargetLocation(Aurora::NWScript::FunctionContext &ctx) {
 	Location loc;
 	Object *target = _game->getModule().getSpellScriptTarget();
-	if (target) {
+	glm::vec3 location;
+	if (_game->getModule().getSpellScriptTargetLocation(location)) {
+		loc.setPosition(location.x, location.y, location.z);
+	} else if (target) {
 		float x, y, z;
 		target->getPosition(x, y, z);
 		loc.setPosition(x, y, z);
@@ -1241,9 +1195,11 @@ void Functions::extraordinaryEffect(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::effectDamageResistance(Aurora::NWScript::FunctionContext &ctx) {
+	// EffectDamageResistance(int nDamageType, int nAmount, int nLimit=0)
 	int damageType = ctx.getParams()[0].getInt();
 	int amount = ctx.getParams()[1].getInt();
-	ctx.getReturn() = Effect(kKotOREffectDamageResistance, amount, damageType);
+	int limit = (ctx.getParams().size() > 2) ? ctx.getParams()[2].getInt() : 0;
+	ctx.getReturn() = Effect(kKotOREffectDamageResistance, amount, damageType, -1, limit);
 }
 
 void Functions::effectConcealment(Aurora::NWScript::FunctionContext &ctx) {
@@ -1460,8 +1416,10 @@ void Functions::effectSavingThrowIncrease(Aurora::NWScript::FunctionContext &ctx
 }
 
 void Functions::effectDamageReduction(Aurora::NWScript::FunctionContext &ctx) {
-	int amount = ctx.getParams()[2].getInt();
-	ctx.getReturn() = Effect(kKotOREffectDamageReduction, amount);
+	// EffectDamageReduction(int nAmount, int nDamagePower, int nLimit=0)
+	int amount = ctx.getParams()[0].getInt();
+	int limit = (ctx.getParams().size() > 2) ? ctx.getParams()[2].getInt() : 0;
+	ctx.getReturn() = Effect(kKotOREffectDamageReduction, amount, 0, -1, limit);
 }
 
 void Functions::effectInvisibility(Aurora::NWScript::FunctionContext &ctx) {
@@ -1498,7 +1456,9 @@ void Functions::effectDamageDecrease(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::effectDamageImmunityDecrease(Aurora::NWScript::FunctionContext &ctx) {
-	ctx.getReturn() = Effect(kKotOREffectDamageImmunityDecrease, ctx.getParams()[1].getInt());
+	// EffectDamageImmunityDecrease(int nDamageType, int nPercentImmunity)
+	ctx.getReturn() = Effect(kKotOREffectDamageImmunityDecrease, ctx.getParams()[1].getInt(),
+	                         ctx.getParams()[0].getInt());
 }
 
 void Functions::effectACDecrease(Aurora::NWScript::FunctionContext &ctx) {

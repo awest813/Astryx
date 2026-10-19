@@ -28,6 +28,7 @@
 #include "src/common/ustring.h"
 
 #include "src/engines/kotorbase/types.h"
+#include "src/engines/kotorbase/actionexecutor.h"
 
 namespace Engines {
 
@@ -46,6 +47,10 @@ struct ItemActionResult {
 bool isEquipableItem(const Item &item);
 bool isUsableConsumable(const Item &item);
 InventorySlot findEquipSlot(const Item &item, const Creature &creature);
+
+/** The first spell of the item's CastSpell properties whose spells.2da impact
+ *  script exists in the game data, or nullptr (use the built-in item effects). */
+const ActionExecutor::SpellInfo *findItemSpellScript(const Item &item);
 
 int grenadeDamageForItem(const Item &item);
 bool grenadeHasFriendlyFire(const Item &item);
