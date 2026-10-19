@@ -49,6 +49,8 @@
 #include "src/engines/kotorbase/objectcontainer.h"
 #include "src/engines/kotorbase/script/container.h"
 #include "src/engines/kotorbase/animationnames.h"
+#include "src/engines/kotorbase/trigger.h"
+#include "src/engines/kotorbase/trap.h"
 
 static const float kWalkDistance = 2.0f;
 /** Closer than this counts as arrived; a range of 0 is never hit exactly. */
@@ -63,6 +65,27 @@ static const float kRepathTime = 3.0f;
 static const float kRepathWhenBlocked = 0.5f;
 /** A waypoint closer than this (m) counts as reached. */
 static const float kWaypointReach = 0.3f;
+
+/** How long (s) picking a lock takes. */
+static const float kUnlockTime = 1.5f;
+/** How close (m) a creature walks up to a door or container to lock it. */
+static const float kLockRange = 2.0f;
+/** ActionForceFollowObject never comes closer than this (m). */
+static const float kMinFollowDistance = 1.0f;
+
+/** ActionRandomWalk: destinations lie this far (m) from where the walk started. */
+static const float kRandomWalkMinDistance = 2.0f;
+static const float kRandomWalkMaxDistance = 8.0f;
+/** ActionRandomWalk: pause (s) between two walks. */
+static const float kRandomWalkMinPause = 1.0f;
+static const float kRandomWalkMaxPause = 4.0f;
+/** ActionRandomWalk: destinations tried per walk. */
+static const int   kRandomWalkAttempts = 4;
+/** ActionRandomWalk: closer than this (m) to the destination counts as there. */
+static const float kRandomWalkReach = 0.5f;
+
+/** Item property: Thieves' Tools (security tunnelers), itempropdef.2da. */
+static const int kItemPropertyThievesTools = 37;
 
 namespace Engines {
 
@@ -87,6 +110,21 @@ void ActionExecutor::execute(Action &action, const ExecutionContext &ctx) {
 			break;
 		case kActionOpenLock:
 			executeOpenLock(action, ctx);
+			break;
+		case kActionLock:
+			executeLock(action, ctx);
+			break;
+		case kActionFollow:
+			executeFollow(action, ctx);
+			break;
+		case kActionRandomWalk:
+			executeRandomWalk(action, ctx);
+			break;
+		case kActionDisableTrap:
+		case kActionRecoverTrap:
+		case kActionFlagTrap:
+		case kActionExamineTrap:
+			executeTrapAction(action, ctx);
 			break;
 		case kActionUseObject:
 			executeUseObject(action, ctx);
@@ -178,8 +216,155 @@ void ActionExecutor::executeFollowLeader(Action &action, const ExecutionContext 
 	moveTo(glm::vec2(x, y), action.range, ctx);
 }
 
+/** The inventory a party member's finds go to (the party's), or the creature's own. */
+static Inventory &getLootInventory(Module &module, Creature &creature) {
+	Creature *pc = module.getPC();
+	if (pc && module.isObjectPartyMember(&creature))
+		return pc->getInventory();
+
+	return creature.getInventory();
+}
+
+/** The Thieves' Tools bonus of a security tunneler, which is used up. */
+static int useSecurityTunneler(const Common::UString &tag, Inventory &inventory) {
+	if (tag.empty())
+		return 0;
+
+	if (!inventory.hasItem(tag))
+		return 0;
+
+	int bonus = 0;
+	try {
+		Item item(tag);
+		bonus = item.getItemPropertyValue(kItemPropertyThievesTools, 0);
+	} catch (...) {
+		warning("Cannot use security tunneler \"%s\"", tag.c_str());
+		return 0;
+	}
+
+	if (bonus > 0)
+		inventory.removeItem(tag, 1);
+
+	return bonus;
+}
+
+/** Turn the creature towards an object it works on. */
+static void faceObject(Creature &creature, Object &target) {
+	float x, y, _;
+	target.getPosition(x, y, _);
+	creature.makeLookAt(x, y);
+}
+
 void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx) {
-	if (!action.object) {
+	Situated *situated = ObjectContainer::toSituated(action.object);
+	if (!situated) {
+		if (action.object)
+			warning("Cannot unlock an object that is not a door or a placeable");
+
+		ctx.creature->popAction();
+		return;
+	}
+
+	Door *door = ObjectContainer::toDoor(situated);
+
+	if (action.step == 0) {
+		float x, y, _;
+		situated->getPosition(x, y, _);
+
+		if (!moveTo(glm::vec2(x, y), action.range, ctx))
+			return;
+
+		// Work on the lock for a moment, as in the original and KotOR.js.
+		faceObject(*ctx.creature, *situated);
+		ctx.creature->playAnimation(door ? "unlockdr" : "unlockcntr", false);
+
+		action.step = 1;
+		action.startTime = 0.0f;
+		return;
+	}
+
+	action.startTime += ctx.frameTime;
+	if (action.startTime < kUnlockTime)
+		return;
+
+	// popAction() destroys the action, so keep what we still need.
+	const Common::UString tunneler = action.item;
+	Creature *creature = ctx.creature;
+	creature->popAction();
+	creature->playDefaultAnimation();
+
+	if (!situated->isLocked()) {
+		if (door)
+			door->open(creature);
+		return;
+	}
+
+	bool unlocked = false;
+
+	if (situated->isKeyRequired()) {
+		// Only the key opens it; no skill check.
+		const Common::UString &keyTag = situated->getKeyTag();
+		unlocked = getLootInventory(*ctx.area->_module, *creature).hasItem(keyTag) || creature->getInventory().hasItem(keyTag);
+		if (!unlocked)
+			status("ActionSpeakString [%s]: A specific key is required to open this.", creature->getTag().c_str());
+
+	} else {
+		// d20 + Security against the lock DC. Out of combat a failed attempt
+		// costs nothing, so the check takes 20 (as in KotOR.js).
+		const int security = creature->getSkillRank(kSkillSecurity) + useSecurityTunneler(tunneler, getLootInventory(*ctx.area->_module, *creature));
+		const int roll     = TrapRules::checkRoll(creature->isInCombat(), 20, RNG.getNext(1, 21));
+		const int dc       = situated->getLockDC();
+
+		unlocked = TrapRules::unlocks(security, roll, dc);
+		debugC(Common::kDebugEngineLogic, 1, "Security check by \"%s\": %d + %d vs DC %d: %s",
+		       creature->getTag().c_str(), roll, security, dc, unlocked ? "success" : "failure");
+	}
+
+	if (!unlocked) {
+		situated->runScript(kScriptFailToOpen, situated, creature);
+		return;
+	}
+
+	const uint32_t targetID = situated->getID();
+	situated->setLocked(false);
+	situated->runScript(kScriptUnlock, situated, creature);
+
+	// The OnUnlock script may have destroyed the object.
+	if (door && (ObjectMan.findObject(targetID) == static_cast<Aurora::NWScript::Object *>(door)))
+		door->open(creature);
+}
+
+void ActionExecutor::executeLock(Action &action, const ExecutionContext &ctx) {
+	Situated *situated = ObjectContainer::toSituated(action.object);
+	if (!situated) {
+		ctx.creature->popAction();
+		return;
+	}
+
+	float x, y, _;
+	situated->getPosition(x, y, _);
+
+	if (!moveTo(glm::vec2(x, y), MAX(action.range, kLockRange), ctx))
+		return;
+
+	Creature *creature = ctx.creature;
+	creature->popAction();
+
+	faceObject(*creature, *situated);
+
+	// Close it first, then lock it; no skill check (as in KotOR.js).
+	if (Door *door = ObjectContainer::toDoor(situated))
+		door->close(creature);
+	else if (Placeable *placeable = ObjectContainer::toPlaceable(situated))
+		placeable->close(creature);
+
+	situated->setLocked(true);
+	situated->runScript(kScriptLock, situated, creature);
+}
+
+void ActionExecutor::executeFollow(Action &action, const ExecutionContext &ctx) {
+	// ActionForceFollowObject: keep up with the target until the actions are cleared.
+	if (!action.object || (action.object == ctx.creature)) {
 		ctx.creature->popAction();
 		return;
 	}
@@ -187,55 +372,153 @@ void ActionExecutor::executeOpenLock(Action &action, const ExecutionContext &ctx
 	float x, y, _;
 	action.object->getPosition(x, y, _);
 
-	if (!moveTo(glm::vec2(x, y), action.range, ctx))
-		return;
+	moveTo(glm::vec2(x, y), MAX(action.range, kMinFollowDistance), ctx);
+}
 
-	// popAction() destroys the action, so keep what we still need.
-	Object *target = action.object;
-	ctx.creature->popAction();
+void ActionExecutor::executeRandomWalk(Action &action, const ExecutionContext &ctx) {
+	// ActionRandomWalk: stroll between random reachable points near where the
+	// walk started, pausing in between, until the actions are cleared.
+	Creature *creature = ctx.creature;
 
-	if (ctx.creature != ctx.area->_module->getPartyLeader()) {
-		warning("ActionExecutor::executeOpenLock(): Creature is not the party leader");
-		return;
-	}
+	float cx, cy, cz;
+	creature->getPosition(cx, cy, cz);
 
-	Door *door = ObjectContainer::toDoor(target);
-	Placeable *placeable = ObjectContainer::toPlaceable(target);
-	Situated *situated = door ? (Situated *)door : (Situated *)placeable;
+	switch (action.step) {
+		case 0: // Start
+			action.origin = glm::vec3(cx, cy, cz);
+			action.step = 1;
+			// fall through
 
-	if (!situated) {
-		warning("Cannot unlock an object that is not a door or a placeable");
-		return;
-	}
+		case 1: { // Pick a destination
+			std::vector<glm::vec2> route;
+			for (int attempt = 0; attempt < kRandomWalkAttempts; ++attempt) {
+				const float angle    = RNG.getNext(0.0f, 2.0f * static_cast<float>(M_PI));
+				const float distance = RNG.getNext(kRandomWalkMinDistance, kRandomWalkMaxDistance);
 
-	if (situated->isKeyRequired()) {
-		Common::UString keyTag = situated->getKeyTag();
-		if (ctx.creature->getInventory().hasItem(keyTag)) {
-			ctx.creature->playAnimation(door ? "unlockdr" : "unlockcntr", false);
-			situated->setLocked(false);
-			if (door) door->open(ctx.creature);
-			info("Object unlocked with key: %s", keyTag.c_str());
-		} else {
-			status("ActionSpeakString [%s]: A specific key is required to open this.", ctx.creature->getTag().c_str());
+				const glm::vec2 goal(action.origin.x + distance * std::cos(angle),
+				                     action.origin.y + distance * std::sin(angle));
+
+				// Somewhere on the walkmesh that can be walked to.
+				if (ctx.area->evaluateElevation(goal.x, goal.y) == FLT_MIN)
+					continue;
+				if (!ctx.area->findPath(glm::vec2(cx, cy), goal, route))
+					continue;
+
+				action.location = glm::vec3(goal.x, goal.y, 0.0f);
+				action.step = 2;
+				return;
+			}
+
+			// Nowhere to go from here right now; try again after a pause.
+			action.step = 3;
+			action.startTime = 0.0f;
+			action.range = RNG.getNext(kRandomWalkMinPause, kRandomWalkMaxPause);
+			return;
 		}
+
+		case 2: // Walk there
+			if (!moveTo(glm::vec2(action.location.x, action.location.y), kRandomWalkReach, ctx, false, true))
+				return;
+
+			creature->playDefaultAnimation();
+			action.step = 3;
+			action.startTime = 0.0f;
+			action.range = RNG.getNext(kRandomWalkMinPause, kRandomWalkMaxPause);
+			return;
+
+		default: // Pause
+			action.startTime += ctx.frameTime;
+			if (action.startTime >= action.range)
+				action.step = 1;
+			return;
+	}
+}
+
+void ActionExecutor::executeTrapAction(Action &action, const ExecutionContext &ctx) {
+	Creature *creature = ctx.creature;
+	Object *target = action.object;
+
+	Trigger *mine = dynamic_cast<Trigger *>(target);
+	Situated *situated = ObjectContainer::toSituated(target);
+
+	Trap *trap = mine ? &mine->getTrap() : (situated ? &situated->getTrap() : nullptr);
+	if (!trap || !trap->isTrapped()) {
+		creature->popAction();
 		return;
 	}
 
-	// Security skill check: d20 + Security Rank vs LockDC
-	int securityRank = ctx.creature->getSkillRank(kSkillSecurity);
-	int d20Roll = RNG.getNext(1, 21);
-	int total = d20Roll + securityRank;
-	int dc = situated->getLockDC();
+	// Flagging only needs the trap to have been seen.
+	if (action.type == kActionFlagTrap) {
+		creature->popAction();
 
-	if (total >= dc) {
-		ctx.creature->playAnimation(door ? "unlockdr" : "unlockcntr", false);
-		situated->setLocked(false);
-		if (door) door->open(ctx.creature);
-		info("Security Check SUCCESS: %d + %d = %d vs DC %d", d20Roll, securityRank, total, dc);
-	} else {
-		status("ActionSpeakString [%s]: Security check failed.", ctx.creature->getTag().c_str());
-		info("Security Check FAILURE: %d + %d = %d vs DC %d", d20Roll, securityRank, total, dc);
+		trap->setFlagged(true);
+		if (mine)
+			mine->detectTrap(creature);
+		else
+			trap->setDetectedBy(creature->getID());
+
+		return;
 	}
+
+	float x, y, _;
+	target->getPosition(x, y, _);
+
+	if (!moveTo(glm::vec2(x, y), MAX(action.range, TrapRules::kDisarmRange), ctx))
+		return;
+
+	const ActionType type = action.type;
+	creature->popAction();
+
+	faceObject(*creature, *target);
+
+	if (type == kActionExamineTrap)
+		return;
+
+	if (!trap->isActive() || !trap->isDisarmable()) {
+		status("ActionSpeakString [%s]: This cannot be disarmed.", creature->getTag().c_str());
+		return;
+	}
+
+	const bool recover = type == kActionRecoverTrap;
+
+	// d20 + Demolitions against the disarm DC. Failure has consequences, so
+	// out of combat the check takes 10 rather than 20.
+	const int demolitions = creature->getSkillRank(kSkillDemolitions);
+	const int roll = TrapRules::checkRoll(creature->isInCombat(), 10, RNG.getNext(1, 21));
+	const TrapRules::DisarmResult result = TrapRules::disarm(demolitions, roll, trap->getDisarmDC(), recover);
+
+	debugC(Common::kDebugEngineLogic, 1, "%s check by \"%s\" on \"%s\": %d + %d vs DC %d: %d",
+	       recover ? "Recover" : "Disarm", creature->getTag().c_str(), target->getTag().c_str(),
+	       roll, demolitions, recover ? TrapRules::getRecoverDC(trap->getDisarmDC()) : trap->getDisarmDC(),
+	       (int)result);
+
+	if (result == TrapRules::kDisarmSetOff) {
+		if (mine)
+			mine->fireTrap(creature);
+		else
+			situated->triggerTrap(creature);
+		return;
+	}
+
+	if (result == TrapRules::kDisarmFailed) {
+		status("ActionSpeakString [%s]: Failed to disarm the mine.", creature->getTag().c_str());
+		return;
+	}
+
+	const Common::UString item = trap->getItemResRef();
+	if (recover && !item.empty() && (item != "****"))
+		getLootInventory(*ctx.area->_module, *creature).addItem(item);
+
+	if (mine)
+		mine->disableTrap();
+	else
+		situated->setTrapDisabled();
+
+	target->runScript(kScriptDisarm, target, creature);
+
+	// A mine is gone for good once disarmed.
+	if (mine)
+		ctx.area->destroyObjectDeferred(mine);
 }
 
 void ActionExecutor::executeUseObject(Action &action, const ExecutionContext &ctx) {
@@ -416,7 +699,8 @@ bool ActionExecutor::isLocationReached(const glm::vec2 &location, float range, c
 	return glm::distance(glm::vec2(x, y), location) <= range;
 }
 
-bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx, bool forceRun) {
+bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx,
+                            bool forceRun, bool forceWalk) {
 	range = MAX(range, kMinMoveRange);
 
 	MovePath &path = ctx.creature->getMovePath();
@@ -454,7 +738,7 @@ bool ActionExecutor::moveTo(const glm::vec2 &location, float range, const Execut
 
 	const glm::vec2 dir = diff / dist;
 
-	bool run = forceRun || glm::length(location - origin) > kWalkDistance;
+	bool run = forceRun || (!forceWalk && (glm::length(location - origin) > kWalkDistance));
 	float moveRate = run ? ctx.creature->getRunRate() : ctx.creature->getWalkRate();
 
 	// Don't overshoot the waypoint.

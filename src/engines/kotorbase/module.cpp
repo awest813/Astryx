@@ -1827,9 +1827,12 @@ void Module::updateCombatAI() {
 		if (!leader || c == leader)
 			continue;
 
-		// Non-leader: if idle, mirror the leader's attack target.
+		// Non-leader: if idle, mirror the leader's attack target. Following the
+		// leader counts as idle, whether Astryx queued it or the party AI's
+		// heartbeat did (ActionFollowLeader, ActionForceFollowObject).
 		const CombatAction *ca = c->getCurrentAction();
-		bool idle = (!ca || ca->type == kActionFollowLeader);
+		bool idle = (!ca || ca->type == kActionFollowLeader ||
+		             (ca->type == kActionFollow && ca->object == leader));
 		if (!idle)
 			continue;
 

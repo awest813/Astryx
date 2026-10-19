@@ -71,6 +71,11 @@ private:
 	static void executeMoveToPoint(Action &action, const ExecutionContext &ctx);
 	static void executeFollowLeader(Action &action, const ExecutionContext &ctx);
 	static void executeOpenLock(Action &action, const ExecutionContext &ctx);
+	static void executeLock(Action &action, const ExecutionContext &ctx);
+	static void executeFollow(Action &action, const ExecutionContext &ctx);
+	static void executeRandomWalk(Action &action, const ExecutionContext &ctx);
+	/** Disarm, recover, flag or examine a mine or a trapped door/placeable. */
+	static void executeTrapAction(Action &action, const ExecutionContext &ctx);
 	static void executeUseObject(Action &action, const ExecutionContext &ctx);
 	static void executeAttackObject(Action &action, const ExecutionContext &ctx);
 	static void executePickUpItem(Action &action, const ExecutionContext &ctx);
@@ -85,7 +90,8 @@ private:
 	 * Move the current creature towards a specified location. Returns
 	 * true if location is within a specified range.
 	 */
-	static bool moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx, bool forceRun = false);
+	static bool moveTo(const glm::vec2 &location, float range, const ExecutionContext &ctx,
+	                   bool forceRun = false, bool forceWalk = false);
 };
 
 } // End of namespace KotORBase

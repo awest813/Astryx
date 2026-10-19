@@ -56,6 +56,10 @@ struct Action {
 	float startTime { -1.0f }; ///< Time the action started (for timed actions).
 	bool  initialized { false };
 	bool  cheat { false };     ///< CastSpell: bCheat, cast without spending Force points.
+	int   step { 0 };          ///< Progress of an action done in steps (random walk, lock picking, mines).
+	glm::vec3 origin { 0.0f, 0.0f, 0.0f }; ///< RandomWalk: where the walk started.
+	/** OpenLock: tag of the security tunneler used (its Thieves' Tools bonus applies). */
+	Common::UString item;
 
 	/** kActionDoCommand: the script closure to run when the action is reached. */
 	Common::UString script;

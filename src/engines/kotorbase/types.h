@@ -328,6 +328,7 @@ enum ActionType {
 	kActionTakeItem      = 44,
 	kActionPauseConversation  = 45,
 	kActionResumeConversation = 46,
+	kActionRandomWalk    = 47, ///< Engine-internal: ActionRandomWalk.
 	kActionQueueEmpty    = 65534,
 	kActionInvalid       = 65535
 };

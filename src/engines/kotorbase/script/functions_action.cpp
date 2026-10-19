@@ -340,11 +340,12 @@ void Functions::actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionRandomWalk(Aurora::NWScript::FunctionContext &ctx) {
+	// Wander about near here until the actions are cleared.
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	if (!caller)
+		return;
 
-	(void)ctx;
-
-	// Graceful no-op for scripts that only request ambient movement.
-
+	caller->addAction(Action(kActionRandomWalk));
 }
 
 
@@ -1414,29 +1415,51 @@ void Functions::actionDoCommand(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionUseSkill(Aurora::NWScript::FunctionContext &ctx) {
-
 	// ActionUseSkill(int nSkill, object oTarget, int nSubSkill=0, object oItemUsed=OBJECT_INVALID)
-
-	// Queue a UseObject action — skill check is handled by the object's OnUsed script.
-
 	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
-
 	Object   *target = ObjectContainer::toObject(ctx.getParams()[1].getObject());
-
 	if (!caller || !target)
-
 		return;
 
+	const int skill    = ctx.getParams()[0].getInt();
+	const int subSkill = ctx.getParams()[2].getInt();
 
+	// SUBSKILL_FLAGTRAP, SUBSKILL_RECOVERTRAP, SUBSKILL_EXAMINETRAP
+	static const int kSubSkillFlagTrap    = 100;
+	static const int kSubSkillRecoverTrap = 101;
+	static const int kSubSkillExamineTrap = 102;
 
+	Situated *situated = ObjectContainer::toSituated(target);
+
+	if ((skill == kSkillSecurity) && situated && situated->isLocked()) {
+		// Pick the lock, with a security tunneler if one is given.
+		Action action(kActionOpenLock, target);
+		action.range = 1.5f;
+		if (Item *item = ObjectContainer::toItem(ctx.getParams()[3].getObject()))
+			action.item = item->getTemplateResRef().empty() ? item->getTag() : item->getTemplateResRef();
+
+		caller->addAction(action);
+		return;
+	}
+
+	if (skill == kSkillDemolitions) {
+		ActionType type = kActionDisableTrap;
+		if (subSkill == kSubSkillFlagTrap)
+			type = kActionFlagTrap;
+		else if (subSkill == kSubSkillRecoverTrap)
+			type = kActionRecoverTrap;
+		else if (subSkill == kSubSkillExamineTrap)
+			type = kActionExamineTrap;
+
+		caller->addAction(Action(type, target));
+		return;
+	}
+
+	// Anything else: use the object; its OnUsed script does the skill check.
 	Action action(kActionUseObject);
-
 	action.object = target;
-
 	action.range  = 1.5f;
-
 	caller->addAction(action);
-
 }
 
 
@@ -1597,19 +1620,27 @@ void Functions::actionCircleObject(Aurora::NWScript::FunctionContext &ctx) {
 
 
 void Functions::actionLockObject(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
-	if (object) {
-		// Logic to lock the object would go here
-		debugC(Common::kDebugEngineLogic, 1, "ActionLockObject: %s", object->getTag().c_str());
-	}
+	// ActionLockObject(object oTarget): walk up to it, close and lock it.
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Situated *target = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	if (!caller || !target)
+		return;
+
+	Action action(kActionLock, target);
+	action.range = 2.0f;
+	caller->addAction(action);
 }
 
 void Functions::actionUnlockObject(Aurora::NWScript::FunctionContext &ctx) {
-	Aurora::NWScript::Object *object = getParamObject(ctx, 0);
-	if (object) {
-		// Logic to unlock the object would go here
-		debugC(Common::kDebugEngineLogic, 1, "ActionUnlockObject: %s", object->getTag().c_str());
-	}
+	// ActionUnlockObject(object oTarget): walk up to it and pick the lock (Security).
+	Creature *caller = ObjectContainer::toCreature(ctx.getCaller());
+	Situated *target = ObjectContainer::toSituated(getParamObject(ctx, 0));
+	if (!caller || !target)
+		return;
+
+	Action action(kActionOpenLock, target);
+	action.range = 1.5f;
+	caller->addAction(action);
 }
 
 void Functions::actionCastFakeSpellAtObject(Aurora::NWScript::FunctionContext &ctx) {
