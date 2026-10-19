@@ -161,8 +161,12 @@ new way:
   scripts that want them gone destroy them. They used to be deleted, which
   broke the Endar Spire: the cutscene queued on Trask never ran and the
   door after the bridge stayed locked.
-- **`SetMinOneHP` isn't saved:** after loading a save made on the Endar
-  Spire, the PC can die there.
+- **`SetMinOneHP`** is saved with creatures; the PC's is restored when
+  loading a save made in the same module, but not carried to other modules
+  (unverified what the original does there).
+- **Party selection** starts with the current companions ticked (forced ones
+  first, at most two). Companions a script made unselectable
+  (`SetNPCSelectability`) can't be ticked or unticked.
 - **Script variables of areas and modules** (e.g. the "has never
   triggered" flags of OnEnter scripts) are now saved; saves from earlier
   builds don't have them, so loading one may replay a module's opening.

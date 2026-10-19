@@ -286,7 +286,7 @@ void Functions::createItemOnObject(Aurora::NWScript::FunctionContext &ctx) {
 }
 
 void Functions::getArea(Aurora::NWScript::FunctionContext &ctx) {
-	// TODO: return current area of the specified object
+	// A KotOR module has one area, so every object is in the current one.
 	ctx.getReturn() = _game->getModule().getCurrentArea();
 }
 
