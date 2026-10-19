@@ -66,7 +66,6 @@ public:
 
 protected:
 	bool deferIngameHUDOnEnter() const override;
-	void onFrameUpdate(float frameTime) override;
 
 private:
 	void showIngameOptionsMenu();

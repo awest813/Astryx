@@ -56,7 +56,6 @@
 #include "src/engines/kotor/encounters_ebon.h"
 #include "src/engines/kotor/pazaak.h"
 #include "src/engines/kotor/gui/ingame/pazaak.h"
-#include "src/engines/kotorbase/swoopminigame.h"
 #include "src/engines/kotorbase/area.h"
 #include "src/engines/kotor/gui/ingame/menu.h"
 
@@ -253,8 +252,6 @@ void Module::signalEncounter(const Common::UString &id) {
 		performTurretMinigame(*this);
 	} else if (id == "turret_combat_start") {
 		setGlobalBoolean("__swmg_gunbank_targeting", true);
-	} else if (id == "swmg_obstacle_hit") {
-		setGlobalNumber("__swmg_last_event", KotORBase::SwoopMinigame::get().getLastEvent());
 	} else if (id == "tar_brejik_post_race") {
 		KotOR::performBrejikShowdown(*this);
 	} else if (id == "pazaak_start") {
@@ -284,16 +281,6 @@ void Module::signalEncounter(const Common::UString &id) {
 			}
 		}
 	}
-}
-
-void Module::onFrameUpdate(float frameTime) {
-	const bool swoopModule = _module.endsWith("mg");
-	const bool areaMinigame = _area && _area->isMinigame();
-	KotORBase::SwoopMinigame &swoop = KotORBase::SwoopMinigame::get();
-
-	swoop.setActive(swoopModule || areaMinigame);
-	if (swoop.isActive())
-		swoop.update(frameTime);
 }
 
 void Module::showJournal() {
